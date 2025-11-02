@@ -1,0 +1,28 @@
+{
+  "name": "@c2/connectors-cache",
+  "version": "1.0.0",
+  "description": "Edge cache and 5xx policy for marketplace connectors",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@c2/connectors": "workspace:*",
+    "@c2/rbac": "workspace:*",
+    "hono": "^4.10.4",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/jest": "^29.5.8",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.5",
+    "typescript": "^5.3.0",
+    "eslint": "^8.54.0",
+    "@jest/globals": "^30.2.0"
+  }
+}
