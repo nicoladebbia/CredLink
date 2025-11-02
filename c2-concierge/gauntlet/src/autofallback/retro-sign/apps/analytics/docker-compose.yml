@@ -1,0 +1,125 @@
+# Phase 13 Analytics - Development Docker Compose
+# Local development environment with ClickHouse and analytics service
+
+version: '3.8'
+
+services:
+  # ClickHouse analytics database
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: c2pa-clickhouse
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native interface
+    environment:
+      CLICKHOUSE_DB: c2pa_analytics
+      CLICKHOUSE_USER: analytics
+      CLICKHOUSE_PASSWORD: analytics123
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+      - ./schema/clickhouse-ddl.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - analytics-network
+
+  # Analytics service
+  analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: c2pa-analytics
+    ports:
+      - "3002:3002"
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 3002
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_USER: analytics
+      CLICKHOUSE_PASSWORD: analytics123
+      CLICKHOUSE_DATABASE: c2pa_analytics
+      LOG_LEVEL: debug
+      ALERTS_ENABLED: "false"  # Disabled for development
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: "analytics@localhost"
+    volumes:
+      - ./src:/app/src
+      - ./templates:/app/templates
+      - ./config:/app/config
+      - analytics_logs:/app/logs
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - analytics-network
+    command: npm run dev
+
+  # MailHog for email testing
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: c2pa-mailhog
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - analytics-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: c2pa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - analytics-network
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: c2pa-grafana
+    ports:
+      - "3003:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+      GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - clickhouse
+    networks:
+      - analytics-network
+
+volumes:
+  clickhouse_data:
+  clickhouse_logs:
+  analytics_logs:
+  redis_data:
+  grafana_data:
+
+networks:
+  analytics-network:
+    driver: bridge

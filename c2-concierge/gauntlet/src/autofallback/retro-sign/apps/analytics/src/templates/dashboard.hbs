@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{tenant}} - C2PA Analytics Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .tenant-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .freshness {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .freshness.fresh {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .freshness.stale {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .route-filter {
+            padding: 0.5rem 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .export-btn {
+            padding: 0.5rem 1rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .export-btn:hover {
+            background: #2563eb;
+        }
+
+        .slo-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .slo-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .slo-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #0f172a;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .status-pass {
+            color: #059669;
+        }
+
+        .status-fail {
+            color: #dc2626;
+        }
+
+        .policy-normal {
+            color: #059669;
+        }
+
+        .policy-fallback {
+            color: #f59e0b;
+        }
+
+        .policy-recovery {
+            color: #ef4444;
+        }
+
+        .burn-normal {
+            color: #059669;
+        }
+
+        .burn-caution {
+            color: #f59e0b;
+        }
+
+        .burn-warning {
+            color: #ea580c;
+        }
+
+        .burn-critical {
+            color: #dc2626;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .action-btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            background: white;
+            color: #374151;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: #f9fafb;
+        }
+
+        .action-btn.danger {
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        .action-btn.danger:hover {
+            background: #fef2f2;
+        }
+
+        .incidents-section {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .incidents-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .incidents-table th,
+        .incidents-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .incidents-table th {
+            font-weight: 600;
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .incidents-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .incident-id {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .latency-section {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .latency-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .latency-table th,
+        .latency-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .latency-table th {
+            font-weight: 600;
+            color: #374151;
+            background: #f9fafb;
+        }
+
+        .cost-section {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .cost-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .cost-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+        }
+
+        .cost-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .cost-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .last-updated {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo">C2PA Analytics</div>
+        <div class="tenant-info">
+            <span>Tenant: {{tenant}}</span>
+            <div class="freshness {{#if freshness.fresh}}fresh{{else}}stale{{/if}}">
+                {{#if freshness.fresh}}
+                    Data Fresh ✓
+                {{else}}
+                    Data Stale ({{freshness.age_minutes}}m old)
+                {{/if}}
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="controls">
+            <select class="route-filter" id="routeFilter">
+                <option value="">All Routes</option>
+                {{#each dashboardData.slo_status}}
+                <option value="{{route}}" {{#if ../selectedRoute}}{{#if (eq route ../selectedRoute)}}selected{{/if}}{{/if}}>{{route}}</option>
+                {{/each}}
+            </select>
+            <a href="/t/{{tenant}}/analytics/export?format=csv" class="export-btn">Export CSV</a>
+            <a href="/t/{{tenant}}/analytics/export?format=json" class="export-btn">Export JSON</a>
+        </div>
+
+        {{#if dashboardData.slo_status}}
+        <div class="slo-cards">
+            {{#each dashboardData.slo_status}}
+            <div class="slo-card">
+                <h3>{{route}} - {{mode}} Survival</h3>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-label">30-Day Survival</div>
+                        <div class="metric-value status-{{survival_status}}">
+                            {{formatPercent survival_30d}}
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Target</div>
+                        <div class="metric-value">{{formatPercent survival_target}}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Budget Left</div>
+                        <div class="metric-value">{{formatNumber budget_left}}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Burn Rate (5m)</div>
+                        <div class="metric-value burn-rate-{{burnRateClass burn_rate_5m}}">
+                            {{burn_rate_5m}}x
+                        </div>
+                    </div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-label">Burn Rate (1h)</div>
+                        <div class="metric-value burn-rate-{{burnRateClass burn_rate_1h}}">
+                            {{burn_rate_1h}}x
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Policy</div>
+                        <div class="metric-value policy-{{policyClass policy}}">
+                            {{policy}}
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <a href="/t/{{../tenant}}/incidents?route={{route}}" class="action-btn">View Incidents</a>
+                    <a href="/public/{{../tenant}}/survival/{{../currentPeriod}}?token=read-only" class="action-btn">Open Report</a>
+                    <button class="action-btn danger" onclick="forceFallback('{{route}}')">Force Fallback</button>
+                </div>
+            </div>
+            {{/each}}
+        </div>
+        {{else}}
+        <div class="no-data">
+            <h3>No SLO Data Available</h3>
+            <p>Check back in a few minutes for analytics data to appear.</p>
+        </div>
+        {{/if}}
+
+        {{#if dashboardData.incidents}}
+        <section class="incidents-section">
+            <div class="section-header">
+                <h2 class="section-title">Recent Incidents</h2>
+                <span>{{dashboardData.incidents.length}} incidents in last 7 days</span>
+            </div>
+            <table class="incidents-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Route</th>
+                        <th>Change</th>
+                        <th>Reason</th>
+                        <th>Rules</th>
+                        <th>Status</th>
+                        <th>Incident ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each dashboardData.incidents}}
+                    <tr>
+                        <td>{{formatRelativeTime ts}}</td>
+                        <td>{{route}}</td>
+                        <td>{{state_from}} → {{state_to}}</td>
+                        <td>{{reason}}</td>
+                        <td>{{#each rules}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}</td>
+                        <td><span class="status-{{status}}">{{status}}</span></td>
+                        <td><code class="incident-id">{{incident_id}}</code></td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+        {{/if}}
+
+        {{#if dashboardData.latency_metrics}}
+        <section class="latency-section">
+            <div class="section-header">
+                <h2 class="section-title">Latency Metrics (24h)</h2>
+                <span>Verify performance</span>
+            </div>
+            <table class="latency-table">
+                <thead>
+                    <tr>
+                        <th>Route</th>
+                        <th>p50</th>
+                        <th>p95</th>
+                        <th>p99</th>
+                        <th>Sample Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each dashboardData.latency_metrics}}
+                    <tr>
+                        <td>{{route}}</td>
+                        <td>{{formatDuration p50}}</td>
+                        <td>{{formatDuration p95}}</td>
+                        <td>{{formatDuration p99}}</td>
+                        <td>{{formatNumber sample_count}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+        {{/if}}
+
+        {{#if dashboardData.cost_metrics}}
+        <section class="cost-section">
+            <div class="section-header">
+                <h2 class="section-title">Cost Projections</h2>
+                <span>Current month estimate</span>
+            </div>
+            <div class="cost-grid">
+                <div class="cost-item">
+                    <div class="cost-label">Signing</div>
+                    <div class="cost-value">{{formatCurrency dashboardData.cost_metrics.sign_usd}}</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-label">Verification</div>
+                    <div class="cost-value">{{formatCurrency dashboardData.cost_metrics.verify_usd}}</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-label">Storage</div>
+                    <div class="cost-value">{{formatCurrency dashboardData.cost_metrics.storage_usd}}</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-label">Egress</div>
+                    <div class="cost-value">{{formatCurrency dashboardData.cost_metrics.egress_usd}}</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-label">Total (MTD)</div>
+                    <div class="cost-value">{{formatCurrency dashboardData.cost_metrics.total_usd}}</div>
+                </div>
+                <div class="cost-item">
+                    <div class="cost-label">Projected Monthly</div>
+                    <div class="cost-value">{{formatCurrency dashboardData.cost_metrics.projected_monthly}}</div>
+                </div>
+            </div>
+        </section>
+        {{/if}}
+
+        <div class="last-updated">
+            Last updated: {{formatDate lastUpdated}}
+        </div>
+    </div>
+
+    <script>
+        // Route filter functionality
+        document.getElementById('routeFilter').addEventListener('change', function(e) {
+            const route = e.target.value;
+            const url = route ? `/t/{{tenant}}/analytics?route=${route}` : `/t/{{tenant}}/analytics`;
+            window.location.href = url;
+        });
+
+        // Auto-refresh every 60 seconds
+        setTimeout(() => {
+            window.location.reload();
+        }, 60000);
+
+        // Force fallback (break-glass)
+        function forceFallback(route) {
+            if (confirm(`Force fallback for route "${route}"? This is a break-glass action.`)) {
+                fetch(`/api/v1/{{tenant}}/routes/${route}/force-fallback`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + document.querySelector('meta[name="token"]').content
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        alert('Fallback forced successfully');
+                        window.location.reload();
+                    } else {
+                        alert('Failed to force fallback');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

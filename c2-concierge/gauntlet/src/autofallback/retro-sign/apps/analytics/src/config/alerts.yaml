@@ -1,0 +1,277 @@
+# Phase 13 Analytics - Alert Configuration v1.0
+# Burn-rate monitoring and automatic enforcement rules
+
+rules:
+  # Fast burn detection - 5 minute window
+  - name: remote-fast-burn
+    enabled: true
+    thresholds:
+      - window_minutes: 5
+        target_survival: 0.999
+        burn_rate_threshold: 10.0    # 10x budget burn
+        min_requests: 100            # Minimum requests to trigger
+    actions:
+      - type: notify
+        config:
+          email:
+            - sre@tenant.com
+            - ops@c2pa.example.com
+          slack:
+            - "#c2c-alerts"
+            - "#tenant-sre"
+          priority: critical
+      - type: enforce_fallback
+        config:
+          auto_resolve: false         # Don't auto-resolve critical alerts
+      - type: open_incident
+        config:
+          priority: critical
+          auto_resolve: false
+    cooldown_minutes: 30            # Don't spam alerts for same route
+
+  # Slow burn detection - 1 hour window  
+  - name: remote-slow-burn
+    enabled: true
+    thresholds:
+      - window_minutes: 60
+        target_survival: 0.999
+        burn_rate_threshold: 4.0     # 4x budget burn
+        min_requests: 1000           # Higher threshold for longer window
+    actions:
+      - type: notify
+        config:
+          email:
+            - ops@tenant.com
+          slack:
+            - "#c2c-alerts"
+          priority: high
+      - type: open_ticket
+        config:
+          priority: high
+          assignee: "ops-team"
+    cooldown_minutes: 60
+
+  # Embed survival monitoring (lower priority)
+  - name: embed-degradation
+    enabled: true
+    thresholds:
+      - window_minutes: 15
+        target_survival: 0.95        # Lower target for embed
+        burn_rate_threshold: 8.0     # Higher threshold for embed
+        min_requests: 50
+    actions:
+      - type: notify
+        config:
+          email:
+            - ops@tenant.com
+          slack:
+            - "#c2c-alerts"
+          priority: medium
+    cooldown_minutes: 45
+
+  # Verification latency alerts
+  - name: verify-latency-spike
+    enabled: true
+    thresholds:
+      - window_minutes: 5
+        target_survival: 0.999
+        burn_rate_threshold: 5.0     # Trigger on latency issues
+        min_requests: 200
+    actions:
+      - type: notify
+        config:
+          email:
+            - perf@tenant.com
+          slack:
+            - "#performance"
+          priority: medium
+    cooldown_minutes: 15
+
+  # Critical provider failure detection
+  - name: provider-critical-failure
+    enabled: true
+    thresholds:
+      - window_minutes: 2
+        target_survival: 0.999
+        burn_rate_threshold: 50.0    # Very high threshold for provider failure
+        min_requests: 10
+    actions:
+      - type: notify
+        config:
+          email:
+            - sre@tenant.com
+            - emergency@c2pa.example.com
+          slack:
+            - "#emergency"
+            - "#c2c-alerts"
+          priority: critical
+      - type: enforce_fallback
+        config:
+          auto_resolve: false
+      - type: open_incident
+        config:
+          priority: critical
+          severity: "sev1"
+    cooldown_minutes: 10
+
+# Notification configuration
+notifications:
+  email:
+    smtp_host: ${SMTP_HOST}
+    smtp_port: ${SMTP_PORT}
+    username: ${SMTP_USER}
+    password: ${SMTP_PASS}
+    from: "C2PA Analytics <alerts@c2pa.example.com>"
+    
+  slack:
+    bot_token: ${SLACK_BOT_TOKEN}
+    default_channel: "#c2c-alerts"
+
+# Enforcement configuration  
+enforcement:
+  fallback_api_url: ${FALLBACK_API_URL}
+  service_token: ${SERVICE_TOKEN}
+  auto_resolve_hours: 24
+
+# Alert escalation policy
+escalation:
+  levels:
+    - level: "page"
+      delay_minutes: 0
+      channels: ["email", "slack"]
+      conditions:
+        burn_rate: ">= 10.0"
+        priority: "critical"
+        
+    - level: "ticket" 
+      delay_minutes: 15
+      channels: ["email", "slack", "jira"]
+      conditions:
+        burn_rate: ">= 4.0"
+        priority: "high"
+        
+    - level: "notify"
+      delay_minutes: 30
+      channels: ["email"]
+      conditions:
+        burn_rate: ">= 2.0"
+        priority: "medium"
+
+# Suppression rules (prevent alert fatigue)
+suppressions:
+  - name: maintenance-window
+    enabled: true
+    schedule: "0 2 * * 0"           # Sunday 2 AM UTC
+    duration_minutes: 60
+    affected_routes: ["*"]
+    
+  - name: known-issues
+    enabled: true
+    conditions:
+      reason_contains: ["scheduled maintenance", "planned outage"]
+    auto_resolve: true
+
+# Rate limiting (prevent notification spam)
+rate_limits:
+  per_route:
+    max_alerts_per_hour: 5
+    max_critical_per_hour: 2
+    
+  per_tenant:
+    max_alerts_per_hour: 20
+    max_critical_per_hour: 5
+    
+  global:
+    max_alerts_per_minute: 10
+    max_critical_per_minute: 3
+
+# Alert templates
+templates:
+  email_subject: "🚨 C2PA Alert: {{rule_name}} - {{tenant}}/{{route}}"
+  slack_channel: "#c2c-alerts"
+  
+  # Custom message templates
+  messages:
+    critical: |
+      🚨 **CRITICAL ALERT** 🚨
+      
+      Tenant: {{tenant}}
+      Route: {{route}}
+      Rule: {{rule_name}}
+      Burn Rate: {{burn_rate}}x
+      Window: {{window_minutes}}m
+      
+      Actions: {{actions_taken}}
+      
+      <{{dashboard_url}}|View Dashboard>
+      
+    high: |
+      ⚠️ **HIGH PRIORITY ALERT**
+      
+      {{tenant}}/{{route}} - {{rule_name}}
+      Burn Rate: {{burn_rate}}x ({{window_minutes}}m)
+      
+      <{{dashboard_url}}|Investigate>
+      
+    medium: |
+      📊 **Performance Alert**
+      
+      {{tenant}}/{{route}}: {{rule_name}}
+      Burn Rate: {{burn_rate}}x
+      
+      <{{dashboard_url}}|View Details>
+
+# Integration settings
+integrations:
+  pagerduty:
+    enabled: false
+    service_key: ${PAGERDUTY_SERVICE_KEY}
+    severity_mapping:
+      critical: "critical"
+      high: "error"
+      medium: "warning"
+      low: "info"
+      
+  jira:
+    enabled: false
+    url: ${JIRA_URL}
+    username: ${JIRA_USER}
+    api_token: ${JIRA_TOKEN}
+    project: "C2C"
+    issue_type: "Alert"
+    
+  datadog:
+    enabled: false
+    api_key: ${DATADOG_API_KEY}
+    site: "datadoghq.com"
+    
+  statuspage:
+    enabled: false
+    page_id: ${STATUSPAGE_ID}
+    api_key: ${STATUSPAGE_API_KEY}
+
+# Health checks
+health_checks:
+  alert_service:
+    enabled: true
+    interval_seconds: 60
+    
+  notification_channels:
+    enabled: true
+    interval_seconds: 300
+    
+  enforcement_api:
+    enabled: true
+    interval_seconds: 120
+
+# Metrics and monitoring
+metrics:
+  prometheus:
+    enabled: true
+    port: 9090
+    
+  internal:
+    track_alerts: true
+    track_notifications: true
+    track_enforcement: true
+    retention_days: 30
