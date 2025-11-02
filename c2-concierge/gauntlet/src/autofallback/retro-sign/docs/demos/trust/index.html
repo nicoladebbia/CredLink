@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 11 — Trust Graph & Badge Reputation Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f7;
+            color: #1d1d1f;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+            color: #1d1d1f;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #86868b;
+            margin: 10px 0 0 0;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .demo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .demo-card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 16px 0;
+            color: #1d1d1f;
+        }
+
+        .demo-card p {
+            color: #86868b;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .video-placeholder {
+            width: 100%;
+            height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .trust-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .trust-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 12px 0;
+            color: #1d1d1f;
+        }
+
+        .trust-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .metric {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #86868b;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1d1d1f;
+        }
+
+        .metric-value.grade-A { color: #34c759; }
+        .metric-value.grade-B { color: #34c759; }
+        .metric-value.grade-C { color: #ff9500; }
+        .metric-value.grade-D { color: #ff9500; }
+        .metric-value.grade-E { color: #ff3b30; }
+        .metric-value.grade-F { color: #ff3b30; }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #007aff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d70015;
+        }
+
+        .btn-secondary {
+            background: #8e8e93;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #636366;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-valid { background: #34c759; }
+        .status-warning { background: #ff9500; }
+        .status-invalid { background: #ff3b30; }
+        .status-unknown { background: #8e8e93; }
+
+        .log {
+            background: #1d1d1f;
+            color: #f5f5f7;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 16px;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        .log-timestamp {
+            color: #86868b;
+        }
+
+        .log-message {
+            color: #f5f5f7;
+        }
+
+        .log-success { color: #34c759; }
+        .log-error { color: #ff3b30; }
+        .log-warning { color: #ff9500; }
+
+        @media (max-width: 768px) {
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .trust-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Phase 11 — Trust Graph & Badge Reputation</h1>
+            <p>Live demo of trust scoring, revocation propagation, and badge reputation</p>
+        </div>
+
+        <div class="demo-grid">
+            <!-- High Trust Demo -->
+            <div class="demo-card">
+                <h2>✅ High Trust Example</h2>
+                <p>Demonstrates a properly signed asset with high trust score (84/100, Grade A)</p>
+                
+                <div class="video-container">
+                    <div class="video-placeholder">
+                        <c2-badge-video id="high-trust-badge" player-id="high-trust-video"></c2-badge-video>
+                    </div>
+                </div>
+
+                <div class="trust-info">
+                    <h3>Trust Metrics</h3>
+                    <div class="trust-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Score</span>
+                            <span class="metric-value grade-A" id="high-trust-score">84/100</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Grade</span>
+                            <span class="metric-value grade-A" id="high-trust-grade">A</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Issuer</span>
+                            <span class="metric-value" id="high-trust-issuer">Acme Media</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Hardware</span>
+                            <span class="metric-value" id="high-trust-hardware">✓ YubiHSM2</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="verifyHighTrust()">Verify</button>
+                    <button class="btn btn-secondary" onclick="showTrustDetails('high')">View Details</button>
+                </div>
+            </div>
+
+            <!-- Revoked Key Demo -->
+            <div class="demo-card">
+                <h2>⚠️ Revoked Key Example</h2>
+                <p>Demonstrates immediate badge update when a key is revoked (< 10 min propagation)</p>
+                
+                <div class="video-container">
+                    <div class="video-placeholder">
+                        <c2-badge-video id="revoked-badge" player-id="revoked-video"></c2-badge-video>
+                    </div>
+                </div>
+
+                <div class="trust-info">
+                    <h3>Trust Metrics</h3>
+                    <div class="trust-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Score</span>
+                            <span class="metric-value grade-F" id="revoked-score">0/100</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Status</span>
+                            <span class="metric-value grade-F" id="revoked-status">REVOKED</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Revoked At</span>
+                            <span class="metric-value" id="revoked-time">--:--</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Reason</span>
+                            <span class="metric-value" id="revoked-reason">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-danger" onclick="revokeKey()">Revoke Key</button>
+                    <button class="btn btn-secondary" onclick="showTrustDetails('revoked')">View Details</button>
+                </div>
+            </div>
+
+            <!-- Unknown CA Demo -->
+            <div class="demo-card">
+                <h2>❓ Unknown CA Example</h2>
+                <p>Demonstrates reduced trust score for certificates from unknown authorities</p>
+                
+                <div class="video-container">
+                    <div class="video-placeholder">
+                        <c2-badge-video id="unknown-ca-badge" player-id="unknown-ca-video"></c2-badge-video>
+                    </div>
+                </div>
+
+                <div class="trust-info">
+                    <h3>Trust Metrics</h3>
+                    <div class="trust-metrics">
+                        <div class="metric">
+                            <span class="metric-label">Score</span>
+                            <span class="metric-value grade-D" id="unknown-ca-score">40/100</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Grade</span>
+                            <span class="metric-value grade-D" id="unknown-ca-grade">D</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">CA Status</span>
+                            <span class="metric-value" id="unknown-ca-status">Unknown</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Hardware</span>
+                            <span class="metric-value" id="unknown-ca-hardware">✗ None</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="verifyUnknownCA()">Verify</button>
+                    <button class="btn btn-secondary" onclick="showTrustDetails('unknown')">View Details</button>
+                </div>
+            </div>
+
+            <!-- Live Revocation Monitor -->
+            <div class="demo-card">
+                <h2>🔄 Revocation Monitor</h2>
+                <p>Real-time monitoring of revocation propagation (updates every 30 seconds)</p>
+                
+                <div class="trust-info">
+                    <h3>System Status</h3>
+                    <div class="trust-metrics">
+                        <div class="metric">
+                            <span class="metric-label">API Status</span>
+                            <span class="metric-value" id="api-status">
+                                <span class="status-indicator status-unknown"></span>Checking...
+                            </span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Last Update</span>
+                            <span class="metric-value" id="last-update">--:--</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Revoked Keys</span>
+                            <span class="metric-value" id="revoked-count">0</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Cache Hits</span>
+                            <span class="metric-value" id="cache-hits">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="checkSystemStatus()">Check Status</button>
+                    <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
+                </div>
+
+                <div class="log" id="activity-log">
+                    <div class="log-entry">
+                        <span class="log-timestamp">[00:00:00]</span>
+                        <span class="log-message">Trust demo initialized</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Phase 11 components -->
+    <script src="/packages/badge-video/dist/index.js"></script>
+    <script src="/packages/player-hooks/dist/verify.worker.js"></script>
+
+    <script>
+        // Demo configuration
+        const API_BASE = 'http://localhost:3001';
+        let revokedKeyId = 'key:demo:test-revoked-123';
+        let monitoringInterval = null;
+
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', async () => {
+            await initializeBadges();
+            startMonitoring();
+            await checkSystemStatus();
+            log('Demo initialized successfully', 'success');
+        });
+
+        // Initialize badge components
+        async function initializeBadges() {
+            // High trust badge
+            const highTrustBadge = document.getElementById('high-trust-badge');
+            if (highTrustBadge) {
+                highTrustBadge.setAttribute('manifest-url', `${API_BASE}/manifests/high-trust-demo.c2pa.json`);
+                await verifyHighTrust();
+            }
+
+            // Revoked badge
+            const revokedBadge = document.getElementById('revoked-badge');
+            if (revokedBadge) {
+                revokedBadge.setAttribute('manifest-url', `${API_BASE}/manifests/revoked-demo.c2pa.json`);
+            }
+
+            // Unknown CA badge
+            const unknownBadge = document.getElementById('unknown-ca-badge');
+            if (unknownBadge) {
+                unknownBadge.setAttribute('manifest-url', `${API_BASE}/manifests/unknown-ca-demo.c2pa.json`);
+                await verifyUnknownCA();
+            }
+        }
+
+        // Verify high trust example
+        async function verifyHighTrust() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/verify/video?asset_url=https://demo-cdn.c2pa.example.com/video/high-trust.mp4&manifest_url=${API_BASE}/manifests/high-trust-demo.c2pa.json`);
+                const data = await response.json();
+
+                if (data.trust) {
+                    updateTrustDisplay('high-trust', data.trust);
+                    log(`High trust verification: ${data.trust.score}/100 (${data.trust.grade})`, 'success');
+                } else {
+                    log('High trust verification: No trust data available', 'warning');
+                }
+            } catch (error) {
+                log(`High trust verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+            }
+        }
+
+        // Verify unknown CA example
+        async function verifyUnknownCA() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/verify/video?asset_url=https://demo-cdn.c2pa.example.com/video/unknown-ca.mp4&manifest_url=${API_BASE}/manifests/unknown-ca-demo.c2pa.json`);
+                const data = await response.json();
+
+                if (data.trust) {
+                    updateTrustDisplay('unknown-ca', data.trust);
+                    log(`Unknown CA verification: ${data.trust.score}/100 (${data.trust.grade})`, 'warning');
+                } else {
+                    log('Unknown CA verification: No trust data available', 'warning');
+                }
+            } catch (error) {
+                log(`Unknown CA verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+            }
+        }
+
+        // Revoke test key
+        async function revokeKey() {
+            try {
+                const response = await fetch(`${API_BASE}/trust/revoke`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key_id: revokedKeyId,
+                        reason: 'Demo revocation for Phase 11 testing',
+                        evidence_url: 'https://demo.c2pa.example.com/evidence/revocation-demo'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`Key revoked successfully: ${data.key_id}`, 'error');
+                    const revokedTimeEl = document.getElementById('revoked-time');
+                    const revokedReasonEl = document.getElementById('revoked-reason');
+                    if (revokedTimeEl) revokedTimeEl.textContent = new Date().toLocaleTimeString();
+                    if (revokedReasonEl) revokedReasonEl.textContent = data.reason;
+                    
+                    // Update badge to show revoked status
+                    await verifyRevoked();
+                } else {
+                    log(`Revocation failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                log(`Revocation error: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+            }
+        }
+
+        // Verify revoked key
+        async function verifyRevoked() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/verify/video?asset_url=https://demo-cdn.c2pa.example.com/video/revoked.mp4&manifest_url=${API_BASE}/manifests/revoked-demo.c2pa.json`);
+                const data = await response.json();
+
+                if (data.trust) {
+                    updateTrustDisplay('revoked', data.trust);
+                    log(`Revoked key verification: ${data.trust.score}/100 (${data.trust.grade})`, 'error');
+                } else {
+                    log('Revoked key verification: No trust data available', 'warning');
+                }
+            } catch (error) {
+                log(`Revoked key verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+            }
+        }
+
+        // Update trust display
+        function updateTrustDisplay(prefix, trust) {
+            const scoreEl = document.getElementById(`${prefix}-score`);
+            const gradeEl = document.getElementById(`${prefix}-grade`);
+            
+            if (scoreEl) scoreEl.textContent = `${trust.score}/100`;
+            if (gradeEl) {
+                gradeEl.textContent = trust.grade.toUpperCase();
+                gradeEl.className = `metric-value grade-${trust.grade.toLowerCase()}`;
+            }
+
+            // Update additional fields
+            if (prefix === 'high-trust') {
+                const issuerEl = document.getElementById('high-trust-issuer');
+                const hardwareEl = document.getElementById('high-trust-hardware');
+                if (issuerEl) issuerEl.textContent = trust.path?.org?.name || 'Unknown';
+                if (hardwareEl) hardwareEl.textContent = trust.path?.device?.attested ? '✓ Hardware-backed' : '✗ No hardware';
+            } else if (prefix === 'unknown-ca') {
+                const caStatusEl = document.getElementById('unknown-ca-status');
+                const hardwareEl = document.getElementById('unknown-ca-hardware');
+                if (caStatusEl) caStatusEl.textContent = trust.path?.org?.name || 'Unknown CA';
+                if (hardwareEl) hardwareEl.textContent = trust.path?.device?.attested ? '✓ Hardware-backed' : '✗ No hardware';
+            }
+        }
+
+        // Check system status
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/trust/stats`);
+                const data = await response.json();
+
+                // Update status displays
+                const apiStatus = document.getElementById('api-status');
+                if (apiStatus) apiStatus.innerHTML = '<span class="status-indicator status-valid"></span>Online';
+
+                const lastUpdateEl = document.getElementById('last-update');
+                const revokedCountEl = document.getElementById('revoked-count');
+                const cacheHitsEl = document.getElementById('cache-hits');
+                
+                if (lastUpdateEl) lastUpdateEl.textContent = new Date().toLocaleTimeString();
+                if (revokedCountEl) revokedCountEl.textContent = data.graph?.revoked_keys || 0;
+                if (cacheHitsEl) cacheHitsEl.textContent = data.cache?.size || 0;
+
+                log('System status checked successfully', 'success');
+            } catch (error) {
+                const apiStatus = document.getElementById('api-status');
+                if (apiStatus) apiStatus.innerHTML = '<span class="status-indicator status-invalid"></span>Offline';
+                log(`System status check failed: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+            }
+        }
+
+        // Start monitoring
+        function startMonitoring() {
+            monitoringInterval = setInterval(async () => {
+                await checkSystemStatus();
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Show trust details modal
+        function showTrustDetails(type) {
+            // This would open a detailed modal showing the full trust path
+            log(`Showing trust details for: ${type}`, 'success');
+            alert(`Trust details for ${type} would be shown in a modal with full path, components, and evidence.`);
+        }
+
+        // Clear activity log
+        function clearLog() {
+            const logEl = document.getElementById('activity-log');
+            logEl.innerHTML = '<div class="log-entry"><span class="log-timestamp">[' + new Date().toLocaleTimeString() + ']</span><span class="log-message">Log cleared</span></div>';
+        }
+
+        // Log activity
+        function log(message, type = 'message') {
+            const logEl = document.getElementById('activity-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logClass = type === 'success' ? 'log-success' : 
+                           type === 'error' ? 'log-error' : 
+                           type === 'warning' ? 'log-warning' : 'log-message';
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span><span class="log-${type}">${message}</span>`;
+            
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+
+            // Keep only last 50 entries
+            while (logEl.children.length > 50) {
+                logEl.removeChild(logEl.firstChild);
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+            }
+        });
+    </script>
+</body>
+</html>

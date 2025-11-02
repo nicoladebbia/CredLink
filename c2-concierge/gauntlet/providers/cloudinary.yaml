@@ -1,0 +1,207 @@
+provider: cloudinary
+name: "Cloudinary"
+products: ["Fetch Delivery", "Image Optimization"]
+base_url: "https://res.cloudinary.com/demo/image/fetch"
+documentation:
+  fetch: "https://cloudinary.com/documentation/fetch_remote_images"
+  metadata: "https://cloudinary.com/documentation/image_transformations#controlling_the_preservation_of_metadata"
+  flags: "https://cloudinary.com/documentation/image_transformation_reference#flag_parameter"
+last_updated: "2025-10-30"
+notes: |
+  Cloudinary behavior (as of 2025-10-30):
+  
+  • Transformed images strip metadata by default
+  • fl_keep_iptc flag preserves IPTC metadata (not EXIF)
+  • q_auto negates metadata preservation even with fl_keep_iptc
+  • f_auto may strip some metadata during format conversion
+  • Fetch delivery supports explicit preservation flags
+  • Content Credentials not natively supported
+  
+  References:
+  - https://cloudinary.com/documentation/image_transformations#metadata_stripping
+  - https://cloudinary.com/documentation/image_transformation_reference#fl_keep_iptc
+
+routes:
+  - id: preserve-embed
+    description: "Preserve with fl_keep_iptc and avoid q_auto"
+    url_pattern: "/{transform_options}/{origin_url}"
+    default_params:
+      fl_keep_iptc: ""
+    transform_mappings:
+      resize_1024:
+        w: 1024
+        fl_keep_iptc: ""
+      q_75:
+        q: 80
+        fl_keep_iptc: ""
+      format_webp:
+        f: "webp"
+        fl_keep_iptc: ""
+      format_avif:
+        f: "avif"
+        fl_keep_iptc: ""
+      crop_1x1_center:
+        w: 1024
+        h: 1024
+        c: "fill"
+        g: "center"
+        fl_keep_iptc: ""
+      progressive_jpeg:
+        f: "jpg"
+        q: 80
+        fl_keep_iptc: ""
+      rotate_90:
+        a: "90"
+        fl_keep_iptc: ""
+      sharpen:
+        e: "sharpen"
+        fl_keep_iptc: ""
+      gamma:
+        e: "gamma:1.2;contrast:1.1"
+        fl_keep_iptc: ""
+      png_to_jpg:
+        f: "jpg"
+        q: 80
+        fl_keep_iptc: ""
+      dpr_2:
+        dpr: 2
+        fl_keep_iptc: ""
+      provider_auto_optimize:
+        f: "auto"
+        q: 80
+        fl_keep_iptc: ""
+    special_config:
+      expected_behavior:
+        embed_survival: true
+        remote_survival: true
+        reason: "fl_keep_iptc preserves IPTC metadata when q_auto is avoided"
+      caveats:
+        - "q_auto negates metadata preservation"
+        - "Only IPTC preserved, not EXIF"
+        - "Format conversion may still strip some metadata"
+
+  - id: strip-happy
+    description: "Aggressive transforms with q_auto and f_auto"
+    url_pattern: "/{transform_options}/{origin_url}"
+    default_params:
+      f: "auto"
+      q: "auto"
+    transform_mappings:
+      resize_1024:
+        w: 1024
+        f: "auto"
+        q: "auto"
+      q_75:
+        q: "auto"
+        f: "auto"
+      format_webp:
+        f: "auto"
+        q: "auto"
+      format_avif:
+        f: "auto"
+        q: "auto"
+      crop_1x1_center:
+        w: 1024
+        h: 1024
+        c: "fill"
+        g: "center"
+        f: "auto"
+        q: "auto"
+      progressive_jpeg:
+        f: "auto"
+        q: "auto"
+      rotate_90:
+        a: "90"
+        f: "auto"
+        q: "auto"
+      sharpen:
+        e: "sharpen"
+        f: "auto"
+        q: "auto"
+      gamma:
+        e: "gamma:1.2;contrast:1.1"
+        f: "auto"
+        q: "auto"
+      png_to_jpg:
+        f: "auto"
+        q: "auto"
+      dpr_2:
+        dpr: 2
+        f: "auto"
+        q: "auto"
+      provider_auto_optimize:
+        f: "auto"
+        q: "auto"
+    special_config:
+      expected_behavior:
+        embed_survival: false
+        remote_survival: true
+        reason: "q_auto and f_auto strip metadata by default"
+
+  - id: remote-only
+    description: "Remote manifest only, no embed preservation"
+    url_pattern: "/{transform_options}/{origin_url}"
+    default_params: {}
+    transform_mappings:
+      resize_1024:
+        w: 1024
+      q_75:
+        q: 75
+      format_webp:
+        f: "webp"
+      format_avif:
+        f: "avif"
+      crop_1x1_center:
+        w: 1024
+        h: 1024
+        c: "fill"
+        g: "center"
+      progressive_jpeg:
+        f: "jpg"
+        q: 75
+      rotate_90:
+        a: "90"
+      sharpen:
+        e: "sharpen"
+      gamma:
+        e: "gamma:1.2;contrast:1.1"
+      png_to_jpg:
+        f: "jpg"
+        q: 75
+      dpr_2:
+        dpr: 2
+      provider_auto_optimize:
+        f: "auto"
+        q: "auto"
+    special_config:
+      edge_worker:
+        inject_manifest_link: true
+        fallback_html: true
+      expected_behavior:
+        embed_survival: false
+        remote_survival: true
+        reason: "Remote manifest injection via HTML fallback"
+
+headers:
+  test:
+    User-Agent: "C2C-Gauntlet/1.0"
+    Accept: "image/*,*/*;q=0.8"
+  expected:
+    Link: 'rel="c2pa-manifest"'
+    Cache-Control: "public, max-age=31536000"
+    ETag: "*"
+
+probes:
+  remote:
+    method: "header_link"
+    fallback: "html_link"
+    verification: "hash_alignment"
+  embed:
+    method: "c2patool_verify"
+    expected_on_routes: ["preserve-embed"]
+    failure_expected_on_routes: ["strip-happy", "remote-only"]
+    notes:
+      - "fl_keep_iptc preserves IPTC metadata only"
+      - "q_auto negates all metadata preservation"
+      - "Format conversion may strip some metadata"
+      - "Content Credentials not natively supported"

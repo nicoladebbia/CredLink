@@ -4,8 +4,39 @@ import { promisify } from 'util';
 
 const execFileAsync = promisify(execFile);
 
+// Security: Allowed magick operations whitelist
+const ALLOWED_OPERATIONS = [
+  '-strip', '-quality', '-resize', '-webp', '-avif', 
+  '-gravity', '-crop', '-interlace', '-rotate', 
+  '-thumbnail', '-gravity', '-pointsize', '-fill', 
+  '-undercolor', '-annotate'
+];
+
+// Security: Validate and sanitize magick arguments
+function validateMagickArgs(args: string[]): void {
+  for (const arg of args) {
+    // Check for dangerous characters that could lead to command injection
+    if (/[;&|`$(){}[\]<>]/.test(arg)) {
+      throw new Error(`Dangerous character detected in argument: ${arg}`);
+    }
+    
+    // Check if operation is in whitelist
+    if (arg.startsWith('-') && !ALLOWED_OPERATIONS.includes(arg)) {
+      throw new Error(`Operation not allowed: ${arg}`);
+    }
+    
+    // Validate numeric arguments
+    if (arg.match(/^\d+$/) && (parseInt(arg) < 0 || parseInt(arg) > 10000)) {
+      throw new Error(`Numeric argument out of range: ${arg}`);
+    }
+  }
+}
+
 export async function magickTransform(inputBuffer: Buffer, args: string[]): Promise<Buffer> {
   try {
+    // Security: Validate all arguments before execution
+    validateMagickArgs(args);
+    
     // For simple operations, use sharp for better performance
     if (args.length === 0) {
       return inputBuffer;
@@ -36,6 +67,9 @@ export async function magickTransform(inputBuffer: Buffer, args: string[]): Prom
     if (args.includes('-quality')) {
       const qualityIndex = args.indexOf('-quality');
       const quality = parseInt(args[qualityIndex + 1]);
+      if (quality < 0 || quality > 100) {
+        throw new Error('Quality must be between 0 and 100');
+      }
       const image = sharp(inputBuffer);
       return await image.jpeg({ quality }).toBuffer();
     }
@@ -77,11 +111,13 @@ export async function magickTransform(inputBuffer: Buffer, args: string[]): Prom
       return await image.jpeg({ progressive: false }).toBuffer();
     }
 
-    // Fallback to ImageMagick for complex operations
+    // Fallback to ImageMagick for complex operations with security constraints
     const { stdout } = await execFileAsync('magick', [
       '-', ...args, '-'
     ], {
-      encoding: null
+      encoding: null,
+      timeout: 30000, // Security: 30 second timeout
+      maxBuffer: 50 * 1024 * 1024 // Security: 50MB max buffer
     });
     
     return stdout;

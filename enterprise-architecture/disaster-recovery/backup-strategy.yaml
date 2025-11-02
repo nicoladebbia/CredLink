@@ -1,0 +1,774 @@
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: c2c-backup-storage
+  namespace: velero
+spec:
+  provider: aws
+  objectStorage:
+    bucket: c2c-enterprise-backups
+    prefix: "k8s-backups"
+  config:
+    region: us-east-1
+    s3ForcePathStyle: "false"
+    s3Url: "https://s3.amazonaws.com"
+
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: daily-backup
+  namespace: velero
+spec:
+  schedule: "0 2 * * *" # Daily at 2 AM
+  template:
+    includedNamespaces:
+    - c2c-enterprise
+    - c2c-monitoring
+    - c2c-logging
+    excludedNamespaces:
+    - kube-system
+    - kube-public
+    - velero
+    storageLocation: c2c-backup-storage
+    volumeSnapshotLocations:
+    - c2c-volume-snapshots
+    ttl: "720h" # 30 days retention
+    hooks:
+      resources:
+      - name: auth-service-backup-hook
+        includedNamespaces:
+        - c2c-enterprise
+        includedResources:
+        - pods
+        labelSelector:
+          matchLabels:
+            app: auth-service
+        hooks:
+        - exec:
+            container: auth-service
+            command:
+            - /bin/bash
+            - -c
+            - "pg_dump $DATABASE_URL > /tmp/auth-backup.sql && aws s3 cp /tmp/auth-backup.sql s3://c2c-enterprise-backups/database/$(date +%Y-%m-%d)/auth-backup.sql"
+            onError: Fail
+            timeout: 300s
+
+---
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: weekly-full-backup
+  namespace: velero
+spec:
+  schedule: "0 3 * * 0" # Weekly on Sunday at 3 AM
+  template:
+    includedNamespaces:
+    - c2c-enterprise
+    - c2c-monitoring
+    - c2c-logging
+    storageLocation: c2c-backup-storage
+    volumeSnapshotLocations:
+    - c2c-volume-snapshots
+    ttl: "2160h" # 90 days retention
+    defaultVolumesToRestic: false
+
+---
+apiVersion: velero.io/v1
+kind: VolumeSnapshotLocation
+metadata:
+  name: c2c-volume-snapshots
+  namespace: velero
+spec:
+  provider: aws
+  config:
+    region: us-east-1
+    profile: "default"
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup-cronjob
+  namespace: c2c-enterprise
+spec:
+  schedule: "0 1 * * *" # Daily at 1 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: backup-sa
+          containers:
+          - name: postgres-backup
+            image: postgres:15-alpine
+            command:
+            - /bin/bash
+            - -c
+            - |
+              TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+              BACKUP_FILE="c2c-backup-${TIMESTAMP}.sql"
+              
+              # Create backup
+              pg_dump -h postgres-primary -U postgres -d c2c_primary > /tmp/${BACKUP_FILE}
+              
+              # Compress backup
+              gzip /tmp/${BACKUP_FILE}
+              
+              # Upload to S3
+              aws s3 cp /tmp/${BACKUP_FILE}.gz s3://c2c-enterprise-backups/database/${TIMESTAMP}/${BACKUP_FILE}.gz
+              
+              # Verify backup
+              BACKUP_SIZE=$(stat -c%s /tmp/${BACKUP_FILE}.gz)
+              if [ $BACKUP_SIZE -lt 1024 ]; then
+                echo "Backup too small: ${BACKUP_SIZE} bytes"
+                exit 1
+              fi
+              
+              # Clean up local files
+              rm /tmp/${BACKUP_FILE}.gz
+              
+              # Clean up old backups (keep 30 days)
+              aws s3 ls s3://c2c-enterprise-backups/database/ | while read -r line; do
+                createDate=$(echo $line | awk '{print $1" "$2}')
+                createDate=$(date -d "$createDate" +%s)
+                olderThan=$(date -d "30 days ago" +%s)
+                if [[ $createDate -lt $olderThan ]]; then
+                  fileName=$(echo $line | awk '{print $4}')
+                  if [[ $fileName != "" ]]; then
+                    aws s3 rm s3://c2c-enterprise-backups/database/$fileName --recursive
+                  fi
+                fi
+              done
+              
+              echo "Database backup completed successfully: ${BACKUP_FILE}.gz"
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secret-access-key
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /tmp
+          - name: redis-backup
+            image: redis:7-alpine
+            command:
+            - /bin/bash
+            - -c
+            - |
+              TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)
+              BACKUP_FILE="redis-backup-${TIMESTAMP}.rdb"
+              
+              # Create backup
+              redis-cli -h redis-cluster --rdb /tmp/${BACKUP_FILE}
+              
+              # Upload to S3
+              aws s3 cp /tmp/${BACKUP_FILE} s3://c2c-enterprise-backups/redis/${TIMESTAMP}/${BACKUP_FILE}
+              
+              # Verify backup
+              BACKUP_SIZE=$(stat -c%s /tmp/${BACKUP_FILE})
+              if [ $BACKUP_SIZE -lt 1024 ]; then
+                echo "Redis backup too small: ${BACKUP_SIZE} bytes"
+                exit 1
+              fi
+              
+              # Clean up local files
+              rm /tmp/${BACKUP_FILE}
+              
+              echo "Redis backup completed successfully: ${BACKUP_FILE}"
+            env:
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secret-access-key
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /tmp
+          volumes:
+          - name: backup-storage
+            emptyDir: {}
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cross-region-backup
+  namespace: c2c-enterprise
+spec:
+  schedule: "0 4 * * *" # Daily at 4 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: backup-sa
+          containers:
+          - name: cross-region-sync
+            image: amazon/aws-cli:latest
+            command:
+            - /bin/bash
+            - -c
+            - |
+              # Sync primary region to backup region
+              aws s3 sync s3://c2c-enterprise-backups-us-east-1 s3://c2c-enterprise-backups-us-west-2 --delete
+              
+              # Sync monitoring data
+              aws s3 sync s3://c2c-monitoring-data-us-east-1 s3://c2c-monitoring-data-us-west-2 --delete
+              
+              # Sync logs
+              aws s3 sync s3://c2c-logs-us-east-1 s3://c2c-logs-us-west-2 --delete
+              
+              echo "Cross-region backup sync completed"
+            env:
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: access-key-id
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-credentials
+                  key: secret-access-key
+          restartPolicy: OnFailure
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: disaster-recovery-test
+  namespace: c2c-enterprise
+spec:
+  template:
+    spec:
+      serviceAccountName: backup-sa
+      containers:
+      - name: dr-test
+        image: python:3.9-slim
+        command:
+        - /bin/bash
+        - -c
+        - |
+          pip install boto3 psycopg2-binary kubernetes
+          
+          cat > dr_test.py << 'EOF'
+          import boto3
+          import psycopg2
+          import redis
+          import kubernetes
+          from datetime import datetime
+          import time
+          
+          class DisasterRecoveryTest:
+              def __init__(self):
+                  self.s3_client = boto3.client('s3')
+                  self.results = []
+          
+              def test_backup_availability(self):
+                  """Test if latest backups are available"""
+                  try:
+                      response = self.s3_client.list_objects_v2(
+                          Bucket='c2c-enterprise-backups',
+                          Prefix='database/'
+                      )
+                      
+                      if response['KeyCount'] > 0:
+                          latest_backup = sorted(response['Contents'], 
+                                                key=lambda x: x['LastModified'])[-1]
+                          self.results.append({
+                              'test': 'backup_availability',
+                              'status': 'PASS',
+                              'message': f'Latest backup: {latest_backup["Key"]}',
+                              'timestamp': datetime.now().isoformat()
+                          })
+                      else:
+                          self.results.append({
+                              'test': 'backup_availability',
+                              'status': 'FAIL',
+                              'message': 'No backups found',
+                              'timestamp': datetime.now().isoformat()
+                          })
+                  except Exception as e:
+                      self.results.append({
+                          'test': 'backup_availability',
+                          'status': 'FAIL',
+                          'message': str(e),
+                          'timestamp': datetime.now().isoformat()
+                      })
+          
+              def test_backup_integrity(self):
+                  """Test backup file integrity"""
+                  try:
+                      response = self.s3_client.list_objects_v2(
+                          Bucket='c2c-enterprise-backups',
+                          Prefix='database/'
+                      )
+                      
+                      if response['KeyCount'] > 0:
+                          latest_backup = sorted(response['Contents'], 
+                                                key=lambda x: x['LastModified'])[-1]
+                          
+                          # Download and check backup size
+                          backup_obj = self.s3_client.get_object(
+                              Bucket='c2c-enterprise-backups',
+                              Key=latest_backup['Key']
+                          )
+                          
+                          backup_size = backup_obj['ContentLength']
+                          if backup_size > 1024:  # At least 1KB
+                              self.results.append({
+                                  'test': 'backup_integrity',
+                                  'status': 'PASS',
+                                  'message': f'Backup size: {backup_size} bytes',
+                                  'timestamp': datetime.now().isoformat()
+                              })
+                          else:
+                              self.results.append({
+                                  'test': 'backup_integrity',
+                                  'status': 'FAIL',
+                                  'message': f'Backup too small: {backup_size} bytes',
+                                  'timestamp': datetime.now().isoformat()
+                              })
+                  except Exception as e:
+                      self.results.append({
+                          'test': 'backup_integrity',
+                          'status': 'FAIL',
+                          'message': str(e),
+                          'timestamp': datetime.now().isoformat()
+                      })
+          
+              def test_database_connectivity(self):
+                  """Test database connectivity"""
+                  try:
+                      conn = psycopg2.connect(
+                          host="postgres-primary",
+                          database="c2c_primary",
+                          user="postgres",
+                          password="test_password"
+                      )
+                      
+                      cursor = conn.cursor()
+                      cursor.execute("SELECT 1")
+                      result = cursor.fetchone()
+                      
+                      if result[0] == 1:
+                          self.results.append({
+                              'test': 'database_connectivity',
+                              'status': 'PASS',
+                              'message': 'Database connectivity verified',
+                              'timestamp': datetime.now().isoformat()
+                          })
+                      else:
+                          self.results.append({
+                              'test': 'database_connectivity',
+                              'status': 'FAIL',
+                              'message': 'Database query failed',
+                              'timestamp': datetime.now().isoformat()
+                          })
+                      
+                      conn.close()
+                  except Exception as e:
+                      self.results.append({
+                          'test': 'database_connectivity',
+                          'status': 'FAIL',
+                          'message': str(e),
+                          'timestamp': datetime.now().isoformat()
+                      })
+          
+              def test_redis_connectivity(self):
+                  """Test Redis connectivity"""
+                  try:
+                      r = redis.Redis(host='redis-cluster', port=6379, db=0)
+                      r.ping()
+                      
+                      self.results.append({
+                          'test': 'redis_connectivity',
+                          'status': 'PASS',
+                          'message': 'Redis connectivity verified',
+                          'timestamp': datetime.now().isoformat()
+                      })
+                  except Exception as e:
+                      self.results.append({
+                          'test': 'redis_connectivity',
+                          'status': 'FAIL',
+                          'message': str(e),
+                          'timestamp': datetime.now().isoformat()
+                      })
+          
+              def test_service_availability(self):
+                  """Test service availability"""
+                  services = [
+                      ('auth-service', 3001),
+                      ('webhook-service', 3002),
+                      ('signing-service', 3003),
+                      ('admin-service', 3004)
+                  ]
+                  
+                  for service, port in services:
+                      try:
+                          import socket
+                          sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                          result = sock.connect_ex((service, port))
+                          sock.close()
+                          
+                          if result == 0:
+                              self.results.append({
+                                  'test': f'service_availability_{service}',
+                                  'status': 'PASS',
+                                  'message': f'{service} is available on port {port}',
+                                  'timestamp': datetime.now().isoformat()
+                              })
+                          else:
+                              self.results.append({
+                                  'test': f'service_availability_{service}',
+                                  'status': 'FAIL',
+                                  'message': f'{service} is not available on port {port}',
+                                  'timestamp': datetime.now().isoformat()
+                              })
+                      except Exception as e:
+                          self.results.append({
+                              'test': f'service_availability_{service}',
+                              'status': 'FAIL',
+                              'message': str(e),
+                              'timestamp': datetime.now().isoformat()
+                          })
+          
+              def test_kubernetes_cluster_health(self):
+                  """Test Kubernetes cluster health"""
+                  try:
+                      kubernetes.config.load_incluster_config()
+                      v1 = kubernetes.client.CoreV1Api()
+                      
+                      # Check API server connectivity
+                      v1.get_api_resources()
+                      
+                      # Check node status
+                      nodes = v1.list_node()
+                      ready_nodes = 0
+                      for node in nodes.items:
+                          for condition in node.status.conditions:
+                              if condition.type == 'Ready' and condition.status == 'True':
+                                  ready_nodes += 1
+                                  break
+                      
+                      if ready_nodes > 0:
+                          self.results.append({
+                              'test': 'kubernetes_cluster_health',
+                              'status': 'PASS',
+                              'message': f'{ready_nodes} nodes ready',
+                              'timestamp': datetime.now().isoformat()
+                          })
+                      else:
+                          self.results.append({
+                              'test': 'kubernetes_cluster_health',
+                              'status': 'FAIL',
+                              'message': 'No ready nodes',
+                              'timestamp': datetime.now().isoformat()
+                          })
+                  except Exception as e:
+                      self.results.append({
+                          'test': 'kubernetes_cluster_health',
+                          'status': 'FAIL',
+                          'message': str(e),
+                          'timestamp': datetime.now().isoformat()
+                      })
+          
+              def run_all_tests(self):
+                  """Run all disaster recovery tests"""
+                  print("Starting disaster recovery tests...")
+                  
+                  self.test_backup_availability()
+                  self.test_backup_integrity()
+                  self.test_database_connectivity()
+                  self.test_redis_connectivity()
+                  self.test_service_availability()
+                  self.test_kubernetes_cluster_health()
+                  
+                  # Generate report
+                  pass_count = sum(1 for r in self.results if r['status'] == 'PASS')
+                  total_count = len(self.results)
+                  
+                  report = f"""
+                  # Disaster Recovery Test Report
+                  Generated: {datetime.now().isoformat()}
+                  
+                  ## Summary
+                  Total Tests: {total_count}
+                  Passed: {pass_count}
+                  Failed: {total_count - pass_count}
+                  Success Rate: {(pass_count/total_count)*100:.1f}%
+                  
+                  ## Test Results
+                  """
+                  
+                  for result in self.results:
+                      report += f"""
+                  ### {result['test']}
+                  Status: {result['status']}
+                  Message: {result['message']}
+                  Timestamp: {result['timestamp']}
+                  """
+                  
+                  # Save report
+                  with open('/reports/dr-test-report.md', 'w') as f:
+                      f.write(report)
+                  
+                  # Upload to S3
+                  self.s3_client.put_object(
+                      Bucket='c2c-enterprise-backups',
+                      Key=f'reports/dr-test-{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.md',
+                      Body=report
+                  )
+                  
+                  print(f"Disaster recovery tests completed. Success rate: {(pass_count/total_count)*100:.1f}%")
+                  
+                  return pass_count == total_count
+          
+          if __name__ == "__main__":
+              dr_test = DisasterRecoveryTest()
+              success = dr_test.run_all_tests()
+              exit(0 if success else 1)
+          EOF
+          
+          python dr_test.py
+        env:
+        - name: AWS_DEFAULT_REGION
+          value: "us-east-1"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: secret-access-key
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-secret
+              key: password
+        volumeMounts:
+        - name: reports
+          mountPath: /reports
+      volumes:
+      - name: reports
+        emptyDir: {}
+      restartPolicy: OnFailure
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-sa
+  namespace: c2c-enterprise
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: backup-role
+  namespace: c2c-enterprise
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log", "pods/exec"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+- apiGroups: ["velero.io"]
+  resources: ["backups", "restores", "schedules"]
+  verbs: ["get", "list", "watch", "create", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: backup-rolebinding
+  namespace: c2c-enterprise
+subjects:
+- kind: ServiceAccount
+  name: backup-sa
+  namespace: c2c-enterprise
+roleRef:
+  kind: Role
+  name: backup-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: disaster-recovery-plan
+  namespace: c2c-enterprise
+data:
+  dr-plan.md: |
+    # C2C Enterprise Disaster Recovery Plan
+    
+    ## Overview
+    This document outlines the comprehensive disaster recovery strategy for C2C Enterprise infrastructure.
+    
+    ## Recovery Time Objectives (RTO)
+    - **Critical Services**: 15 minutes
+    - **Important Services**: 1 hour
+    - **Non-critical Services**: 4 hours
+    
+    ## Recovery Point Objectives (RPO)
+    - **Database**: 15 minutes
+    - **Application State**: 1 hour
+    - **Configuration**: 24 hours
+    
+    ## Disaster Scenarios
+    
+    ### 1. Single Service Failure
+    **Detection**: Automated monitoring alerts
+    **Response**: 
+    1. Kubernetes auto-restart failed pods
+    2. Horizontal pod autoscaling if needed
+    3. Manual intervention if auto-recovery fails
+    
+    ### 2. Database Failure
+    **Detection**: Database health checks, connection failures
+    **Response**:
+    1. Failover to replica database
+    2. Promote replica to primary
+    3. Restore from latest backup if needed
+    4. Update application connection strings
+    
+    ### 3. Entire Cluster Failure
+    **Detection**: Multiple service failures, API server unavailable
+    **Response**:
+    1. Activate disaster recovery cluster in backup region
+    2. Restore from latest Velero backup
+    3. Update DNS to point to backup region
+    4. Validate all services are operational
+    
+    ### 4. Regional Outage
+    **Detection**: Regional monitoring failures, external connectivity loss
+    **Response**:
+    1. Activate multi-region failover
+    2. Redirect traffic to healthy regions
+    3. Restore services in backup region
+    4. Communicate with stakeholders
+    
+    ## Recovery Procedures
+    
+    ### Service Recovery
+    ```bash
+    # Check service status
+    kubectl get pods -n c2c-enterprise
+    
+    # Restart failed service
+    kubectl rollout restart deployment/auth-service -n c2c-enterprise
+    
+    # Scale up if needed
+    kubectl scale deployment auth-service --replicas=5 -n c2c-enterprise
+    ```
+    
+    ### Database Recovery
+    ```bash
+    # Check database status
+    kubectl get pods -n c2c-enterprise -l app=postgres-primary
+    
+    # Failover to replica
+    kubectl exec -it postgres-replica-0 -n c2c-enterprise -- pg_ctl promote
+    
+    # Restore from backup
+    kubectl apply -f - <<EOF
+    apiVersion: velero.io/v1
+    kind: Restore
+    metadata:
+      name: database-restore
+      namespace: velero
+    spec:
+      backupName: latest-backup
+      includedNamespaces:
+      - c2c-enterprise
+    EOF
+    ```
+    
+    ### Full Cluster Recovery
+    ```bash
+    # Restore from Velero backup
+    velero restore create --from-backup latest-backup
+    
+    # Wait for restore completion
+    velero restore get
+    
+    # Verify services
+    kubectl get pods -n c2c-enterprise
+    ```
+    
+    ## Communication Plan
+    
+    ### Internal Communication
+    - **Incident Commander**: Lead recovery efforts
+    - **Technical Team**: Execute recovery procedures
+    - **Support Team**: Handle customer communications
+    
+    ### External Communication
+    - **Status Page**: Update service status
+    - **Email Notifications**: Send incident updates
+    - **Social Media**: Post outage information
+    
+    ## Testing Schedule
+    
+    - **Monthly**: Service failure simulations
+    - **Quarterly**: Database failover tests
+    - **Semi-annually**: Full cluster recovery tests
+    - **Annually**: Regional failover tests
+    
+    ## Contact Information
+    
+    ### Primary Contacts
+    - **Incident Commander**: [Contact Info]
+    - **Technical Lead**: [Contact Info]
+    - **Database Admin**: [Contact Info]
+    - **Network Engineer**: [Contact Info]
+    
+    ### Escalation Contacts
+    - **CTO**: [Contact Info]
+    - **VP Engineering**: [Contact Info]
+    - **External Vendor**: [Contact Info]
+    
+    ## Documentation Updates
+    
+    This document should be reviewed and updated:
+    - After any incident
+    - Quarterly during planning
+    - Annually during strategy review
+    
+    ## Success Criteria
+    
+    Recovery is considered successful when:
+    - All critical services are operational
+    - Database integrity is verified
+    - Monitoring shows normal metrics
+    - Customer impact is minimized
+    - Post-incident review is completed

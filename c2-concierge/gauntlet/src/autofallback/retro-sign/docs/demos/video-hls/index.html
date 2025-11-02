@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2PA Video HLS Demo - Live Verification</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.8;
+            font-size: 16px;
+        }
+        
+        .video-container {
+            position: relative;
+            background: #111;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        #video-player {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn:hover {
+            background: #0056D6;
+            transform: translateY(-1px);
+        }
+        
+        .btn:disabled {
+            background: #333;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn.secondary {
+            background: #333;
+        }
+        
+        .btn.secondary:hover {
+            background: #444;
+        }
+        
+        .status-panel {
+            background: #111;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .status-item {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #333;
+        }
+        
+        .status-item.valid {
+            border-left-color: #34C759;
+        }
+        
+        .status-item.warning {
+            border-left-color: #FF9500;
+        }
+        
+        .status-item.invalid {
+            border-left-color: #FF3B30;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .assertions {
+            margin-top: 10px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .assertion-tag {
+            display: inline-block;
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 2px;
+            font-family: monospace;
+        }
+        
+        .timeline {
+            background: #111;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .timeline-bar {
+            position: relative;
+            height: 40px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .timeline-region {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .timeline-region.content {
+            background: #34C759;
+        }
+        
+        .timeline-region.ad {
+            background: #FF9500;
+        }
+        
+        .timeline-region.active {
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transform: scaleY(1.1);
+        }
+        
+        .timeline-playhead {
+            position: absolute;
+            top: -5px;
+            width: 2px;
+            height: 50px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            transition: left 0.1s linear;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s ease;
+        }
+        
+        .modal-close:hover {
+            background: #333;
+        }
+        
+        .manifest-viewer {
+            background: #000;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        
+        .performance-metrics {
+            background: #111;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .metric-item {
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #007AFF;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            opacity: 0.7;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>C2PA Video HLS Demo</h1>
+            <p>Live verification with temporal mapping and overlay badge</p>
+        </header>
+
+        <div class="video-container">
+            <video id="video-player" controls crossorigin="anonymous">
+                Your browser does not support the video tag.
+            </video>
+            <c2-badge-video id="c2pa-badge" player-id="video-player" manifest-url="/manifests/demo-hls.c2pa.json"></c2-badge-video>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="play-btn">Play Demo</button>
+            <button class="btn secondary" id="switch-quality-btn">Switch Quality</button>
+            <button class="btn secondary" id="simulate-ad-btn">Simulate Ad Break</button>
+            <button class="btn secondary" id="view-manifest-btn">View Manifest</button>
+            <button class="btn secondary" id="test-cors-btn">Test CORS Fix</button>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-grid">
+                <div class="status-item" id="verification-status">
+                    <div class="status-label">Verification Status</div>
+                    <div class="status-value">Loading...</div>
+                    <div class="assertions" id="active-assertions"></div>
+                </div>
+                <div class="status-item" id="current-region">
+                    <div class="status-label">Current Region</div>
+                    <div class="status-value">Unknown</div>
+                </div>
+                <div class="status-item" id="playback-time">
+                    <div class="status-label">Playback Time</div>
+                    <div class="status-value">0:00</div>
+                </div>
+                <div class="status-item" id="quality-info">
+                    <div class="status-label">Quality</div>
+                    <div class="status-value">Auto</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="timeline">
+            <div class="timeline-header">
+                <h3>Temporal Map</h3>
+                <span id="timeline-duration">Duration: 10:00</span>
+            </div>
+            <div class="timeline-bar" id="timeline-bar">
+                <div class="timeline-playhead" id="timeline-playhead"></div>
+            </div>
+            <div class="timeline-legend">
+                <span style="color: #34C759;">● Content</span>
+                <span style="color: #FF9500;">● Advertisement</span>
+                <span style="color: #007AFF;">● Current Position</span>
+            </div>
+        </div>
+
+        <div class="performance-metrics">
+            <h3>Performance Metrics</h3>
+            <div class="metrics-grid">
+                <div class="metric-item">
+                    <div class="metric-value" id="verify-time">0ms</div>
+                    <div class="metric-label">Verify Time</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="cache-hits">0</div>
+                    <div class="metric-label">Cache Hits</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="api-calls">0</div>
+                    <div class="metric-label">API Calls</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-value" id="frame-drops">0</div>
+                    <div class="metric-label">Frame Drops</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Modal -->
+    <div class="modal" id="verify-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Verification Details</h2>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div id="modal-body">
+                <div class="status-item">
+                    <div class="status-label">Manifest URL</div>
+                    <div class="status-value" id="modal-manifest-url">Loading...</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Assertions</div>
+                    <div class="assertions" id="modal-assertions">Loading...</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Raw Manifest</div>
+                    <div class="manifest-viewer" id="modal-manifest-json">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        // Fallback for missing components
+        if (!customElements.get('c2-badge-video')) {
+            console.warn('C2PA Badge component not loaded - using fallback');
+            // Create a simple fallback badge
+            customElements.define('c2-badge-video', class extends HTMLElement {
+                constructor() {
+                    super();
+                    this.innerHTML = '<div style="background: #333; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">C2PA</div>';
+                }
+                
+                getState() {
+                    return { status: 'unknown', assertions: [], timestamp: Date.now() };
+                }
+                
+                addEventListener() {}
+            });
+        }
+    </script>
+    <script src="/packages/badge-video/dist/index.js" onerror="console.warn('Badge component failed to load')"></script>
+    <script src="/packages/player-hooks/dist/hlsjs-plugin.js" onerror="console.warn('HLS plugin failed to load')"></script>
+    <script>
+        // Demo configuration
+        const DEMO_CONFIG = {
+            hlsUrl: 'https://demo-cdn.c2pa.example.com/stream/master.m3u8',
+            manifestUrl: '/manifests/demo-hls.c2pa.json',
+            temporalMap: {
+                duration: 600, // 10 minutes
+                regions: [
+                    { start: 0, end: 90, type: 'content', label: 'Program Content' },
+                    { start: 90, end: 120, type: 'ad', label: 'Advertisement' },
+                    { start: 120, end: 240, type: 'content', label: 'Program Content' },
+                    { start: 240, end: 255, type: 'ad', label: 'Advertisement' },
+                    { start: 255, end: 600, type: 'content', label: 'Program Content' }
+                ]
+            }
+        };
+
+        // Performance tracking
+        const performanceMetrics = {
+            verifyTime: [],
+            cacheHits: 0,
+            apiCalls: 0,
+            frameDrops: 0,
+            startTime: Date.now()
+        };
+
+        // Initialize demo
+        let hls = null;
+        let c2paPlugin = null;
+        let verifyStartTime = 0;
+
+        function initializeDemo() {
+            console.log('Initializing C2PA Video HLS Demo...');
+            
+            const video = document.getElementById('video-player');
+            const badge = document.getElementById('c2pa-badge');
+            
+            // Setup HLS.js
+            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                hls = new Hls({
+                    debug: false,
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                });
+                
+                hls.loadSource(DEMO_CONFIG.hlsUrl);
+                hls.attachMedia(video);
+                
+                // Install C2PA plugin if available
+                if (typeof installC2PAPlugin !== 'undefined') {
+                    c2paPlugin = installC2PAPlugin(hls, {
+                        manifestUrl: DEMO_CONFIG.manifestUrl,
+                        badgeElement: badge
+                    });
+                } else {
+                    console.warn('C2PA HLS plugin not available');
+                }
+                
+                // Setup HLS event listeners
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    console.log('HLS manifest parsed');
+                    updateQualityInfo();
+                    initializeTimeline();
+                });
+                
+                hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
+                    console.log('Quality switched to level', data.level);
+                    updateQualityInfo();
+                });
+                
+            } else if (video && video.canPlayType('application/vnd.apple.mpegurl')) {
+                // Native HLS support (Safari)
+                video.src = DEMO_CONFIG.hlsUrl;
+            } else {
+                console.error('HLS not supported in this browser');
+            }
+            
+            // Setup video event listeners
+            video.addEventListener('timeupdate', onTimeUpdate);
+            video.addEventListener('play', onPlay);
+            video.addEventListener('pause', onPause);
+            
+            // Setup badge event listeners
+            badge.addEventListener('c2-verify-update', onVerifyUpdate);
+            badge.addEventListener('c2-verify-error', onVerifyError);
+            badge.addEventListener('c2-show-verify-modal', showVerifyModal);
+            
+            // Setup UI event listeners
+            setupUIEventListeners();
+            
+            // Register service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/packages/sw-relay/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            }
+            
+            console.log('Demo initialization complete');
+        }
+
+        function setupUIEventListeners() {
+            document.getElementById('play-btn').addEventListener('click', togglePlayback);
+            document.getElementById('switch-quality-btn').addEventListener('click', switchQuality);
+            document.getElementById('simulate-ad-btn').addEventListener('click', simulateAdBreak);
+            document.getElementById('view-manifest-btn').addEventListener('click', viewManifest);
+            document.getElementById('test-cors-btn').addEventListener('click', testCORSFix);
+            document.getElementById('modal-close').addEventListener('click', closeModal);
+        }
+
+        function togglePlayback() {
+            const video = document.getElementById('video-player');
+            const btn = document.getElementById('play-btn');
+            
+            if (video.paused) {
+                video.play();
+                btn.textContent = 'Pause';
+            } else {
+                video.pause();
+                btn.textContent = 'Play Demo';
+            }
+        }
+
+        function switchQuality() {
+            if (hls && hls.levels.length > 1) {
+                const currentLevel = hls.currentLevel;
+                const nextLevel = (currentLevel + 1) % hls.levels.length;
+                hls.currentLevel = nextLevel;
+                console.log('Switched to quality level:', nextLevel);
+            }
+        }
+
+        function simulateAdBreak() {
+            const video = document.getElementById('video-player');
+            // Jump to an ad break
+            video.currentTime = 90;
+            console.log('Jumped to ad break at 90s');
+        }
+
+        function viewManifest() {
+            showVerifyModal();
+        }
+
+        function testCORSFix() {
+            // Test CORS by fetching manifest through service worker
+            fetch(DEMO_CONFIG.manifestUrl)
+                .then(response => response.json())
+                .then(manifest => {
+                    console.log('CORS test successful:', manifest);
+                    alert('CORS fix working! Manifest loaded via Service Worker.');
+                })
+                .catch(error => {
+                    console.error('CORS test failed:', error);
+                    alert('CORS test failed. Check Service Worker.');
+                });
+        }
+
+        function onTimeUpdate() {
+            const video = document.getElementById('video-player');
+            const currentTime = video.currentTime;
+            
+            // Update playback time display
+            updatePlaybackTime(currentTime);
+            
+            // Update timeline playhead
+            updateTimelinePlayhead(currentTime);
+            
+            // Update current region
+            updateCurrentRegion(currentTime);
+        }
+
+        function onPlay() {
+            document.getElementById('play-btn').textContent = 'Pause';
+            console.log('Playback started');
+        }
+
+        function onPause() {
+            document.getElementById('play-btn').textContent = 'Play Demo';
+            console.log('Playback paused');
+        }
+
+        function onVerifyUpdate(event) {
+            verifyStartTime = Date.now();
+            const data = event.detail;
+            
+            // Update verification status
+            updateVerificationStatus(data);
+            
+            // Track performance
+            const verifyTime = Date.now() - verifyStartTime;
+            performanceMetrics.verifyTime.push(verifyTime);
+            updatePerformanceMetrics();
+            
+            console.log('Verification update:', data);
+        }
+
+        function onVerifyError(event) {
+            const data = event.detail;
+            console.error('Verification error:', data);
+            
+            const statusItem = document.getElementById('verification-status');
+            statusItem.className = 'status-item invalid';
+            statusItem.querySelector('.status-value').textContent = 'Error';
+            statusItem.querySelector('.assertions').textContent = data.message || 'Unknown error';
+        }
+
+        function updateVerificationStatus(data) {
+            const statusItem = document.getElementById('verification-status');
+            const statusValue = statusItem.querySelector('.status-value');
+            const assertionsDiv = statusItem.querySelector('.assertions');
+            
+            statusItem.className = `status-item ${data.status}`;
+            statusValue.textContent = data.status.charAt(0).toUpperCase() + data.status.slice(1);
+            
+            if (data.assertions && data.assertions.length > 0) {
+                assertionsDiv.innerHTML = data.assertions
+                    .map(assertion => `<span class="assertion-tag">${assertion}</span>`)
+                    .join('');
+            } else {
+                assertionsDiv.textContent = data.reason || 'No assertions';
+            }
+        }
+
+        function updateCurrentRegion(currentTime) {
+            const region = DEMO_CONFIG.temporalMap.regions.find(r => 
+                currentTime >= r.start && currentTime <= r.end
+            );
+            
+            const regionItem = document.getElementById('current-region');
+            const regionValue = regionItem.querySelector('.status-value');
+            
+            if (region) {
+                regionValue.textContent = region.label;
+                regionItem.className = `status-item ${region.type}`;
+            } else {
+                regionValue.textContent = 'Unknown';
+                regionItem.className = 'status-item';
+            }
+        }
+
+        function updatePlaybackTime(currentTime) {
+            const timeItem = document.getElementById('playback-time');
+            const timeValue = timeItem.querySelector('.status-value');
+            
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = Math.floor(currentTime % 60);
+            timeValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function updateQualityInfo() {
+            const qualityItem = document.getElementById('quality-info');
+            const qualityValue = qualityItem.querySelector('.status-value');
+            
+            if (hls && hls.currentLevel >= 0) {
+                const level = hls.levels[hls.currentLevel];
+                qualityValue.textContent = `${level.height}p`;
+            } else {
+                qualityValue.textContent = 'Auto';
+            }
+        }
+
+        function initializeTimeline() {
+            const timelineBar = document.getElementById('timeline-bar');
+            const duration = DEMO_CONFIG.temporalMap.duration;
+            
+            // Clear existing regions
+            const existingRegions = timelineBar.querySelectorAll('.timeline-region');
+            existingRegions.forEach(region => region.remove());
+            
+            // Add regions
+            DEMO_CONFIG.temporalMap.regions.forEach(region => {
+                const regionElement = document.createElement('div');
+                regionElement.className = `timeline-region ${region.type}`;
+                regionElement.style.left = `${(region.start / duration) * 100}%`;
+                regionElement.style.width = `${((region.end - region.start) / duration) * 100}%`;
+                regionElement.textContent = region.label;
+                regionElement.title = `${region.label} (${region.start}s - ${region.end}s)`;
+                
+                timelineBar.appendChild(regionElement);
+            });
+        }
+
+        function updateTimelinePlayhead(currentTime) {
+            const playhead = document.getElementById('timeline-playhead');
+            const duration = DEMO_CONFIG.temporalMap.duration;
+            const position = (currentTime / duration) * 100;
+            
+            playhead.style.left = `${position}%`;
+            
+            // Update active region
+            const regions = document.querySelectorAll('.timeline-region');
+            regions.forEach(region => region.classList.remove('active'));
+            
+            const activeRegion = DEMO_CONFIG.temporalMap.regions.find(r => 
+                currentTime >= r.start && currentTime <= r.end
+            );
+            
+            if (activeRegion) {
+                const index = DEMO_CONFIG.temporalMap.regions.indexOf(activeRegion);
+                if (regions[index]) {
+                    regions[index].classList.add('active');
+                }
+            }
+        }
+
+        function updatePerformanceMetrics() {
+            // Verify time (p95)
+            if (performanceMetrics.verifyTime.length > 0) {
+                const sortedTimes = [...performanceMetrics.verifyTime].sort((a, b) => a - b);
+                const p95Index = Math.floor(sortedTimes.length * 0.95);
+                const p95Time = sortedTimes[p95Index] || 0;
+                document.getElementById('verify-time').textContent = `${p95Time}ms`;
+            }
+            
+            // Other metrics
+            document.getElementById('cache-hits').textContent = performanceMetrics.cacheHits;
+            document.getElementById('api-calls').textContent = performanceMetrics.apiCalls;
+            document.getElementById('frame-drops').textContent = performanceMetrics.frameDrops;
+        }
+
+        function showVerifyModal(event) {
+            const modal = document.getElementById('verify-modal');
+            const badge = document.getElementById('c2pa-badge');
+            
+            // Get current verification state
+            const state = badge.getState();
+            
+            // Update modal content
+            document.getElementById('modal-manifest-url').textContent = state.manifestUrl || 'Unknown';
+            
+            const assertionsDiv = document.getElementById('modal-assertions');
+            if (state.assertions && state.assertions.length > 0) {
+                assertionsDiv.innerHTML = state.assertions
+                    .map(assertion => `<span class="assertion-tag">${assertion}</span>`)
+                    .join('');
+            } else {
+                assertionsDiv.textContent = 'No assertions';
+            }
+            
+            // Load and display manifest JSON
+            if (state.manifestUrl) {
+                fetch(state.manifestUrl)
+                    .then(response => response.json())
+                    .then(manifest => {
+                        document.getElementById('modal-manifest-json').textContent = 
+                            JSON.stringify(manifest, null, 2);
+                    })
+                    .catch(error => {
+                        document.getElementById('modal-manifest-json').textContent = 
+                            `Error loading manifest: ${error.message}`;
+                    });
+            }
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('verify-modal');
+            modal.classList.remove('active');
+        }
+
+        // Initialize demo when page loads
+        document.addEventListener('DOMContentLoaded', initializeDemo);
+        
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('Page hidden, pausing performance tracking');
+            } else {
+                console.log('Page visible, resuming performance tracking');
+            }
+        });
+        
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            console.error('Demo error:', event.error);
+        });
+        
+        // Performance monitoring
+        if ('performance' in window) {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    const perfData = performance.getEntriesByType('navigation')[0];
+                    console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+                }, 0);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2PA Pilot Survival Report</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --success-color: #16a34a;
+            --warning-color: #f59e0b;
+            --error-color: #dc2626;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --bg-gray: #f9fafb;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: white;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #1e40af);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 60px;
+            background: white;
+            border-radius: 8px;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .pilot-info {
+            background: var(--bg-gray);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .pilot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .pilot-stat {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            margin-bottom: 3rem;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-success {
+            background: #dcfce7;
+            color: var(--success-color);
+        }
+        
+        .status-warning {
+            background: #fef3c7;
+            color: var(--warning-color);
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: var(--error-color);
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .metric-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+        }
+        
+        .metric-card.success::before {
+            background: var(--success-color);
+        }
+        
+        .metric-card.warning::before {
+            background: var(--warning-color);
+        }
+        
+        .metric-card.error::before {
+            background: var(--error-color);
+        }
+        
+        .metric-title {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-target {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .routes-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .routes-table th,
+        .routes-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .routes-table th {
+            background: var(--bg-gray);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .routes-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.success {
+            background: var(--success-color);
+        }
+        
+        .status-dot.warning {
+            background: var(--warning-color);
+        }
+        
+        .status-dot.error {
+            background: var(--error-color);
+        }
+        
+        .breakpoints-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .breakpoint-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .breakpoint-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .breakpoint-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .breakpoint-url {
+            font-family: monospace;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .breakpoint-status {
+            margin-left: auto;
+        }
+        
+        .breakpoint-description {
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+        
+        .breakpoint-fix {
+            background: var(--bg-gray);
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .fix-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .fix-steps {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .compliance-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .compliance-title {
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .compliance-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .compliance-item:last-child {
+            border-bottom: none;
+        }
+        
+        .next-steps {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .steps-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+        
+        .steps-list li {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .steps-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .footer {
+            background: var(--bg-gray);
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-secondary);
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .routes-table {
+                font-size: 0.875rem;
+            }
+            
+            .routes-table th,
+            .routes-table td {
+                padding: 0.75rem 0.5rem;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">Client Logo</div>
+            <h1 class="title">C2PA Pilot Survival Report</h1>
+            <p class="subtitle">Content Credentials Provenance Verification & Survival Analysis</p>
+        </div>
+    </header>
+
+    <div class="pilot-info">
+        <div class="pilot-grid">
+            <div class="pilot-stat">
+                <div class="stat-label">Pilot Day</div>
+                <div class="stat-value">[DAY]/14</div>
+            </div>
+            <div class="pilot-stat">
+                <div class="stat-label">Tenant ID</div>
+                <div class="stat-value">[TENANT_ID]</div>
+            </div>
+            <div class="pilot-stat">
+                <div class="stat-label">Report Date</div>
+                <div class="stat-value">[REPORT_DATE]</div>
+            </div>
+            <div class="pilot-stat">
+                <div class="stat-label">Decision Date</div>
+                <div class="stat-value">[DECISION_DATE]</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Executive Summary -->
+        <section class="section">
+            <h2 class="section-title">
+                Executive Summary
+                <span class="status-badge status-[OVERALL_STATUS]">[OVERALL_STATUS_TEXT]</span>
+            </h2>
+            
+            <div class="metrics-grid">
+                <div class="metric-card success">
+                    <div class="metric-title">Remote Survival Rate</div>
+                    <div class="metric-value">[SURVIVAL_RATE]%</div>
+                    <div class="metric-target">Target: ≥99.9%</div>
+                </div>
+                
+                <div class="metric-card [STATUS_CLASS]">
+                    <div class="metric-title">p95 Verify Latency</div>
+                    <div class="metric-value">[LATENCY]ms</div>
+                    <div class="metric-target">Target: <600ms</div>
+                </div>
+                
+                <div class="metric-card success">
+                    <div class="metric-title">Assets Processed</div>
+                    <div class="metric-value">[ASSETS_PROCESSED]</div>
+                    <div class="metric-target">Target: ≥200</div>
+                </div>
+                
+                <div class="metric-card [INCIDENT_STATUS_CLASS]">
+                    <div class="metric-title">Active Incidents</div>
+                    <div class="metric-value">[INCIDENT_COUNT]</div>
+                    <div class="metric-target">Target: 0</div>
+                </div>
+            </div>
+            
+            <p><strong>Summary:</strong> [EXECUTIVE_SUMMARY_TEXT] This report provides a comprehensive analysis of Content Credentials survival across your digital infrastructure, including detailed breakpoint analysis and remediation recommendations.</p>
+        </section>
+
+        <!-- Routes Matrix -->
+        <section class="section">
+            <h2 class="section-title">Routes Survival Matrix</h2>
+            
+            <table class="routes-table">
+                <thead>
+                    <tr>
+                        <th>Route</th>
+                        <th>Page Type</th>
+                        <th>Remote Survival</th>
+                        <th>Embed Survival</th>
+                        <th>p95 Latency</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    [ROUTES_ROWS]
+                    <!-- Example row:
+                    <tr>
+                        <td>/images/</td>
+                        <td>Product Pages</td>
+                        <td>
+                            <div class="status-indicator">
+                                <span class="status-dot success"></span>
+                                99.8%
+                            </div>
+                        </td>
+                        <td>
+                            <div class="status-indicator">
+                                <span class="status-dot success"></span>
+                                96.2%
+                            </div>
+                        </td>
+                        <td>540ms</td>
+                        <td><span class="status-badge status-success">Pass</span></td>
+                    </tr>
+                    -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Breakpoints -->
+        <section class="section">
+            <h2 class="section-title">Breakpoints & Issues</h2>
+            
+            <div class="breakpoints-list">
+                [BREAKPOINTS_CARDS]
+                <!-- Example card:
+                <div class="breakpoint-card">
+                    <div class="breakpoint-header">
+                        <div>
+                            <div class="breakpoint-title">CDN Optimizer Stripping Headers</div>
+                            <div class="breakpoint-url">https://example.com/products/featured-image.jpg</div>
+                        </div>
+                        <div class="breakpoint-status">
+                            <span class="status-badge status-warning">In Progress</span>
+                        </div>
+                    </div>
+                    <div class="breakpoint-description">
+                        Cloudflare Polish is removing C2PA manifest headers from image responses, causing verification failures on optimized images.
+                    </div>
+                    <div class="breakpoint-fix">
+                        <div class="fix-title">Fix Applied:</div>
+                        <div class="fix-steps">
+                            1. Configured HTML fallback injection<br>
+                            2. Added preserve path for critical images<br>
+                            3. Updated cache rules to bypass optimization for signed assets
+                        </div>
+                    </div>
+                </div>
+                -->
+            </div>
+        </section>
+
+        <!-- Compliance Snapshot -->
+        <section class="section">
+            <h2 class="section-title">Compliance Snapshot</h2>
+            
+            <div class="compliance-grid">
+                <div class="compliance-card">
+                    <div class="compliance-title">Content Credentials Assertions</div>
+                    [ASSERTIONS_LIST]
+                    <!-- Example:
+                    <div class="compliance-item">
+                        <span>Training Data Mining</span>
+                        <span class="status-badge status-success">Compliant</span>
+                    </div>
+                    -->
+                </div>
+                
+                <div class="compliance-card">
+                    <div class="compliance-title">Sector Requirements</div>
+                    [SECTOR_REQUIREMENTS]
+                    <!-- Example:
+                    <div class="compliance-item">
+                        <span>AI Transparency</span>
+                        <span class="status-badge status-success">Met</span>
+                    </div>
+                    -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Next Steps -->
+        <section class="section">
+            <h2 class="section-title">Next Steps</h2>
+            
+            <div class="next-steps">
+                <ol class="steps-list">
+                    [NEXT_STEPS_LIST]
+                    <!-- Example:
+                    <li>Complete fix for CDN optimizer header stripping (ETA: Day 10)</li>
+                    <li>Validate embed survival on preserve paths (ETA: Day 11)</li>
+                    <li>Final performance optimization and latency tuning (ETA: Day 12)</li>
+                    <li>Prepare final decision report and commercial terms (ETA: Day 13)</li>
+                    <li>Day 14 decision meeting - Go/No-Go on paid deployment</li>
+                    -->
+                </ol>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="contact-info">
+                <div class="contact-item">
+                    <strong>Technical Support:</strong> pilot@credlink.io
+                </div>
+                <div class="contact-item">
+                    <strong>Commercial Questions:</strong> sales@credlink.io
+                </div>
+                <div class="contact-item">
+                    <strong>Urgent Issues:</strong> +1-555-PILOT-HELP
+                </div>
+            </div>
+            <p><strong>Promise:</strong> By Day 14, we'll either show all green checks or a documented reason we can publish.</p>
+            <p><em>Report generated on [GENERATION_DATE] by CredLink Pilot System</em></p>
+        </div>
+    </footer>
+</body>
+</html>

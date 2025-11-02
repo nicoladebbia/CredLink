@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # Strip-happy sandbox
+  strip-happy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4101:4101"
+    environment:
+      - PORT=4101
+      - NODE_ENV=development
+    # CRITICAL SECURITY: Read-only volume mount
+    volumes:
+      - ./.artifacts:/app/.artifacts:ro
+    # SECURITY: Remove privileged capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # SECURITY: Run as non-root user
+    user: "1001:1001"
+    # SECURITY: Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    # SECURITY: No privileged mode
+    privileged: false
+    # SECURITY: Read-only filesystem
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/run:noexec,nosuid,size=50m
+    command: ["node", "sandboxes/strip-happy/server.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4101/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Preserve-embed sandbox
+  preserve-embed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4102:4102"
+    environment:
+      - PORT=4102
+      - NODE_ENV=development
+    volumes:
+      - ./.artifacts:/app/.artifacts
+    command: ["node", "sandboxes/preserve-embed/server.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4102/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Remote-only sandbox
+  remote-only:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4103:4103"
+    environment:
+      - PORT=4103
+      - NODE_ENV=development
+    volumes:
+      - ./.artifacts:/app/.artifacts
+    command: ["node", "sandboxes/remote-only/server.js"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:4103/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Acceptance test runner
+  acceptance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      strip-happy:
+        condition: service_healthy
+      preserve-embed:
+        condition: service_healthy
+      remote-only:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=test
+    volumes:
+      - ./.artifacts:/app/.artifacts
+      - ./docs:/app/docs
+    command: ["pnpm", "test:acceptance"]
+    profiles:
+      - tests
+
+  # Development environment
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4101:4101"
+      - "4102:4102"
+      - "4103:4103"
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    # CRITICAL SECURITY: Read-only volume mount to prevent container escape
+    volumes:
+      - ./.artifacts:/app/.artifacts:ro
+      # SECURITY: Removed host filesystem write access
+      # - .:/app  # DANGEROUS: Allows container escape
+      # - /app/node_modules  # DANGEROUS: Host filesystem modification
+    command: ["pnpm", "dev"]
+    profiles:
+      - dev

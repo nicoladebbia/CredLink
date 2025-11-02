@@ -1,0 +1,180 @@
+provider: akamai
+name: "Akamai"
+products: ["Image & Video Manager"]
+base_url: "https://akamai.survival.test"
+documentation:
+  ivm: "https://techdocs.akamai.com/ivm/reference"
+  policies: "https://techdocs.akamai.com/ivm/reference/api-policies"
+last_updated: "2025-10-30"
+notes: |
+  Akamai Image & Video Manager behavior (as of 2025-10-30):
+  
+  • STRIP policy removes metadata by default
+  • Policy Manager controls metadata preservation
+  • Transform rules can override preservation settings
+  • Content Credentials preservation requires explicit policy
+  • Format conversion may strip metadata regardless of policy
+  • Policy configuration varies by property setup
+  
+  References:
+  - https://techdocs.akamai.com/ivm/reference/policy-types
+  - https://techdocs.akamai.com/ivm/reference/transform-rules
+
+routes:
+  - id: preserve-embed
+    description: "Preserve metadata with KEEP policy"
+    url_pattern: "/{origin_path}?{transform_params}"
+    default_params: {}
+    transform_mappings:
+      resize_1024:
+        im: "resize,w=1024"
+      q_75:
+        im: "quality,q=75"
+      format_webp:
+        im: "format,webp"
+      format_avif:
+        im: "format,avif"
+      crop_1x1_center:
+        im: "resize,w=1024,h=1024,crop=center"
+      progressive_jpeg:
+        im: "format,jpeg,progressive"
+      rotate_90:
+        im: "rotate,90"
+      sharpen:
+        im: "sharpen"
+      gamma:
+        im: "gamma,1.2;contrast,1.1"
+      png_to_jpg:
+        im: "format,jpeg"
+      dpr_2:
+        im: "dpr,2"
+      provider_auto_optimize:
+        im: "auto"
+    special_config:
+      policy:
+        name: "PRESERVE_METADATA_POLICY"
+        version: "1.2"
+        rules:
+          - type: "metadata"
+            action: "keep"
+            scope: "all"
+      expected_behavior:
+        embed_survival: true
+        remote_survival: true
+        reason: "KEEP policy preserves metadata including C2PA"
+      caveats:
+        - "Policy must be configured in Property Manager"
+        - "Format conversion may still strip some metadata"
+        - "Transform rules can override policy settings"
+
+  - id: strip-happy
+    description: "Aggressive transforms with STRIP policy"
+    url_pattern: "/{origin_path}?{transform_params}"
+    default_params: {}
+    transform_mappings:
+      resize_1024:
+        im: "resize,w=1024;strip"
+      q_75:
+        im: "quality,q=75;strip"
+      format_webp:
+        im: "format,webp;strip"
+      format_avif:
+        im: "format,avif;strip"
+      crop_1x1_center:
+        im: "resize,w=1024,h=1024,crop=center;strip"
+      progressive_jpeg:
+        im: "format,jpeg,progressive;strip"
+      rotate_90:
+        im: "rotate,90;strip"
+      sharpen:
+        im: "sharpen;strip"
+      gamma:
+        im: "gamma,1.2;contrast,1.1;strip"
+      png_to_jpg:
+        im: "format,jpeg;strip"
+      dpr_2:
+        im: "dpr,2;strip"
+      provider_auto_optimize:
+        im: "auto;strip"
+    special_config:
+      policy:
+        name: "STRIP_METADATA_POLICY"
+        version: "1.0"
+        rules:
+          - type: "metadata"
+            action: "strip"
+            scope: "all"
+      expected_behavior:
+        embed_survival: false
+        remote_survival: true
+        reason: "STRIP policy removes all metadata by design"
+
+  - id: remote-only
+    description: "Remote manifest only, metadata ignored"
+    url_pattern: "/{origin_path}?{transform_params}"
+    default_params: {}
+    transform_mappings:
+      resize_1024:
+        im: "resize,w=1024"
+      q_75:
+        im: "quality,q=75"
+      format_webp:
+        im: "format,webp"
+      format_avif:
+        im: "format,avif"
+      crop_1x1_center:
+        im: "resize,w=1024,h=1024,crop=center"
+      progressive_jpeg:
+        im: "format,jpeg,progressive"
+      rotate_90:
+        im: "rotate,90"
+      sharpen:
+        im: "sharpen"
+      gamma:
+        im: "gamma,1.2;contrast,1.1"
+      png_to_jpg:
+        im: "format,jpeg"
+      dpr_2:
+        im: "dpr,2"
+      provider_auto_optimize:
+        im: "auto"
+    special_config:
+      policy:
+        name: "REMOTE_ONLY_POLICY"
+        version: "1.0"
+        rules:
+          - type: "metadata"
+            action: "strip"
+            scope: "all"
+      edge_worker:
+        inject_manifest_link: true
+        fallback_html: true
+      expected_behavior:
+        embed_survival: false
+        remote_survival: true
+        reason: "Remote manifest injection via HTML fallback"
+
+headers:
+  test:
+    User-Agent: "C2C-Gauntlet/1.0"
+    Accept: "image/*,*/*;q=0.8"
+  expected:
+    Link: 'rel="c2pa-manifest"'
+    Cache-Control: "public, max-age=31536000"
+    ETag: "*"
+
+probes:
+  remote:
+    method: "header_link"
+    fallback: "html_link"
+    verification: "hash_alignment"
+  embed:
+    method: "c2patool_verify"
+    expected_on_routes: ["preserve-embed"]
+    failure_expected_on_routes: ["strip-happy", "remote-only"]
+    notes:
+      - "Policy configuration in Property Manager is critical"
+      - "STRIP policy removes all metadata"
+      - "KEEP policy preserves most metadata"
+      - "Transform rules can override policy settings"
+      - "Format conversion may affect preservation regardless"

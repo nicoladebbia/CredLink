@@ -1,0 +1,319 @@
+# Production Docker Compose - ENTERPRISE DEPLOYMENT
+# 
+# This is NOT a development setup - production-ready orchestration
+# Includes all services: keyctl, HSM, KMS, monitoring, and databases
+# 
+# SECURITY REQUIREMENTS:
+# - Network isolation
+# - Secrets management
+# - Resource limits
+# - Health checks
+# - Backup strategies
+
+version: '3.8'
+
+services:
+  # Main Key Custody Service
+  keyctl:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: c2-keyctl
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    ports:
+      - "8080:8080"
+    environment:
+      - RUST_LOG=info,keyctl=debug
+      - DATABASE_URL=postgresql://keyctl:${POSTGRES_PASSWORD}@postgres:5432/keyctl
+      - CONFIG_PATH=/opt/keyctl/config/signer-hsm.toml
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN}
+    volumes:
+      - keyctl-data:/opt/keyctl/data
+      - keyctl-logs:/opt/keyctl/logs
+      - keyctl-rep:/opt/keyctl/rep-output
+      - ./config:/opt/keyctl/config:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: c2-postgres
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    environment:
+      - POSTGRES_DB=keyctl
+      - POSTGRES_USER=keyctl
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keyctl -d keyctl"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+
+  # HashiCorp Vault for KMS
+  vault:
+    image: hashicorp/vault:1.15.0
+    container_name: c2-vault
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_ADDR=http://localhost:8200
+      - VAULT_API_ADDR=http://localhost:8200
+      - VAULT_DEV_ROOT_TOKEN_ID=${VAULT_TOKEN}
+    volumes:
+      - vault-data:/vault/data
+      - ./vault-config:/vault/config:ro
+    cap_add:
+      - IPC_LOCK
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    security_opt:
+      - no-new-privileges:true
+    command: server -config=/vault/config/vault.hcl
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: c2-redis
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    volumes:
+      - redis-data:/data
+      - ./redis-config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: c2-prometheus
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus-config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus-config/rules:/etc/prometheus/rules:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+
+  # Grafana for monitoring dashboards
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: c2-grafana
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-config/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana-config/datasources:/etc/grafana/provisioning/datasources:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    security_opt:
+      - no-new-privileges:true
+    user: "472"
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: c2-nginx
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-config/ssl:/etc/nginx/ssl:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - keyctl
+      - grafana
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+
+  # Backup service
+  backup:
+    image: postgres:15-alpine
+    container_name: c2-backup
+    restart: unless-stopped
+    networks:
+      - keyctl-network
+    environment:
+      - POSTGRES_DB=keyctl
+      - POSTGRES_USER=keyctl
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
+    volumes:
+      - backup-data:/backups
+      - postgres-data:/var/lib/postgresql/data:ro
+      - ./backup-scripts:/scripts:ro
+    command: >
+      sh -c "
+        echo '0 2 * * * pg_dump -h postgres -U keyctl keyctl > /backups/keyctl-$(date +\%Y\%m\%d-\%H\%M\%S).sql' | crontab -
+        && crond -f
+      "
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    security_opt:
+      - no-new-privileges:true
+
+# Networks
+networks:
+  keyctl-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Volumes
+volumes:
+  keyctl-data:
+    driver: local
+  keyctl-logs:
+    driver: local
+  keyctl-rep:
+    driver: local
+  postgres-data:
+    driver: local
+  vault-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  nginx-logs:
+    driver: local
+  backup-data:
+    driver: local

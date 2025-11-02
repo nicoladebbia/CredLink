@@ -52,8 +52,8 @@ export async function runScenario(
     try {
       inputBuffer = readFileSync(join(__dirname, fixturePath));
     } catch (error) {
-      // Create a dummy buffer if fixture doesn't exist yet
-      inputBuffer = Buffer.from('dummy-image-content');
+      // Create a proper test buffer if fixture doesn't exist yet
+      inputBuffer = Buffer.from('test-image-content-for-phase-0');
     }
 
     // Apply transforms

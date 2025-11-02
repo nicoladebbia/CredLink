@@ -1,0 +1,32 @@
+{
+  "name": "@c2/c2-badge",
+  "version": "0.1.0",
+  "description": "C2PA Verification Badge Web Component",
+  "type": "module",
+  "main": "dist/c2-badge.js",
+  "types": "dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && npm run build-css",
+    "build-css": "cat src/styles.css > dist/styles.css",
+    "dev": "tsc --watch",
+    "test": "node --test dist/**/*.test.js",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "c2pa",
+    "provenance",
+    "verification",
+    "web-component",
+    "badge",
+    "accessibility"
+  ],
+  "author": "C2 Concierge Team",
+  "license": "MIT"
+}

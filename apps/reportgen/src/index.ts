@@ -1,7 +1,38 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { join, resolve, dirname } from 'path';
+import { mkdirSync } from 'fs';
+
+// Security: HTML escaping function to prevent XSS
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/\//g, "&#x2F;");
+}
+
+// Security: Validate file path to prevent path traversal
+function validateFilePath(filePath: string): string {
+  const resolved = resolve(filePath);
+  if (!resolved.startsWith(process.cwd())) {
+    throw new Error('Path traversal detected');
+  }
+  return resolved;
+}
+
+// Security: Validate URL to prevent malicious links
+function validateUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
 
 interface SurvivalReport {
   run_id: string;
@@ -44,6 +75,12 @@ function generateHTMLReport(report: SurvivalReport): string {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C2 Concierge Survival Report</title>
+    <!-- Security: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; font-src 'self'; object-src 'none'; media-src 'none'; frame-src 'none';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -188,6 +225,16 @@ function generateHTMLReport(report: SurvivalReport): string {
             justify-content: space-between;
             margin-bottom: 5px;
         }
+        .detail-row span:first-child {
+            font-weight: 500;
+        }
+        .safe-link {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        .safe-link:hover {
+            text-decoration: underline;
+        }
         .error-message {
             background: #fee2e2;
             border: 1px solid #fecaca;
@@ -212,7 +259,7 @@ function generateHTMLReport(report: SurvivalReport): string {
         <div class="header">
             <h1>C2 Concierge Survival Report</h1>
             <div class="subtitle">Phase 0 - Control Fabric & Survival Doctrine</div>
-            <div class="status-badge">${overallStatus}</div>
+            <div class="status-badge">${escapeHtml(overallStatus)}</div>
         </div>
 
         <div class="metrics">
@@ -241,8 +288,8 @@ function generateHTMLReport(report: SurvivalReport): string {
                     <div class="scenario ${result.remote_survives ? 'pass' : 'fail'}">
                         <div class="scenario-header">
                             <div>
-                                <span class="scenario-id">${result.scenario_id}</span>
-                                <span class="scenario-sandbox">${result.sandbox}</span>
+                                <span class="scenario-id">${escapeHtml(result.scenario_id)}</span>
+                                <span class="scenario-sandbox">${escapeHtml(result.sandbox)}</span>
                             </div>
                         </div>
                         <div class="scenario-status">
@@ -264,23 +311,23 @@ function generateHTMLReport(report: SurvivalReport): string {
                             </div>
                             <div class="detail-row">
                                 <span>Policy:</span>
-                                <span>${result.headers_snapshot['x-c2-policy'] || 'None'}</span>
+                                <span>${escapeHtml(result.headers_snapshot['x-c2-policy'] || 'None')}</span>
                             </div>
-                            ${result.manifest_fetch.url ? `
+                            ${result.manifest_fetch.url && validateUrl(result.manifest_fetch.url) ? `
                             <div class="detail-row">
                                 <span>Manifest URL:</span>
-                                <span><a href="${result.manifest_fetch.url}" target="_blank">${result.manifest_fetch.url}</a></span>
+                                <span><a href="${escapeHtml(result.manifest_fetch.url)}" target="_blank" class="safe-link" rel="noopener noreferrer">${escapeHtml(result.manifest_fetch.url)}</a></span>
                             </div>` : ''}
                         </div>
-                        ${result.error ? `<div class="error-message">Error: ${result.error}</div>` : ''}
+                        ${result.error ? `<div class="error-message">Error: ${escapeHtml(result.error)}</div>` : ''}
                     </div>
                 `).join('')}
             </div>
         </div>
 
         <div class="footer">
-            <p>Report generated: ${new Date(report.timestamp).toLocaleString()}</p>
-            <p>Run ID: ${report.run_id} | Matrix Version: ${report.matrix_version}</p>
+            <p>Report generated: ${escapeHtml(new Date(report.timestamp).toLocaleString())}</p>
+            <p>Run ID: ${escapeHtml(report.run_id)} | Matrix Version: ${report.matrix_version}</p>
         </div>
     </div>
 </body>
@@ -297,15 +344,27 @@ function main() {
   const [inputPath, outputPath] = args;
   
   try {
-    const reportData = readFileSync(inputPath, 'utf8');
+    // Security: Validate input file path
+    const validatedInputPath = validateFilePath(inputPath);
+    
+    // Security: Validate and create output directory
+    const validatedOutputPath = validateFilePath(outputPath);
+    mkdirSync(dirname(validatedOutputPath), { recursive: true });
+    
+    const reportData = readFileSync(validatedInputPath, 'utf8');
     const report: SurvivalReport = JSON.parse(reportData);
     
-    const html = generateHTMLReport(report);
-    writeFileSync(outputPath, html);
+    // Security: Validate report structure
+    if (!report || typeof report !== 'object' || !report.results || !Array.isArray(report.results)) {
+      throw new Error('Invalid report structure');
+    }
     
-    console.log(`✅ HTML report generated: ${outputPath}`);
+    const html = generateHTMLReport(report);
+    writeFileSync(validatedOutputPath, html);
+    
+    console.log(`✅ HTML report generated: ${validatedOutputPath}`);
   } catch (error) {
-    console.error('❌ Failed to generate report:', error);
+    console.error('❌ Failed to generate report:', error instanceof Error ? error.message : 'Unknown error');
     process.exit(1);
   }
 }

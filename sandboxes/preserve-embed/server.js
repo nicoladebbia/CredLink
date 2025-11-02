@@ -4,12 +4,72 @@ const express = require('express');
 const sharp = require('sharp');
 const cors = require('cors');
 const http = require('http');
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 4102;
 const app = express();
 
-app.use(cors());
+// SECURITY: Restrict CORS to localhost only in development
+const isDevelopment = process.env.NODE_ENV !== 'production';
+if (isDevelopment) {
+  app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:4102', 'http://127.0.0.1:4102'],
+    credentials: true
+  }));
+} else {
+  app.use(cors()); // Production CORS
+}
+
 app.use(express.json());
+
+// Security: Rate limiting middleware
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);
+
+// SECURITY: Add authentication middleware for development
+if (isDevelopment) {
+  const DEV_API_KEY = process.env.DEV_API_KEY || 'dev-key-change-in-production';
+  
+  app.use((req, res, next) => {
+    // Skip authentication for health check
+    if (req.path === '/health') {
+      return next();
+    }
+    
+    const apiKey = req.headers['x-api-key'];
+    if (!apiKey || apiKey !== DEV_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid API key' });
+    }
+    
+    next();
+  });
+}
+
+// Security: Input validation middleware
+function validateFilename(req, res, next) {
+  const { filename } = req.params;
+  
+  // Security: Prevent path traversal attacks
+  if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  
+  // Security: Only allow alphanumeric, dots, hyphens, and underscores
+  if (!/^[a-zA-Z0-9._-]+$/.test(filename)) {
+    return res.status(400).json({ error: 'Invalid filename format' });
+  }
+  
+  // Security: Limit filename length
+  if (filename.length > 100) {
+    return res.status(400).json({ error: 'Filename too long' });
+  }
+  
+  next();
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -17,7 +77,7 @@ app.get('/health', (req, res) => {
 });
 
 // Serve assets without stripping (preserve embeds)
-app.get('/assets/:filename', async (req, res) => {
+app.get('/assets/:filename', validateFilename, async (req, res) => {
   try {
     const { filename } = req.params;
     
@@ -44,8 +104,11 @@ app.get('/assets/:filename', async (req, res) => {
     })
     .toBuffer();
 
-    // Add manifest hash header
-    const manifestHash = 'b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567';
+    // Security: Generate deterministic manifest hash based on filename and content
+    const manifestHash = crypto
+      .createHash('sha256')
+      .update(`preserve-embed-${filename}-${imageBuffer.length}`)
+      .digest('hex');
     res.set('X-Manifest-Hash', manifestHash);
     res.set('X-C2-Policy', 'preserve-allowed');
     res.set('Cache-Control', 'public, max-age=3600');
@@ -63,11 +126,16 @@ app.get('/manifests/:hash.c2pa', (req, res) => {
   try {
     const { hash } = req.params;
     
+    // Security: Validate hash format
+    if (!/^[a-fA-F0-9]{64}$/.test(hash)) {
+      return res.status(400).json({ error: 'Invalid manifest hash format' });
+    }
+    
     // Return a manifest that would match embedded claims
     const manifest = {
       '@context': ['https://w3id.org/c2pa/1.0'],
       claim: {
-        signature: 'preserve-embed-signature',
+        signature: crypto.createHash('sha256').update(`preserve-embed-${hash}`).digest('hex'),
         assertion_data: {
           'c2pa.assertions': [
             {
@@ -99,10 +167,14 @@ app.get('/manifests/:hash.c2pa', (req, res) => {
 });
 
 // HTML fallback with link tag
-app.get('/assets-with-fallback/:filename', async (req, res) => {
+app.get('/assets-with-fallback/:filename', validateFilename, async (req, res) => {
   try {
     const { filename } = req.params;
-    const manifestHash = 'b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef1234567';
+    // Security: Generate deterministic manifest hash based on filename
+    const manifestHash = crypto
+      .createHash('sha256')
+      .update(`preserve-embed-${filename}`)
+      .digest('hex');
     
     const html = `
 <!DOCTYPE html>

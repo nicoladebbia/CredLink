@@ -1,0 +1,33 @@
+{
+  "name": "@c2/manifest-store-worker",
+  "version": "0.1.0",
+  "description": "Cloudflare Worker for Remote Manifest Store v1",
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "node --test dist/**/*.test.js",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@c2/manifest-store": "file:../../packages/manifest-store"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^3.22.0"
+  },
+  "keywords": [
+    "c2pa",
+    "manifest",
+    "cloudflare",
+    "worker",
+    "store"
+  ],
+  "author": "C2 Concierge Team",
+  "license": "MIT"
+}

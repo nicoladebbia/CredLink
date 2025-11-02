@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2 Badge Demo - Phase 3</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .demo-section {
+            margin: 40px 0;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        
+        .demo-section h2 {
+            margin-top: 0;
+            color: #495057;
+        }
+        
+        .demo-image {
+            max-width: 300px;
+            height: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        
+        .demo-badge-container {
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .code-block {
+            background: #f8f9fa;
+            padding: 16px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-indicator.valid {
+            background: #28a745;
+        }
+        
+        .status-indicator.invalid {
+            background: #dc3545;
+        }
+        
+        .status-indicator.loading {
+            background: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🏷️ C2 Badge Demo - Phase 3</h1>
+        <p>Interactive demonstration of the C2PA verification badge component.</p>
+    </header>
+
+    <main>
+        <section class="demo-section">
+            <h2>Basic Badge Usage</h2>
+            <p>Click the badge to verify provenance information:</p>
+            
+            <div class="demo-badge-container">
+                <img src="https://picsum.photos/seed/demo1/300/200.jpg" alt="Demo image 1" class="demo-image">
+                <c2-badge 
+                    asset-url="https://picsum.photos/seed/demo1/300/200.jpg"
+                    text="Verify Provenance">
+                </c2-badge>
+            </div>
+            
+            <div class="code-block">
+                &lt;c2-badge 
+    asset-url="https://example.com/image.jpg"
+    text="Verify Provenance"&gt;
+&lt;/c2-badge&gt;
+            </div>
+        </section>
+
+        <section class="demo-section">
+            <h2>Direct Manifest URL</h2>
+            <p>Badge can also verify a manifest directly:</p>
+            
+            <div class="demo-badge-container">
+                <img src="https://picsum.photos/seed/demo2/300/200.jpg" alt="Demo image 2" class="demo-image">
+                <c2-badge 
+                    manifest-url="https://example.com/manifest.c2pa"
+                    text="View Certificate">
+                </c2-badge>
+            </div>
+            
+            <div class="code-block">
+                &lt;c2-badge 
+    manifest-url="https://example.com/manifest.c2pa"
+    text="View Certificate"&gt;
+&lt;/c2-badge&gt;
+            </div>
+        </section>
+
+        <section class="demo-section">
+            <h2>Auto-Open Modal</h2>
+            <p>Badge can automatically open the verification modal:</p>
+            
+            <div class="demo-badge-container">
+                <img src="https://picsum.photos/seed/demo3/300/200.jpg" alt="Demo image 3" class="demo-image">
+                <c2-badge 
+                    asset-url="https://picsum.photos/seed/demo3/300/200.jpg"
+                    auto-open
+                    text="Auto Verification">
+                </c2-badge>
+            </div>
+            
+            <div class="code-block">
+                &lt;c2-badge 
+    asset-url="https://example.com/image.jpg"
+    auto-open
+    text="Auto Verification"&gt;
+&lt;/c2-badge&gt;
+            </div>
+        </section>
+
+        <section class="demo-section">
+            <h2>Programmatic Usage</h2>
+            <p>Create badges dynamically using JavaScript:</p>
+            
+            <div id="programmatic-demo"></div>
+            
+            <div class="code-block">
+                import { createBadge, injectBadges } from '@c2/c2-badge';
+
+// Create a single badge
+const badge = createBadge({
+    assetUrl: 'https://example.com/image.jpg',
+    text: 'Verify Image'
+});
+document.body.appendChild(badge);
+
+// Inject badges for all images
+injectBadges({
+    selector: 'img.demo-image',
+    apiUrl: 'https://verify.c2pa.org/api/v1',
+    text: 'Verify'
+});
+            </div>
+        </section>
+
+        <section class="demo-section">
+            <h2>Accessibility Features</h2>
+            <p>The badge component includes comprehensive accessibility support:</p>
+            
+            <ul>
+                <li>✅ Keyboard navigation (Tab, Enter, Space, Escape)</li>
+                <li>✅ Screen reader support with ARIA labels</li>
+                <li>✅ High contrast mode support</li>
+                <li>✅ Reduced motion support</li>
+                <li>✅ Focus management</li>
+                <li>✅ Semantic HTML structure</li>
+            </ul>
+            
+            <p><strong>Test:</strong> Try navigating the badges using only your keyboard!</p>
+        </section>
+
+        <section class="demo-section">
+            <h2>Security Features</h2>
+            <p>Built with security as a top priority:</p>
+            
+            <ul>
+                <li>🔒 CSP-safe (no eval, no inline scripts)</li>
+                <li>🔒 SRI-pinnable for integrity verification</li>
+                <li>🔒 Strict URL validation</li>
+                <li>🔒 No dynamic style injection</li>
+                <li>🔒 Safe error handling</li>
+                <li>🔒 CORS-aware manifest fetching</li>
+            </ul>
+        </section>
+
+        <section class="demo-section">
+            <h2>Performance Targets</h2>
+            <p>Optimized for fast verification:</p>
+            
+            <ul>
+                <li>⚡ p95 &lt;600ms for cached manifests</li>
+                <li>⚡ p95 &lt;1000ms for cold fetches</li>
+                <li>⚡ Minimal bundle size (&lt;50KB gzipped)</li>
+                <li>⚡ Lazy loading of verification data</li>
+                <li>⚡ Efficient modal rendering</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>
+            <strong>C2 Badge v1.0.0</strong> - 
+            Phase 3 of the C2PA Remote Manifest Store project
+        </p>
+    </footer>
+
+    <!-- Load the C2 Badge component -->
+    <script type="module">
+        // Import the badge component
+        import './src/index.js';
+        
+        // Demo programmatic usage
+        setTimeout(() => {
+            const container = document.getElementById('programmatic-demo');
+            if (container) {
+                // Create a badge programmatically
+                const badge = document.createElement('c2-badge');
+                badge.setAttribute('asset-url', 'https://picsum.photos/seed/programmatic/300/200.jpg');
+                badge.setAttribute('text', 'Programmatic Badge');
+                
+                // Add an image
+                const img = document.createElement('img');
+                img.src = 'https://picsum.photos/seed/programmatic/300/200.jpg';
+                img.alt = 'Programmatic demo image';
+                img.className = 'demo-image';
+                
+                container.appendChild(img);
+                container.appendChild(badge);
+            }
+        }, 1000);
+        
+        // Log badge events for demonstration
+        document.addEventListener('c2-badge:open', () => {
+            console.log('🏷️ Badge modal opened');
+        });
+        
+        document.addEventListener('c2-badge:close', () => {
+            console.log('🏷️ Badge modal closed');
+        });
+        
+        document.addEventListener('c2-badge:verify-start', (e) => {
+            console.log('🔍 Verification started:', e.detail);
+        });
+        
+        document.addEventListener('c2-badge:verify-success', (e) => {
+            console.log('✅ Verification successful:', e.detail);
+        });
+        
+        document.addEventListener('c2-badge:verify-error', (e) => {
+            console.log('❌ Verification failed:', e.detail);
+        });
+    </script>
+</body>
+</html>

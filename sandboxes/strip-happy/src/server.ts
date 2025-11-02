@@ -10,8 +10,62 @@ import { join } from 'path';
 const PORT = process.env.PORT || 4101;
 const app = express();
 
-app.use(cors());
+// SECURITY: Restrict CORS to localhost only in development
+const isDevelopment = process.env.NODE_ENV !== 'production';
+if (isDevelopment) {
+  app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:4101', 'http://127.0.0.1:4101'],
+    credentials: true
+  }));
+} else {
+  app.use(cors()); // Production CORS
+}
+
 app.use(express.json());
+
+// SECURITY: Add rate limiting
+const rateLimitMap = new Map();
+const RATE_LIMIT = 100; // requests per minute
+const WINDOW_MS = 60 * 1000; // 1 minute
+
+app.use((req, res, next) => {
+  const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+  const now = Date.now();
+  const windowStart = now - WINDOW_MS;
+  
+  if (!rateLimitMap.has(clientIP)) {
+    rateLimitMap.set(clientIP, []);
+  }
+  
+  const requests = rateLimitMap.get(clientIP).filter((timestamp: number) => timestamp > windowStart);
+  
+  if (requests.length >= RATE_LIMIT) {
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+  
+  requests.push(now);
+  rateLimitMap.set(clientIP, requests);
+  next();
+});
+
+// SECURITY: Add authentication middleware for development
+if (isDevelopment) {
+  const DEV_API_KEY = process.env.DEV_API_KEY || 'dev-key-change-in-production';
+  
+  app.use((req, res, next) => {
+    // Skip authentication for health check
+    if (req.path === '/health') {
+      return next();
+    }
+    
+    const apiKey = req.headers['x-api-key'] as string;
+    if (!apiKey || apiKey !== DEV_API_KEY) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid API key' });
+    }
+    
+    next();
+  });
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {

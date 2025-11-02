@@ -1,0 +1,384 @@
+groups:
+  - name: c2c-enterprise-alerts
+    rules:
+      # High Priority Alerts
+      - alert: ServiceDown
+        expr: up{job=~"auth-service|webhook-service|signing-service|admin-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Service {{ $labels.service }} is down"
+          description: "Service {{ $labels.service }} has been down for more than 1 minute"
+          runbook_url: "https://runbooks.c2concierge.com/service-down"
+          dashboard_url: "https://grafana.c2concierge.com/d/service-overview"
+
+      - alert: DatabaseDown
+        expr: up{job=~"postgres-primary|postgres-replica"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Database {{ $labels.service }} is down"
+          description: "Database {{ $labels.service }} has been down for more than 30 seconds"
+          runbook_url: "https://runbooks.c2concierge.com/database-down"
+          dashboard_url: "https://grafana.c2concierge.com/d/database-overview"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High error rate on {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.service }}"
+          runbook_url: "https://runbooks.c2concierge.com/high-error-rate"
+          dashboard_url: "https://grafana.c2concierge.com/d/service-metrics"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High latency on {{ $labels.service }}"
+          description: "95th percentile latency is {{ $value }}s on {{ $labels.service }}"
+          runbook_url: "https://runbooks.c2concierge.com/high-latency"
+          dashboard_url: "https://grafana.c2concierge.com/d/service-metrics"
+
+      - alert: MemoryHigh
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: "{{ $labels.instance }}"
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+          runbook_url: "https://runbooks.c2concierge.com/high-memory"
+          dashboard_url: "https://grafana.c2concierge.com/d/system-metrics"
+
+      - alert: CPUHigh
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: "{{ $labels.instance }}"
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://runbooks.c2concierge.com/high-cpu"
+          dashboard_url: "https://grafana.c2concierge.com/d/system-metrics"
+
+      - alert: DiskSpaceHigh
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: "{{ $labels.instance }}"
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+          runbook_url: "https://runbooks.c2concierge.com/low-disk-space"
+          dashboard_url: "https://grafana.c2concierge.com/d/system-metrics"
+
+      - alert: RedisDown
+        expr: up{job="redis-cluster"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+          service: redis
+        annotations:
+          summary: "Redis cluster is down"
+          description: "Redis cluster has been down for more than 30 seconds"
+          runbook_url: "https://runbooks.c2concierge.com/redis-down"
+          dashboard_url: "https://grafana.c2concierge.com/d/redis-overview"
+
+      - alert: KafkaDown
+        expr: up{job="kafka"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          team: platform
+          service: kafka
+        annotations:
+          summary: "Kafka broker is down"
+          description: "Kafka broker {{ $labels.instance }} has been down for more than 30 seconds"
+          runbook_url: "https://runbooks.c2concierge.com/kafka-down"
+          dashboard_url: "https://grafana.c2concierge.com/d/kafka-overview"
+
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "High database connections on {{ $labels.service }}"
+          description: "Database connections: {{ $value }} on {{ $labels.service }}"
+          runbook_url: "https://runbooks.c2concierge.com/high-db-connections"
+          dashboard_url: "https://grafana.c2concierge.com/d/database-overview"
+
+      - alert: QueueBacklog
+        expr: kafka_consumer_lag_sum > 1000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: kafka
+        annotations:
+          summary: "High Kafka consumer lag"
+          description: "Consumer lag is {{ $value }} messages"
+          runbook_url: "https://runbooks.c2concierge.com/queue-backlog"
+          dashboard_url: "https://grafana.c2concierge.com/d/kafka-overview"
+
+      - alert: FailedLoginsHigh
+        expr: rate(failed_logins_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+          service: auth
+        annotations:
+          summary: "High failed login rate"
+          description: "Failed login rate is {{ $value }} per second"
+          runbook_url: "https://runbooks.c2concierge.com/high-failed-logins"
+          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
+
+      - alert: UnusualTraffic
+        expr: rate(http_requests_total[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+          service: "{{ $labels.service }}"
+        annotations:
+          summary: "Unusual traffic spike on {{ $labels.service }}"
+          description: "Traffic rate is {{ $value }} requests per second"
+          runbook_url: "https://runbooks.c2concierge.com/unusual-traffic"
+          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
+
+      - alert: SSLCertificateExpiring
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 1m
+        labels:
+          severity: warning
+          team: platform
+          service: ssl
+        annotations:
+          summary: "SSL certificate expiring soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+          runbook_url: "https://runbooks.c2concierge.com/ssl-expiring"
+          dashboard_url: "https://grafana.c2concierge.com/d/ssl-overview"
+
+      - alert: PodCrashLooping
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: kubernetes
+        annotations:
+          summary: "Pod {{ $labels.pod }} is crash looping"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is restarting frequently"
+          runbook_url: "https://runbooks.c2concierge.com/pod-crash-looping"
+          dashboard_url: "https://grafana.c2concierge.com/d/kubernetes-overview"
+
+      - alert: PodNotReady
+        expr: kube_pod_status_ready{condition="true"} == 0
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+          service: kubernetes
+        annotations:
+          summary: "Pod {{ $labels.pod }} is not ready"
+          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 10 minutes"
+          runbook_url: "https://runbooks.c2concierge.com/pod-not-ready"
+          dashboard_url: "https://grafana.c2concierge.com/d/kubernetes-overview"
+
+      - alert: NodeNotReady
+        expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+        for: 10m
+        labels:
+          severity: critical
+          team: platform
+          service: kubernetes
+        annotations:
+          summary: "Node {{ $labels.node }} is not ready"
+          description: "Node {{ $labels.node }} has been not ready for more than 10 minutes"
+          runbook_url: "https://runbooks.c2concierge.com/node-not-ready"
+          dashboard_url: "https://grafana.c2concierge.com/d/kubernetes-overview"
+
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health_status{color="red"} == 1
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: elasticsearch
+        annotations:
+          summary: "Elasticsearch cluster is red"
+          description: "Elasticsearch cluster health is red"
+          runbook_url: "https://runbooks.c2concierge.com/elasticsearch-red"
+          dashboard_url: "https://grafana.c2concierge.com/d/elasticsearch-overview"
+
+      - alert: ElasticsearchClusterYellow
+        expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: elasticsearch
+        annotations:
+          summary: "Elasticsearch cluster is yellow"
+          description: "Elasticsearch cluster health is yellow"
+          runbook_url: "https://runbooks.c2concierge.com/elasticsearch-yellow"
+          dashboard_url: "https://grafana.c2concierge.com/d/elasticsearch-overview"
+
+      - alert: ActiveSessionsHigh
+        expr: active_sessions > 10000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: auth
+        annotations:
+          summary: "High number of active sessions"
+          description: "Active sessions: {{ $value }}"
+          runbook_url: "https://runbooks.c2concierge.com/high-sessions"
+          dashboard_url: "https://grafana.c2concierge.com/d/auth-metrics"
+
+      - alert: SigningQueueBacklog
+        expr: signing_queue_size > 5000
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: signing
+        annotations:
+          summary: "High signing queue backlog"
+          description: "Signing queue size: {{ $value }}"
+          runbook_url: "https://runbooks.c2concierge.com/signing-queue-backlog"
+          dashboard_url: "https://grafana.c2concierge.com/d/signing-metrics"
+
+      - alert: WebhookProcessingSlow
+        expr: histogram_quantile(0.95, rate(webhook_processing_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: webhook
+        annotations:
+          summary: "Slow webhook processing"
+          description: "95th percentile webhook processing time is {{ $value }}s"
+          runbook_url: "https://runbooks.c2concierge.com/slow-webhook-processing"
+          dashboard_url: "https://grafana.c2concierge.com/d/webhook-metrics"
+
+      - alert: ExternalAPIFailure
+        expr: probe_success{job="blackbox"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: external-api
+        annotations:
+          summary: "External API {{ $labels.instance }} is failing"
+          description: "External API {{ $labels.instance }} health check failed"
+          runbook_url: "https://runbooks.c2concierge.com/external-api-failure"
+          dashboard_url: "https://grafana.c2concierge.com/d/external-apis"
+
+  - name: c2c-business-alerts
+    rules:
+      - alert: LowSigningSuccessRate
+        expr: rate(signing_success_total[5m]) / rate(signing_requests_total[5m]) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          team: business
+          service: signing
+        annotations:
+          summary: "Low signing success rate"
+          description: "Signing success rate is {{ $value | humanizePercentage }}"
+          runbook_url: "https://runbooks.c2concierge.com/low-signing-success"
+          dashboard_url: "https://grafana.c2concierge.com/d/business-metrics"
+
+      - alert: HighCustomerChurn
+        expr: rate(customer_churn_total[1h]) > 0.01
+        for: 10m
+        labels:
+          severity: warning
+          team: business
+          service: customer
+        annotations:
+          summary: "High customer churn rate"
+          description: "Customer churn rate is {{ $value | humanizePercentage }} per hour"
+          runbook_url: "https://runbooks.c2concierge.com/high-churn"
+          dashboard_url: "https://grafana.c2concierge.com/d/business-metrics"
+
+      - alert: RevenueDrop
+        expr: rate(revenue_total[1h]) < 0.8 * rate(revenue_total[1h] offset 24h)
+        for: 30m
+        labels:
+          severity: warning
+          team: business
+          service: revenue
+        annotations:
+          summary: "Revenue drop detected"
+          description: "Revenue is 20% lower than same time yesterday"
+          runbook_url: "https://runbooks.c2concierge.com/revenue-drop"
+          dashboard_url: "https://grafana.c2concierge.com/d/business-metrics"
+
+  - name: c2c-security-alerts
+    rules:
+      - alert: BruteForceAttack
+        expr: rate(failed_logins_total[1m]) > 50
+        for: 1m
+        labels:
+          severity: critical
+          team: security
+          service: auth
+        annotations:
+          summary: "Possible brute force attack detected"
+          description: "Failed login rate is {{ $value }} per second"
+          runbook_url: "https://runbooks.c2concierge.com/brute-force-attack"
+          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
+
+      - alert: SuspiciousActivity
+        expr: rate(suspicious_activity_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          team: security
+          service: auth
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "Suspicious activity rate is {{ $value }} per second"
+          runbook_url: "https://runbooks.c2concierge.com/suspicious-activity"
+          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
+
+      - alert: DataBreachDetected
+        expr: data_breach_events_total > 0
+        for: 0s
+        labels:
+          severity: critical
+          team: security
+          service: security
+        annotations:
+          summary: "Data breach detected"
+          description: "Data breach events detected"
+          runbook_url: "https://runbooks.c2concierge.com/data-breach"
+          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"

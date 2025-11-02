@@ -1,0 +1,33 @@
+{
+  "tenant_id": "acme-news",
+  "algorithm": "ES256",
+  "tsa_profile": "std",
+  "assertions_allow": [
+    "c2pa.actions",
+    "c2pa.hash.data",
+    "c2pa.ingredients",
+    "cai.thumbnail"
+  ],
+  "assertions_deny": [
+    "c2pa.location.precise"
+  ],
+  "embed_allowed_origins": [
+    "/media/preserve/"
+  ],
+  "key": {
+    "key_type": "hsm",
+    "provider": "yubihsm2",
+    "handle": "slot:0x0007",
+    "cert_chain": [
+      "-----BEGIN CERTIFICATE-----\nMIIBkTCB+wIJAMlyFqk69v+9MA0GCSqGSIb3DQEBCwUAMBkxFzAVBgNVBAMMDkMy\nUEEgVGVzdCBLaW5kMB4XDTI1MTAwMTAwMDAwMFoXDTI2MDEwMTAwMDAwMFowGTEX\nMBUGA1UEAwwOQzJQQSBUZXN0IEtpbmQwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC\nAATRj4L8Z2Jz8w0J6GVt2N0W8OqE3L4x9M6QxJvZ5W7X8Q2J9M0J6GVt2N0W8OqE3\nL4x9M6QxJvZ5W7X8Q2J9M0J6GVt2N0W8OqE3L4x9M6QxJvZ5W7X8Q2J9MAoGCCqG\nSIb3DQEBCw4CAQEAAQgBj1R8h7XJ8Z2Jz8w0J6GVt2N0W8OqE3L4x9M6QxJvZ5W7\nX8Q2J9M0J6GVt2N0W8OqE3L4x9M6QxJvZ5W7X8Q2J9M0J6GVt2N0W8OqE3L4x9M6\nQxJvZ5W7X8Q2J9\n-----END CERTIFICATE-----"
+    ],
+    "not_before": "2025-10-01T00:00:00Z",
+    "not_after": "2026-01-01T00:00:00Z",
+    "rotate_every_days": 90,
+    "max_issuance_per_24h": 250000,
+    "sign_enabled": true
+  },
+  "created_at": "2025-10-31T15:00:00Z",
+  "updated_at": "2025-10-31T15:00:00Z",
+  "policy_hash": "sha256:abc123def456789012345678901234567890123456789012345678901234567890"
+}

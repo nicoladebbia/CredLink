@@ -1,0 +1,188 @@
+version: "1.0"
+name: "Hostile Path Matrix"
+description: "Test matrix for hostile path traversal and security scenarios"
+
+scenarios:
+  - name: "valid-manifest-storage"
+    description: "Test valid manifest storage with proper SHA-256 hash"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "store-manifest"
+        content: "valid manifest content"
+        expectedStatus: 201
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "invalid-object-key-format"
+    description: "Test rejection of invalid object key formats"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "store-manifest"
+        objectKey: "invalid-key.c2pa"
+        content: "test content"
+        expectedStatus: 400
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "path-traversal-attempt"
+    description: "Test path traversal attack prevention"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "store-manifest"
+        objectKey: "../../../etc/passwd.c2pa"
+        content: "malicious content"
+        expectedStatus: 400
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "oversized-content"
+    description: "Test rejection of oversized content"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+          maxObjectSize: "1024"
+    test:
+      - type: "store-manifest"
+        content: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        expectedStatus: 400
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "disallowed-content-type"
+    description: "Test rejection of disallowed content types"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "store-manifest"
+        contentType: "text/html"
+        content: "<script>alert('xss')</script>"
+        expectedStatus: 400
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "rate-limit-exceeded"
+    description: "Test rate limiting enforcement"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "health-check"
+        repeat: 1001
+        expectedStatus: 429
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "missing-signature"
+    description: "Test rejection of requests without signatures"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "signed-url"
+        signature: null
+        expectedStatus: 401
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "cors-preflight"
+    description: "Test CORS preflight handling"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "cors-preflight"
+        expectedStatus: 200
+        expectedHeaders:
+          "Access-Control-Allow-Origin": "*"
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "security-headers"
+    description: "Test security headers are present"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "health-check"
+        expectedStatus: 200
+        expectedHeaders:
+          "X-Frame-Options": "DENY"
+          "X-Content-Type-Options": "nosniff"
+          "X-XSS-Protection": "1; mode=block"
+          "Referrer-Policy": "strict-origin-when-cross-origin"
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "write-once-enforcement"
+    description: "Test write-once semantics enforcement"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+          writeOnceEnabled: "true"
+    test:
+      - type: "store-manifest"
+        content: "first content"
+        expectedStatus: 201
+      - type: "store-manifest"
+        content: "second content"
+        expectedStatus: 409
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "sql-injection-attempt"
+    description: "Test SQL injection attack prevention"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "store-manifest"
+        objectKey: "'; DROP TABLE manifests; --.c2pa"
+        content: "sql injection attempt"
+        expectedStatus: 400
+    cleanup:
+      - type: "stop-worker"
+
+  - name: "xss-in-content-type"
+    description: "Test XSS prevention in content type headers"
+    setup:
+      - type: "start-worker"
+        config:
+          bucket: "test-bucket"
+          region: "us-east-1"
+    test:
+      - type: "store-manifest"
+        contentType: "application/json<script>alert('xss')</script>"
+        content: "xss attempt"
+        expectedStatus: 400
+    cleanup:
+      - type: "stop-worker"

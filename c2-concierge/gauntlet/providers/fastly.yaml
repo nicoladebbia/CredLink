@@ -1,0 +1,216 @@
+provider: fastly
+name: "Fastly"
+products: ["Image Optimizer"]
+base_url: "https://fastly.survival.test"
+documentation:
+  io: "https://developer.fastly.com/reference/io/"
+  metadata: "https://developer.fastly.com/reference/io/metadata/"
+last_updated: "2025-10-30"
+notes: |
+  Fastly Image Optimizer behavior (as of 2025-10-30):
+  
+  • Default behavior removes all metadata
+  • metadata=none|copyright|keep|all parameter controls preservation
+  • metadata=keep preserves most metadata including EXIF/IPTC
+  • metadata=copyright preserves only copyright information
+  • Format conversion may strip some metadata
+  • Content Credentials preservation depends on metadata setting
+  
+  References:
+  - https://developer.fastly.com/reference/io/metadata/
+  - https://developer.fastly.com/reference/io/
+
+routes:
+  - id: preserve-embed
+    description: "Preserve metadata with metadata=keep"
+    url_pattern: "/{origin_path}?{transform_params}"
+    default_params:
+      metadata: "keep"
+    transform_mappings:
+      resize_1024:
+        width: 1024
+        metadata: "keep"
+      q_75:
+        quality: 75
+        metadata: "keep"
+      format_webp:
+        format: "webp"
+        metadata: "keep"
+      format_avif:
+        format: "avif"
+        metadata: "keep"
+      crop_1x1_center:
+        width: 1024
+        height: 1024
+        crop: "center"
+        metadata: "keep"
+      progressive_jpeg:
+        format: "jpg"
+        quality: 75
+        metadata: "keep"
+      rotate_90:
+        rotate: 90
+        metadata: "keep"
+      sharpen:
+        sharpen: 10
+        metadata: "keep"
+      gamma:
+        gamma: 1.2
+        contrast: 1.1
+        metadata: "keep"
+      png_to_jpg:
+        format: "jpg"
+        quality: 75
+        metadata: "keep"
+      dpr_2:
+        dpr: 2
+        metadata: "keep"
+      provider_auto_optimize:
+        format: "auto"
+        quality: 75
+        metadata: "keep"
+    special_config:
+      expected_behavior:
+        embed_survival: true
+        remote_survival: true
+        reason: "metadata=keep preserves most metadata including C2PA"
+      caveats:
+        - "Format conversion may still strip some metadata"
+        - "Content Credentials preservation depends on metadata setting"
+
+  - id: strip-happy
+    description: "Aggressive transforms with metadata=none"
+    url_pattern: "/{origin_path}?{transform_params}"
+    default_params:
+      metadata: "none"
+      format: "auto"
+      quality: 75
+    transform_mappings:
+      resize_1024:
+        width: 1024
+        metadata: "none"
+      q_75:
+        quality: 75
+        metadata: "none"
+      format_webp:
+        format: "webp"
+        metadata: "none"
+      format_avif:
+        format: "avif"
+        metadata: "none"
+      crop_1x1_center:
+        width: 1024
+        height: 1024
+        crop: "center"
+        metadata: "none"
+      progressive_jpeg:
+        format: "jpg"
+        quality: 75
+        metadata: "none"
+      rotate_90:
+        rotate: 90
+        metadata: "none"
+      sharpen:
+        sharpen: 10
+        metadata: "none"
+      gamma:
+        gamma: 1.2
+        contrast: 1.1
+        metadata: "none"
+      png_to_jpg:
+        format: "jpg"
+        quality: 75
+        metadata: "none"
+      dpr_2:
+        dpr: 2
+        metadata: "none"
+      provider_auto_optimize:
+        format: "auto"
+        quality: 75
+        metadata: "none"
+    special_config:
+      expected_behavior:
+        embed_survival: false
+        remote_survival: true
+        reason: "metadata=none removes all metadata by design"
+
+  - id: remote-only
+    description: "Remote manifest only, metadata ignored"
+    url_pattern: "/{origin_path}?{transform_params}"
+    default_params:
+      metadata: "none"
+    transform_mappings:
+      resize_1024:
+        width: 1024
+        metadata: "none"
+      q_75:
+        quality: 75
+        metadata: "none"
+      format_webp:
+        format: "webp"
+        metadata: "none"
+      format_avif:
+        format: "avif"
+        metadata: "none"
+      crop_1x1_center:
+        width: 1024
+        height: 1024
+        crop: "center"
+        metadata: "none"
+      progressive_jpeg:
+        format: "jpg"
+        quality: 75
+        metadata: "none"
+      rotate_90:
+        rotate: 90
+        metadata: "none"
+      sharpen:
+        sharpen: 10
+        metadata: "none"
+      gamma:
+        gamma: 1.2
+        contrast: 1.1
+        metadata: "none"
+      png_to_jpg:
+        format: "jpg"
+        quality: 75
+        metadata: "none"
+      dpr_2:
+        dpr: 2
+        metadata: "none"
+      provider_auto_optimize:
+        format: "auto"
+        quality: 75
+        metadata: "none"
+    special_config:
+      edge_worker:
+        inject_manifest_link: true
+        fallback_html: true
+      expected_behavior:
+        embed_survival: false
+        remote_survival: true
+        reason: "Remote manifest injection via HTML fallback"
+
+headers:
+  test:
+    User-Agent: "C2C-Gauntlet/1.0"
+    Accept: "image/*,*/*;q=0.8"
+  expected:
+    Link: 'rel="c2pa-manifest"'
+    Cache-Control: "public, max-age=31536000"
+    ETag: "*"
+
+probes:
+  remote:
+    method: "header_link"
+    fallback: "html_link"
+    verification: "hash_alignment"
+  embed:
+    method: "c2patool_verify"
+    expected_on_routes: ["preserve-embed"]
+    failure_expected_on_routes: ["strip-happy", "remote-only"]
+    notes:
+      - "metadata=keep preserves most metadata"
+      - "metadata=none removes all metadata"
+      - "Format conversion may affect preservation"
+      - "Content Credentials preservation depends on metadata setting"

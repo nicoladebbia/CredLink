@@ -1,0 +1,360 @@
+/**
+ * C2PA Pilot Badge - Styles
+ * Content Credentials badge styling for pilot program
+ */
+
+/* Badge Container */
+.c2pa-badge {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.c2pa-badge img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Badge Icon */
+.c2pa-badge__icon {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #2563eb;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+  opacity: 0.8;
+}
+
+.c2pa-badge__icon:hover {
+  opacity: 1;
+  transform: scale(1.1);
+  background: #1e40af;
+}
+
+/* Badge Position Variants */
+.c2pa-badge--top-right .c2pa-badge__icon {
+  top: 8px;
+  right: 8px;
+  bottom: auto;
+  left: auto;
+}
+
+.c2pa-badge--top-left .c2pa-badge__icon {
+  top: 8px;
+  left: 8px;
+  bottom: auto;
+  right: auto;
+}
+
+.c2pa-badge--bottom-right .c2pa-badge__icon {
+  bottom: 8px;
+  right: 8px;
+  top: auto;
+  left: auto;
+}
+
+.c2pa-badge--bottom-left .c2pa-badge__icon {
+  bottom: 8px;
+  left: 8px;
+  top: auto;
+  right: auto;
+}
+
+/* Modal Overlay */
+.c2pa-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.c2pa-modal__content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.c2pa-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.c2pa-modal__header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.c2pa-modal__close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+}
+
+.c2pa-modal__close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.c2pa-modal__body {
+  padding: 20px;
+}
+
+.c2pa-modal__image {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.c2pa-modal__image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.c2pa-modal__info h4 {
+  margin: 0 0 16px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.c2pa-modal__info p {
+  margin: 0 0 12px 0;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.c2pa-modal__info a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.c2pa-modal__info a:hover {
+  text-decoration: underline;
+}
+
+.c2pa-modal__status {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.c2pa-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.c2pa-status--verified {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.c2pa-status--error {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.c2pa-status--pending {
+  background: #fef3c7;
+  color: #f59e0b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .c2pa-modal {
+    padding: 10px;
+  }
+  
+  .c2pa-modal__content {
+    margin: 0;
+    border-radius: 8px;
+  }
+  
+  .c2pa-modal__header {
+    padding: 16px 16px 0;
+  }
+  
+  .c2pa-modal__header h3 {
+    font-size: 1.125rem;
+  }
+  
+  .c2pa-modal__body {
+    padding: 16px;
+  }
+  
+  .c2pa-badge__icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .c2pa-badge--top-right .c2pa-badge__icon,
+  .c2pa-badge--top-left .c2pa-badge__icon {
+    top: 6px;
+  }
+  
+  .c2pa-badge--bottom-right .c2pa-badge__icon,
+  .c2pa-badge--bottom-left .c2pa-badge__icon {
+    bottom: 6px;
+  }
+  
+  .c2pa-badge--top-right .c2pa-badge__icon,
+  .c2pa-badge--bottom-right .c2pa-badge__icon {
+    right: 6px;
+  }
+  
+  .c2pa-badge--top-left .c2pa-badge__icon,
+  .c2pa-badge--bottom-left .c2pa-badge__icon {
+    left: 6px;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .c2pa-badge__icon {
+    border: 2px solid white;
+    background: #000;
+    color: white;
+  }
+  
+  .c2pa-modal__content {
+    border: 2px solid #000;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .c2pa-badge__icon,
+  .c2pa-modal__close,
+  .c2pa-modal {
+    transition: none;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .c2pa-modal__content {
+    background: #1f2937;
+    color: white;
+  }
+  
+  .c2pa-modal__header {
+    border-bottom-color: #374151;
+  }
+  
+  .c2pa-modal__header h3 {
+    color: white;
+  }
+  
+  .c2pa-modal__close {
+    color: #9ca3af;
+  }
+  
+  .c2pa-modal__close:hover {
+    background: #374151;
+    color: white;
+  }
+  
+  .c2pa-modal__info h4 {
+    color: white;
+  }
+  
+  .c2pa-modal__info p {
+    color: #d1d5db;
+  }
+  
+  .c2pa-modal__status {
+    border-top-color: #374151;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .c2pa-badge__icon {
+    display: none;
+  }
+  
+  .c2pa-modal {
+    display: none;
+  }
+}
+
+/* Focus Styles for Accessibility */
+.c2pa-badge__icon:focus,
+.c2pa-modal__close:focus {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Loading State */
+.c2pa-badge--loading .c2pa-badge__icon {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.c2pa-badge--loading .c2pa-badge__icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 2px solid transparent;
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: c2pa-spin 1s linear infinite;
+}
+
+@keyframes c2pa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.c2pa-badge--error .c2pa-badge__icon {
+  background: #dc2626;
+}
+
+.c2pa-badge--error .c2pa-badge__icon:hover {
+  background: #b91c1c;
+}

@@ -1,0 +1,521 @@
+# Kubernetes Monitoring - ENTERPRISE OBSERVABILITY
+# 
+# Complete monitoring stack with Prometheus, Grafana, and AlertManager
+# Includes custom metrics, dashboards, and alerting rules
+# 
+# SECURITY REQUIREMENTS:
+# - Metrics authentication
+# - Network isolation
+# - Data retention policies
+# - Alert escalation
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: keyctl-metrics
+  namespace: c2-concierge
+  labels:
+    app: keyctl
+    component: metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+    prometheus.io/path: "/metrics"
+    description: "C2-Concierge metrics endpoint"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9090
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: keyctl
+    component: custody-service
+---
+# Prometheus deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: c2-concierge
+  labels:
+    app: prometheus
+    component: monitoring
+  annotations:
+    description: "Prometheus monitoring service"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "false"
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.45.0
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--web.console.libraries=/etc/prometheus/console_libraries'
+          - '--web.console.templates=/etc/prometheus/consoles'
+          - '--storage.tsdb.retention.time=30d'
+          - '--web.enable-lifecycle'
+          - '--web.enable-admin-api'
+        ports:
+        - name: web
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        resources:
+          requests:
+            cpu: 200m
+            memory: 400Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+          readOnly: true
+        - name: storage
+          mountPath: /prometheus
+        - name: rules
+          mountPath: /etc/prometheus/rules
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: web
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: web
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: keyctl-config
+          defaultMode: 0644
+      - name: storage
+        persistentVolumeClaim:
+          claimName: prometheus-storage-pvc
+      - name: rules
+        configMap:
+          name: keyctl-config
+          defaultMode: 0644
+---
+# Prometheus service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: c2-concierge
+  labels:
+    app: prometheus
+    component: monitoring
+  annotations:
+    description: "Prometheus service endpoint"
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9090
+    targetPort: web
+    protocol: TCP
+  selector:
+    app: prometheus
+    component: monitoring
+---
+# Grafana deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: c2-concierge
+  labels:
+    app: grafana
+    component: monitoring
+  annotations:
+    description: "Grafana dashboard service"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: grafana
+        component: monitoring
+    spec:
+      serviceAccountName: grafana
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        runAsGroup: 472
+        fsGroup: 472
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.0.0
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: keyctl-secrets
+              key: grafana-password
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-clock-panel,grafana-simple-json-datasource"
+        - name: GF_SECURITY_ALLOW_EMBEDDING
+          value: "true"
+        - name: GF_AUTH_ANONYMOUS_ENABLED
+          value: "false"
+        - name: GF_AUTH_BASIC_ENABLED
+          value: "true"
+        - name: GF_AUTH_LDAP_ENABLED
+          value: "false"
+        - name: GF_SERVER_ROOT_URL
+          value: "https://grafana.c2-concierge.com"
+        ports:
+        - name: web
+          containerPort: 3000
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: storage
+          mountPath: /var/lib/grafana
+        - name: dashboards
+          mountPath: /etc/grafana/provisioning/dashboards
+          readOnly: true
+        - name: datasources
+          mountPath: /etc/grafana/provisioning/datasources
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: web
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: web
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: grafana-storage-pvc
+      - name: dashboards
+        configMap:
+          name: keyctl-config
+          defaultMode: 0644
+      - name: datasources
+        configMap:
+          name: keyctl-config
+          defaultMode: 0644
+---
+# Grafana service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: c2-concierge
+  labels:
+    app: grafana
+    component: monitoring
+  annotations:
+    description: "Grafana service endpoint"
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 3000
+    targetPort: web
+    protocol: TCP
+  selector:
+    app: grafana
+    component: monitoring
+---
+# AlertManager deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alertmanager
+  namespace: c2-concierge
+  labels:
+    app: alertmanager
+    component: monitoring
+  annotations:
+    description: "AlertManager service"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alertmanager
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: alertmanager
+        component: monitoring
+    spec:
+      serviceAccountName: alertmanager
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        fsGroup: 65534
+      containers:
+      - name: alertmanager
+        image: prom/alertmanager:v0.25.0
+        args:
+          - '--config.file=/etc/alertmanager/alertmanager.yml'
+          - '--storage.path=/alertmanager'
+          - '--web.external-url=https://alertmanager.c2-concierge.com'
+          - '--web.route-prefix=/'
+        ports:
+        - name: web
+          containerPort: 9093
+          protocol: TCP
+        - name: mesh
+          containerPort: 9094
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/alertmanager
+          readOnly: true
+        - name: storage
+          mountPath: /alertmanager
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: web
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: web
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: alertmanager-config
+          defaultMode: 0644
+      - name: storage
+        persistentVolumeClaim:
+          claimName: alertmanager-storage-pvc
+---
+# AlertManager service
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: c2-concierge
+  labels:
+    app: alertmanager
+    component: monitoring
+  annotations:
+    description: "AlertManager service endpoint"
+spec:
+  type: ClusterIP
+  ports:
+  - name: web
+    port: 9093
+    targetPort: web
+    protocol: TCP
+  - name: mesh
+    port: 9094
+    targetPort: mesh
+    protocol: TCP
+  selector:
+    app: alertmanager
+    component: monitoring
+---
+# Node Exporter for system metrics
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-exporter
+  namespace: c2-concierge
+  labels:
+    app: node-exporter
+    component: monitoring
+  annotations:
+    description: "Node exporter for system metrics"
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: node-exporter
+        component: monitoring
+    spec:
+      serviceAccountName: node-exporter
+      hostNetwork: true
+      hostPID: true
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+      containers:
+      - name: node-exporter
+        image: prom/node-exporter:v1.6.0
+        args:
+          - '--path.rootfs=/host'
+          - '--web.listen-address=0.0.0.0:9100'
+          - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+        ports:
+        - name: metrics
+          containerPort: 9100
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        volumeMounts:
+        - name: rootfs
+          mountPath: /host
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+---
+# Node Exporter service
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: c2-concierge
+  labels:
+    app: node-exporter
+    component: monitoring
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9100"
+    prometheus.io/path: "/metrics"
+    description: "Node exporter metrics endpoint"
+spec:
+  type: ClusterIP
+  ports:
+  - name: metrics
+    port: 9100
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    app: node-exporter
+    component: monitoring
+---
+# Service monitors for Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: keyctl-metrics
+  namespace: c2-concierge
+  labels:
+    app: keyctl
+    component: monitoring
+  annotations:
+    description: "Service monitor for C2-Concierge metrics"
+spec:
+  selector:
+    matchLabels:
+      app: keyctl
+      component: metrics
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    honorLabels: true
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: node-exporter-metrics
+  namespace: c2-concierge
+  labels:
+    app: node-exporter
+    component: monitoring
+  annotations:
+    description: "Service monitor for node exporter metrics"
+spec:
+  selector:
+    matchLabels:
+      app: node-exporter
+      component: monitoring
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
+    honorLabels: true

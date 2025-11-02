@@ -1,0 +1,140 @@
+name = "c2-manifest-store-worker"
+main = "dist/index.js"
+compatibility_date = "2023-10-30"
+compatibility_flags = ["nodejs_compat"]
+
+[env.development]
+name = "c2-manifest-store-worker-dev"
+vars = { 
+  ENVIRONMENT = "development",
+  MANIFEST_BASE_URL = "https://manifests.dev.survival.test",
+  WRITE_ONCE_ENABLED = "true",
+  SIGNED_URL_TTL = "3600000",
+  NEGATIVE_CACHE_TTL = "300000",
+  MAX_OBJECT_SIZE = "104857600"
+}
+
+[env.staging]
+name = "c2-manifest-store-worker-staging"
+vars = { 
+  ENVIRONMENT = "staging",
+  MANIFEST_BASE_URL = "https://manifests.staging.survival.test",
+  WRITE_ONCE_ENABLED = "true",
+  SIGNED_URL_TTL = "1800000",
+  NEGATIVE_CACHE_TTL = "600000",
+  MAX_OBJECT_SIZE = "52428800"
+}
+
+[env.production]
+name = "c2-manifest-store-worker"
+vars = { 
+  ENVIRONMENT = "production",
+  MANIFEST_BASE_URL = "https://manifests.survival.test",
+  WRITE_ONCE_ENABLED = "true",
+  SIGNED_URL_TTL = "3600000",
+  NEGATIVE_CACHE_TTL = "300000",
+  MAX_OBJECT_SIZE = "104857600"
+}
+
+# R2 bucket configuration (for production)
+[[env.production.r2_buckets]]
+binding = "R2"
+bucket_name = "c2-manifests-production"
+
+[[env.staging.r2_buckets]]
+binding = "R2"
+bucket_name = "c2-manifests-staging"
+
+[[env.development.r2_buckets]]
+binding = "R2"
+bucket_name = "c2-manifests-development"
+
+# D1 database for audit logs (optional)
+[[env.production.d1_databases]]
+binding = "AUDIT_DB"
+database_name = "c2-manifest-audit-production"
+
+[[env.staging.d1_databases]]
+binding = "AUDIT_DB"
+database_name = "c2-manifest-audit-staging"
+
+[[env.development.d1_databases]]
+binding = "AUDIT_DB"
+database_name = "c2-manifest-audit-development"
+
+# KV namespace for caching
+[[env.production.kv_namespaces]]
+binding = "CACHE"
+id = "c2-manifest-cache-production"
+preview_id = "c2-manifest-cache-preview"
+
+[[env.staging.kv_namespaces]]
+binding = "CACHE"
+id = "c2-manifest-cache-staging"
+preview_id = "c2-manifest-cache-preview"
+
+[[env.development.kv_namespaces]]
+binding = "CACHE"
+id = "c2-manifest-cache-development"
+preview_id = "c2-manifest-cache-preview"
+
+# Workers AI for validation (optional)
+[env.production.ai]
+binding = "AI"
+
+[env.staging.ai]
+binding = "AI"
+
+[env.development.ai]
+binding = "AI"
+
+# Queue for audit log processing
+[[env.production.queues.producers]]
+binding = "AUDIT_QUEUE"
+queue = "c2-manifest-audit-queue-production"
+
+[[env.staging.queues.producers]]
+binding = "AUDIT_QUEUE"
+queue = "c2-manifest-audit-queue-staging"
+
+[[env.development.queues.producers]]
+binding = "AUDIT_QUEUE"
+queue = "c2-manifest-audit-queue-development"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+BUCKET_NAME = "c2-manifests"
+REGION = "auto"
+WRITE_ONCE_ENABLED = "true"
+SIGNED_URL_TTL = "3600000"
+NEGATIVE_CACHE_TTL = "300000"
+MAX_OBJECT_SIZE = "104857600"
+
+# Secret variables (set via wrangler secret put)
+# HMAC_SECRET = "your-secret-key-here"
+# TSA_URL = "https://timestamp.digicert.com"
+# TSA_CERTIFICATE = "base64-encoded-certificate"
+
+# Limits and quotas
+[limits]
+cpu_ms = 50000
+
+# Route configuration
+[[routes]]
+pattern = "manifests.survival.test/*"
+zone_name = "survival.test"
+
+[[routes]]
+pattern = "api.manifests.survival.test/*"
+zone_name = "survival.test"
+
+# Custom domains
+[env.production.custom_domains]
+domain = "manifests.survival.test"
+
+[env.staging.custom_domains]
+domain = "manifests.staging.survival.test"
+
+[env.development.custom_domains]
+domain = "manifests.dev.survival.test"

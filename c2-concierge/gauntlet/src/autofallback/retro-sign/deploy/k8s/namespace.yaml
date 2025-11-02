@@ -1,0 +1,111 @@
+# Kubernetes Namespace - ENTERPRISE ISOLATION
+# 
+# Dedicated namespace for C2-Concierge key custody services
+# Provides network isolation and resource separation
+# 
+# SECURITY REQUIREMENTS:
+# - Network policies
+# - Resource quotas
+# - Pod security policies
+# - RBAC controls
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: c2-concierge
+  labels:
+    name: c2-concierge
+    environment: production
+    security-level: high
+  annotations:
+    description: "C2-Concierge Key Custody Management Namespace"
+    contact: "security@c2-concierge.com"
+---
+# Resource Quota - Prevent resource exhaustion
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: c2-concierge-quota
+  namespace: c2-concierge
+spec:
+  hard:
+    requests.cpu: "10"
+    requests.memory: 20Gi
+    limits.cpu: "20"
+    limits.memory: 40Gi
+    persistentvolumeclaims: "10"
+    pods: "20"
+    services: "10"
+    secrets: "20"
+    configmaps: "20"
+---
+# Network Policy - Restrict traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: c2-concierge-network-policy
+  namespace: c2-concierge
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 9090
+  egress:
+  - to:
+    - podSelector: {}
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 80
+---
+# Pod Security Policy - Security hardening
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: c2-concierge-psp
+  namespace: c2-concierge
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: true
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000

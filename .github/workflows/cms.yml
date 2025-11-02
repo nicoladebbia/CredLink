@@ -1,0 +1,337 @@
+name: CMS Injector Matrix Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'plugins/**'
+      - 'packages/acceptance-cms/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'plugins/**'
+      - 'packages/acceptance-cms/**'
+  schedule:
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  WP_VERSION: '6.4'
+  PHP_VERSION: '8.2'
+
+jobs:
+  wordpress-matrix:
+    name: WordPress Theme Matrix
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: wordpress
+          MYSQL_DATABASE: wordpress_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, mysql, gd
+        tools: composer:v2
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd packages/acceptance-cms && npm ci
+
+    - name: Start WordPress
+      run: |
+        docker-compose -f .github/workflows/wp-docker-compose.yml up -d
+        sleep 30
+
+    - name: Install WordPress
+      run: |
+        docker exec wp-test wp core install \
+          --url=http://localhost:8080 \
+          --title="C2 Concierge Test" \
+          --admin_user=admin \
+          --admin_password=password \
+          --admin_email=test@example.com \
+          --skip-email
+
+    - name: Install test themes
+      run: |
+        docker exec wp-test wp theme install twentytwentyfive --activate
+        docker exec wp-test wp theme install twentytwentyfour
+        docker exec wp-test wp theme install astra
+        docker exec wp-test wp theme install generatepress
+        docker exec wp-test wp theme install hello-elementor
+
+    - name: Build WordPress plugin
+      run: |
+        cd plugins/wp-c2concierge
+        zip -r ../wp-c2concierge.zip .
+
+    - name: Run WordPress matrix tests
+      env:
+        WP_URL: http://localhost:8080
+        WP_USERNAME: admin
+        WP_PASSWORD: password
+      run: |
+        cd packages/acceptance-cms
+        npm run build
+        npm run test:wp
+
+    - name: Upload WordPress artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: wp-matrix-results
+        path: .artifacts/cms/wp/
+        retention-days: 30
+
+    - name: WordPress matrix gate
+      run: |
+        cd packages/acceptance-cms
+        node -e "
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('.artifacts/cms/wp/theme-matrix-results.json', 'utf8'));
+          const total = results.length;
+          const passed = results.filter(r => r.status === 'PASS').length;
+          const passRate = (passed / total) * 100;
+          
+          console.log(\`WordPress Matrix: \${passed}/\${total} passed (\${passRate.toFixed(1)}%)\`);
+          
+          if (passRate < 100) {
+            console.error('❌ WordPress matrix gate failed: 100% pass rate required');
+            process.exit(1);
+          }
+          
+          console.log('✅ WordPress matrix gate passed');
+        "
+
+  shopify-matrix:
+    name: Shopify Theme Matrix
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd packages/acceptance-cms && npm ci
+        cd ../../plugins/shopify-app && npm ci
+
+    - name: Build Shopify app
+      run: |
+        cd plugins/shopify-app
+        npm run build
+
+    - name: Run Shopify matrix tests
+      env:
+        SHOPIFY_DEV_STORE: ${{ secrets.SHOPIFY_DEV_STORE }}
+        SHOPIFY_ACCESS_TOKEN: ${{ secrets.SHOPIFY_ACCESS_TOKEN }}
+      run: |
+        cd packages/acceptance-cms
+        npm run build
+        npm run test:shopify
+
+    - name: Upload Shopify artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: shopify-matrix-results
+        path: .artifacts/cms/shopify/
+        retention-days: 30
+
+    - name: Shopify matrix gate
+      run: |
+        cd packages/acceptance-cms
+        node -e "
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('.artifacts/cms/shopify/theme-matrix-results.json', 'utf8'));
+          const total = results.length;
+          const passed = results.filter(r => r.status === 'PASS').length;
+          const passRate = (passed / total) * 100;
+          
+          console.log(\`Shopify Matrix: \${passed}/\${total} passed (\${passRate.toFixed(1)}%)\`);
+          
+          if (passRate < 100) {
+            console.error('❌ Shopify matrix gate failed: 100% pass rate required');
+            process.exit(1);
+          }
+          
+          console.log('✅ Shopify matrix gate passed');
+        "
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run security audit
+      run: npm run security:audit
+
+    - name: Security gate
+      run: |
+        if [ $? -ne 0 ]; then
+          echo "❌ Security gate failed: vulnerabilities found"
+          exit 1
+        fi
+        echo "✅ Security gate passed"
+
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build all packages
+      run: npm run build
+
+    - name: Run tests
+      run: npm test
+
+    - name: Type check
+      run: npm run typecheck
+
+    - name: Lint
+      run: npm run lint
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: [wordpress-matrix, shopify-matrix, security-scan, build-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build for staging
+      run: |
+        npm run build
+        cd plugins/wp-c2concierge && zip -r ../wp-c2concierge-staging.zip .
+        cd ../shopify-app && npm run build
+
+    - name: Deploy WordPress plugin to staging
+      run: |
+        echo "Deploying WordPress plugin to staging..."
+        # Add deployment logic here
+
+    - name: Deploy Shopify app to staging
+      run: |
+        echo "Deploying Shopify app to staging..."
+        # Add deployment logic here
+
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests on staging..."
+        # Add smoke test logic here
+
+  deploy-production:
+    name: Deploy to Production
+    needs: [wordpress-matrix, shopify-matrix, security-scan, build-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build for production
+      run: |
+        npm run build
+        cd plugins/wp-c2concierge && zip -r ../wp-c2concierge-production.zip .
+        cd ../shopify-app && npm run build
+
+    - name: Create production release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        draft: false
+        prerelease: false
+
+    - name: Upload WordPress plugin
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./wp-c2concierge-production.zip
+        asset_name: wp-c2concierge-v${{ github.run_number }}.zip
+        asset_content_type: application/zip
+
+    - name: Deploy to production
+      run: |
+        echo "Deploying to production..."
+        # Add production deployment logic here

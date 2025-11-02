@@ -3,22 +3,24 @@
   "version": "0.1.0",
   "description": "Acceptance harness for hostile-path matrix testing",
   "main": "dist/main.js",
+  "type": "module",
   "bin": {
-    "acceptance": "bin/acceptance"
+    "acceptance": "bin/acceptance.mjs"
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "node dist/main.js --matrix docs/hostile-path-matrix.yaml --out .artifacts/acceptance",
+    "test": "node bin/acceptance.mjs --matrix docs/hostile-path-matrix.yaml --out .artifacts/acceptance",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@c2/utils": "workspace:*",
-    "@c2/policy": "workspace:*",
+    "@c2/utils": "file:../utils",
+    "yaml": "^2.3.4",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.2",
     "sharp": "^0.33.0",
-    "commander": "^11.1.0"
+    "commander": "^11.1.0",
+    "csv-writer": "^1.6.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

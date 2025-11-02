@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2 Badge with Subresource Integrity</title>
+    
+    <!-- CRITICAL: Subresource Integrity for all external resources -->
+    <script src="https://cdn.jsdelivr.net/npm/@c2/c2-badge@latest/dist/c2-badge.js" 
+            integrity="sha384-ABC123DEF456GHI789JKL012MNO345PQR678STU012VWXYZABCDEF456GHI789JKL" 
+            crossorigin="anonymous"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .demo-container {
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .security-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+            color: #856404;
+        }
+        
+        .integrity-status {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>C2 Badge - Subresource Integrity Demo</h1>
+        <p>This demo shows secure loading with integrity verification.</p>
+    </header>
+
+    <main>
+        <div class="security-notice">
+            <strong>🔒 Security Notice:</strong> This page uses Subresource Integrity (SRI) to ensure the C2 Badge script hasn't been tampered with.
+        </div>
+
+        <section class="demo-container">
+            <h2>Asset Verification Example</h2>
+            <p>Verify the authenticity of this sample image:</p>
+            
+            <!-- Asset with manifest URL -->
+            <c2-badge 
+                asset-url="https://picsum.photos/400/300" 
+                manifest-url="https://example.com/manifests/abc123.c2pa"
+                api-url="https://verify.c2pa.org/api/v1"
+                text="Verify Provenance">
+            </c2-badge>
+        </section>
+
+        <section class="demo-container">
+            <h2>Direct Manifest Verification</h2>
+            <p>Verify a manifest directly:</p>
+            
+            <!-- Direct manifest verification -->
+            <c2-badge 
+                manifest-url="https://example.com/manifests/def456.c2pa"
+                api-url="https://verify.c2pa.org/api/v1"
+                text="Check Manifest">
+            </c2-badge>
+        </section>
+
+        <section class="demo-container">
+            <h2>Integrity Verification Status</h2>
+            <div class="integrity-status" id="integrity-status">
+                Checking script integrity...
+            </div>
+            
+            <button onclick="verifyIntegrity()">Verify SRI Hash</button>
+        </section>
+    </main>
+
+    <script>
+        // Verify subresource integrity
+        function verifyIntegrity() {
+            const status = document.getElementById('integrity-status');
+            const scripts = document.querySelectorAll('script[integrity]');
+            
+            if (scripts.length === 0) {
+                status.textContent = '❌ No SRI protected scripts found';
+                status.style.color = '#dc3545';
+                return;
+            }
+            
+            let verifiedCount = 0;
+            scripts.forEach(script => {
+                if (script.integrity) {
+                    verifiedCount++;
+                }
+            });
+            
+            status.innerHTML = `
+                ✅ ${verifiedCount} script(s) protected with SRI<br>
+                📋 Integrity: ${scripts[0].integrity}<br>
+                🔒 Crossorigin: ${scripts[0].crossOrigin}
+            `;
+            status.style.color = '#28a745';
+        }
+
+        // Auto-verify on load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(verifyIntegrity, 1000);
+        });
+
+        // Monitor for CSP violations
+        document.addEventListener('securitypolicyviolation', (e) => {
+            console.error('🚨 CSP Violation:', e);
+            const status = document.getElementById('integrity-status');
+            status.innerHTML += `<br>⚠️ CSP Violation: ${e.violatedDirective}`;
+            status.style.color = '#ffc107';
+        });
+    </script>
+</body>
+</html>

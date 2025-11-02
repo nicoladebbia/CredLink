@@ -1,0 +1,81 @@
+# HSM/KMS Signing Service Configuration
+
+[service]
+host = "0.0.0.0"
+port = 8082
+
+# Logging configuration
+[logging]
+level = "info"
+format = "json"
+
+# Metrics configuration
+[metrics]
+enabled = true
+port = 9092
+
+# Backend configurations
+[backends]
+
+# Example YubiHSM2 backend (REAL HARDWARE)
+[backends.enterprise-tenant]
+backend_type = "YubiHSM2"
+timeout_ms = 5000
+max_retries = 3
+
+[backends.enterprise-tenant.settings]
+module_path = "/usr/local/lib/libyubihsm.so"
+slot_id = "7"
+key_id = "01020304"  # Hex-encoded key ID
+# pin = "123456"     # Optional HSM PIN
+
+# Example Vault Transit backend
+[backends.growth-tenant]
+backend_type = "VaultTransit"
+timeout_ms = 5000
+max_retries = 3
+
+[backends.growth-tenant.settings]
+vault_addr = "https://vault.example.com"
+vault_token = "vault-token-here"
+transit_mount = "transit"
+key_prefix = "tenants"
+
+# Example Vault-HSM backend (REAL HARDWARE BACKED)
+[backends.hsm-tenant]
+backend_type = "VaultHSM"
+timeout_ms = 5000
+max_retries = 3
+
+[backends.hsm-tenant.settings]
+vault_addr = "https://vault-hsm.example.com"
+vault_token = "s.vault-token-here"
+mount_path = "hsm"
+key_name = "c2c-signing-key"
+# namespace = "admin"  # Optional Vault namespace
+
+# Example AWS KMS backend
+[backends.aws-tenant]
+backend_type = "AWSKMS"
+timeout_ms = 5000
+max_retries = 3
+
+[backends.aws-tenant.settings]
+region = "us-east-1"
+key_id = "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+# role_arn = "arn:aws:iam::123456789012:role/C2C-Signer-Role"
+# external_id = "external-id-here"
+
+# Example GCP KMS backend
+[backends.gcp-tenant]
+backend_type = "GCPKMS"
+timeout_ms = 5000
+max_retries = 3
+
+[backends.gcp-tenant.settings]
+project_id = "my-gcp-project"
+location_id = "us-central1"
+key_ring_id = "c2c-keyring"
+key_id = "c2c-signing-key"
+version_id = "1"
+# service_account_key = "/path/to/service-account-key.json"

@@ -19,12 +19,36 @@ export interface EnvironmentConfig {
   BREAK_GLASS_HOSTS?: string;
 }
 
+function parseBoolean(value: string | undefined, defaultValue: boolean): boolean {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return value === '1';
+}
+
+function parseList(value: string | undefined, defaultValue: string[]): string[] {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  return value
+    .split(',')
+    .map(entry => entry.trim())
+    .filter(entry => entry.length > 0);
+}
+
 export function policyFromEnvironment(env: EnvironmentConfig): PolicyConfig {
+  const remoteOnlyEnv = env.REMOTE_ONLY;
+  const preservePathsEnv = env.PRESERVE_PATHS;
+  const dropIfLinkMissingEnv = env.DROP_IF_LINK_MISSING;
+  const breakGlassHostsEnv = env.BREAK_GLASS_HOSTS;
+
   return {
-    remote_only: env.REMOTE_ONLY === '1',
-    preserve_paths: env.PRESERVE_PATHS ? env.PRESERVE_PATHS.split(',').map(p => p.trim()) : DEFAULT_POLICY.preserve_paths,
-    drop_if_link_missing: env.DROP_IF_LINK_MISSING === '1',
-    break_glass_hosts: env.BREAK_GLASS_HOSTS ? env.BREAK_GLASS_HOSTS.split(',').map(h => h.trim()) : []
+    remote_only: parseBoolean(remoteOnlyEnv, DEFAULT_POLICY.remote_only),
+    preserve_paths: parseList(preservePathsEnv, DEFAULT_POLICY.preserve_paths),
+    drop_if_link_missing: parseBoolean(dropIfLinkMissingEnv, DEFAULT_POLICY.drop_if_link_missing),
+    break_glass_hosts: parseList(breakGlassHostsEnv, DEFAULT_POLICY.break_glass_hosts)
   };
 }
 
