@@ -202,22 +202,14 @@ async function createServer() {
     keyGenerator: (request) => {
       // SECURITY: Use IP-based rate limiting with fallback
       const ip = request.ip || 
-                 request.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                 (Array.isArray(request.headers['x-forwarded-for']) 
+                   ? request.headers['x-forwarded-for'][0]?.split(',')[0]?.trim()
+                   : request.headers['x-forwarded-for']?.split(',')[0]?.trim()) ||
                  request.headers['x-real-ip'] ||
                  'unknown';
-      return ip;
-    },
-    addHeadersOnExceed: {
-      'X-RateLimit-Limit': true,
-      'X-RateLimit-Remaining': true,
-      'X-RateLimit-Reset': true
-    },
-    addHeaders: {
-      'X-RateLimit-Limit': true,
-      'X-RateLimit-Remaining': true,
-      'X-RateLimit-Reset': true,
-      'Retry-After': true
+      return ip.toString();
     }
+  });
 
   // Register verification routes
   await registerRoutes(fastify);
@@ -250,7 +242,7 @@ async function createServer() {
         });
       }
       
-      if (error.statusCode >= 500) {
+      if ((error.statusCode || 0) >= 500) {
         return reply.status(500).send({
           error: 'Internal server error',
           message: 'An error occurred while processing your request'
@@ -325,13 +317,12 @@ async function createServer() {
   // SECURITY: Add graceful shutdown handling
   const gracefulShutdown = (signal: string) => {
     fastify.log.info({ signal }, 'Received shutdown signal, closing server gracefully');
-    fastify.close((err) => {
-      if (err) {
-        fastify.log.error({ error: err.message }, 'Error during server shutdown');
-        process.exit(1);
-      }
+    fastify.close().then(() => {
       fastify.log.info('Server closed successfully');
       process.exit(0);
+    }).catch((err) => {
+      fastify.log.error({ error: err.message }, 'Error during server shutdown');
+      process.exit(1);
     });
   };
 

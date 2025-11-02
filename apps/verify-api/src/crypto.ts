@@ -190,10 +190,10 @@ function verifySignatureWithPublicKey(
       const verify = createVerify('ED25519');
       verify.update(data);
       return verify.verify(publicKeyPem, signature, 'base64');
-    } catch (ed25519Error) {
+    } catch (ed25519Err) {
       // Combine error messages without exposing sensitive details
       const rsaError = error instanceof Error ? 'RSA/ECDSA verification failed' : 'Signature verification failed';
-      const ed25519Error = ed25519Error instanceof Error ? 'Ed25519 verification failed' : 'Alternative verification failed';
+      const ed25519Error = ed25519Err instanceof Error ? 'Ed25519 verification failed' : 'Alternative verification failed';
       throw new Error(`${rsaError}, ${ed25519Error}`);
     }
   }
@@ -393,7 +393,7 @@ function extractSerialFromCert(pem: string): string {
   }
   
   // In production, use proper X.509 parsing library
-  return crypto.randomBytes(16).toString('hex');
+  return require('crypto').randomBytes(16).toString('hex');
 }
 
 function extractNotBeforeFromCert(pem: string): Date {
