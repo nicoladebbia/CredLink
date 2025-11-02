@@ -7,7 +7,6 @@ import { ClickHouseClient } from '../db/clickhouse';
 import { SLO_QUERIES, QueryBuilder } from '../queries/slo-queries';
 import { Logger } from 'winston';
 import {
-  SurvivalMetrics,
   BurnRateMetrics,
   LatencyMetrics,
   CostMetrics,
@@ -118,7 +117,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to get SLO status', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -167,7 +166,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to get dashboard data', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -196,7 +195,7 @@ export class AnalyticsService {
       this.logger.error('Failed to get burn rate metrics', {
         tenant,
         windowMinutes,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -208,7 +207,7 @@ export class AnalyticsService {
   async getRecentIncidents(tenant: string, routes?: string[]): Promise<IncidentMetrics[]> {
     try {
       const result = await this.clickhouse.query(
-        SLO_QUERIES.RECENT_INCIDENTS,
+        SLO_QUERIES.INCIDENTS_7D,
         QueryBuilder.incidentParams(tenant, routes?.[0])
       );
 
@@ -221,7 +220,7 @@ export class AnalyticsService {
       this.logger.error('Failed to get recent incidents', {
         tenant,
         routes,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -243,7 +242,7 @@ export class AnalyticsService {
       this.logger.error('Failed to get latency metrics', {
         tenant,
         routes,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -276,7 +275,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to get cost projections', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -301,7 +300,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to get provider performance', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -327,7 +326,7 @@ export class AnalyticsService {
         tenant,
         startDate,
         endDate,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -373,7 +372,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to check burn rate thresholds', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -417,8 +416,8 @@ export class AnalyticsService {
 
       return {
         total_routes: totalRoutes,
-        healthy_routes,
-        unhealthy_routes,
+        healthy_routes: healthyRoutes,
+        unhealthy_routes: unhealthyRoutes,
         overall_survival: Math.round(overallSurvival * 10000) / 10000,
         alerts_triggered: alertsTriggered
       };
@@ -426,7 +425,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to get SLO health summary', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -460,7 +459,7 @@ export class AnalyticsService {
     } catch (error) {
       this.logger.error('Failed to validate data freshness', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }

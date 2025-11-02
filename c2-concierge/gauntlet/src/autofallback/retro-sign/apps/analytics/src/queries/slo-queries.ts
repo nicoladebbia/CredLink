@@ -75,12 +75,11 @@ export const SLO_QUERIES = {
       sumMerge(embed_ok) AS embed_ok,
       sumMerge(embed_fail) AS embed_fail,
       sumMerge(total) AS total,
-      round(remote_ok / (remote_ok + remote_fail), 4) AS remote_survival,
-      round(embed_ok / (embed_ok + embed_fail), 4) AS embed_survival
+      round(if(remote_ok + remote_fail > 0, remote_ok / (remote_ok + remote_fail), 0), 4) AS remote_survival,
+      round(if(embed_ok + embed_fail > 0, embed_ok / (embed_ok + embed_fail), 0), 4) AS embed_survival
     FROM mv_survival_5m_table
     WHERE tenant = {tenant:String}
       AND window_start >= now() - INTERVAL 30 DAY
-      AND route = {route:String}
     GROUP BY tenant, route, mode
     ORDER BY mode, route
   `,
@@ -94,8 +93,8 @@ export const SLO_QUERIES = {
       window_start,
       sumMerge(remote_ok) AS ok,
       sumMerge(remote_fail) AS fail,
-      round(ok / (ok + fail), 4) AS survival,
-      round(fail / ((1 - target) * (ok + fail)), 2) AS burn_rate,
+      round(if(ok + fail > 0, ok / (ok + fail), 0), 4) AS survival,
+      round(if(ok + fail > 0, fail / ((1 - target) * (ok + fail)), 0), 2) AS burn_rate,
       sumMerge(total) AS total_requests
     FROM mv_survival_5m_table
     WHERE tenant = {tenant:String}
@@ -113,8 +112,8 @@ export const SLO_QUERIES = {
       route,
       sumMerge(remote_ok) AS ok,
       sumMerge(remote_fail) AS fail,
-      round(ok / (ok + fail), 4) AS survival,
-      round(fail / ((1 - target) * (ok + fail)), 2) AS burn_rate,
+      round(if(ok + fail > 0, ok / (ok + fail), 0), 4) AS survival,
+      round(if(ok + fail > 0, fail / ((1 - target) * (ok + fail)), 0), 2) AS burn_rate,
       sumMerge(total) AS total_requests
     FROM mv_survival_5m_table
     WHERE tenant = {tenant:String}
@@ -129,14 +128,13 @@ export const SLO_QUERIES = {
     SELECT
       tenant,
       route,
-      round(quantileMerge(0.50)(p50), 0) AS p50,
-      round(quantileMerge(0.95)(p95), 0) AS p95,
-      round(quantileMerge(0.99)(p99), 0) AS p99,
+      quantileMerge(0.95)(p95) AS verify_p95,
+      quantileMerge(0.99)(p99) AS verify_p99,
+      quantileMerge(0.50)(p50) AS verify_p50,
       sumMerge(n) AS sample_count
     FROM mv_verify_5m_table
     WHERE tenant = {tenant:String}
       AND window_start >= now() - INTERVAL 24 HOUR
-      ${route:raw}
     GROUP BY tenant, route
     ORDER BY route
   `,
@@ -240,8 +238,8 @@ export const SLO_QUERIES = {
     FULL OUTER JOIN egress_gb e ON coalesce(s.tenant, v.tenant, st.tenant) = e.tenant
   `,
 
-  // Recent incidents for dashboard table
-  RECENT_INCIDENTS: `
+  // Recent incidents for dashboard
+  INCIDENTS_7D: `
     SELECT
       tenant,
       route,
@@ -250,15 +248,11 @@ export const SLO_QUERIES = {
       state_to,
       reason,
       rules,
-      toString(id) AS incident_id,
-      CASE 
-        WHEN state_to = 'NORMAL' THEN 'resolved'
-        ELSE 'open'
-      END AS status
+      id,
+      dateDiff('minute', ts, now()) AS duration_minutes
     FROM incidents
     WHERE tenant = {tenant:String}
       AND ts >= now() - INTERVAL 7 DAY
-      ${route:raw}
     ORDER BY ts DESC
     LIMIT 50
   `,

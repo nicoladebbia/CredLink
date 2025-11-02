@@ -3,7 +3,7 @@
  * Global test configuration and mocks
  */
 
-import { config } from '../config';
+import { jest } from '@jest/globals';
 
 // Set test environment
 process.env.NODE_ENV = 'test';
@@ -16,7 +16,7 @@ process.env.CLICKHOUSE_DATABASE = process.env.CLICKHOUSE_DATABASE || 'test_analy
 process.env.LOG_LEVEL = 'error';
 process.env.ALERTS_ENABLED = 'false';
 
-// Mock console methods to reduce noise in tests
+// Mock global services
 global.console = {
   ...console,
   log: jest.fn(),
@@ -24,6 +24,17 @@ global.console = {
   info: jest.fn(),
   warn: jest.fn(),
   error: jest.fn()
+} as any;
+
+// Mock nodemailer
+global.testMocks = {
+  nodemailer: {
+    sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' }) as any
+  },
+  slack: {
+    postMessage: jest.fn().mockResolvedValue({ ok: true, ts: '1234567890.123456' }) as any
+  },
+  fetch: jest.fn() as any
 };
 
 // Global test utilities
@@ -80,20 +91,65 @@ jest.mock('@slack/web-api', () => ({
 // Mock fetch for external API calls
 global.fetch = jest.fn() as jest.Mock;
 
-// Setup and teardown hooks
+// Global test utilities
+global.testUtils = {
+  generateTestTenant: (prefix = 'test') => `${prefix}-tenant-${Math.random().toString(36).substring(7)}`,
+  generateTestToken: () => `test-token-${Math.random().toString(36).substring(7)}`,
+  generateServiceToken: () => `service-token-${Math.random().toString(36).substring(7)}`,
+  
+  // Wait for async operations
+  wait: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+  
+  // Generate test data
+  generateTestSLOData: (tenant: string, route: string) => ({
+    tenant,
+    route,
+    mode: 'remote' as const,
+    survival_30d: 0.995 + Math.random() * 0.004,
+    survival_target: 0.999,
+    survival_status: Math.random() > 0.1 ? 'PASS' as const : 'FAIL' as const,
+    budget_left: Math.floor(Math.random() * 1000),
+    burn_rate_5m: Math.random() * 2,
+    burn_rate_1h: Math.random() * 1.5,
+    policy: 'NORMAL' as const
+  }),
+  
+  generateTestIncident: (tenant: string, route: string) => ({
+    tenant,
+    route,
+    ts: new Date(),
+    state_from: 'NORMAL',
+    state_to: 'FALLBACK_REMOTE_ONLY',
+    reason: 'High burn rate detected',
+    rules: ['remote-fast-burn'],
+    id: `inc_${Date.now()}_${Math.random().toString(36).substring(7)}`
+  }),
+  
+  // Mock ClickHouse responses
+  mockClickHouseResponse: (data: any[]) => ({
+    data,
+    rows: data.length,
+    statistics: {
+      elapsed: 0.001,
+      rows_read: data.length,
+      bytes_read: 1024
+    }
+  })
+};
+
+// Add Jest globals
+declare global {
+  var testUtils: any;
+  var testMocks: any;
+}
+
+// Setup and teardown
 beforeAll(async () => {
-  // Global test setup
-  console.log('🧪 Starting Phase 13 Analytics test suite');
+  // Test setup
 });
 
 afterAll(async () => {
-  // Global cleanup
-  console.log('✅ Phase 13 Analytics test suite completed');
-});
-
-// Error handling for unhandled promises
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Test cleanup
 });
 
 process.on('uncaughtException', (error) => {

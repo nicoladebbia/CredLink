@@ -172,8 +172,8 @@ SELECT
   sumMerge(embed_ok) AS embed_ok,
   sumMerge(embed_fail) AS embed_fail,
   sumMerge(total) AS total,
-  remote_ok / (remote_ok + remote_fail) AS remote_survival,
-  embed_ok / (embed_ok + embed_fail) AS embed_survival
+  if(remote_ok + remote_fail > 0, remote_ok / (remote_ok + remote_fail), 0) AS remote_survival,
+  if(embed_ok + embed_fail > 0, embed_ok / (embed_ok + embed_fail), 0) AS embed_survival
 FROM mv_survival_5m_table
 WHERE window_start >= now() - INTERVAL 30 DAY
 GROUP BY tenant, route, mode;
@@ -187,8 +187,8 @@ SELECT
   window_start,
   sumMerge(remote_ok) AS ok,
   sumMerge(remote_fail) AS fail,
-  ok / (ok + fail) AS survival,
-  (fail) / ((1 - target) * (ok + fail)) AS burn_rate,
+  if(ok + fail > 0, ok / (ok + fail), 0) AS survival,
+  if(ok + fail > 0, fail / ((1 - target) * (ok + fail)), 0) AS burn_rate,
   sumMerge(total) AS total_requests
 FROM mv_survival_5m_table
 GROUP BY tenant, route, window_start

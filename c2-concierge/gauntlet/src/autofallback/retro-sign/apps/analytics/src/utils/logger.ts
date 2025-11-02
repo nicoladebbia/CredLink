@@ -3,7 +3,9 @@
  * Structured logging with Winston for production monitoring
  */
 
-import { Logger, createLogger, format, transports } from 'winston';
+import { Logger as WinstonLogger, createLogger as winstonCreateLogger, format, transports } from 'winston';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface LoggerConfig {
   level: string;
@@ -12,7 +14,7 @@ export interface LoggerConfig {
   version?: string;
 }
 
-export function createLogger(service: string, config?: Partial<LoggerConfig>): Logger {
+export function createLogger(service: string, config?: Partial<LoggerConfig>): WinstonLogger {
   const loggerConfig: LoggerConfig = {
     level: 'info',
     service,
@@ -49,7 +51,7 @@ export function createLogger(service: string, config?: Partial<LoggerConfig>): L
     })
   );
 
-  const loggerTransports = [
+  const loggerTransports: any[] = [
     // Console transport
     new transports.Console({
       level: loggerConfig.level,
@@ -59,6 +61,12 @@ export function createLogger(service: string, config?: Partial<LoggerConfig>): L
 
   // File transports for production
   if (loggerConfig.environment === 'production') {
+    // Ensure logs directory exists
+    const logsDir = path.join(process.cwd(), 'logs');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+    
     loggerTransports.push(
       // Error log file
       new transports.File({
@@ -79,7 +87,7 @@ export function createLogger(service: string, config?: Partial<LoggerConfig>): L
     );
   }
 
-  return createLogger({
+  return winstonCreateLogger({
     level: loggerConfig.level,
     defaultMeta: {
       service: loggerConfig.service,

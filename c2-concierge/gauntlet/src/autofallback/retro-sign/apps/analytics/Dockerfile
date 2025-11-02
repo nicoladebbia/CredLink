@@ -1,8 +1,13 @@
 # Phase 13 Analytics - Production Dockerfile
-# Multi-stage build for optimized production image
+# Multi-stage build for optimized production image with security hardening
 
 # Build stage
 FROM node:18-alpine AS builder
+
+# CRITICAL: Security updates
+RUN apk update && apk upgrade && \
+    apk add --no-cache git && \
+    rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
@@ -10,8 +15,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig.json ./
 
-# Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+# Install dependencies with security audit
+RUN npm ci --audit && npm cache clean --force
 
 # Copy source code
 COPY src/ ./src/
@@ -19,41 +24,56 @@ COPY src/ ./src/
 # Build the application
 RUN npm run build
 
-# Production stage
+# Production stage with security hardening
 FROM node:18-alpine AS production
 
-# Install system dependencies
-RUN apk add --no-cache \
+# CRITICAL: Install and configure security packages
+RUN apk update && apk upgrade && \
+    apk add --no-cache \
     dumb-init \
     curl \
-    && rm -rf /var/cache/apk/*
+    ca-certificates \
+    && rm -rf /var/cache/apk/* \
+    && rm -rf /tmp/* \
+    && rm -rf /var/tmp/*
 
-# Create app user
+# CRITICAL: Create non-root user with no shell
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S analytics -u 1001
+    adduser -S -D -H -s /sbin/nologin -u 1001 analytics
 
 WORKDIR /app
 
-# Copy built application
+# CRITICAL: Copy built application with proper permissions
 COPY --from=builder --chown=analytics:nodejs /app/dist ./dist
 COPY --from=builder --chown=analytics:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=analytics:nodejs /app/package*.json ./
 
-# Create logs directory
-RUN mkdir -p logs && chown analytics:nodejs logs
+# Create logs directory with restricted permissions
+RUN mkdir -p logs && \
+    chown analytics:nodejs logs && \
+    chmod 750 logs
 
-# Switch to non-root user
+# CRITICAL: Remove setuid binaries
+RUN find / -perm /6000 -type f -exec chmod a-s {} \; || true
+
+# CRITICAL: Switch to non-root user
 USER analytics
 
-# Health check
+# CRITICAL: Health check with timeout and security
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:3002/health || exit 1
+    CMD curl -f -s -o /dev/null -w '%{http_code}' http://localhost:3002/health | grep -q '^200$' || exit 1
 
 # Expose port
 EXPOSE 3002
 
-# Use dumb-init to handle signals properly
+# CRITICAL: Security labels
+LABEL maintainer="security-team@c2pa.example.com" \
+      version="1.0.0" \
+      description="Phase 13 Analytics - Hardened Production Image" \
+      security.scan="required"
+
+# CRITICAL: Use dumb-init to handle signals properly and prevent zombie processes
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "dist/index.js"]
+# CRITICAL: Start the application with security flags
+CMD ["node", "--no-deprecation", "--security", "--throw-deprecation", "dist/index.js"]

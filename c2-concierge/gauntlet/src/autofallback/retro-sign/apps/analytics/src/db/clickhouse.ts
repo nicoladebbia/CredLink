@@ -3,8 +3,19 @@
  * High-performance analytics database client with connection pooling
  */
 
-import { createClient } from '@clickhouse/client';
+import { createClient, ClickHouseClient as CHClient } from '@clickhouse/client';
 import { Logger } from 'winston';
+import { RequestValidator } from '../utils/validation';
+
+export interface QueryResult<T> {
+  data: T[];
+  rows: number;
+  queryStats: {
+    elapsed: number;
+    rows_read: number;
+    bytes_read: number;
+  };
+}
 
 export interface ClickHouseConfig {
   host: string;
@@ -27,7 +38,7 @@ export interface QueryResult<T = any> {
 }
 
 export class ClickHouseClient {
-  private client: any;
+  private client: CHClient;
   private logger: Logger;
 
   constructor(config: ClickHouseConfig, logger: Logger) {
@@ -44,9 +55,9 @@ export class ClickHouseClient {
         async_insert: 1,
         wait_for_async_insert: 1,
         max_execution_time: 60,
-        max_memory_usage: 10000000000, // 10GB
-        max_result_rows: 100000,
-        max_result_bytes: 1000000000   // 1GB
+        max_memory_usage: '10000000000', // 10GB
+        max_result_rows: '100000',
+        max_result_bytes: '1000000000'   // 1GB
       }
     });
 
@@ -57,15 +68,79 @@ export class ClickHouseClient {
   }
 
   /**
-   * Execute a parameterized query
+   * Enhanced parameterized query with comprehensive security
    */
   async query<T = any>(sql: string, params?: Record<string, any>): Promise<QueryResult<T>> {
     const startTime = Date.now();
     
     try {
+      // CRITICAL: Enhanced SQL query validation
+      if (typeof sql !== 'string' || sql.length === 0) {
+        throw new Error('SQL query must be a non-empty string');
+      }
+
+      if (sql.length > 100000) { // 100KB limit
+        throw new Error('SQL query too large');
+      }
+
+      // Enhanced dangerous SQL pattern detection
+      const dangerousPatterns = [
+        // DDL operations
+        /\b(DROP|TRUNCATE|ALTER|CREATE|RENAME)\b/i,
+        // DML operations (should be handled through specific methods)
+        /\b(DELETE|UPDATE|INSERT)\b/i,
+        // Administrative operations
+        /\b(EXEC|EXECUTE|SCRIPT|KILL|SHUTDOWN)\b/i,
+        // Information disclosure
+        /\b(INFORMATION_SCHEMA|SYS|MASTER|MSDB|mysql|pg_)\b/i,
+        // File operations
+        /\b(BULK|OPENROWSET|OPENDATASOURCE|LOAD_FILE)\b/i,
+        // System functions
+        /\b(SYSTEM|SHELL|CMD|EXECUTE_IMMEDIATE)\b/i,
+        // Time-based attacks
+        /\b(WAITFOR|SLEEP|BENCHMARK|PG_SLEEP)\b/i,
+        // Union-based attacks
+        /\bUNION\s+(ALL\s+)?SELECT\b/i,
+        // Comment-based attacks
+        /(--|;|\/\*|\*\/|#)/,
+        // Boolean-based attacks
+        /(\bOR\b.*=.*\bOR\b|\bAND\b.*=.*\bAND\b)/i,
+        // Stored procedures
+        /\b(xp_|sp_)\w*\b/i
+      ];
+
+      for (const pattern of dangerousPatterns) {
+        if (pattern.test(sql)) {
+          this.logger.error('Dangerous SQL pattern detected', { 
+            sql: sql.substring(0, 100) + '...',
+            pattern: pattern.source
+          });
+          throw new Error('Potentially dangerous SQL query detected');
+        }
+      }
+
+      // Validate all parameters with enhanced security
+      if (params) {
+        if (Object.keys(params).length > 100) {
+          throw new Error('Too many parameters in query');
+        }
+
+        for (const [key, value] of Object.entries(params)) {
+          // Validate parameter names
+          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(key)) {
+            throw new Error(`Invalid parameter name: ${key}`);
+          }
+
+          // Validate parameter values
+          RequestValidator.validateSQLParam(value);
+        }
+      }
+
+      // CRITICAL SECURITY: Enhanced logging without sensitive data
       this.logger.debug('Executing ClickHouse query', { 
-        sql: sql.substring(0, 200) + '...',
-        params 
+        sql: sql.substring(0, 200) + (sql.length > 200 ? '...' : ''),
+        paramCount: params ? Object.keys(params).length : 0,
+        queryLength: sql.length
       });
 
       const result = await this.client.query({
@@ -73,24 +148,28 @@ export class ClickHouseClient {
         format: 'JSONEachRow',
         clickhouse_settings: {
           wait_end_of_query: 1,
-          max_execution_time: 30
+          max_execution_time: 30,
+          max_memory_usage: '10000000000', // 10GB
+          max_result_rows: '1000000',
+          max_result_bytes: '1000000000' // 1GB
         },
         query_params: params || {}
       });
 
-      const data = await result.json();
-      const elapsed = Date.now() - startTime;
-
-      this.logger.debug('ClickHouse query completed', {
-        rows: data.length,
-        elapsed: `${elapsed}ms`
-      });
-
+      const data = (await result.json()) as any[];
+      
+      // Validate result size
+      if (data.length > 1000000) {
+        this.logger.warn('Query returned unusually large result set', {
+          rowCount: data.length
+        });
+      }
+      
       return {
-        data,
+        data: data as T[],
         rows: data.length,
-        statistics: {
-          elapsed,
+        queryStats: {
+          elapsed: Date.now() - startTime,
           rows_read: data.length,
           bytes_read: JSON.stringify(data).length
         }
@@ -99,14 +178,20 @@ export class ClickHouseClient {
     } catch (error) {
       const elapsed = Date.now() - startTime;
       
+      // CRITICAL: Enhanced error logging without sensitive parameters
       this.logger.error('ClickHouse query failed', {
-        error: error.message,
-        sql: sql.substring(0, 200) + '...',
-        params,
-        elapsed: `${elapsed}ms`
+        error: error instanceof Error ? error.message : String(error),
+        sql: sql.substring(0, 200) + (sql.length > 200 ? '...' : ''),
+        elapsed: `${elapsed}ms`,
+        paramCount: params ? Object.keys(params).length : 0
       });
 
-      throw new Error(`ClickHouse query failed: ${error.message}`);
+      // Don't expose internal database errors to clients
+      if (error instanceof Error && error.message.includes('detected')) {
+        throw error; // Re-throw security errors
+      }
+      
+      throw new Error('Database query failed');
     }
   }
 
@@ -125,7 +210,7 @@ export class ClickHouseClient {
       await this.client.insert({
         table,
         values: data,
-        format,
+        format: format as any,
         clickhouse_settings: {
           async_insert: 1,
           wait_for_async_insert: 1
@@ -143,13 +228,13 @@ export class ClickHouseClient {
       const elapsed = Date.now() - startTime;
       
       this.logger.error('ClickHouse insert failed', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         table,
         rows: data.length,
         elapsed: `${elapsed}ms`
       });
 
-      throw new Error(`ClickHouse insert failed: ${error.message}`);
+      throw new Error(`ClickHouse insert failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -180,12 +265,12 @@ export class ClickHouseClient {
       const elapsed = Date.now() - startTime;
       
       this.logger.error('DDL execution failed', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         ddl: ddl.substring(0, 200) + '...',
         elapsed: `${elapsed}ms`
       });
 
-      throw new Error(`DDL execution failed: ${error.message}`);
+      throw new Error(`DDL execution failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -200,13 +285,13 @@ export class ClickHouseClient {
         healthy: result.rows === 1,
         details: {
           rows: result.rows,
-          statistics: result.statistics
+          statistics: result.queryStats
         }
       };
     } catch (error) {
       return {
         healthy: false,
-        details: { error: error.message }
+        details: { error: error instanceof Error ? error.message : String(error) }
       };
     }
   }
@@ -266,7 +351,7 @@ export class ClickHouseClient {
       await this.client.close();
       this.logger.info('ClickHouse client closed');
     } catch (error) {
-      this.logger.error('Error closing ClickHouse client', { error: error.message });
+      this.logger.error('Error closing ClickHouse client', { error: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -275,11 +360,10 @@ export class ClickHouseClient {
    */
   async createSchema(ddlPath: string): Promise<void> {
     const fs = require('fs');
-    const path = require('path');
     
     try {
       const ddl = fs.readFileSync(ddlPath, 'utf8');
-      const statements = ddl.split(';').filter(s => s.trim().length > 0);
+      const statements = ddl.split(';').filter((s: string) => s.trim().length > 0);
       
       this.logger.info('Creating ClickHouse schema', {
         statements: statements.length,
@@ -295,7 +379,7 @@ export class ClickHouseClient {
       this.logger.info('ClickHouse schema created successfully');
     } catch (error) {
       this.logger.error('Failed to create ClickHouse schema', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         path: ddlPath
       });
       throw error;
@@ -324,7 +408,7 @@ export class ClickHouseClient {
       return {
         success: false,
         elapsed,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       };
     }
   }

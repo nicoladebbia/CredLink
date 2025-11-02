@@ -10,6 +10,7 @@ import { WebClient } from '@slack/web-api';
 import * as yaml from 'yaml';
 import * as fs from 'fs';
 import * as path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface AlertConfig {
   rules: AlertRule[];
@@ -77,9 +78,9 @@ export interface AlertIncident {
 }
 
 export class AlertService {
-  private config: AlertConfig;
-  private emailTransporter: nodemailer.Transporter;
-  private slackClient: WebClient;
+  private config!: AlertConfig;
+  private emailTransporter!: nodemailer.Transporter;
+  private slackClient!: WebClient;
   private activeIncidents: Map<string, AlertIncident> = new Map();
 
   constructor(
@@ -109,7 +110,7 @@ export class AlertService {
     } catch (error) {
       this.logger.error('Failed to load alert configuration', {
         path: filePath,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       
       // Load default configuration for safety
@@ -122,7 +123,7 @@ export class AlertService {
    */
   private initializeNotificationClients(): void {
     // Email transporter
-    this.emailTransporter = nodemailer.createTransporter({
+    this.emailTransporter = nodemailer.createTransport({
       host: this.config.notifications.email.smtp_host,
       port: this.config.notifications.email.smtp_port,
       secure: true,
@@ -160,7 +161,7 @@ export class AlertService {
     } catch (error) {
       this.logger.error('Burn-rate check failed', {
         tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -168,32 +169,32 @@ export class AlertService {
   /**
    * Check a specific alert rule
    */
-  private async checkRule(tenant: string, rule: AlertRule): Promise<void> {
+  private async checkRule(tenant: string, _rule: AlertRule): Promise<void> {
     try {
       // Check cooldown
-      const incidentKey = `${tenant}:${rule.name}`;
+      const incidentKey = `${tenant}:${_rule.name}`;
       const lastIncident = this.activeIncidents.get(incidentKey);
       
       if (lastIncident && lastIncident.status === 'open') {
         const cooldownElapsed = (Date.now() - lastIncident.triggered_at.getTime()) / (1000 * 60);
         
-        if (cooldownElapsed < rule.cooldown_minutes) {
+        if (cooldownElapsed < _rule.cooldown_minutes) {
           this.logger.debug('Rule in cooldown period', {
             tenant,
-            rule: rule.name,
-            cooldown_remaining: rule.cooldown_minutes - cooldownElapsed
+            rule: _rule.name,
+            cooldown_remaining: _rule.cooldown_minutes - cooldownElapsed
           });
           return;
         }
       }
 
       // Check burn-rate thresholds
-      const violations = await this.analyticsService.checkBurnRateThresholds(tenant, [rule]);
+      const violations = await this.analyticsService.checkBurnRateThresholds(tenant, [_rule]);
       
       if (violations.length > 0) {
         for (const violation of violations) {
           for (const metrics of violation.violations) {
-            await this.triggerAlert(tenant, rule, metrics);
+            await this.triggerAlert(tenant, _rule, metrics);
           }
         }
       }
@@ -201,8 +202,8 @@ export class AlertService {
     } catch (error) {
       this.logger.error('Rule check failed', {
         tenant,
-        rule: rule.name,
-        error: error.message
+        rule: _rule.name,
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -212,18 +213,18 @@ export class AlertService {
    */
   private async triggerAlert(
     tenant: string, 
-    rule: AlertRule, 
+    _rule: AlertRule, 
     metrics: any
   ): Promise<void> {
     try {
       const incidentId = this.generateIncidentId();
-      const incidentKey = `${tenant}:${rule.name}:${metrics.route}`;
+      const incidentKey = `${tenant}:${_rule.name}:${metrics.route}`;
       
       const incident: AlertIncident = {
         id: incidentId,
         tenant,
         route: metrics.route,
-        rule_name: rule.name,
+        rule_name: _rule.name,
         triggered_at: new Date(),
         burn_rate: metrics.burn_rate,
         window_minutes: metrics.window_start ? 5 : 60, // Determine from metrics
@@ -237,14 +238,14 @@ export class AlertService {
       this.logger.warn('Alert triggered', {
         tenant,
         route: metrics.route,
-        rule: rule.name,
+        rule: _rule.name,
         burn_rate: metrics.burn_rate,
         incident_id: incidentId
       });
 
       // Execute alert actions
-      for (const action of rule.actions) {
-        await this.executeAction(tenant, metrics, rule, action, incident);
+      for (const action of _rule.actions) {
+        await this.executeAction(tenant, metrics, _rule, action, incident);
       }
 
       // Log incident to database
@@ -253,8 +254,8 @@ export class AlertService {
     } catch (error) {
       this.logger.error('Alert trigger failed', {
         tenant,
-        rule: rule.name,
-        error: error.message
+        rule: _rule.name,
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -264,30 +265,30 @@ export class AlertService {
    */
   private async executeAction(
     tenant: string,
-    metrics: any,
-    rule: AlertRule,
+    _metrics: any,
+    _rule: AlertRule,
     action: AlertAction,
     incident: AlertIncident
   ): Promise<void> {
     try {
       switch (action.type) {
         case 'notify':
-          await this.sendNotifications(tenant, metrics, rule, action, incident);
+          await this.sendNotifications(tenant, _metrics, _rule, action, incident);
           incident.actions_taken.push('notification_sent');
           break;
 
         case 'enforce_fallback':
-          await this.enforceFallback(tenant, metrics.route, incident);
+          await this.enforceFallback(tenant, _metrics.route, incident);
           incident.actions_taken.push('fallback_enforced');
           break;
 
         case 'open_incident':
-          await this.openIncident(tenant, metrics, rule, incident);
+          await this.openIncident(tenant, _metrics, _rule, incident);
           incident.actions_taken.push('incident_opened');
           break;
 
         case 'open_ticket':
-          await this.openTicket(tenant, metrics, rule, incident);
+          await this.openTicket(tenant, _metrics, _rule, incident);
           incident.actions_taken.push('ticket_opened');
           break;
 
@@ -299,7 +300,7 @@ export class AlertService {
       this.logger.error('Alert action execution failed', {
         tenant,
         action: action.type,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   }
@@ -393,7 +394,7 @@ export class AlertService {
         tenant,
         route,
         incident_id: incident.id,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       throw error;
     }
@@ -404,14 +405,14 @@ export class AlertService {
    */
   private async openIncident(
     tenant: string,
-    metrics: any,
-    rule: AlertRule,
+    _metrics: any,
+    _rule: AlertRule,
     incident: AlertIncident
   ): Promise<void> {
     // TODO: Integrate with incident management system (PagerDuty, etc.)
     this.logger.info('Incident opened in tracking system', {
       tenant,
-      route: metrics.route,
+      route: _metrics.route,
       incident_id: incident.id
     });
   }
@@ -421,14 +422,14 @@ export class AlertService {
    */
   private async openTicket(
     tenant: string,
-    metrics: any,
-    rule: AlertRule,
+    _metrics: any,
+    _rule: AlertRule,
     incident: AlertIncident
   ): Promise<void> {
     // TODO: Integrate with ticketing system (Jira, etc.)
     this.logger.info('Support ticket opened', {
       tenant,
-      route: metrics.route,
+      route: _metrics.route,
       incident_id: incident.id
     });
   }
@@ -436,7 +437,7 @@ export class AlertService {
   /**
    * Log incident to analytics database
    */
-  private async logIncident(incident: AlertIncident, metrics: any): Promise<void> {
+  private async logIncident(incident: AlertIncident, _metrics: any): Promise<void> {
     // TODO: Insert into incidents table in ClickHouse
     this.logger.info('Incident logged to database', {
       incident_id: incident.id,
@@ -588,9 +589,7 @@ export class AlertService {
    * Generate unique incident ID
    */
   private generateIncidentId(): string {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
-    return `inc_${timestamp}_${random}`;
+    return `inc_${uuidv4()}`;
   }
 
   /**

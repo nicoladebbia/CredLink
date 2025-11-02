@@ -5,8 +5,9 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { AnalyticsService } from '../services/analytics-service';
-import { Logger } from 'winston';
-import * as fs from 'fs';
+import { createLogger } from '../utils/logger';
+import { RequestValidator } from '../utils/validation';
+import { getConfig } from '../config';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
 
@@ -33,24 +34,30 @@ export class DashboardRoutes {
   private loadTemplates(): void {
     const templateDir = path.join(__dirname, '../templates');
     
+    // Ensure template directory exists
+    if (!fs.existsSync(templateDir)) {
+      this.logger.warn('Template directory not found', { templateDir });
+      return;
+    }
+    
     const templateFiles = {
       'dashboard': 'dashboard.hbs',
-      'slo-card': 'slo-card.hbs',
-      'incidents-table': 'incidents-table.hbs',
-      'latency-table': 'latency-table.hbs',
-      'cost-card': 'cost-card.hbs',
       'public-report': 'public-report.hbs'
     };
 
     for (const [name, file] of Object.entries(templateFiles)) {
       try {
         const templatePath = path.join(templateDir, file);
-        const templateSource = fs.readFileSync(templatePath, 'utf8');
-        this.templates.set(name, Handlebars.compile(templateSource));
-        
-        this.logger.debug('Template loaded', { name, file });
+        if (fs.existsSync(templatePath)) {
+          const templateSource = fs.readFileSync(templatePath, 'utf8');
+          this.templates.set(name, Handlebars.compile(templateSource));
+          
+          this.logger.debug('Template loaded', { name, file });
+        } else {
+          this.logger.warn('Template file not found', { name, file });
+        }
       } catch (error) {
-        this.logger.error('Failed to load template', { name, file, error: error.message });
+        this.logger.error('Failed to load template', { name, file, error: error instanceof Error ? error.message : String(error) });
       }
     }
   }
@@ -197,7 +204,7 @@ export class DashboardRoutes {
     } catch (error) {
       this.logger.error('Failed to render tenant dashboard', {
         tenant: (request.params as any).tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       reply.status(500).send({
@@ -271,7 +278,7 @@ export class DashboardRoutes {
       this.logger.error('Failed to render public survival report', {
         tenant: (request.params as any).tenant,
         period: (request.params as any).period,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       reply.status(500).send({
@@ -309,7 +316,7 @@ export class DashboardRoutes {
     } catch (error) {
       this.logger.error('Failed to export dashboard data', {
         tenant: (request.params as any).tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       reply.status(500).send({
@@ -337,7 +344,7 @@ export class DashboardRoutes {
     } catch (error) {
       this.logger.error('Failed to get SLO status API', {
         tenant: (request.params as any).tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       reply.status(500).send({
@@ -367,7 +374,7 @@ export class DashboardRoutes {
     } catch (error) {
       this.logger.error('Failed to get burn rate API', {
         tenant: (request.params as any).tenant,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
 
       reply.status(500).send({
@@ -380,7 +387,7 @@ export class DashboardRoutes {
   /**
    * Health check endpoint
    */
-  private async healthCheck(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  private async healthCheck(_request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
       // Check analytics service health
       const healthSummary = {
@@ -395,14 +402,14 @@ export class DashboardRoutes {
     } catch (error) {
       reply.status(500).send({
         analytics: 'unhealthy',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
       });
     }
   }
 
   /**
-   * Authenticate tenant request (JWT-based)
+   * Authenticate tenant request (JWT-based) - Enhanced Security
    */
   private async authenticateTenant(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     const authHeader = request.headers.authorization;
@@ -415,23 +422,86 @@ export class DashboardRoutes {
     }
 
     const token = authHeader.substring(7);
+    const config = getConfig();
     
     try {
-      // TODO: Implement proper JWT validation with tenant claims
-      // For now, just check if token exists and is not empty
-      if (!token || token.length < 10) {
-        throw new Error('Invalid token');
+      // CRITICAL: Enhanced JWT validation with security checks
+      const jwt = require('jsonwebtoken');
+      const jwtSecret = config.security?.jwt_secret || process.env.JWT_SECRET;
+      
+      if (!jwtSecret || jwtSecret.length < 32) {
+        this.logger.error('JWT secret not configured or too weak');
+        return reply.status(500).send({
+          error: 'Configuration error',
+          message: 'Authentication system not properly configured'
+        });
       }
 
-      // Extract tenant from token or validate against request tenant
-      const tokenTenant = this.extractTenantFromToken(token);
+      const decoded = jwt.verify(token, jwtSecret);
+      
+      // Enhanced token validation
+      if (!decoded.tenant || !decoded.exp || !decoded.iat || !decoded.jti) {
+        return reply.status(401).send({
+          error: 'Authentication failed',
+          message: 'Invalid token structure'
+        });
+      }
+
+      // Check token age
+      const now = Math.floor(Date.now() / 1000);
+      const tokenAge = now - decoded.iat;
+      const maxAge = config.security?.session_timeout || 3600;
+      
+      if (tokenAge > maxAge) {
+        return reply.status(401).send({
+          error: 'Authentication failed',
+          message: 'Token expired'
+        });
+      }
+
+      // Extract and validate tenant from token
+      const tokenTenant = decoded.tenant;
+      
+      if (!RequestValidator.validateTenant(tokenTenant)) {
+        return reply.status(401).send({
+          error: 'Authentication failed',
+          message: 'Invalid tenant in token'
+        });
+      }
+
+      // Extract tenant from request and validate
       const requestTenant = (request.params as any).tenant;
       
+      if (!RequestValidator.validateTenant(requestTenant)) {
+        return reply.status(400).send({
+          error: 'Invalid request',
+          message: 'Invalid tenant parameter'
+        });
+      }
+      
+      // CRITICAL: Ensure tenant in token matches tenant in request
       if (tokenTenant !== requestTenant) {
-        throw new Error('Tenant mismatch');
+        this.logger.warn('Tenant access denied', {
+          tokenTenant,
+          requestTenant,
+          ip: request.ip
+        });
+        return reply.status(403).send({
+          error: 'Authorization failed',
+          message: 'Tenant access denied'
+        });
       }
 
+      // Attach validated tenant and token info to request
+      (request as any).tenant = tokenTenant;
+      (request as any).tokenId = decoded.jti;
+      (request as any).tokenExp = decoded.exp;
+
     } catch (error) {
+      this.logger.warn('Dashboard authentication failed', {
+        error: error instanceof Error ? error.message : String(error),
+        ip: request.ip
+      });
       return reply.status(401).send({
         error: 'Authentication failed',
         message: 'Invalid or expired token'
@@ -466,7 +536,7 @@ export class DashboardRoutes {
   /**
    * Extract tenant from JWT token
    */
-  private extractTenantFromToken(token: string): string {
+  private extractTenantFromToken(_token: string): string {
     // TODO: Implement proper JWT parsing
     // For now, return a dummy tenant
     return 'demo-tenant';
@@ -503,7 +573,7 @@ export class DashboardRoutes {
     ]);
 
     return [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .map(row => row.map((cell: any) => `"${cell}"`).join(','))
       .join('\n');
   }
 }
