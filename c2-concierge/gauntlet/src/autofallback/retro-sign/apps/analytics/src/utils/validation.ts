@@ -4,8 +4,10 @@
  */
 
 import Joi from 'joi';
-import { getConfig } from '../config';
 
+/**
+ * Enhanced validation and sanitization utilities
+ */
 // Tenant validation - alphanumeric with hyphens and underscores only
 export const tenantSchema = Joi.string()
   .pattern(/^[a-zA-Z0-9_-]+$/)
@@ -67,11 +69,26 @@ export const reasonSchema = Joi.string()
   .max(1000)
   .optional()
   .custom((value, helpers) => {
-    // Remove potential HTML/JS injection
-    const sanitized = value
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      .replace(/<[^>]*>/g, '')
-      .trim();
+    // CRITICAL: Enhanced HTML/JS injection prevention
+    let sanitized = value;
+    
+    // Remove script tags (including variations)
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    sanitized = sanitized.replace(/<script[^>]*>.*?<\/script>/gis, '');
+    
+    // Remove dangerous event handlers and javascript: protocols
+    sanitized = sanitized.replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+    sanitized = sanitized.replace(/javascript\s*:/gi, '');
+    sanitized = sanitized.replace(/vbscript\s*:/gi, '');
+    sanitized = sanitized.replace(/data\s*:\s*text\/html/gi, '');
+    
+    // Remove all HTML tags
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+    
+    // Remove potentially dangerous characters
+    sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+    
+    sanitized = sanitized.trim();
     
     if (sanitized !== value) {
       return helpers.error('string.sanitized');
@@ -81,23 +98,23 @@ export const reasonSchema = Joi.string()
   })
   .messages({
     'string.max': 'Reason cannot exceed 1000 characters',
-    'string.sanitized': 'Reason contains invalid characters or HTML'
+    'string.sanitized': 'Reason contains invalid characters, HTML, or scripts'
   });
 
-// Token validation - JWT token format
+// Token validation - JWT token format with DoS protection
 export const tokenSchema = Joi.string()
+  .max(1024) // CRITICAL: Prevent DoS via extremely long tokens
   .pattern(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/)
   .optional()
   .messages({
-    'string.pattern.base': 'Token must be a valid JWT format'
+    'string.pattern.base': 'Token must be a valid JWT format',
+    'string.max': 'Token cannot exceed 1024 characters'
   });
 
 /**
  * Enhanced validation and sanitization utilities
  */
 export class RequestValidator {
-  private static config = getConfig();
-
   /**
    * Validate tenant parameter with enhanced security
    */

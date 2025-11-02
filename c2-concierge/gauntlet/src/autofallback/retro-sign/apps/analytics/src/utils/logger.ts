@@ -23,31 +23,62 @@ export function createLogger(service: string, config?: Partial<LoggerConfig>): W
     ...config
   };
 
-  // Custom format for structured logging
+  // Custom format for structured logging with injection protection
   const customFormat = format.combine(
     format.timestamp(),
     format.errors({ stack: true }),
     format.json(),
     format.printf(({ timestamp, level, message, service: svc, environment, version, ...meta }) => {
+      // CRITICAL: Sanitize log data to prevent injection
+      const sanitizeString = (str: any): string => {
+        if (typeof str !== 'string') return str;
+        return str
+          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+          .replace(/[\r\n]/g, '') // Remove line breaks
+          .substring(0, 10000); // Limit length
+      };
+      
+      const sanitizedMessage = sanitizeString(message);
+      const sanitizedMeta = Object.keys(meta).reduce((acc, key) => {
+        acc[key] = sanitizeString(meta[key]);
+        return acc;
+      }, {} as any);
+      
       return JSON.stringify({
         timestamp,
         level,
-        service: svc || service,
-        environment,
-        version,
-        message,
-        ...meta
+        service: sanitizeString(svc || service),
+        environment: sanitizeString(environment),
+        version: sanitizeString(version),
+        message: sanitizedMessage,
+        ...sanitizedMeta
       });
     })
   );
 
-  // Console format for development
+  // Console format for development with injection protection
   const consoleFormat = format.combine(
     format.colorize(),
     format.timestamp({ format: 'HH:mm:ss' }),
     format.printf(({ timestamp, level, message, service: svc, ...meta }) => {
-      const metaStr = Object.keys(meta).length > 0 ? ` ${JSON.stringify(meta)}` : '';
-      return `${timestamp} [${svc || service}] ${level}: ${message}${metaStr}`;
+      // CRITICAL: Sanitize console output to prevent injection
+      const sanitizeString = (str: any): string => {
+        if (typeof str !== 'string') return str;
+        return str
+          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+          .replace(/[\r\n]/g, '') // Remove line breaks
+          .substring(0, 1000); // Limit length for console
+      };
+      
+      const sanitizedMessage = sanitizeString(message);
+      const sanitizedService = sanitizeString(svc || service);
+      const sanitizedMeta = Object.keys(meta).reduce((acc, key) => {
+        acc[key] = sanitizeString(meta[key]);
+        return acc;
+      }, {} as any);
+      
+      const metaStr = Object.keys(sanitizedMeta).length > 0 ? ` ${JSON.stringify(sanitizedMeta).substring(0, 500)}` : '';
+      return `${timestamp} [${sanitizedService}] ${level}: ${sanitizedMessage}${metaStr}`;
     })
   );
 

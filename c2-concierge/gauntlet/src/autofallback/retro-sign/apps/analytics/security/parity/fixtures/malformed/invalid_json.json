@@ -1,0 +1,19 @@
+{
+  "title": "Invalid JSON Structure",
+  "claim_generator": "Test Tool v1.0",
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [
+          {
+            "action": "created",
+            "when": "invalid-date-format"
+          }
+        ]
+      }
+    }
+  ],
+  "timestamp": "not-a-valid-timestamp",
+  "trailing_comma": "this should break parsing",
+}

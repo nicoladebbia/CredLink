@@ -1,0 +1,8 @@
+expected:
+  decision: "DEGRADED"
+  reason: "Verified with limitations: Remote manifest not available"
+  code: "REMOTE_404"
+  user_copy: "Verified with limitations: Remote manifest not available"
+  log_assertions:
+    incident: true
+    headers_snapshot: "present"

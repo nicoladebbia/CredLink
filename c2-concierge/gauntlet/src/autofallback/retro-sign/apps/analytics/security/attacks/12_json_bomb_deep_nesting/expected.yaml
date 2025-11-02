@@ -1,0 +1,8 @@
+expected:
+  decision: "BLOCKED"
+  reason: "For safety, this request was blocked: JSON too complex"
+  code: "JSON_RESOURCE_LIMIT"
+  user_copy: "For safety, this request was blocked: JSON too complex"
+  log_assertions:
+    incident: true
+    headers_snapshot: "present"

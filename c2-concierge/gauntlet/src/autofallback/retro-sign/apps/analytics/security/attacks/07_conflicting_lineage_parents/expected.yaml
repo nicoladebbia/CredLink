@@ -1,0 +1,8 @@
+expected:
+  decision: "DESTROYED"
+  reason: "This file's Content Credentials are broken: Conflicting lineage detected"
+  code: "LINEAGE_CONFLICT"
+  user_copy: "This file's Content Credentials are broken: Conflicting lineage detected"
+  log_assertions:
+    incident: true
+    headers_snapshot: "present"

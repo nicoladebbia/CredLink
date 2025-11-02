@@ -1,0 +1,20 @@
+{
+  "title": "Basic Valid Manifest",
+  "claim_generator": "Adobe Photoshop v24.0",
+  "format": "application/c2pa+json",
+  "instance_id": "urn:uuid:550e8400-e29b-41d4-a716-446655440000",
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [
+          {
+            "action": "created",
+            "when": "2024-01-15T10:30:00Z"
+          }
+        ]
+      }
+    }
+  ],
+  "timestamp": "2024-01-15T10:30:00Z"
+}

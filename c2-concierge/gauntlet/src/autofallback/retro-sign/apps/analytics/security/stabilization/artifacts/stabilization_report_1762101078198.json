@@ -1,0 +1,143 @@
+{
+  "timestamp": "2025-11-02T16:31:18.198Z",
+  "summary": {
+    "total_nights": 2,
+    "successful_nights": 0,
+    "consecutive_green_nights": 0,
+    "average_success_rate": "50.00%",
+    "total_flaky_tests": 4,
+    "total_crashes": 0,
+    "stabilization_complete": false
+  },
+  "success_criteria": {
+    "consecutive_green_nights": 2,
+    "minimum_success_rate": 95,
+    "maximum_flaky_tests": 2,
+    "crash_threshold": 0
+  },
+  "quality_metrics": {
+    "average_reliability": 50,
+    "average_performance": 0,
+    "average_security": 95
+  },
+  "quarantine_status": {
+    "quarantined_tests": [
+      "Fuzzing Tests",
+      "Parity Tests"
+    ],
+    "total_quarantined": 2
+  },
+  "results": [
+    {
+      "night_number": 1,
+      "timestamp": "2025-11-02T16:30:13.895Z",
+      "overall_success": false,
+      "success_rate": 50,
+      "flaky_tests_detected": 2,
+      "crashes_detected": 0,
+      "test_results": [
+        {
+          "test_name": "Attack Tests",
+          "success": true,
+          "execution_time_ms": 1085,
+          "memory_usage_mb": 107,
+          "flaky_score": 0
+        },
+        {
+          "test_name": "Fuzzing Tests",
+          "success": false,
+          "execution_time_ms": 1041,
+          "memory_usage_mb": 114,
+          "error_message": "Command failed: npm run security:fuzz\nnpm error Lifecycle script `security:fuzz` failed with error:\nnpm error code 1\nnpm error path /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error workspace @c2pa/analytics@1.0.0\nnpm error location /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error command failed\nnpm error command sh -c ts-node security/runners/run_fuzz.ts\n",
+          "flaky_score": 0.36037367086661565
+        },
+        {
+          "test_name": "Chaos Tests",
+          "success": true,
+          "execution_time_ms": 61053,
+          "memory_usage_mb": 240,
+          "flaky_score": 0
+        },
+        {
+          "test_name": "Parity Tests",
+          "success": false,
+          "execution_time_ms": 1481,
+          "memory_usage_mb": 522,
+          "error_message": "Command failed: npm run security:parity\n(node:59660) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 uncaughtException listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit\n(Use `node --trace-warnings ...` to show where the warning was created)\nnpm error Lifecycle script `security:parity` failed with error:\nnpm error code 1\nnpm error path /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error workspace @c2pa/analytics@1.0.0\nnpm error location /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error command failed\nnpm error command sh -c ts-node security/runners/run_parity.ts\n",
+          "flaky_score": 0.43952769515777357
+        }
+      ],
+      "quality_metrics": {
+        "reliability_score": 50,
+        "performance_score": 0,
+        "security_score": 95
+      },
+      "meets_criteria": false,
+      "recommendations": [
+        "2 test(s) failing - prioritize fixes",
+        "1 slow test(s) - optimize performance"
+      ]
+    },
+    {
+      "night_number": 2,
+      "timestamp": "2025-11-02T16:31:18.197Z",
+      "overall_success": false,
+      "success_rate": 50,
+      "flaky_tests_detected": 2,
+      "crashes_detected": 0,
+      "test_results": [
+        {
+          "test_name": "Attack Tests",
+          "success": true,
+          "execution_time_ms": 1012,
+          "memory_usage_mb": 146,
+          "flaky_score": 0
+        },
+        {
+          "test_name": "Fuzzing Tests",
+          "success": false,
+          "execution_time_ms": 959,
+          "memory_usage_mb": 1010,
+          "error_message": "Command failed: npm run security:fuzz\nnpm error Lifecycle script `security:fuzz` failed with error:\nnpm error code 1\nnpm error path /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error workspace @c2pa/analytics@1.0.0\nnpm error location /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error command failed\nnpm error command sh -c ts-node security/runners/run_fuzz.ts\n",
+          "flaky_score": 0.599339982762177
+        },
+        {
+          "test_name": "Chaos Tests",
+          "success": true,
+          "execution_time_ms": 60986,
+          "memory_usage_mb": 328,
+          "flaky_score": 0
+        },
+        {
+          "test_name": "Parity Tests",
+          "success": false,
+          "execution_time_ms": 1344,
+          "memory_usage_mb": 60,
+          "error_message": "Command failed: npm run security:parity\n(node:60234) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 uncaughtException listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit\n(Use `node --trace-warnings ...` to show where the warning was created)\nnpm error Lifecycle script `security:parity` failed with error:\nnpm error code 1\nnpm error path /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error workspace @c2pa/analytics@1.0.0\nnpm error location /Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics\nnpm error command failed\nnpm error command sh -c ts-node security/runners/run_parity.ts\n",
+          "flaky_score": 0.7714099204825442
+        }
+      ],
+      "quality_metrics": {
+        "reliability_score": 50,
+        "performance_score": 0,
+        "security_score": 95
+      },
+      "meets_criteria": false,
+      "recommendations": [
+        "2 test(s) failing - prioritize fixes",
+        "1 slow test(s) - optimize performance"
+      ]
+    }
+  ],
+  "recommendations": [
+    "❌ Stabilization incomplete - address remaining issues",
+    "Focus on achieving consecutive green nights",
+    "Consider extending stabilization period if needed",
+    "Implement test reliability improvements before production"
+  ],
+  "production_readiness": {
+    "ready": false,
+    "confidence_level": "MEDIUM",
+    "go_live_date": null
+  }
+}

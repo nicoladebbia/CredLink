@@ -1,0 +1,109 @@
+# Phase 16 - Adversarial Lab v1
+# Differential Testing Configuration
+
+parity:
+  # Reference implementations to compare against
+  references:
+    c2patool:
+      name: "c2patool"
+      version: ">=0.7.0"
+      command: "c2patool"
+      enabled: true
+      description: "Official C2PA command-line tool"
+      
+    cai_verify:
+      name: "CAI Verify"
+      version: "latest"
+      endpoint: "https://cai.verify.org/api/verify"
+      enabled: false
+      description: "Content Authenticity Initiative verification service"
+      api_key: "${CAI_API_KEY}"
+
+  # Test fixtures for comparison
+  fixtures:
+    valid_manifests:
+      - "fixtures/valid/basic.json"
+      - "fixtures/valid/with_assertions.json"
+      - "fixtures/valid/with_ingredients.json"
+      - "fixtures/valid/complex_manifest.json"
+      
+    malformed_manifests:
+      - "fixtures/malformed/invalid_json.json"
+      - "fixtures/malformed/broken_jumbf.json"
+      - "fixtures/malformed/circular_refs.json"
+      
+    edge_cases:
+      - "fixtures/edge/empty_manifest.json"
+      - "fixtures/edge/minimal_manifest.json"
+      - "fixtures/edge/utf8_edge_cases.json"
+      - "fixtures/edge/large_manifest.json"
+
+  # Comparison criteria
+  comparison:
+    decision_codes:
+      # Map our decision codes to reference implementations
+      mapping:
+        "VALID": ["valid", "verified", "success"]
+        "DEGRADED": ["degraded", "warning", "partial"]
+        "BLOCKED": ["blocked", "rejected", "forbidden"]
+        "DESTROYED": ["invalid", "corrupted", "error", "failed"]
+      
+      # Required agreement percentage
+      agreement_threshold: 95
+      
+    error_codes:
+      # Compare error messages and codes
+      compare_messages: true
+      similarity_threshold: 80
+      
+    performance:
+      # Performance comparison thresholds
+      max_time_ratio: 2.0  # Our implementation should be within 2x of reference
+      max_memory_ratio: 1.5  # Our implementation should use <= 1.5x memory
+
+  # Test execution settings
+  execution:
+    parallel_jobs: 4
+    timeout_seconds: 30
+    retry_attempts: 2
+    
+  # Reporting
+  reporting:
+    artifacts_dir: "artifacts"
+    reports:
+      - "parity_summary.json"
+      - "decision_comparison.csv"
+      - "performance_comparison.json"
+      - "discrepancies.json"
+
+# Test matrix
+test_matrix:
+  dimensions:
+    - "manifest_type"  # basic, complex, malformed
+    - "file_format"   # json, jumbf, cbor
+    - "assertion_type" # actions, ingredients, relationships
+    - "error_condition" # valid, invalid, edge_case
+    
+  combinations:
+    # Total test combinations to run
+    total_combinations: 144
+    # Minimum combinations to pass
+    min_passing: 137
+    
+# Quality gates
+quality_gates:
+  decision_agreement:
+    threshold: 95.0
+    description: "Percentage of decisions matching reference implementations"
+    
+  error_detection:
+    threshold: 90.0
+    description: "Percentage of errors correctly detected"
+    
+  performance_compliance:
+    threshold: 85.0
+    description: "Percentage of performance tests within thresholds"
+    
+  overall_score:
+    threshold: 90.0
+    description: "Overall parity score weighted across all metrics"

@@ -59,7 +59,7 @@ class EnhancedRateLimiter {
       
       record.blockedUntil = now + blockTime;
       
-      logger.warn('Rate limit exceeded - IP blocked', {
+      logger.log('warn', 'Rate limit exceeded - IP blocked', {
         key,
         violations,
         blockTime: `${blockTime}ms`,
@@ -138,7 +138,7 @@ export async function rateLimit(request: FastifyRequest, reply: FastifyReply): P
   if (Math.random() < 0.001) {
     const stats = rateLimiter.cleanup();
     if (stats.cleaned > 0) {
-      logger.debug('Rate limiter cleanup', stats);
+      logger.log('debug', 'Rate limiter cleanup', stats);
     }
   }
 
@@ -155,7 +155,7 @@ export async function rateLimit(request: FastifyRequest, reply: FastifyReply): P
   const result = rateLimiter.isAllowed(fingerprint);
 
   if (!result.allowed) {
-    logger.warn('Rate limit exceeded', {
+    logger.log('warn', 'Rate limit exceeded', {
       ip: clientIP,
       userAgent: userAgent.substring(0, 100),
       url: request.url,
@@ -180,9 +180,7 @@ export async function rateLimit(request: FastifyRequest, reply: FastifyReply): P
 /**
  * Enhanced security headers with CSP 3.0
  */
-export async function securityHeaders(request: FastifyRequest, reply: FastifyReply): Promise<void> {
-  const config = getConfig();
-  
+export async function securityHeaders(_request: FastifyRequest, reply: FastifyReply): Promise<void> {
   // Prevent clickjacking
   reply.header('X-Frame-Options', 'DENY');
   
@@ -256,7 +254,7 @@ export async function requestSizeLimit(request: FastifyRequest, reply: FastifyRe
   // Validate content length
   const maxSize = config.security?.max_request_size || 1048576;
   if (contentLength && parseInt(contentLength) > maxSize) {
-    logger.warn('Request size limit exceeded', {
+    logger.log('warn', 'Request size limit exceeded', {
       contentLength,
       maxSize,
       ip: request.ip,
@@ -281,7 +279,7 @@ export async function requestSizeLimit(request: FastifyRequest, reply: FastifyRe
 
     const isAllowed = allowedTypes.some(type => contentType.includes(type));
     if (!isAllowed) {
-      logger.warn('Invalid content-type', {
+      logger.log('warn', 'Invalid content-type', {
         contentType,
         method: request.method,
         ip: request.ip
@@ -323,7 +321,7 @@ export async function ipWhitelist(request: FastifyRequest, reply: FastifyReply):
   });
 
   if (!isAllowed) {
-    logger.warn('IP access denied', {
+    logger.log('warn', 'IP access denied', {
       clientIP,
       allowedIPs,
       url: request.url,
@@ -386,7 +384,7 @@ export async function sanitizeRequest(request: FastifyRequest, reply: FastifyRep
       request.body = sanitizeValue(request.body);
     }
   } catch (error) {
-    logger.error('Request sanitization error', {
+    logger.log('error', 'Request sanitization error', {
       error: error instanceof Error ? error.message : String(error),
       url: request.url
     });
@@ -409,7 +407,7 @@ export async function securityMiddleware(request: FastifyRequest, reply: Fastify
     await rateLimit(request, reply);
     await requestSizeLimit(request, reply);
   } catch (error) {
-    logger.error('Security middleware error', {
+    logger.log('error', 'Security middleware error', {
       error: error instanceof Error ? error.message : String(error),
       url: request.url,
       ip: request.ip

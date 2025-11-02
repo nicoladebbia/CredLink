@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mixed Content Attack Sample</title>
+</head>
+<body>
+    <h1>C2PA Test Asset</h1>
+    <p>This page loads a remote manifest via HTTP (mixed content).</p>
+    <script>
+        // Attempt to load HTTP manifest from HTTPS page
+        fetch('http://malicious.example.com/manifest.json')
+            .then(response => response.json())
+            .then(data => console.log('Loaded manifest:', data));
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+expected:
+  decision: "BLOCKED"
+  reason: "For safety, this request was blocked: Insecure redirect detected"
+  code: "REDIRECT_DOWNGRADE"
+  user_copy: "For safety, this request was blocked: Insecure redirect detected"
+  log_assertions:
+    incident: true
+    headers_snapshot: "present"

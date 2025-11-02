@@ -1,0 +1,101 @@
+# Phase 16 - Adversarial Lab v1
+# Fuzzing Configuration and Thresholds
+
+fuzzing:
+  # Maximum runtime before timeout (seconds)
+  max_runtime: 300
+  
+  # Memory limits (MB)
+  max_memory: 512
+  
+  # Corpus size limits
+  max_corpus_size: 10000
+  min_corpus_size: 100
+  
+  # Crash thresholds
+  crash_threshold:
+    # Maximum acceptable crashes per hour
+    max_crashes_per_hour: 0
+    # Maximum acceptable hangs per hour  
+    max_hangs_per_hour: 1
+    # Maximum acceptable memory leaks per hour
+    max_leaks_per_hour: 0
+  
+  # Coverage thresholds
+  coverage_threshold:
+    # Minimum coverage percentage required
+    min_coverage_percent: 85
+    # Minimum new edges per hour
+    min_new_edges_per_hour: 10
+    # Minimum new functions per hour
+    min_new_functions_per_hour: 5
+  
+  # Performance thresholds
+  performance_threshold:
+    # Maximum execution time per input (ms)
+    max_exec_time_ms: 1000
+    # Maximum memory usage per input (MB)
+    max_memory_per_input_mb: 64
+    # Maximum stack depth
+    max_stack_depth: 1000
+
+targets:
+  c2pa_reader:
+    description: "Fuzz c2pa::Reader manifest parsing"
+    dictionary: "dictionaries/c2pa.dict"
+    interesting_values: [
+      "jumb", "json", "c2pa", "b64", "utf8",
+      "\x00", "\xFF", "\xC0\x80", # Null bytes, max byte, overlong UTF-8
+      '{"title":', '"claim_generator":', '"timestamp":',
+      "9999999999999999999", # Large numbers
+      "null", "true", "false"
+    ]
+    
+corpus:
+  sources:
+    - "corpus/valid_manifests"
+    - "corpus/malformed_jumbf" 
+    - "corpus/edge_cases"
+    - "corpus/real_world_samples"
+  
+  seed_corpus:
+    description: "Initial seed corpus for fuzzing"
+    size_target: 1000
+    diversity_target: 0.8 # 80% unique coverage paths
+
+dictionaries:
+  c2pa:
+    - "jumb"
+    - "json" 
+    - "c2pa"
+    - "b64"
+    - "utf8"
+    - "cbor"
+    - "cose"
+    - "claim_generator"
+    - "title"
+    - "timestamp"
+    - "assertions"
+    - "ingredients"
+    - "manifest"
+
+sanitizers:
+  enabled: true
+  types:
+    - "address"     # Detect memory errors
+    - "thread"      # Detect data races
+    - "memory"      # Detect memory leaks
+    - "undefined"   # Detect undefined behavior
+
+reporting:
+  artifacts_dir: "artifacts"
+  crash_reports: "crashes"
+  hang_reports: "hangs"
+  leak_reports: "leaks"
+  coverage_reports: "coverage"
+  
+ci_integration:
+  enabled: true
+  timeout_minutes: 30
+  parallel_jobs: 2
+  artifact_retention_days: 7

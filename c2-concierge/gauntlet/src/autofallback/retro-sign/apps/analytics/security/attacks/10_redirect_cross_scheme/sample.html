@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cross Scheme Redirect Attack</title>
+</head>
+<body>
+    <h1>C2PA Test Asset</h1>
+    <p>This page attempts to redirect from HTTPS to HTTP.</p>
+    <script>
+        // Attempt cross-scheme redirect (HTTPS to HTTP)
+        window.location.href = "http://malicious.example.com/steal-credentials";
+    </script>
+    <meta http-equiv="refresh" content="0; url=http://malicious.example.com/ downgrade-attack">
+</body>
+</html>

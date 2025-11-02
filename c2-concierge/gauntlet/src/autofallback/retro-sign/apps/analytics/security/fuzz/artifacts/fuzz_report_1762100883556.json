@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-11-02T16:28:03.556Z",
+  "summary": {
+    "total_targets": 1,
+    "passed_targets": 0,
+    "failed_targets": 1,
+    "total_executions": 0,
+    "total_crashes": 1,
+    "total_hangs": 0,
+    "average_coverage": 0
+  },
+  "results": [
+    {
+      "target": "c2pa_reader",
+      "runtime_seconds": 0,
+      "executions": 0,
+      "crashes": 1,
+      "hangs": 0,
+      "coverage_percent": 0,
+      "new_edges": 0,
+      "new_functions": 0,
+      "passed": false,
+      "artifacts": []
+    }
+  ],
+  "config": {
+    "fuzzing": {
+      "max_runtime": 300,
+      "max_memory": 512,
+      "crash_threshold": {
+        "max_crashes_per_hour": 0,
+        "max_hangs_per_hour": 1,
+        "max_leaks_per_hour": 0
+      },
+      "coverage_threshold": {
+        "min_coverage_percent": 85,
+        "min_new_edges_per_hour": 10,
+        "min_new_functions_per_hour": 5
+      },
+      "performance_threshold": {
+        "max_exec_time_ms": 1000,
+        "max_memory_per_input_mb": 64,
+        "max_stack_depth": 1000
+      }
+    },
+    "targets": {
+      "c2pa_reader": {
+        "description": "Fuzz c2pa::Reader manifest parsing",
+        "dictionary": "dictionaries/c2pa.dict",
+        "interesting_values": [
+          "jumb",
+          "json",
+          "c2pa"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "title": "Overlong UTF-8 Test",
+  "claim_generator": "Adobe Photoshop v23.0",
+  "assertions": [
+    {
+      "label": "c2pa.actions",
+      "data": {
+        "actions": [
+          {
+            "action": "created",
+            "when": "2024-01-01T00:00:00Z"
+          }
+        ]
+      }
+    }
+  ],
+  "timestamp": "2024-01-01T00:00:00Z",
+  "malformed_utf8": "Invalid UTF-8 sequence: \xC0\x80\xE0\x80\x80"
+}

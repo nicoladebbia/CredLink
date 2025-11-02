@@ -27,16 +27,6 @@ export interface ClickHouseConfig {
   request_timeout?: number;
 }
 
-export interface QueryResult<T = any> {
-  data: T[];
-  rows: number;
-  statistics?: {
-    elapsed: number;
-    rows_read: number;
-    bytes_read: number;
-  };
-}
-
 export class ClickHouseClient {
   private client: CHClient;
   private logger: Logger;
@@ -400,7 +390,7 @@ export class ClickHouseClient {
         success: true,
         elapsed,
         rows: result.rows,
-        bytes: result.statistics?.bytes_read || 0
+        bytes: result.queryStats?.bytes_read || 0
       };
     } catch (error) {
       const elapsed = Date.now() - startTime;
