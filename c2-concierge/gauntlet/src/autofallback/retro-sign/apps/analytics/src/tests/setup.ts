@@ -27,14 +27,14 @@ global.console = {
 } as any;
 
 // Mock nodemailer
-global.testMocks = {
+(global as any).testMocks = {
   nodemailer: {
-    sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' }) as any
+    sendMail: jest.fn().mockImplementation(() => Promise.resolve({ messageId: 'test-message-id' }))
   },
   slack: {
-    postMessage: jest.fn().mockResolvedValue({ ok: true, ts: '1234567890.123456' }) as any
+    postMessage: jest.fn().mockImplementation(() => Promise.resolve({ ok: true, ts: '1234567890.123456' }))
   },
-  fetch: jest.fn() as any
+  fetch: jest.fn()
 };
 
 // Global test utilities
@@ -76,23 +76,23 @@ global.testUtils = {
 // Mock external services
 jest.mock('nodemailer', () => ({
   createTransporter: jest.fn(() => ({
-    sendMail: jest.fn().mockResolvedValue({ messageId: 'test-message-id' })
+    sendMail: jest.fn().mockImplementation(() => Promise.resolve({ messageId: 'test-message-id' }))
   }))
 }));
 
 jest.mock('@slack/web-api', () => ({
   WebClient: jest.fn(() => ({
     chat: {
-      postMessage: jest.fn().mockResolvedValue({ ok: true, ts: '1234567890.123456' })
+      postMessage: jest.fn().mockImplementation(() => Promise.resolve({ ok: true, ts: '1234567890.123456' }))
     }
   }))
 }));
 
 // Mock fetch for external API calls
-global.fetch = jest.fn() as jest.Mock;
+(global as any).fetch = jest.fn() as jest.Mock;
 
 // Global test utilities
-global.testUtils = {
+(global as any).testUtils = {
   generateTestTenant: (prefix = 'test') => `${prefix}-tenant-${Math.random().toString(36).substring(7)}`,
   generateTestToken: () => `test-token-${Math.random().toString(36).substring(7)}`,
   generateServiceToken: () => `service-token-${Math.random().toString(36).substring(7)}`,
@@ -215,13 +215,4 @@ declare global {
       toBeValidBurnRate(): R;
     }
   }
-  
-  var testUtils: {
-    generateTestTenant: (prefix?: string) => string;
-    generateTestToken: () => string;
-    generateServiceToken: () => string;
-    wait: (ms: number) => Promise<void>;
-    generateTestSLOData: (tenant: string, route: string) => any;
-    generateTestIncident: (tenant: string, route: string) => any;
-  };
 }

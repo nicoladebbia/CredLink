@@ -9,11 +9,66 @@ import rateLimit from '@fastify/rate-limit';
 import pino from 'pino';
 import { registerRoutes } from './routes.js';
 /**
+ * SECURITY: Validate environment variables
+ */
+function validateEnvironmentVariables() {
+    const requiredVars = ['NODE_ENV'];
+    const optionalVars = ['LOG_LEVEL', 'PORT', 'HOST', 'ALLOWED_ORIGINS', 'RATE_LIMIT_MAX', 'ENABLE_CSP_REPORT_ONLY'];
+    // Check required variables
+    for (const varName of requiredVars) {
+        if (!process.env[varName]) {
+            throw new Error(`Required environment variable ${varName} is not set`);
+        }
+    }
+    // Validate and sanitize optional variables
+    const validLogLevels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace'];
+    const logLevel = process.env.LOG_LEVEL || 'info';
+    if (!validLogLevels.includes(logLevel)) {
+        console.warn(`Invalid LOG_LEVEL: ${logLevel}. Using 'info' instead.`);
+        process.env.LOG_LEVEL = 'info';
+    }
+    // Validate port
+    if (process.env.PORT) {
+        const port = parseInt(process.env.PORT);
+        if (isNaN(port) || port < 1 || port > 65535) {
+            console.warn(`Invalid PORT: ${process.env.PORT}. Using 3001 instead.`);
+            process.env.PORT = '3001';
+        }
+    }
+    // Validate host
+    const host = process.env.HOST || '0.0.0.0';
+    const validHosts = ['0.0.0.0', '127.0.0.1', 'localhost'];
+    if (!validHosts.includes(host)) {
+        console.warn(`Invalid HOST: ${host}. Using '0.0.0.0' instead.`);
+        process.env.HOST = '0.0.0.0';
+    }
+    // Validate rate limit
+    if (process.env.RATE_LIMIT_MAX) {
+        const max = parseInt(process.env.RATE_LIMIT_MAX);
+        if (isNaN(max) || max < 1 || max > 10000) {
+            console.warn(`Invalid RATE_LIMIT_MAX: ${process.env.RATE_LIMIT_MAX}. Using 100 instead.`);
+            process.env.RATE_LIMIT_MAX = '100';
+        }
+    }
+    // Validate boolean variables
+    const booleanVars = ['ENABLE_CSP_REPORT_ONLY'];
+    for (const varName of booleanVars) {
+        const value = process.env[varName];
+        if (value && value !== 'true' && value !== 'false') {
+            console.warn(`Invalid ${varName}: ${value}. Must be 'true' or 'false'.`);
+            process.env[varName] = 'false';
+        }
+    }
+}
+/**
  * Create and configure Fastify server
  */
 async function createServer() {
+    // SECURITY: Validate environment variables first
+    validateEnvironmentVariables();
     const logger = pino({
         level: process.env.LOG_LEVEL || 'info',
+        // SECURITY: Remove debug information in production
         transport: process.env.NODE_ENV !== 'production' ? {
             target: 'pino-pretty',
             options: {
@@ -26,6 +81,7 @@ async function createServer() {
     const fastify = Fastify({
         logger: {
             level: process.env.LOG_LEVEL || 'info',
+            // SECURITY: Remove debug information in production
             transport: process.env.NODE_ENV !== 'production' ? {
                 target: 'pino-pretty',
                 options: {

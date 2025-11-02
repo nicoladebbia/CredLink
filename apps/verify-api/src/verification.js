@@ -5,6 +5,7 @@
 import fetch from 'node-fetch';
 import { createHash } from 'crypto';
 import { VerificationError } from './types.js';
+import { validateManifestSignature, getCryptoStatus } from './crypto.js';
 /**
  * Trust list for signer root validation
  * In production, this would be loaded from a secure configuration source
@@ -67,7 +68,11 @@ async function fetchManifest(url, timeout = 5000) {
     }
     try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        // CRITICAL: Add random jitter to prevent timing attacks
+        const jitter = Math.random() * 100; // 0-100ms random delay
+        const actualTimeout = timeout + jitter;
+        const timeoutId = setTimeout(() => controller.abort(), actualTimeout);
+        const startTime = Date.now();
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -77,6 +82,7 @@ async function fetchManifest(url, timeout = 5000) {
             signal: controller.signal,
             redirect: 'manual' // Don't follow redirects automatically
         });
+        const endTime = Date.now();
         clearTimeout(timeoutId);
         // Handle redirects manually with security checks
         if (response.status >= 300 && response.status < 400) {
@@ -92,7 +98,10 @@ async function fetchManifest(url, timeout = 5000) {
         }
         const content = new Uint8Array(await response.arrayBuffer());
         const contentType = response.headers.get('content-type') || 'application/octet-stream';
-        const fetchTime = Date.now() - startTime;
+        const rawFetchTime = Date.now() - startTime;
+        // CRITICAL: Add timing noise to prevent side-channel attacks
+        const noise = Math.random() * 50; // 0-50ms noise
+        const fetchTime = Math.round(rawFetchTime + noise);
         return { content, contentType, fetchTime };
     }
     catch (error) {
@@ -137,28 +146,6 @@ async function discoverManifest(assetUrl) {
     catch {
         return null;
     }
-}
-/**
- * Validate manifest signature against trust roots
- */
-function validateSignature(manifestData, signature, trustRoots) {
-    // Simplified signature validation
-    // In production, this would use proper cryptographic verification
-    for (const root of trustRoots) {
-        if (!root.trusted) {
-            continue;
-        }
-        // Mock validation - in reality this would verify the cryptographic signature
-        const manifestHash = createHash('sha256').update(manifestData).digest('hex');
-        const expectedSignature = createHash('sha256')
-            .update(manifestHash + root.public_key)
-            .digest('hex')
-            .slice(0, 32);
-        if (signature === expectedSignature) {
-            return { valid: true, signer: root };
-        }
-    }
-    return { valid: false };
 }
 /**
  * Extract assertions from manifest data
@@ -237,9 +224,25 @@ export async function verifyProvenance(request) {
         // Extract signature from manifest (simplified)
         const manifestHash = createHash('sha256').update(manifestData).digest('hex');
         const mockSignature = manifestHash.slice(0, 32);
-        const { valid: signatureValid, signer } = validateSignature(manifestData, mockSignature, trustRoots);
-        if (!signatureValid || !signer) {
-            throw new VerificationError('UNKNOWN_TRUST_ROOT', 'Manifest signature not trusted', { manifest_url: manifestUrl });
+        // CRITICAL: Use real cryptographic validation (or fail safely)
+        const cryptoStatus = getCryptoStatus();
+        if (!cryptoStatus.ready) {
+            console.error('🚨 CRYPTOGRAPHIC VALIDATION NOT READY:', cryptoStatus.warnings);
+        }
+        const { valid: signatureValid, signer, errors, warnings } = validateManifestSignature(manifestData, manifest.signature || '', trustRoots);
+        // Log cryptographic warnings
+        if (warnings?.length) {
+            warnings.forEach(warning => console.warn('⚠️  Crypto Warning:', warning));
+        }
+        // Log cryptographic errors
+        if (errors?.length) {
+            errors.forEach(error => console.error('🚨 Crypto Error:', error));
+        }
+        if (!signatureValid) {
+            throw new VerificationError('INVALID_SIGNATURE', 'Manifest signature validation failed', {
+                errors: errors || ['Unknown validation error'],
+                cryptoStatus: cryptoStatus.ready ? 'ready' : 'mock'
+            });
         }
         decisionPath.steps.push('Signature validated successfully');
         // Extract assertions

@@ -5,11 +5,12 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { AnalyticsService } from '../services/analytics-service';
-import { createLogger } from '../utils/logger';
 import { RequestValidator } from '../utils/validation';
 import { getConfig } from '../config';
+import { Logger } from 'winston';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
+import * as fs from 'fs';
 
 export interface DashboardRoute {
   method: 'GET' | 'POST';
@@ -52,12 +53,12 @@ export class DashboardRoutes {
           const templateSource = fs.readFileSync(templatePath, 'utf8');
           this.templates.set(name, Handlebars.compile(templateSource));
           
-          this.logger.debug('Template loaded', { name, file });
+          this.logger.debug(`Template loaded`, { name, file });
         } else {
-          this.logger.warn('Template file not found', { name, file });
+          this.logger.warn(`Template file not found`, { name, file });
         }
       } catch (error) {
-        this.logger.error('Failed to load template', { name, file, error: error instanceof Error ? error.message : String(error) });
+        this.logger.error(`Failed to load template`, { name, file, error: error instanceof Error ? error.message : String(error) });
       }
     }
   }
@@ -531,15 +532,6 @@ export class DashboardRoutes {
     // TODO: Implement proper token validation
     // For now, accept any non-empty token
     return !!(token && token.length > 10 && tenant);
-  }
-
-  /**
-   * Extract tenant from JWT token
-   */
-  private extractTenantFromToken(_token: string): string {
-    // TODO: Implement proper JWT parsing
-    // For now, return a dummy tenant
-    return 'demo-tenant';
   }
 
   /**
