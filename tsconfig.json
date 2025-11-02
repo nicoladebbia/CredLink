@@ -38,6 +38,9 @@
       "path": "./packages/manifest-store"
     },
     {
+      "path": "./packages/oem-trust"
+    },
+    {
       "path": "./apps/edge-worker"
     },
     {
