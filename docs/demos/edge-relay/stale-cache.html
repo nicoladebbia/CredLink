@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Stale Cache Drill</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 32px; line-height: 1.5; }
+    form { display: grid; gap: 12px; max-width: 640px; }
+    label { display: flex; flex-direction: column; font-weight: 600; }
+    input { padding: 8px; border: 1px solid #cbd2d9; border-radius: 6px; font-size: 14px; }
+    fieldset { border: 1px solid #dfe3eb; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    legend { font-weight: 700; padding: 0 8px; }
+    button { width: fit-content; padding: 10px 18px; border: none; border-radius: 6px; background: #16a34a; color: #fff; font-size: 14px; cursor: pointer; }
+    button:disabled { background: #9aa5b1; cursor: not-allowed; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 16px; border-radius: 8px; overflow-x: auto; max-width: 720px; }
+    .status { font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Stale Cache Drill</h1>
+  <p>Warm the cache with a healthy manifest, then simulate an origin failure (stop your manifest server or force a 502). The second request should return stale data with <code>Warning: 110 - response is stale</code> and <code>X-C2P-Cache: HIT</code>.</p>
+
+  <form id="stale-form">
+    <label>Relay origin
+      <input id="relay-origin" value="http://127.0.0.1:8788" required>
+    </label>
+    <label>Tenant ID
+      <input id="tenant-id" value="demo-tenant" required>
+    </label>
+    <label>Tenant secret (base64url for test only)
+      <input id="tenant-secret" value="ZGVtby1zZWNyZXQ" required>
+    </label>
+    <label>Manifest URL
+      <input id="manifest-url" value="https://manifests.test/healthy.c2pa" required>
+    </label>
+  </form>
+
+  <fieldset>
+    <legend>Step 1 — Warm cache (origin healthy)</legend>
+    <button id="warm-cache">Fetch (expect 200 / MISS)</button>
+  </fieldset>
+
+  <fieldset>
+    <legend>Step 2 — Origin outage</legend>
+    <p>Stop or break the manifest origin, then run this request.</p>
+    <button id="simulate-outage">Fetch (expect Warning: 110 / HIT)</button>
+  </fieldset>
+
+  <p class="status" id="status"></p>
+  <pre id="output">(awaiting run)</pre>
+
+  <script type="module">
+    const encoder = new TextEncoder();
+
+    function decodeSecret(secret) {
+      try {
+        const normalized = secret.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = normalized.length % 4;
+        const padded = normalized + (pad ? '='.repeat(4 - pad) : '');
+        const binary = atob(padded);
+        return Uint8Array.from(binary, (char) => char.charCodeAt(0)).buffer;
+      } catch {
+        return encoder.encode(secret).buffer;
+      }
+    }
+
+    function toBase64Url(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      bytes.forEach((b) => (binary += String.fromCharCode(b)));
+      return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/u, '');
+    }
+
+    async function signRequest(secret, manifestUrl, timestamp) {
+      const keyMaterial = decodeSecret(secret);
+      const key = await crypto.subtle.importKey('raw', keyMaterial, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+      const data = encoder.encode(`${manifestUrl}|${timestamp}`);
+      const signature = await crypto.subtle.sign('HMAC', key, data);
+      return toBase64Url(signature);
+    }
+
+    async function buildRelayUrl({ relayOrigin, tenantId, secret, manifestUrl }) {
+      const ts = Math.floor(Date.now() / 1000);
+      const sig = await signRequest(secret, manifestUrl, ts);
+      const params = new URLSearchParams({ u: manifestUrl, t: tenantId, ts: String(ts), sig });
+      return `${relayOrigin.replace(/\/$/, '')}/c2/relay?${params.toString()}`;
+    }
+
+    async function runFetch(label) {
+      const relayOrigin = document.getElementById('relay-origin').value.trim();
+      const tenantId = document.getElementById('tenant-id').value.trim();
+      const secret = document.getElementById('tenant-secret').value.trim();
+      const manifestUrl = document.getElementById('manifest-url').value.trim();
+
+      statusEl.textContent = `⏳ ${label}…`;
+      outputEl.textContent = '(pending network)';
+
+      try {
+        const relayUrl = await buildRelayUrl({ relayOrigin, tenantId, secret, manifestUrl });
+        const response = await fetch(relayUrl, { headers: { Accept: 'application/c2pa+json' } });
+        const bodyText = await response.text();
+        const warning = response.headers.get('Warning');
+        const cacheStatus = response.headers.get('X-C2P-Cache');
+        const integrity = response.headers.get('X-C2P-Integrity-SHA256');
+        statusEl.textContent = `${label}: ${response.status} ${response.statusText}`;
+        outputEl.textContent = `Warning: ${warning ?? '(none)'}\nX-C2P-Cache: ${cacheStatus ?? '(none)'}\nIntegrity: ${integrity ?? '(none)'}\n\nBody:\n${bodyText}`;
+      } catch (error) {
+        statusEl.textContent = `${label}: network error`;
+        outputEl.textContent = String(error);
+      }
+    }
+
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+
+    document.getElementById('warm-cache').addEventListener('click', async (event) => {
+      event.preventDefault();
+      await runFetch('Warm cache');
+    });
+
+    document.getElementById('simulate-outage').addEventListener('click', async (event) => {
+      event.preventDefault();
+      await runFetch('Outage run');
+    });
+  </script>
+</body>
+</html>

@@ -6,6 +6,16 @@
 // Import the component first
 import './c2-badge.js';
 
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    const target = event.target as HTMLScriptElement | undefined;
+    if (target && typeof target.src === 'string' && /badge-v/.test(target.src)) {
+      document.documentElement.classList.add('c2-badge-degraded');
+      console.warn('C2 badge integrity failed', event);
+    }
+  }, true);
+}
+
 // Export types
 export type { 
   C2BadgeAttributes, 

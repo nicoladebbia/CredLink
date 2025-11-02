@@ -104,6 +104,49 @@ ERROR_TEMPLATE.innerHTML = `
     </div>
   </div>
 `;
+const relayStatusMap = new Map();
+function getActiveDegradeMessage() {
+    for (const message of relayStatusMap.values()) {
+        if (message.status === 'stale' || message.status === 'error') {
+            return message;
+        }
+    }
+    return undefined;
+}
+function updateDocumentDegradeClass() {
+    if (getActiveDegradeMessage()) {
+        document.documentElement.classList.add('c2-badge-degraded');
+    }
+    else {
+        document.documentElement.classList.remove('c2-badge-degraded');
+    }
+}
+function formatTimestamp(value) {
+    if (!value) {
+        return 'an unknown time';
+    }
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return 'an unknown time';
+    }
+    try {
+        return new Intl.DateTimeFormat(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        }).format(date);
+    }
+    catch {
+        return date.toISOString();
+    }
+}
+function formatDegradedText(state) {
+    const when = formatTimestamp(state.storedAt);
+    return `Degraded – cached manifest from ${when}`;
+}
 /**
  * C2 Badge Custom Element
  *
@@ -116,6 +159,9 @@ export class C2Badge extends HTMLElement {
     modal = null;
     config = {};
     currentResult = null;
+    escapeHandler = null;
+    serviceWorkerListener = null;
+    degradeState = null;
     constructor() {
         super();
         this.shadow = this.attachShadow({ mode: 'open' });
@@ -128,6 +174,10 @@ export class C2Badge extends HTMLElement {
         this.loadConfig();
         this.render();
         this.bindEvents();
+        this.refreshDegradeFromGlobal();
+        updateDocumentDegradeClass();
+        this.registerServiceWorkerListener();
+        this.updateDegradedBadge();
         if (this.config.autoOpen) {
             setTimeout(() => this.openModal(), 100);
         }
@@ -162,6 +212,63 @@ export class C2Badge extends HTMLElement {
             autoOpen: this.hasAttribute('auto-open')
         };
     }
+    registerServiceWorkerListener() {
+        if (!('serviceWorker' in navigator)) {
+            return;
+        }
+        if (this.serviceWorkerListener) {
+            return;
+        }
+        this.serviceWorkerListener = (event) => {
+            const data = event.data;
+            if (!data || data.type !== 'C2_RELAY_STATUS') {
+                return;
+            }
+            if (data.status === 'fresh') {
+                relayStatusMap.delete(data.manifestUrl);
+            }
+            else {
+                relayStatusMap.set(data.manifestUrl, data);
+            }
+            updateDocumentDegradeClass();
+            this.refreshDegradeFromGlobal();
+            this.updateDegradedBadge();
+            this.updateModalDegradedState();
+        };
+        navigator.serviceWorker.addEventListener('message', this.serviceWorkerListener);
+    }
+    refreshDegradeFromGlobal() {
+        const message = getActiveDegradeMessage();
+        if (message && (message.status === 'stale' || message.status === 'error')) {
+            this.degradeState = {
+                status: message.status,
+                storedAt: message.storedAt,
+                reason: message.reason,
+                manifestUrl: message.manifestUrl
+            };
+        }
+        else {
+            this.degradeState = null;
+        }
+    }
+    updateDegradedBadge() {
+        const degraded = Boolean(this.degradeState);
+        if (this.badgeButton) {
+            this.badgeButton.classList.toggle('c2-badge--degraded', degraded);
+            if (degraded) {
+                this.badgeButton.setAttribute('data-status', 'degraded');
+            }
+            else {
+                this.badgeButton.removeAttribute('data-status');
+            }
+        }
+        if (degraded) {
+            this.setAttribute('data-degraded', 'true');
+        }
+        else {
+            this.removeAttribute('data-degraded');
+        }
+    }
     render() {
         // Clear shadow DOM safely
         while (this.shadow.firstChild) {
@@ -174,6 +281,7 @@ export class C2Badge extends HTMLElement {
         if (textElement) {
             textElement.textContent = this.config.text || 'Verify';
         }
+        this.updateDegradedBadge();
     }
     bindEvents() {
         this.badgeButton?.addEventListener('click', () => this.openModal());
@@ -216,13 +324,12 @@ export class C2Badge extends HTMLElement {
             });
         }
         // Escape key handling
-        const escapeHandler = (e) => {
+        this.escapeHandler = (e) => {
             if (e.key === 'Escape') {
                 this.closeModal();
-                document.removeEventListener('keydown', escapeHandler);
             }
         };
-        document.addEventListener('keydown', escapeHandler);
+        document.addEventListener('keydown', this.escapeHandler);
         // Focus management
         const closeButtonElement = closeButton;
         if (closeButtonElement) {
@@ -275,6 +382,64 @@ export class C2Badge extends HTMLElement {
         assertion.textContent = text;
         return assertion;
     }
+    updateModalDegradedState() {
+        if (!this.modal)
+            return;
+        const statusElement = this.modal.querySelector('.c2-verification-status');
+        const statusTextElement = this.modal.querySelector('.c2-verification-status__text');
+        const warningsContainer = this.modal.querySelector('#warnings');
+        if (!statusElement || !statusTextElement) {
+            return;
+        }
+        if (this.degradeState) {
+            statusElement.classList.add('c2-verification-status--degraded');
+            statusElement.classList.remove('c2-verification-status--valid', 'c2-verification-status--invalid');
+            statusTextElement.textContent = formatDegradedText(this.degradeState);
+            this.ensureDegradeWarning(warningsContainer);
+        }
+        else if (this.currentResult) {
+            statusElement.classList.remove('c2-verification-status--degraded');
+            if (this.currentResult.valid) {
+                statusElement.classList.add('c2-verification-status--valid');
+                statusElement.classList.remove('c2-verification-status--invalid');
+                statusTextElement.textContent = 'Valid Provenance';
+            }
+            else {
+                statusElement.classList.add('c2-verification-status--invalid');
+                statusElement.classList.remove('c2-verification-status--valid');
+                statusTextElement.textContent = 'Invalid Provenance';
+            }
+            this.removeDegradeWarning(warningsContainer);
+        }
+    }
+    ensureDegradeWarning(container) {
+        if (!container || !this.degradeState) {
+            return;
+        }
+        let warningElement = container.querySelector('#c2-degraded-warning');
+        if (!warningElement) {
+            warningElement = document.createElement('div');
+            warningElement.id = 'c2-degraded-warning';
+            warningElement.className = 'c2-warning c2-warning--degraded';
+            container.prepend(warningElement);
+        }
+        warningElement.textContent = this.buildDegradeMessage();
+    }
+    removeDegradeWarning(container) {
+        if (!container) {
+            return;
+        }
+        const warningElement = container.querySelector('#c2-degraded-warning');
+        warningElement?.remove();
+    }
+    buildDegradeMessage() {
+        if (!this.degradeState) {
+            return '';
+        }
+        const when = formatTimestamp(this.degradeState.storedAt);
+        const reason = this.degradeState.reason ? ` Reason: ${this.degradeState.reason}.` : '';
+        return `Relay degraded mode — serving cached manifest from ${when}.${reason}`;
+    }
     renderResult() {
         if (!this.modal || !this.currentResult)
             return;
@@ -287,21 +452,6 @@ export class C2Badge extends HTMLElement {
         }
         const resultClone = RESULT_TEMPLATE.content.cloneNode(true);
         body.appendChild(resultClone);
-        // Update status
-        const statusElement = body.querySelector('.c2-verification-status');
-        const statusTextElement = body.querySelector('.c2-verification-status__text');
-        if (this.currentResult.valid) {
-            statusElement?.classList.add('c2-verification-status--valid');
-            statusElement?.classList.remove('c2-verification-status--invalid');
-            if (statusTextElement)
-                statusTextElement.textContent = 'Valid Provenance';
-        }
-        else {
-            statusElement?.classList.add('c2-verification-status--invalid');
-            statusElement?.classList.remove('c2-verification-status--valid');
-            if (statusTextElement)
-                statusTextElement.textContent = 'Invalid Provenance';
-        }
         // Update signer information
         const signerName = body.querySelector('#signer-name');
         const signerKey = body.querySelector('#signer-key');
@@ -347,19 +497,21 @@ export class C2Badge extends HTMLElement {
         }
         // Update warnings
         const warningsContainer = body.querySelector('#warnings');
-        if (warningsContainer && this.currentResult.warnings.length > 0) {
-            // Clear container safely
+        if (warningsContainer) {
             while (warningsContainer.firstChild) {
                 warningsContainer.removeChild(warningsContainer.firstChild);
             }
-            this.currentResult.warnings.forEach(warning => {
-                const warningElement = document.createElement('div');
-                warningElement.className = 'c2-warning';
-                // Sanitize warning text
-                warningElement.textContent = warning.replace(/[<>]/g, '');
-                warningsContainer.appendChild(warningElement);
-            });
+            if (this.currentResult.warnings.length > 0) {
+                this.currentResult.warnings.forEach(warning => {
+                    const warningElement = document.createElement('div');
+                    warningElement.className = 'c2-warning';
+                    // Sanitize warning text
+                    warningElement.textContent = warning.replace(/[<>]/g, '');
+                    warningsContainer.appendChild(warningElement);
+                });
+            }
         }
+        this.updateModalDegradedState();
         // Bind action buttons
         this.bindActionButtons();
     }
@@ -386,6 +538,7 @@ export class C2Badge extends HTMLElement {
         retryButton?.addEventListener('click', () => {
             this.performVerification();
         });
+        this.updateModalDegradedState();
     }
     bindActionButtons() {
         if (!this.modal)
@@ -420,6 +573,15 @@ export class C2Badge extends HTMLElement {
         });
     }
     disconnectedCallback() {
+        // CRITICAL: Clean up event listeners to prevent memory leaks
+        if (this.escapeHandler) {
+            document.removeEventListener('keydown', this.escapeHandler);
+            this.escapeHandler = null;
+        }
+        if (this.serviceWorkerListener && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.removeEventListener('message', this.serviceWorkerListener);
+            this.serviceWorkerListener = null;
+        }
         this.closeModal();
     }
 }

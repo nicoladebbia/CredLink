@@ -48,6 +48,12 @@
     },
     {
       "path": "./apps/reportgen"
+    },
+    {
+      "path": "./apps/edge-relay"
+    },
+    {
+      "path": "./packages/sw-relay"
     }
   ]
 }

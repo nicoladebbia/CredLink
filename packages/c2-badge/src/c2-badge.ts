@@ -110,6 +110,69 @@ ERROR_TEMPLATE.innerHTML = `
   </div>
 `;
 
+interface RelayStatusMessage {
+  type: 'C2_RELAY_STATUS';
+  status: 'fresh' | 'cached' | 'stale' | 'error';
+  manifestUrl: string;
+  storedAt?: string;
+  reason?: string;
+  statusCode?: number;
+}
+
+interface DegradeState {
+  status: 'stale' | 'error';
+  storedAt?: string;
+  reason?: string;
+  manifestUrl: string;
+}
+
+const relayStatusMap = new Map<string, RelayStatusMessage>();
+
+function getActiveDegradeMessage(): RelayStatusMessage | undefined {
+  for (const message of relayStatusMap.values()) {
+    if (message.status === 'stale' || message.status === 'error') {
+      return message;
+    }
+  }
+  return undefined;
+}
+
+function updateDocumentDegradeClass(): void {
+  if (getActiveDegradeMessage()) {
+    document.documentElement.classList.add('c2-badge-degraded');
+  } else {
+    document.documentElement.classList.remove('c2-badge-degraded');
+  }
+}
+
+function formatTimestamp(value?: string): string {
+  if (!value) {
+    return 'an unknown time';
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'an unknown time';
+  }
+
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(date);
+  } catch {
+    return date.toISOString();
+  }
+}
+
+function formatDegradedText(state: DegradeState): string {
+  const when = formatTimestamp(state.storedAt);
+  return `Degraded – cached manifest from ${when}`;
+}
+
 interface VerificationResult {
   valid: boolean;
   signer: {
@@ -164,6 +227,8 @@ export class C2Badge extends HTMLElement {
   private config: C2BadgeConfig = {};
   private currentResult: VerificationResult | null = null;
   private escapeHandler: ((e: KeyboardEvent) => void) | null = null;
+  private serviceWorkerListener: ((event: MessageEvent) => void) | null = null;
+  private degradeState: DegradeState | null = null;
 
   constructor() {
     super();
@@ -179,6 +244,10 @@ export class C2Badge extends HTMLElement {
     this.loadConfig();
     this.render();
     this.bindEvents();
+    this.refreshDegradeFromGlobal();
+    updateDocumentDegradeClass();
+    this.registerServiceWorkerListener();
+    this.updateDegradedBadge();
     
     if (this.config.autoOpen) {
       setTimeout(() => this.openModal(), 100);
@@ -219,6 +288,68 @@ export class C2Badge extends HTMLElement {
     };
   }
 
+  private registerServiceWorkerListener(): void {
+    if (!('serviceWorker' in navigator)) {
+      return;
+    }
+
+    if (this.serviceWorkerListener) {
+      return;
+    }
+
+    this.serviceWorkerListener = (event: MessageEvent) => {
+      const data = event.data as RelayStatusMessage | undefined;
+      if (!data || data.type !== 'C2_RELAY_STATUS') {
+        return;
+      }
+
+      if (data.status === 'fresh') {
+        relayStatusMap.delete(data.manifestUrl);
+      } else {
+        relayStatusMap.set(data.manifestUrl, data);
+      }
+
+      updateDocumentDegradeClass();
+      this.refreshDegradeFromGlobal();
+      this.updateDegradedBadge();
+      this.updateModalDegradedState();
+    };
+
+    navigator.serviceWorker.addEventListener('message', this.serviceWorkerListener);
+  }
+
+  private refreshDegradeFromGlobal(): void {
+    const message = getActiveDegradeMessage();
+    if (message && (message.status === 'stale' || message.status === 'error')) {
+      this.degradeState = {
+        status: message.status,
+        storedAt: message.storedAt,
+        reason: message.reason,
+        manifestUrl: message.manifestUrl
+      };
+    } else {
+      this.degradeState = null;
+    }
+  }
+
+  private updateDegradedBadge(): void {
+    const degraded = Boolean(this.degradeState);
+    if (this.badgeButton) {
+      this.badgeButton.classList.toggle('c2-badge--degraded', degraded);
+      if (degraded) {
+        this.badgeButton.setAttribute('data-status', 'degraded');
+      } else {
+        this.badgeButton.removeAttribute('data-status');
+      }
+    }
+
+    if (degraded) {
+      this.setAttribute('data-degraded', 'true');
+    } else {
+      this.removeAttribute('data-degraded');
+    }
+  }
+
   private render(): void {
     // Clear shadow DOM safely
     while (this.shadow.firstChild) {
@@ -233,6 +364,8 @@ export class C2Badge extends HTMLElement {
     if (textElement) {
       textElement.textContent = this.config.text || 'Verify';
     }
+
+    this.updateDegradedBadge();
   }
 
   private bindEvents(): void {
@@ -350,6 +483,71 @@ export class C2Badge extends HTMLElement {
     return assertion;
   }
 
+  private updateModalDegradedState(): void {
+    if (!this.modal) return;
+
+    const statusElement = this.modal.querySelector('.c2-verification-status') as HTMLElement | null;
+    const statusTextElement = this.modal.querySelector('.c2-verification-status__text') as HTMLElement | null;
+    const warningsContainer = this.modal.querySelector('#warnings') as HTMLElement | null;
+
+    if (!statusElement || !statusTextElement) {
+      return;
+    }
+
+    if (this.degradeState) {
+      statusElement.classList.add('c2-verification-status--degraded');
+      statusElement.classList.remove('c2-verification-status--valid', 'c2-verification-status--invalid');
+      statusTextElement.textContent = formatDegradedText(this.degradeState);
+      this.ensureDegradeWarning(warningsContainer);
+    } else if (this.currentResult) {
+      statusElement.classList.remove('c2-verification-status--degraded');
+      if (this.currentResult.valid) {
+        statusElement.classList.add('c2-verification-status--valid');
+        statusElement.classList.remove('c2-verification-status--invalid');
+        statusTextElement.textContent = 'Valid Provenance';
+      } else {
+        statusElement.classList.add('c2-verification-status--invalid');
+        statusElement.classList.remove('c2-verification-status--valid');
+        statusTextElement.textContent = 'Invalid Provenance';
+      }
+      this.removeDegradeWarning(warningsContainer);
+    }
+  }
+
+  private ensureDegradeWarning(container: HTMLElement | null): void {
+    if (!container || !this.degradeState) {
+      return;
+    }
+
+    let warningElement = container.querySelector('#c2-degraded-warning') as HTMLElement | null;
+    if (!warningElement) {
+      warningElement = document.createElement('div');
+      warningElement.id = 'c2-degraded-warning';
+      warningElement.className = 'c2-warning c2-warning--degraded';
+      container.prepend(warningElement);
+    }
+
+    warningElement.textContent = this.buildDegradeMessage();
+  }
+
+  private removeDegradeWarning(container: HTMLElement | null): void {
+    if (!container) {
+      return;
+    }
+    const warningElement = container.querySelector('#c2-degraded-warning');
+    warningElement?.remove();
+  }
+
+  private buildDegradeMessage(): string {
+    if (!this.degradeState) {
+      return '';
+    }
+
+    const when = formatTimestamp(this.degradeState.storedAt);
+    const reason = this.degradeState.reason ? ` Reason: ${this.degradeState.reason}.` : '';
+    return `Relay degraded mode — serving cached manifest from ${when}.${reason}`;
+  }
+
   private renderResult(): void {
     if (!this.modal || !this.currentResult) return;
 
@@ -363,20 +561,6 @@ export class C2Badge extends HTMLElement {
     
     const resultClone = RESULT_TEMPLATE.content.cloneNode(true) as DocumentFragment;
     body.appendChild(resultClone);
-
-    // Update status
-    const statusElement = body.querySelector('.c2-verification-status') as HTMLElement;
-    const statusTextElement = body.querySelector('.c2-verification-status__text') as HTMLElement;
-    
-    if (this.currentResult.valid) {
-      statusElement?.classList.add('c2-verification-status--valid');
-      statusElement?.classList.remove('c2-verification-status--invalid');
-      if (statusTextElement) statusTextElement.textContent = 'Valid Provenance';
-    } else {
-      statusElement?.classList.add('c2-verification-status--invalid');
-      statusElement?.classList.remove('c2-verification-status--valid');
-      if (statusTextElement) statusTextElement.textContent = 'Invalid Provenance';
-    }
 
     // Update signer information
     const signerName = body.querySelector('#signer-name') as HTMLElement;
@@ -423,21 +607,24 @@ export class C2Badge extends HTMLElement {
     }
 
     // Update warnings
-    const warningsContainer = body.querySelector('#warnings') as HTMLElement;
-    if (warningsContainer && this.currentResult.warnings.length > 0) {
-      // Clear container safely
+    const warningsContainer = body.querySelector('#warnings') as HTMLElement | null;
+    if (warningsContainer) {
       while (warningsContainer.firstChild) {
         warningsContainer.removeChild(warningsContainer.firstChild);
       }
-      
-      this.currentResult.warnings.forEach(warning => {
-        const warningElement = document.createElement('div');
-        warningElement.className = 'c2-warning';
-        // Sanitize warning text
-        warningElement.textContent = warning.replace(/[<>]/g, '');
-        warningsContainer.appendChild(warningElement);
-      });
+
+      if (this.currentResult.warnings.length > 0) {
+        this.currentResult.warnings.forEach(warning => {
+          const warningElement = document.createElement('div');
+          warningElement.className = 'c2-warning';
+          // Sanitize warning text
+          warningElement.textContent = warning.replace(/[<>]/g, '');
+          warningsContainer.appendChild(warningElement);
+        });
+      }
     }
+
+    this.updateModalDegradedState();
 
     // Bind action buttons
     this.bindActionButtons();
@@ -469,6 +656,8 @@ export class C2Badge extends HTMLElement {
     retryButton?.addEventListener('click', () => {
       this.performVerification();
     });
+
+    this.updateModalDegradedState();
   }
 
   private bindActionButtons(): void {
@@ -511,6 +700,11 @@ export class C2Badge extends HTMLElement {
     if (this.escapeHandler) {
       document.removeEventListener('keydown', this.escapeHandler);
       this.escapeHandler = null;
+    }
+
+    if (this.serviceWorkerListener && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.removeEventListener('message', this.serviceWorkerListener);
+      this.serviceWorkerListener = null;
     }
     
     this.closeModal();

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Edge Relay Test Harness</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; line-height: 1.5; }
+    h1 { margin-bottom: 0.5rem; }
+    ul { padding-left: 1.2rem; }
+    code { background: #f2f4f8; padding: 0 4px; border-radius: 4px; }
+    .card { border: 1px solid #dfe3eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    .card h2 { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <h1>Edge Relay Test Harness</h1>
+  <p>Use these pages to validate Phase 14 behaviour in staging or production. Each scenario signs a relay request client-side with a test secret—never use production secrets here.</p>
+
+  <div class="card">
+    <h2><a href="mixed-content.html">Mixed Content Block</a></h2>
+    <p>Confirms the relay emits <code>497 MixedContentBlocked</code> when an HTTP manifest is requested from an HTTPS page.</p>
+  </div>
+
+  <div class="card">
+    <h2><a href="redirect.html">Redirect Discipline</a></h2>
+    <p>Exercises HTTPS redirects, enforces same-scheme constraints, and checks the three-hop ceiling.</p>
+  </div>
+
+  <div class="card">
+    <h2><a href="stale-cache.html">Stale Cache Drill</a></h2>
+    <p>Demonstrates negative caching: seed a valid manifest, force a 5xx at the origin, and confirm the relay serves the cached copy with a <code>Warning: 110</code>.</p>
+  </div>
+
+  <div class="card">
+    <h2><a href="offline.html">Offline / Degraded Mode</a></h2>
+    <p>Shows how the Service Worker serves the last good manifest while flagging Degraded mode during a simulated offline window.</p>
+  </div>
+
+  <p><strong>Tip:</strong> Run <code>wrangler dev --local</code> from <code>apps/edge-relay</code> to exercise these pages against the local worker at <code>http://127.0.0.1:8788</code>.</p>
+</body>
+</html>

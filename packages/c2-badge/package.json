@@ -9,9 +9,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && npm run build-css",
-    "build-css": "cat src/styles.css > dist/styles.css",
-    "dev": "tsc --watch",
+    "build": "tsc -p tsconfig.json && npm run build-css && node ./scripts/build.mjs",
+    "build-css": "mkdir -p dist && cat src/styles.css > dist/styles.css",
+    "dev": "tsc -p tsconfig.json --watch",
     "test": "node --test dist/**/*.test.js",
     "clean": "rm -rf dist"
   },
