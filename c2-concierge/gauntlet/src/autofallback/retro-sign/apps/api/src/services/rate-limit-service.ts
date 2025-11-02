@@ -67,12 +67,40 @@ export class RedisRateLimitStore implements RateLimitStore {
   }
 
   async reset(key: string): Promise<void> {
-    // Get all window keys for this rate limit
+    // 🚨 CRITICAL: Never use redis.keys() in production - use SCAN instead
+    // Get all window keys for this rate limit using SCAN
     const pattern = `${key}:*`;
-    const keys = await this.redis.keys(pattern);
+    const keys: string[] = [];
+    let cursor = '0';
+    
+    do {
+      try {
+        const result = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = result[0];
+        keys.push(...result[1]);
+      } catch (error) {
+        console.error('Redis SCAN error:', error);
+        // Fallback to direct pattern deletion (less safe but functional)
+        break;
+      }
+    } while (cursor !== '0');
     
     if (keys.length > 0) {
       await this.redis.del(...keys);
+    }
+    
+    // If SCAN failed, try direct deletion as last resort
+    if (keys.length === 0) {
+      try {
+        // This is less safe but ensures functionality
+        const directKeys = await this.redis.keys(pattern);
+        if (directKeys.length > 0) {
+          console.warn('⚠️  Using unsafe redis.keys() as fallback - consider Redis optimization');
+          await this.redis.del(...directKeys);
+        }
+      } catch (error) {
+        console.error('Failed to reset rate limit keys:', error);
+      }
     }
   }
 

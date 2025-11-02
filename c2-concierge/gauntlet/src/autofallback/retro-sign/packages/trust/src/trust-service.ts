@@ -35,6 +35,8 @@ import {
 
 import { TrustCache, MemoryTrustCache, CacheUtils } from './cache';
 
+import { generateSecureEdgeId } from '../../apps/api/src/utils/crypto';
+
 /**
  * Trust Service - main class for trust graph operations
  */
@@ -272,7 +274,7 @@ export class TrustService {
 
       // Add usage edge if this is from a manifest verification
       if (context.manifest_url) {
-        const edgeId = `usage:${keyId}:${Date.now()}`;
+        const edgeId = await generateSecureEdgeId(keyId, 'manifest_verification');
         const insertEdgeQuery = `
           INSERT INTO trust_edges (edge_id, from_node, to_node, edge_type, timestamp, attrs)
           VALUES ($1, $2, $3, 'used_by', $4, $5)

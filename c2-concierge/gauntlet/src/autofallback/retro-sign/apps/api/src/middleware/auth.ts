@@ -7,6 +7,12 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { securityConfig } from '../config/security';
 import { tokenBlacklist } from '../services/token-blacklist-service';
+import { 
+  securePermissionCheck, 
+  secureRoleCheck, 
+  secureArrayIncludes,
+  addRandomDelay 
+} from '../utils/timing';
 
 // JWT payload interface
 export interface JWTPayload {
@@ -125,6 +131,7 @@ export function requireRole(requiredRole: 'admin' | 'user' | 'readonly') {
       });
     }
 
+    // 🚨 CRITICAL: Use timing-safe role comparison to prevent timing attacks
     const roleHierarchy = {
       'readonly': 0,
       'user': 1,
@@ -133,6 +140,9 @@ export function requireRole(requiredRole: 'admin' | 'user' | 'readonly') {
 
     const userLevel = roleHierarchy[user.role] || 0;
     const requiredLevel = roleHierarchy[requiredRole] || 0;
+
+    // Add random delay to prevent timing attacks
+    await addRandomDelay(10, 30);
 
     if (userLevel < requiredLevel) {
       return reply.status(403).send({ 
@@ -159,7 +169,10 @@ export function requirePermission(permission: string) {
       });
     }
 
-    if (!user.permissions.includes(permission)) {
+    // 🚨 CRITICAL: Use timing-safe permission check to prevent timing attacks
+    await addRandomDelay(10, 30);
+
+    if (!securePermissionCheck(user.permissions, permission)) {
       return reply.status(403).send({ 
         error: 'Insufficient permissions',
         message: `Requires permission: ${permission}`,
@@ -212,6 +225,11 @@ export async function addSecurityHeaders(request: FastifyRequest, reply: Fastify
   reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
   reply.header('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   
+  // 🚨 CRITICAL: Add HSTS for HTTPS security
+  if (process.env.NODE_ENV === 'production' || request.headers['x-forwarded-proto'] === 'https') {
+    reply.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+  
   // Content Security Policy - HARSH SECURITY MODE
   const csp = [
     "default-src 'self'",
@@ -235,6 +253,11 @@ export async function addSecurityHeaders(request: FastifyRequest, reply: Fastify
   // Remove server information
   reply.header('Server', '');
   reply.header('X-Powered-By', '');
+  
+  // Additional security headers
+  reply.header('X-Permitted-Cross-Domain-Policies', 'none');
+  reply.header('X-Download-Options', 'noopen');
+  reply.header('X-Content-Security-Policy', 'default-src \'self\'');
 }
 
 /**

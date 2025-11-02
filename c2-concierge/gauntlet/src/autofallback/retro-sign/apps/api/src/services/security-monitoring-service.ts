@@ -3,6 +3,7 @@
  * Real-time threat detection, alerting, and incident response
  */
 
+import { generateSecurityEventId, generateSecureTimestampId } from '../utils/crypto';
 import { FastifyRequest } from 'fastify';
 
 export interface SecurityEvent {
@@ -405,6 +406,28 @@ export class SecurityMonitoringService {
   }
 
   /**
+   * Detect security event
+   */
+  private async detectSecurityEvent(type: SecurityEventType, details: Record<string, any>, request?: FastifyRequest): Promise<void> {
+    const event: SecurityEvent = {
+      id: await this.generateEventId(),
+      timestamp: new Date().toISOString(),
+      type,
+      severity: this.getSeverityFromType(type),
+      source: {
+        ip_address: request?.ip || 'unknown',
+        user_agent: request?.headers['user-agent']
+      },
+      details,
+      request_id: request?.headers['x-request-id'] as string
+    };
+
+    this.logSecurityEvent(event);
+    this.executeActions(this.getActionsForType(type), event, request);
+    this.eventCallbacks.forEach(callback => callback(event));
+  }
+
+  /**
    * Create security event from rule
    */
   private async createSecurityEvent(
@@ -413,7 +436,7 @@ export class SecurityMonitoringService {
     context: any
   ): Promise<SecurityEvent> {
     return {
-      id: this.generateEventId(),
+      id: await this.generateEventId(),
       timestamp: new Date().toISOString(),
       type: 'suspicious_activity',
       severity: rule.severity,
@@ -497,8 +520,8 @@ export class SecurityMonitoringService {
   /**
    * Generate unique event ID
    */
-  private generateEventId(): string {
-    return `sec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  private async generateEventId(): Promise<string> {
+    return await generateSecurityEventId();
   }
 }
 

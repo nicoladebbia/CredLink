@@ -22,6 +22,10 @@ import {
 import { createAuditService } from '../services/audit-service';
 import { createSecurityMonitoringMiddleware, securityMonitoring } from '../services/security-monitoring-service';
 import { RateLimitPresets } from '../services/rate-limit-service';
+import { defaultRequestLimits, strictRequestLimits } from '../middleware/request-limits';
+import { defaultParameterPollution, strictParameterPollution } from '../middleware/parameter-pollution';
+import { standardReplayProtection, strictReplayProtection } from '../middleware/replay-protection';
+import { standardSideChannelProtection, strictSideChannelProtection } from '../middleware/side-channel';
 
 interface VerifyVideoRequest {
   Querystring: {
@@ -171,6 +175,18 @@ export async function verifyRoutes(fastify: FastifyInstance) {
   
   // Global security headers
   fastify.addHook('preHandler', addSecurityHeaders);
+  
+  // Global request size limits (prevent DoS)
+  fastify.addHook('preHandler', defaultRequestLimits);
+  
+  // Global parameter pollution protection
+  fastify.addHook('preHandler', defaultParameterPollution);
+  
+  // Global replay attack protection
+  fastify.addHook('preHandler', standardReplayProtection);
+  
+  // Global side-channel attack protection
+  fastify.addHook('preHandler', standardSideChannelProtection);
   
   // Global CORS validation
   fastify.addHook('preHandler', validateCORS([

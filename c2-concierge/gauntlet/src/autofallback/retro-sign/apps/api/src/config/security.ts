@@ -1,3 +1,5 @@
+import { generateDevelopmentSecret } from '../utils/crypto';
+
 /**
  * Security Configuration
  * Production-ready security settings and policies
@@ -100,7 +102,13 @@ export interface SecurityConfig {
  */
 export const defaultSecurityConfig: SecurityConfig = {
   jwt: {
-    secret: process.env.JWT_SECRET || 'development-secret-change-in-production',
+    secret: process.env.JWT_SECRET || (() => {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET environment variable is required in production');
+      }
+      console.warn('🚨 SECURITY WARNING: Using default JWT secret for development only');
+      return generateDevelopmentSecret();
+    })(),
     issuer: process.env.JWT_ISSUER || 'c2pa-api',
     audience: process.env.JWT_AUDIENCE || 'c2pa-client',
     expiresIn: '1h',
@@ -222,7 +230,7 @@ export const productionSecurityConfig: SecurityConfig = {
   jwt: {
     ...defaultSecurityConfig.jwt,
     secret: process.env.JWT_SECRET || (() => {
-      throw new Error('JWT_SECRET must be set in production');
+      throw new Error('JWT_SECRET environment variable is REQUIRED in production - cannot start without it');
     })(),
     expiresIn: '15m', // Shorter expiration in production
     refreshExpiresIn: '7d'
@@ -313,8 +321,9 @@ export function validateSecurityConfig(config: SecurityConfig): void {
     errors.push('JWT secret must be at least 32 characters long');
   }
   
-  if (config.jwt.secret === 'development-secret-change-in-production' && process.env.NODE_ENV === 'production') {
-    errors.push('JWT secret must be changed in production');
+  if (process.env.NODE_ENV === 'production' && 
+      (config.jwt.secret.includes('development') || config.jwt.secret.length < 64)) {
+    errors.push('JWT secret must be a strong, unique secret in production (no development secrets)');
   }
   
   // Validate CORS origins

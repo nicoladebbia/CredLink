@@ -189,23 +189,58 @@ export class RedisTrustCache implements TrustCache {
 
   async clear(): Promise<void> {
     try {
+      // 🚨 CRITICAL: Never use redis.keys() in production - use SCAN instead
       const pattern = `${this.keyPrefix}*`;
-      const keys = await this.redis.keys(pattern);
+      const keys: string[] = [];
+      let cursor = '0';
+      
+      do {
+        try {
+          const result = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+          cursor = result[0];
+          keys.push(...result[1]);
+        } catch (scanError) {
+          console.error('Redis SCAN error during clear:', scanError);
+          break;
+        }
+      } while (cursor !== '0');
+      
       if (keys.length > 0) {
-        await this.redis.del(...keys);
+        // Delete in batches to avoid blocking Redis
+        const batchSize = 100;
+        for (let i = 0; i < keys.length; i += batchSize) {
+          const batch = keys.slice(i, i + batchSize);
+          await this.redis.del(...batch);
+        }
+        console.log(`Cleared ${keys.length} cache entries`);
       }
+      
     } catch (error) {
       console.error('Redis clear error:', error);
+      // In case of complete failure, try to continue without cache clearing
+      console.warn('Cache clearing failed - continuing with existing cache');
     }
   }
 
   async size(): Promise<number> {
     try {
+      // 🚨 CRITICAL: Never use redis.keys() even in Lua scripts - use SCAN instead
       const pattern = `${this.keyPrefix}*`;
-      return await this.redis.eval(`
-        local keys = redis.call('keys', ARGV[1])
-        return #keys
-      `, 0, pattern);
+      let count = 0;
+      let cursor = '0';
+      
+      do {
+        try {
+          const result = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+          cursor = result[0];
+          count += result[1].length;
+        } catch (scanError) {
+          console.error('Redis SCAN error during size:', scanError);
+          break;
+        }
+      } while (cursor !== '0');
+      
+      return count;
     } catch (error) {
       console.error('Redis size error:', error);
       return 0;
@@ -214,8 +249,22 @@ export class RedisTrustCache implements TrustCache {
 
   async keys(): Promise<string[]> {
     try {
+      // 🚨 CRITICAL: Never use redis.keys() in production - use SCAN instead
       const pattern = `${this.keyPrefix}*`;
-      const keys = await this.redis.keys(pattern);
+      const keys: string[] = [];
+      let cursor = '0';
+      
+      do {
+        try {
+          const result = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 1000);
+          cursor = result[0];
+          keys.push(...result[1]);
+        } catch (scanError) {
+          console.error('Redis SCAN error during keys:', scanError);
+          break;
+        }
+      } while (cursor !== '0');
+      
       return keys.map((key: string) => key.replace(this.keyPrefix, ''));
     } catch (error) {
       console.error('Redis keys error:', error);

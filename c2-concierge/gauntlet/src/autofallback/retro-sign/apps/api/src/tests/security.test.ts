@@ -1,7 +1,4 @@
-/**
- * Automated Security Testing Suite
- * Comprehensive penetration testing for production security validation
- */
+import { generateJwtId } from '../utils/crypto';
 
 import { FastifyInstance } from 'fastify';
 import jwt from 'jsonwebtoken';
@@ -19,28 +16,28 @@ describe('Security Tests', () => {
     app = await createTestApp();
     
     // Generate test tokens
-    validAdminToken = generateTestToken({
+    validAdminToken = await generateTestToken({
       sub: 'admin-user',
       email: 'admin@test.com',
       role: 'admin',
       permissions: ['admin.access', 'key.revoke']
     });
     
-    validUserToken = generateTestToken({
+    validUserToken = await generateTestToken({
       sub: 'regular-user',
       email: 'user@test.com',
       role: 'user',
       permissions: ['user.access']
     });
     
-    expiredToken = generateTestToken({
+    expiredToken = await generateTestToken({
       sub: 'expired-user',
       email: 'expired@test.com',
       role: 'user',
       permissions: ['user.access']
     }, { expiresIn: '-1h' });
     
-    invalidSignatureToken = generateTestToken({
+    invalidSignatureToken = await generateTestToken({
       sub: 'fake-user',
       email: 'fake@test.com',
       role: 'admin',
@@ -164,7 +161,7 @@ describe('Security Tests', () => {
     });
 
     test('should reject users without specific permissions', async () => {
-      const userWithoutPerms = generateTestToken({
+      const userWithoutPerms = await generateTestToken({
         sub: 'limited-user',
         email: 'limited@test.com',
         role: 'user',
@@ -498,12 +495,12 @@ async function createTestApp(): Promise<FastifyInstance> {
   return app;
 }
 
-function generateTestToken(payload: any, options: { secret?: string; expiresIn?: string } = {}): string {
+async function generateTestToken(payload: any, options: { secret?: string; expiresIn?: string } = {}): Promise<string> {
   return jwt.sign(payload, options.secret || securityConfig.jwt.secret, {
     issuer: securityConfig.jwt.issuer,
     audience: securityConfig.jwt.audience,
     expiresIn: options.expiresIn || securityConfig.jwt.expiresIn,
-    jti: `test-${Math.random().toString(36).substr(2, 9)}`
+    jti: `test-${await generateJwtId()}`
   });
 }
 

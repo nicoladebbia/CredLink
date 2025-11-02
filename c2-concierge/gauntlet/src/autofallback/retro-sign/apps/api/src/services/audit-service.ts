@@ -4,6 +4,7 @@
  */
 
 import { FastifyRequest } from 'fastify';
+import { generateAuditEventId, generateSecureTimestampId } from '../utils/crypto';
 
 // Audit event interface
 export interface AuditEvent {
@@ -56,11 +57,39 @@ export interface AuditStatistics {
   critical_events: number;
 }
 
+/**
+ * Sanitize audit event details to prevent log injection
+ */
+function sanitizeAuditDetails(details: Record<string, any>): Record<string, any> {
+  const sanitized: Record<string, any> = {};
+  
+  for (const [key, value] of Object.entries(details)) {
+    if (typeof value === 'string') {
+      // Prevent log injection by sanitizing string values
+      sanitized[key] = value
+        .replace(/[\r\n]/g, '') // Remove line breaks
+        .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
+        .replace(/[<>]/g, '') // Remove HTML tags
+        .substring(0, 1000); // Truncate long values
+    } else if (typeof value === 'object' && value !== null) {
+      // Recursively sanitize nested objects
+      sanitized[key] = sanitizeAuditDetails(value);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+  
+  return sanitized;
+}
+
 // PostgreSQL implementation
 export class PostgreSQLAuditDatabase implements AuditDatabase {
   constructor(private db: any) {}
 
   async insertAuditEvent(event: AuditEvent): Promise<string> {
+    // Sanitize details to prevent log injection
+    const sanitizedDetails = sanitizeAuditDetails(event.details);
+    
     const query = `
       INSERT INTO audit_events (
         timestamp, action, user_id, session_id, ip_address, user_agent,
@@ -68,24 +97,25 @@ export class PostgreSQLAuditDatabase implements AuditDatabase {
         request_id, correlation_id
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-      ) RETURNING id
+      )
+      RETURNING id
     `;
 
     const values = [
       event.timestamp,
-      event.action,
-      event.user_id,
-      event.session_id || null,
-      event.ip_address,
-      event.user_agent || null,
-      event.resource_id || null,
-      event.resource_type || null,
-      JSON.stringify(event.details),
+      event.action.substring(0, 100), // Limit action length
+      event.user_id?.substring(0, 255) || null, // Limit user_id length
+      event.session_id?.substring(0, 255) || null,
+      event.ip_address?.substring(0, 45) || null, // IPv6 max length
+      event.user_agent?.substring(0, 500) || null,
+      event.resource_id?.substring(0, 255) || null,
+      event.resource_type?.substring(0, 100) || null,
+      JSON.stringify(sanitizedDetails),
       event.severity,
       event.success,
-      event.error_message || null,
-      event.request_id || null,
-      event.correlation_id || null
+      event.error_message?.substring(0, 1000) || null,
+      event.request_id?.substring(0, 255) || null,
+      event.correlation_id?.substring(0, 255) || null
     ];
 
     const result = await this.db.query(query, values);
@@ -269,8 +299,8 @@ export class AuditService {
     return this.auditDb.getAuditStatistics(timeRange);
   }
 
-  private generateEventId(): string {
-    return `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  private async generateEventId(): Promise<string> {
+    return await generateAuditEventId();
   }
 
   private extractSessionId(request: FastifyRequest): string | undefined {
