@@ -1,0 +1,24 @@
+{
+  "name": "@c2/idp",
+  "version": "1.0.0",
+  "description": "SSO broker service for C2 Concierge",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@c2/oidc-saml": "workspace:*",
+    "@c2/rbac": "workspace:*",
+    "hono": "^4.10.4"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "wrangler": "^3.22.1"
+  }
+}

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  wp-test:
+    image: wordpress:6.4-php8.2-apache
+    container_name: wp-test
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress_test
+      WORDPRESS_DEBUG: 1
+    volumes:
+      - wp_data:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mysql:
+    image: mysql:8.0
+    container_name: wp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress_test
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  wp-cli:
+    image: wordpress:cli
+    container_name: wp-cli
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress_test
+    volumes:
+      - wp_data:/var/www/html
+    depends_on:
+      wp-test:
+        condition: service_healthy
+    command: tail -f /dev/null
+
+volumes:
+  wp_data:
+  mysql_data:

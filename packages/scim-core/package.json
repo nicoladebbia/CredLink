@@ -1,0 +1,20 @@
+{
+  "name": "@c2/scim-core",
+  "version": "1.0.0",
+  "description": "SCIM 2.0 core implementation for C2 Concierge",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.8",
+    "ts-jest": "^29.1.1"
+  }
+}

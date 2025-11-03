@@ -1,0 +1,189 @@
+# Sigstore Policy Controller Deployment for C2 Concierge
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cosign-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: policy-controller
+  namespace: cosign-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: policy-controller
+rules:
+- apiGroups: [""]
+  resources: ["pods", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["jobs", "cronjobs"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["policy.sigstore.dev"]
+  resources: ["clusterimagepolicies", "imagepolicies"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["policy.sigstore.dev"]
+  resources: ["clusterimagepolicies/status", "imagepolicies/status"]
+  verbs: ["update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: policy-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: policy-controller
+subjects:
+- kind: ServiceAccount
+  name: policy-controller
+  namespace: cosign-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy-controller
+  namespace: cosign-system
+  labels:
+    app: policy-controller
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: policy-controller
+  template:
+    metadata:
+      labels:
+        app: policy-controller
+    spec:
+      serviceAccountName: policy-controller
+      containers:
+      - name: policy-controller
+        image: ghcr.io/sigstore/policy-controller:v0.8.1
+        args:
+        - --log-level=info
+        - --metrics-addr=:8080
+        - --health-probe-addr=:8081
+        ports:
+        - containerPort: 8080
+          name: metrics
+        - containerPort: 8081
+          name: health
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65532
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: policy-controller
+  namespace: cosign-system
+  labels:
+    app: policy-controller
+spec:
+  selector:
+    app: policy-controller
+  ports:
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+  - name: health
+    port: 8081
+    targetPort: 8081
+---
+# Validating Webhook Configuration
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: policy-controller-validating-webhook-configuration
+webhooks:
+- name: policy.sigstore.dev
+  admissionReviewVersions: ["v1"]
+  clientConfig:
+    service:
+      name: policy-controller-webhook
+      namespace: cosign-system
+      path: "/validate"
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["apps"]
+    apiVersions: ["v1"]
+    resources: ["deployments", "replicasets", "daemonsets", "statefulsets"]
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: ["batch"]
+    apiVersions: ["v1"]
+    resources: ["jobs", "cronjobs"]
+  failurePolicy: Fail
+  sideEffects: None
+  timeoutSeconds: 30
+  namespaceSelector: {}
+  objectSelector: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: policy-controller-webhook
+  namespace: cosign-system
+spec:
+  selector:
+    app: policy-controller
+  ports:
+  - port: 443
+    targetPort: 443
+---
+# Mutating Webhook Configuration (for attestations)
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: policy-controller-mutating-webhook-configuration
+webhooks:
+- name: policy.sigstore.dev
+  admissionReviewVersions: ["v1"]
+  clientConfig:
+    service:
+      name: policy-controller-webhook
+      namespace: cosign-system
+      path: "/mutate"
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]
+  failurePolicy: Fail
+  sideEffects: None
+  timeoutSeconds: 30
+  namespaceSelector: {}
+  objectSelector: {}

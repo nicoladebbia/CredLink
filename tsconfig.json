@@ -22,11 +22,16 @@
     "dist",
     ".artifacts",
     "sandboxes",
-    "scripts"
+    "scripts",
+    "**/*.test.ts",
+    "**/*.spec.ts"
   ],
   "references": [
     {
       "path": "./packages/acceptance"
+    },
+    {
+      "path": "./packages/acceptance-cms"
     },
     {
       "path": "./packages/utils"
@@ -41,6 +46,48 @@
       "path": "./packages/oem-trust"
     },
     {
+      "path": "./packages/merkle-core"
+    },
+    {
+      "path": "./packages/c2-badge"
+    },
+    {
+      "path": "./packages/oem-bridge"
+    },
+    {
+      "path": "./packages/rbac"
+    },
+    {
+      "path": "./packages/oidc-saml"
+    },
+    {
+      "path": "./packages/scim-core"
+    },
+    {
+      "path": "./apps/idp"
+    },
+    {
+      "path": "./apps/scim"
+    },
+    {
+      "path": "./apps/api-gw"
+    },
+    {
+      "path": "./apps/policy"
+    },
+    {
+      "path": "./apps/audit"
+    },
+    {
+      "path": "./apps/flags"
+    },
+    {
+      "path": "./apps/evidence"
+    },
+    {
+      "path": "./packages/sw-relay"
+    },
+    {
       "path": "./apps/edge-worker"
     },
     {
@@ -53,7 +100,7 @@
       "path": "./apps/edge-relay"
     },
     {
-      "path": "./packages/sw-relay"
+      "path": "./apps/verify-api"
     }
   ]
 }

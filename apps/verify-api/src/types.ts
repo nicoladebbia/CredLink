@@ -73,15 +73,17 @@ export interface TrustRoot {
   /** Whether this root is currently trusted */
   trusted: boolean;
   /** Expiration date of the trust root */
-  expires_at?: string;
+  expires_at: string;
+  /** Optional certificate chain */
+  certificate_chain?: string[];
 }
 
 export class VerificationError extends Error {
-  code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT';
+  code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT' | 'INVALID_SIGNATURE';
   details?: Record<string, unknown>;
 
   constructor(
-    code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT',
+    code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT' | 'INVALID_SIGNATURE',
     message: string,
     details?: Record<string, unknown>
   ) {

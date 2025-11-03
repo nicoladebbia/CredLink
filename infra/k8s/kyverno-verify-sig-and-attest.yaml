@@ -1,0 +1,39 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-sig-and-attest
+  annotations:
+    description: "Kyverno policy to verify signatures and attestations for C2 Concierge images"
+    policies.kyverno.io/title: "Verify Image Signatures and Attestations"
+    policies.kyverno.io/category: "Supply Chain Security"
+    policies.kyverno.io/severity: "high"
+spec:
+  validationFailureAction: enforce
+  rules:
+    - name: verify-images
+      match:
+        resources:
+          kinds: ["Pod", "Deployment", "StatefulSet", "DaemonSet", "Job", "CronJob"]
+      verifyImages:
+        - imageReferences: 
+            - "ghcr.io/nickiller04/c2-concierge/*"
+          attestations:
+            - type: "https://slsa.dev/provenance/v1"
+              conditions:
+                - all:
+                  - key: "{{ builder.id }}"
+                    operator: Equals
+                    value: "https://github.com/Nickiller04/c2-concierge"
+                  - key: "{{ buildType }}"
+                    operator: Any
+            - type: "https://spdx.dev/Document"
+              conditions:
+                - all:
+                  - key: "{{ spdxVersion }}"
+                    operator: Equals
+                    value: "SPDX-2.3"
+          keyless: 
+            url: "https://fulcio.sigstore.dev"
+            identities:
+              - issuer: "https://token.actions.githubusercontent.com"
+                subject: "^repo:Nickiller04/c2-concierge:ref:refs/heads/.*:.*$"

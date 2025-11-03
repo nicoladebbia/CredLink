@@ -1,0 +1,9 @@
+# Trivy ignore file for CVE scanning
+# Only Critical and High vulnerabilities will fail the build
+# Medium and Low can be ignored for release gates
+
+# Example format (uncomment and modify as needed):
+# CVE-2021-1234 # Medium vulnerability in dev dependency only
+# CVE-2022-5678 # False positive, not applicable to our usage
+
+# No current ignores - all Critical/High vulnerabilities must be addressed

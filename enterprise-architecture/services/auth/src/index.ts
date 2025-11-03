@@ -21,13 +21,31 @@ import { Kafka } from 'kafkajs';
 import { v4 as uuidv4 } from 'uuid';
 
 // SECURITY: Advanced configuration
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET required');
+  return secret;
+};
+
+const getJwtRefreshSecret = () => {
+  const secret = process.env.JWT_REFRESH_SECRET;
+  if (!secret) throw new Error('JWT_REFRESH_SECRET required');
+  return secret;
+};
+
+const getDatabaseUrl = () => {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error('DATABASE_URL required');
+  return url;
+};
+
 const config = {
   port: process.env.PORT || 3001,
   nodeEnv: process.env.NODE_ENV || 'production',
-  jwtSecret: process.env.JWT_SECRET || throw new Error('JWT_SECRET required'),
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || throw new Error('JWT_REFRESH_SECRET required'),
+  jwtSecret: getJwtSecret(),
+  jwtRefreshSecret: getJwtRefreshSecret(),
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
-  databaseUrl: process.env.DATABASE_URL || throw new Error('DATABASE_URL required'),
+  databaseUrl: getDatabaseUrl(),
   kafkaBrokers: process.env.KAFKA_BROKERS?.split(',') || ['localhost:9092'],
   maxLoginAttempts: 5,
   lockoutDuration: 15 * 60 * 1000, // 15 minutes

@@ -1,0 +1,338 @@
+# Cloudflare Load Balancer Configuration for Phase 21
+# Active/Passive Multi-Region with Health Checks
+
+# Primary Load Balancer for API Services
+resource "cloudflare_load_balancer" "c2_concierge_api" {
+  zone_id = var.cloudflare_zone_id
+  name    = "c2-concierge-lb"
+  
+  # DNS Configuration
+  fallback_pool_id = cloudflare_load_balancer_pool.standby.id
+  default_pool_ids = [cloudflare_load_balancer_pool.primary.id]
+  
+  # TTL Settings
+  ttl = 60
+  
+  # Proxied through Cloudflare
+  proxied = true
+  
+  # Steering Policy
+  steering_policy = "geo"
+  
+  # Country Steering for Optimal Latency
+  country_policies {
+    countries = ["US", "CA", "MX"]
+    pool_id   = cloudflare_load_balancer_pool.primary.id
+  }
+  
+  country_policies {
+    countries = [
+      "GB", "DE", "FR", "IT", "ES", "NL", "BE", "CH", "AT", 
+      "SE", "NO", "DK", "FI", "PL", "CZ", "HU", "RO", "BG",
+      "HR", "SI", "SK", "EE", "LV", "LT", "IE", "PT", "GR"
+    ]
+    pool_id = cloudflare_load_balancer_pool.standby.id
+  }
+  
+  # Regional Steering
+  region_policies {
+    regions = ["enam"]
+    pool_id = cloudflare_load_balancer_pool.primary.id
+  }
+  
+  region_policies {
+    regions = ["weur"]
+    pool_id = cloudflare_load_balancer_pool.standby.id
+  }
+  
+  # Session Affinity (for stateful operations)
+  session_affinity = "cookie"
+  
+  # Description
+  description = "C2 Concierge API Load Balancer - ENAM Primary, WEUR Standby"
+}
+
+# Primary Pool - ENAM Region
+resource "cloudflare_load_balancer_pool" "primary" {
+  name = "pool-enam-primary"
+  
+  # Load Confidence
+  load_confidence = 100
+  
+  # Health Check Regions
+  check_regions = ["enam"]
+  
+  # Origins
+  origins {
+    name    = "api-gateway-enam-1"
+    address = "api-gateway-enam-1.internal"
+    port    = 8080
+    weight  = 1
+  }
+  
+  origins {
+    name    = "api-gateway-enam-2"
+    address = "api-gateway-enam-2.internal"
+    port    = 8080
+    weight  = 1
+  }
+  
+  origins {
+    name    = "api-gateway-enam-3"
+    address = "api-gateway-enam-3.internal"
+    port    = 8080
+    weight  = 1
+  }
+  
+  # Health Check Configuration
+  health_check_id = cloudflare_load_balancer_monitor.api_health.id
+  
+  # Description
+  description = "Primary pool - Eastern North America region"
+}
+
+# Standby Pool - WEUR Region  
+resource "cloudflare_load_balancer_pool" "standby" {
+  name = "pool-weur-standby"
+  
+  # Load Confidence
+  load_confidence = 100
+  
+  # Health Check Regions
+  check_regions = ["weur"]
+  
+  # Origins
+  origins {
+    name    = "api-gateway-weur-1"
+    address = "api-gateway-weur-1.internal"
+    port    = 8080
+    weight  = 1
+  }
+  
+  origins {
+    name    = "api-gateway-weur-2"
+    address = "api-gateway-weur-2.internal"
+    port    = 8080
+    weight  = 1
+  }
+  
+  origins {
+    name    = "api-gateway-weur-3"
+    address = "api-gateway-weur-3.internal"
+    port    = 8080
+    weight  = 1
+  }
+  
+  # Health Check Configuration
+  health_check_id = cloudflare_load_balancer_monitor.api_health.id
+  
+  # Description
+  description = "Standby pool - Western Europe region"
+}
+
+# Health Check Monitor for API Services
+resource "cloudflare_load_balancer_monitor" "api_health" {
+  expected_body = "ok"
+  expected_codes = "200"
+  method = "GET"
+  path = "/healthz"
+  port = 9090
+  timeout = 5
+  interval = 15
+  retries = 3
+  
+  # Description
+  description = "C2 Concierge API Health Check"
+  
+  # HTTP Headers
+  header {
+    header = "Host"
+    values = ["api.c2-concierge.com"]
+  }
+  
+  header {
+    header = "User-Agent"
+    values = ["Cloudflare-HealthCheck/1.0"]
+  }
+}
+
+# Readiness Health Check Monitor
+resource "cloudflare_load_balancer_monitor" "api_readiness" {
+  expected_body = "ready"
+  expected_codes = "200"
+  method = "GET"
+  path = "/readyz"
+  port = 9090
+  timeout = 5
+  interval = 15
+  retries = 3
+  
+  # Description
+  description = "C2 Concierge API Readiness Check"
+  
+  # HTTP Headers
+  header {
+    header = "Host"
+    values = ["api.c2-concierge.com"]
+  }
+  
+  header {
+    header = "User-Agent"
+    values = ["Cloudflare-HealthCheck/1.0"]
+  }
+}
+
+# DNS Records for Load Balanced Services
+resource "cloudflare_record" "api" {
+  zone_id = var.cloudflare_zone_id
+  name    = "api"
+  value   = cloudflare_load_balancer.c2_concierge_api.hostname
+  type    = "CNAME"
+  ttl     = 60
+  proxied = true
+}
+
+resource "cloudflare_record" "sign" {
+  zone_id = var.cloudflare_zone_id
+  name    = "sign"
+  value   = cloudflare_load_balancer.c2_concierge_api.hostname
+  type    = "CNAME"
+  ttl     = 60
+  proxied = true
+}
+
+resource "cloudflare_record" "verify" {
+  zone_id = var.cloudflare_zone_id
+  name    = "verify"
+  value   = cloudflare_load_balancer.c2_concierge_api.hostname
+  type    = "CNAME"
+  ttl     = 60
+  proxied = true
+}
+
+resource "cloudflare_record" "manifests" {
+  zone_id = var.cloudflare_zone_id
+  name    = "manifests"
+  value   = cloudflare_load_balancer.c2_concierge_api.hostname
+  type    = "CNAME"
+  ttl     = 60
+  proxied = true
+}
+
+# Edge Relay Worker Load Balancer
+resource "cloudflare_load_balancer" "c2_edge_relay" {
+  zone_id = var.cloudflare_zone_id
+  name    = "c2-edge-relay-lb"
+  
+  # DNS Configuration
+  fallback_pool_id = cloudflare_load_balancer_pool.edge_relay_standby.id
+  default_pool_ids = [cloudflare_load_balancer_pool.edge_relay_primary.id]
+  
+  # TTL Settings
+  ttl = 60
+  
+  # Proxied through Cloudflare
+  proxied = true
+  
+  # Steering Policy
+  steering_policy = "geo"
+  
+  # Description
+  description = "C2 Concierge Edge Relay Load Balancer"
+}
+
+# Edge Relay Primary Pool
+resource "cloudflare_load_balancer_pool" "edge_relay_primary" {
+  name = "pool-edge-relay-enam"
+  
+  # Load Confidence
+  load_confidence = 100
+  
+  # Health Check Regions
+  check_regions = ["enam"]
+  
+  # Origins (Cloudflare Workers don't have traditional origins)
+  origins {
+    name    = "edge-relay-enam"
+    address = "c2-edge-relay-enam.c2-concierge.workers.dev"
+    weight  = 1
+  }
+  
+  # Health Check Configuration
+  health_check_id = cloudflare_load_balancer_monitor.edge_relay_health.id
+  
+  # Description
+  description = "Edge Relay Primary - ENAM Worker"
+}
+
+# Edge Relay Standby Pool
+resource "cloudflare_load_balancer_pool" "edge_relay_standby" {
+  name = "pool-edge-relay-weur"
+  
+  # Load Confidence
+  load_confidence = 100
+  
+  # Health Check Regions
+  check_regions = ["weur"]
+  
+  # Origins
+  origins {
+    name    = "edge-relay-weur"
+    address = "c2-edge-relay-weur.c2-concierge.workers.dev"
+    weight  = 1
+  }
+  
+  # Health Check Configuration
+  health_check_id = cloudflare_load_balancer_monitor.edge_relay_health.id
+  
+  # Description
+  description = "Edge Relay Standby - WEUR Worker"
+}
+
+# Edge Relay Health Check Monitor
+resource "cloudflare_load_balancer_monitor" "edge_relay_health" {
+  expected_codes = "200"
+  method = "GET"
+  path = "/health"
+  timeout = 5
+  interval = 15
+  retries = 3
+  
+  # Description
+  description = "C2 Concierge Edge Relay Health Check"
+}
+
+# Variables
+variable "cloudflare_zone_id" {
+  description = "Cloudflare Zone ID for c2-concierge.com"
+  type        = string
+}
+
+# Outputs
+output "load_balancer_hostname" {
+  value = cloudflare_load_balancer.c2_concierge_api.hostname
+}
+
+output "primary_pool_id" {
+  value = cloudflare_load_balancer_pool.primary.id
+}
+
+output "standby_pool_id" {
+  value = cloudflare_load_balancer_pool.standby.id
+}
+
+output "health_monitor_id" {
+  value = cloudflare_load_balancer_monitor.api_health.id
+}
+
+# Terraform Configuration
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
+  }
+  
+  required_version = ">= 1.0"
+}

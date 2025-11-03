@@ -128,13 +128,14 @@ class WordPressThemeTester {
       await this.checkPageInjection(page, post_id, result);
       
       // 7. Test uninstall safety
-      await this.testUninstallSafety(page, result);
+      await this.testUninstallSafety(page, result, post_id);
       
       // Determine final status
       result.status = this.determineTestStatus(result);
       
     } catch (error) {
-      result.errors.push(`Test execution error: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Test execution error: ${errorMessage}`);
       console.error(`Error testing ${theme.name} - ${scenario}:`, error);
     } finally {
       await page.close();
@@ -252,7 +253,7 @@ class WordPressThemeTester {
    * Create test image for upload
    */
   private async createTestImage(): Promise<string> {
-    const sharp = await import('sharp');
+    const sharp = (await import('sharp')).default;
     const image_path = path.join(process.cwd(), 'test-image.jpg');
     
     await sharp({
@@ -321,7 +322,7 @@ class WordPressThemeTester {
   /**
    * Test uninstall safety
    */
-  private async testUninstallSafety(page: Page, result: TestResult): Promise<void> {
+  private async testUninstallSafety(page: Page, result: TestResult, post_id: number): Promise<void> {
     // Deactivate and delete plugin
     await page.goto(`${this.wp_url}/wp-admin/plugins.php`);
     await page.click('#plugin-c2concierge .deactivate');

@@ -292,6 +292,16 @@ export async function verifyProvenance(
 
     decisionPath.steps.push('Manifest fetched successfully');
 
+    // Parse manifest
+    const manifestText = new TextDecoder().decode(manifestData);
+    
+    // Validate JSON size to prevent DoS attacks
+    if (manifestText.length > 1024 * 1024) { // 1MB limit
+      throw new Error('Manifest too large');
+    }
+    
+    const manifest = JSON.parse(manifestText);
+
     // Validate signature
     const availableTrustRoots = getTrustRoots();
     const trustRoots = request.trust_roots 
@@ -347,11 +357,16 @@ export async function verifyProvenance(
 
     return {
       valid: true,
-      signer: {
+      signer: signer ? {
         name: signer.name,
         key_id: signer.id,
         organization: signer.name,
         trusted: signer.trusted
+      } : {
+        name: 'Unknown',
+        key_id: 'unknown',
+        organization: 'Unknown',
+        trusted: false
       },
       assertions,
       warnings: [],

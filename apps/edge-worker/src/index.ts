@@ -1,10 +1,10 @@
-import { policyFromEnvironment } from '@c2/policy';
 import { normalizeHeaders, extractLinkHeader, createCacheHeaders } from '@c2/utils';
-import { createHmac, timingSafeEqual } from 'crypto';
 
 interface Env {
   REMOTE_ONLY?: string;
   PRESERVE_PATHS?: string;
+  DROP_IF_LINK_MISSING?: string;
+  BREAK_GLASS_HOSTS?: string;
   MANIFEST_BASE?: string;
   BREAK_GLASS_KV?: KVNamespace;
   HMAC_SECRET?: string;
@@ -37,7 +37,12 @@ export default {
       }
 
       // Load policy from environment
-      const policy = policyFromEnvironment(env);
+      const policy = {
+        remote_only: env.REMOTE_ONLY === 'true',
+        preserve_paths: env.PRESERVE_PATHS?.split(',') || [],
+        drop_if_link_missing: env.DROP_IF_LINK_MISSING === 'true',
+        break_glass_hosts: env.BREAK_GLASS_HOSTS?.split(',') || []
+      };
 
       // Check break-glass protocol
       if (await isBreakGlassActive(env, hostname)) {
@@ -185,7 +190,7 @@ async function isBreakGlassActive(env: Env, hostname: string): Promise<boolean> 
     }
 
     // Verify signature with proper HMAC
-    if (!verifyBreakGlassSignature(entry, env.HMAC_SECRET)) {
+    if (!(await verifyBreakGlassSignature(entry, env.HMAC_SECRET))) {
       await env.BREAK_GLASS_KV.delete(hostname);
       return false;
     }
@@ -217,7 +222,7 @@ function isPreservePath(pathname: string, preservePaths: string[]): boolean {
 }
 
 // Security: Proper HMAC signature verification
-function verifyBreakGlassSignature(entry: BreakGlassEntry, secret: string): boolean {
+async function verifyBreakGlassSignature(entry: BreakGlassEntry, secret: string): Promise<boolean> {
   try {
     // Create canonical message for signing
     const canonicalMessage = [
@@ -228,20 +233,40 @@ function verifyBreakGlassSignature(entry: BreakGlassEntry, secret: string): bool
       entry.ttl_minutes.toString()
     ].join('|');
 
-    // Create expected HMAC
-    const expectedHmac = createHmac('sha256', secret)
-      .update(canonicalMessage)
-      .digest('hex');
+    // Create expected HMAC using Web Crypto API
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(secret);
+    const messageData = encoder.encode(canonicalMessage);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBuffer = await crypto.subtle.sign('HMAC', cryptoKey, messageData);
+    const expectedHmac = Array.from(new Uint8Array(signatureBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
 
     // Security: Use timing-safe comparison to prevent timing attacks
-    const expectedBuffer = Buffer.from(expectedHmac, 'hex');
-    const actualBuffer = Buffer.from(entry.signature, 'hex');
+    const expectedBuffer = new Uint8Array(signatureBuffer);
+    const actualBuffer = new Uint8Array(
+      entry.signature.match(/.{1,2}/g)?.map(byte => parseInt(byte, 16)) || []
+    );
 
     if (expectedBuffer.length !== actualBuffer.length) {
       return false;
     }
 
-    return timingSafeEqual(expectedBuffer, actualBuffer);
+    // Simple timing-safe comparison for small arrays
+    let result = 0;
+    for (let i = 0; i < expectedBuffer.length; i++) {
+      result |= expectedBuffer[i] ^ actualBuffer[i];
+    }
+    return result === 0;
   } catch (error) {
     console.error('Signature verification error:', error);
     return false;

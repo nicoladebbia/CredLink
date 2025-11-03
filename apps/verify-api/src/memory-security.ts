@@ -106,7 +106,7 @@ class MemorySecurityManager {
       
       return parsed;
     } catch (error) {
-      throw new Error(`JSON_PARSE_ERROR: ${source} - ${error.message}`);
+      throw new Error(`JSON_PARSE_ERROR: ${source} - ${(error instanceof Error ? error.message : String(error))}`);
     }
   }
 
@@ -127,7 +127,7 @@ class MemorySecurityManager {
 
     if (typeof obj === 'object' && obj !== null) {
       for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
           this.validateStringLength(key, `${source}_key`);
           this.validateObjectDepth(obj[key], `${source}_${key}`, currentDepth + 1, maxDepth);
         }
