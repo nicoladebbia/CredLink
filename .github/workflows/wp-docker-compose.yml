@@ -99,6 +99,17 @@ jobs:
         # Download WordPress first
         wp --path=/var/www/html core download --allow-root
         
+        # Wait for MySQL service to be available
+        echo "Waiting for MySQL service to be ready..."
+        for i in {1..20}; do
+          if nc -z mysql 3306 2>/dev/null; then
+            echo "MySQL service is ready!"
+            break
+          fi
+          echo "Attempt $i/20 - MySQL not ready, waiting 3 seconds..."
+          sleep 3
+        done
+        
         # Set up WordPress configuration directly (WordPress CLI handles connection)
         wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql --allow-root
         

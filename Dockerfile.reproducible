@@ -18,7 +18,7 @@ ENV PNPM_HOME="/usr/local/bin"
 ENV PATH="${PNPM_HOME}:${PATH}"
 RUN npm install -g pnpm@8.15.6 --no-audit --no-fund && \
     pnpm --version && \
-    pnpm setup && \
+    SHELL=/bin/sh pnpm setup && \
     npm cache clean --force && \
     rm -rf ~/.npm
 
