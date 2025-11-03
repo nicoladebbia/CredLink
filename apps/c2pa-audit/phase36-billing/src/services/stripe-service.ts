@@ -1,0 +1,593 @@
+/**
+ * Phase 36 Billing - Stripe Service
+ * Stripe Billing integration with trials, usage, and webhooks
+ */
+
+import Stripe from 'stripe';
+import { 
+  SubscriptionPlan, 
+  UsageTier, 
+  InvoiceLineItem,
+  StripeWebhookEvent,
+  UsageEvent,
+  Tenant,
+  BillingError
+} from '@/types';
+
+export interface StripeServiceConfig {
+  secretKey: string;
+  webhookSecret: string;
+  apiVersion: string;
+  prices: {
+    starter: string;
+    pro: string;
+    enterprise: string;
+  };
+  meters: {
+    sign_events: string;
+    verify_events: string;
+    rfc3161_timestamps: string;
+  };
+  enableRadar: boolean;
+  enableSmartRetries: boolean;
+}
+
+export class StripeService {
+  private stripe: Stripe;
+  private config: StripeServiceConfig;
+
+  constructor(config: StripeServiceConfig) {
+    this.stripe = new Stripe(config.secretKey, {
+      apiVersion: config.apiVersion as Stripe.LatestApiVersion,
+      typescript: true,
+    });
+    this.config = config;
+  }
+
+  /**
+   * Create customer with enhanced fraud detection
+   */
+  async createCustomer(email: string, name?: string, metadata?: Record<string, string>): Promise<Stripe.Customer> {
+    try {
+      const customerParams: Stripe.CustomerCreateParams = {
+        email,
+        name,
+        metadata,
+        address: {
+          country: 'US', // Default for tax calculation
+        },
+      };
+
+      // Enable Radar fraud detection
+      if (this.config.enableRadar) {
+        customerParams.payment_method = 'card';
+      }
+
+      return await this.stripe.customers.create(customerParams);
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create customer');
+    }
+  }
+
+  /**
+   * Create subscription with trial and usage billing
+   */
+  async createSubscription(
+    customerId: string,
+    priceId: string,
+    trialDays: number = 14,
+    paymentMethodId?: string
+  ): Promise<Stripe.Subscription> {
+    try {
+      const subscriptionParams: Stripe.SubscriptionCreateParams = {
+        customer: customerId,
+        items: [{ price: priceId }],
+        trial_period_days: trialDays,
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          save_default_payment_method: 'on_subscription',
+          payment_method_types: ['card'],
+        },
+        expand: ['latest_invoice.payment_intent'],
+      };
+
+      if (paymentMethodId) {
+        subscriptionParams.default_payment_method = paymentMethodId;
+      }
+
+      // Enable Smart Retries for failed payments
+      if (this.config.enableSmartRetries) {
+        subscriptionParams.billing_cycle_anchor = undefined;
+        subscriptionParams.proration_behavior = 'create_prorations';
+      }
+
+      return await this.stripe.subscriptions.create(subscriptionParams);
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create subscription');
+    }
+  }
+
+  /**
+   * Update subscription with proration
+   */
+  async updateSubscription(
+    subscriptionId: string,
+    priceId: string,
+    prorationBehavior: Stripe.SubscriptionUpdateParams.ProrationBehavior = 'create_prorations'
+  ): Promise<Stripe.Subscription> {
+    try {
+      const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+      
+      return await this.stripe.subscriptions.update(subscriptionId, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: priceId,
+        }],
+        proration_behavior,
+        expand: ['latest_invoice.payment_intent'],
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to update subscription');
+    }
+  }
+
+  /**
+   * Cancel subscription (immediate or at period end)
+   */
+  async cancelSubscription(
+    subscriptionId: string,
+    immediate: boolean = false
+  ): Promise<Stripe.Subscription> {
+    try {
+      if (immediate) {
+        return await this.stripe.subscriptions.cancel(subscriptionId);
+      } else {
+        return await this.stripe.subscriptions.update(subscriptionId, {
+          cancel_at_period_end: true,
+        });
+      }
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to cancel subscription');
+    }
+  }
+
+  /**
+   * Create usage event for metered billing
+   */
+  async createUsageEvent(event: UsageEvent): Promise<Stripe.Billing.MeterEvent> {
+    try {
+      const meterId = this.getMeterId(event.event_type);
+      if (!meterId) {
+        throw new Error(`Unknown event type: ${event.event_type}`);
+      }
+
+      return await this.stripe.billing.meterEvent.create({
+        event_name: event.event_type,
+        payload: {
+          value: event.value.toString(),
+          stripe_customer_id: event.tenant_id, // Will be replaced with actual customer ID
+        },
+        timestamp: Math.floor(new Date(event.timestamp).getTime() / 1000),
+        metadata: event.metadata,
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create usage event');
+    }
+  }
+
+  /**
+   * Create usage event batch for efficiency
+   */
+  async createUsageEventsBatch(events: UsageEvent[]): Promise<Stripe.Billing.MeterEvent[]> {
+    const promises = events.map(event => this.createUsageEvent(event));
+    return Promise.all(promises);
+  }
+
+  /**
+   * Get subscription with usage
+   */
+  async getSubscriptionWithUsage(subscriptionId: string): Promise<Stripe.Subscription> {
+    try {
+      return await this.stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['latest_invoice', 'customer'],
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to retrieve subscription');
+    }
+  }
+
+  /**
+   * Get customer subscriptions
+   */
+  async getCustomerSubscriptions(customerId: string): Promise<Stripe.ApiList<Stripe.Subscription>> {
+    try {
+      return await this.stripe.subscriptions.list({
+        customer: customerId,
+        status: 'all',
+        expand: ['data.latest_invoice'],
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to retrieve customer subscriptions');
+    }
+  }
+
+  /**
+   * Create invoice for one-time charges
+   */
+  async createInvoice(
+    customerId: string,
+    description?: string,
+    metadata?: Record<string, string>
+  ): Promise<Stripe.Invoice> {
+    try {
+      return await this.stripe.invoices.create({
+        customer: customerId,
+        description,
+        metadata,
+        auto_advance: true,
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create invoice');
+    }
+  }
+
+  /**
+   * Create invoice item for custom charges
+   */
+  async createInvoiceItem(
+    customerId: string,
+    amount: number,
+    currency: string = 'usd',
+    description?: string,
+    metadata?: Record<string, string>
+  ): Promise<Stripe.InvoiceItem> {
+    try {
+      return await this.stripe.invoiceItems.create({
+        customer: customerId,
+        amount,
+        currency,
+        description,
+        metadata,
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create invoice item');
+    }
+  }
+
+  /**
+   * Process refund with proration logic
+   */
+  async createRefund(
+    paymentIntentId: string,
+    amount?: number,
+    reason?: Stripe.RefundCreateParams.Reason,
+    metadata?: Record<string, string>
+  ): Promise<Stripe.Refund> {
+    try {
+      return await this.stripe.refunds.create({
+        payment_intent: paymentIntentId,
+        amount,
+        reason,
+        metadata,
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create refund');
+    }
+  }
+
+  /**
+   * Get available plans with pricing
+   */
+  async getAvailablePlans(): Promise<SubscriptionPlan[]> {
+    try {
+      const plans: SubscriptionPlan[] = [];
+
+      // Starter plan
+      const starterPrice = await this.stripe.prices.retrieve(this.config.prices.starter);
+      plans.push({
+        id: 'starter',
+        name: 'Starter',
+        stripe_price_id: starterPrice.id,
+        monthly_price: starterPrice.unit_amount! / 100,
+        currency: starterPrice.currency,
+        features: [
+          { id: 'remote-first', name: 'Remote-First Manifests', description: 'Host manifests remotely for better performance', included: true },
+          { id: 'badge', name: 'C2PA Badge', description: 'Display authenticity badge on content', included: true },
+          { id: 'basic-support', name: 'Basic Support', description: 'Email support during business hours', included: true },
+          { id: 'api-access', name: 'API Access', description: 'Full API access for integrations', included: true },
+        ],
+        limits: {
+          sign_events_included: 500,
+          verify_events_included: 10000,
+          api_calls_per_minute: 60,
+          tenants_per_account: 1,
+          custom_domains: 2,
+        },
+      });
+
+      // Pro plan
+      const proPrice = await this.stripe.prices.retrieve(this.config.prices.pro);
+      plans.push({
+        id: 'pro',
+        name: 'Pro',
+        stripe_price_id: proPrice.id,
+        monthly_price: proPrice.unit_amount! / 100,
+        currency: proPrice.currency,
+        features: [
+          { id: 'remote-first', name: 'Remote-First Manifests', description: 'Host manifests remotely for better performance', included: true },
+          { id: 'badge', name: 'C2PA Badge', description: 'Display authenticity badge on content', included: true },
+          { id: 'priority-support', name: 'Priority Support', description: '24/7 priority support with SLA', included: true },
+          { id: 'api-access', name: 'API Access', description: 'Full API access for integrations', included: true },
+          { id: 'advanced-analytics', name: 'Advanced Analytics', description: 'Detailed usage analytics and reports', included: true },
+          { id: 'custom-branding', name: 'Custom Branding', description: 'Custom badge and verification page branding', included: true },
+        ],
+        limits: {
+          sign_events_included: 2000,
+          verify_events_included: 50000,
+          api_calls_per_minute: 300,
+          tenants_per_account: 5,
+          custom_domains: 10,
+        },
+      });
+
+      // Enterprise plan
+      const enterprisePrice = await this.stripe.prices.retrieve(this.config.prices.enterprise);
+      plans.push({
+        id: 'enterprise',
+        name: 'Enterprise',
+        stripe_price_id: enterprisePrice.id,
+        monthly_price: enterprisePrice.unit_amount! / 100,
+        currency: enterprisePrice.currency,
+        features: [
+          { id: 'remote-first', name: 'Remote-First Manifests', description: 'Host manifests remotely for better performance', included: true },
+          { id: 'badge', name: 'C2PA Badge', description: 'Display authenticity badge on content', included: true },
+          { id: 'dedicated-support', name: 'Dedicated Support', description: 'Dedicated account manager and 24/7 phone support', included: true },
+          { id: 'api-access', name: 'API Access', description: 'Full API access for integrations', included: true },
+          { id: 'advanced-analytics', name: 'Advanced Analytics', description: 'Detailed usage analytics and custom reports', included: true },
+          { id: 'custom-branding', name: 'Custom Branding', description: 'Custom badge and verification page branding', included: true },
+          { id: 'sla-guarantee', name: 'SLA Guarantee', description: '99.9% uptime SLA with financial guarantees', included: true },
+          { id: 'custom-integrations', name: 'Custom Integrations', description: 'Custom integration development and support', included: true },
+          { id: 'on-premise-option', name: 'On-Premise Option', description: 'Option for on-premise deployment', included: true },
+        ],
+        limits: {
+          sign_events_included: 10000,
+          verify_events_included: 250000,
+          api_calls_per_minute: 1000,
+          tenants_per_account: 25,
+          custom_domains: 100,
+        },
+      });
+
+      return plans;
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to retrieve plans');
+    }
+  }
+
+  /**
+   * Get usage tiers for pricing
+   */
+  async getUsageTiers(eventType: 'sign_events' | 'verify_events' | 'rfc3161_timestamps'): Promise<UsageTier[]> {
+    try {
+      const meterId = this.getMeterId(eventType);
+      const meter = await this.stripe.billing.meters.retrieve(meterId);
+      
+      return meter.prices.map(price => ({
+        id: price.id,
+        meter_id: meterId,
+        up_to: price.unit_amount || 0, // This would need to be configured based on your meter setup
+        unit_price: price.unit_amount! / 100,
+        currency: price.currency,
+      }));
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to retrieve usage tiers');
+    }
+  }
+
+  /**
+   * Create customer portal session
+   */
+  async createCustomerPortalSession(customerId: string, returnUrl?: string): Promise<Stripe.BillingPortal.Session> {
+    try {
+      return await this.stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl || `${process.env['ALLOWED_ORIGINS']?.split(',')[0]}/billing`,
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create customer portal session');
+    }
+  }
+
+  /**
+   * Create checkout session for subscription upgrade/new purchase
+   */
+  async createCheckoutSession(
+    customerId: string,
+    priceId: string,
+    successUrl: string,
+    cancelUrl: string,
+    metadata?: Record<string, string>
+  ): Promise<Stripe.Checkout.Session> {
+    try {
+      return await this.stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1,
+        }],
+        mode: 'subscription',
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        metadata,
+        allow_promotion_codes: true,
+        billing_address_collection: 'auto',
+      });
+    } catch (error) {
+      throw this.handleStripeError(error, 'Failed to create checkout session');
+    }
+  }
+
+  /**
+   * Verify webhook signature
+   */
+  verifyWebhookSignature(payload: string, signature: string): StripeWebhookEvent {
+    try {
+      const event = this.stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        this.config.webhookSecret
+      );
+      
+      return event as StripeWebhookEvent;
+    } catch (error) {
+      throw new Error(`Webhook signature verification failed: ${error}`);
+    }
+  }
+
+  /**
+   * Handle webhook events
+   */
+  async handleWebhookEvent(event: StripeWebhookEvent): Promise<void> {
+    switch (event.type) {
+      case 'invoice.payment_succeeded':
+        await this.handlePaymentSucceeded(event);
+        break;
+      case 'invoice.payment_failed':
+        await this.handlePaymentFailed(event);
+        break;
+      case 'customer.subscription.created':
+        await this.handleSubscriptionCreated(event);
+        break;
+      case 'customer.subscription.updated':
+        await this.handleSubscriptionUpdated(event);
+        break;
+      case 'customer.subscription.deleted':
+        await this.handleSubscriptionDeleted(event);
+        break;
+      case 'invoice.finalized':
+        await this.handleInvoiceFinalized(event);
+        break;
+      case 'charge.succeeded':
+        await this.handleChargeSucceeded(event);
+        break;
+      case 'charge.failed':
+        await this.handleChargeFailed(event);
+        break;
+      default:
+        console.log(`Unhandled webhook event type: ${event.type}`);
+    }
+  }
+
+  // ============================================================================
+  // PRIVATE WEBHOOK HANDLERS
+  // ============================================================================
+
+  private async handlePaymentSucceeded(event: StripeWebhookEvent): Promise<void> {
+    const invoice = event.data.object as Stripe.Invoice;
+    console.log(`Payment succeeded for customer ${invoice.customer}: ${invoice.amount_paid / 100} ${invoice.currency}`);
+    // Update tenant status, send confirmation email, etc.
+  }
+
+  private async handlePaymentFailed(event: StripeWebhookEvent): Promise<void> {
+    const invoice = event.data.object as Stripe.Invoice;
+    console.log(`Payment failed for customer ${invoice.customer}`);
+    // Trigger dunning process, update tenant status, send notification
+  }
+
+  private async handleSubscriptionCreated(event: StripeWebhookEvent): Promise<void> {
+    const subscription = event.data.object as Stripe.Subscription;
+    console.log(`Subscription created: ${subscription.id}`);
+    // Initialize tenant usage tracking, send welcome email
+  }
+
+  private async handleSubscriptionUpdated(event: StripeWebhookEvent): Promise<void> {
+    const subscription = event.data.object as Stripe.Subscription;
+    console.log(`Subscription updated: ${subscription.id}`);
+    // Handle plan changes, trial ends, etc.
+  }
+
+  private async handleSubscriptionDeleted(event: StripeWebhookEvent): Promise<void> {
+    const subscription = event.data.object as Stripe.Subscription;
+    console.log(`Subscription deleted: ${subscription.id}`);
+    // Handle cancellation, data export, etc.
+  }
+
+  private async handleInvoiceFinalized(event: StripeWebhookEvent): Promise<void> {
+    const invoice = event.data.object as Stripe.Invoice;
+    console.log(`Invoice finalized: ${invoice.id}`);
+    // Send invoice email, update billing records
+  }
+
+  private async handleChargeSucceeded(event: StripeWebhookEvent): Promise<void> {
+    const charge = event.data.object as Stripe.Charge;
+    console.log(`Charge succeeded: ${charge.id}`);
+    // Update payment records, send receipts
+  }
+
+  private async handleChargeFailed(event: StripeWebhookEvent): Promise<void> {
+    const charge = event.data.object as Stripe.Charge;
+    console.log(`Charge failed: ${charge.id}`);
+    // Handle charge failures, update customer status
+  }
+
+  // ============================================================================
+  // PRIVATE UTILITIES
+  // ============================================================================
+
+  private getMeterId(eventType: string): string {
+    switch (eventType) {
+      case 'sign_events':
+        return this.config.meters.sign_events;
+      case 'verify_events':
+        return this.config.meters.verify_events;
+      case 'rfc3161_timestamps':
+        return this.config.meters.rfc3161_timestamps;
+      default:
+        throw new Error(`Unknown event type: ${eventType}`);
+    }
+  }
+
+  private handleStripeError(error: any, context: string): BillingError {
+    if (error.type === 'StripeCardError') {
+      return {
+        code: 'STRIPE_CARD_ERROR',
+        message: error.message,
+        stripe_error_type: error.type,
+        stripe_error_code: error.code,
+        decline_code: error.decline_code,
+      };
+    } else if (error.type === 'StripeRateLimitError') {
+      return {
+        code: 'STRIPE_RATE_LIMIT',
+        message: 'Rate limit exceeded, please try again',
+        stripe_error_type: error.type,
+      };
+    } else if (error.type === 'StripeInvalidRequestError') {
+      return {
+        code: 'STRIPE_INVALID_REQUEST',
+        message: error.message,
+        stripe_error_type: error.type,
+        stripe_error_code: error.code,
+      };
+    } else if (error.type === 'StripeAPIError') {
+      return {
+        code: 'STRIPE_API_ERROR',
+        message: 'Stripe API error, please try again',
+        stripe_error_type: error.type,
+      };
+    } else if (error.type === 'StripeConnectionError') {
+      return {
+        code: 'STRIPE_CONNECTION_ERROR',
+        message: 'Network error with Stripe, please try again',
+        stripe_error_type: error.type,
+      };
+    } else {
+      return {
+        code: 'STRIPE_UNKNOWN_ERROR',
+        message: `${context}: ${error.message}`,
+        stripe_error_type: error.type,
+      };
+    }
+  }
+}
