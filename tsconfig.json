@@ -50,15 +50,6 @@
       "path": "./packages/oem-trust"
     },
     {
-      "path": "./packages/merkle-core"
-    },
-    {
-      "path": "./packages/c2-badge"
-    },
-    {
-      "path": "./packages/oem-bridge"
-    },
-    {
       "path": "./packages/rbac"
     },
     {

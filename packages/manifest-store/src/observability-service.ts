@@ -295,7 +295,7 @@ export class ObservabilityService {
         sample_size: result.result.sample_count,
         mismatched_count: result.result.mismatched_count,
         mismatch_percentage: result.result.mismatch_percentage,
-        auto_repaired_count: result.actions_taken.filter(action => action.includes('repaired')).length,
+        auto_repaired_count: result.actions_taken.filter((action: string) => action.includes('repaired')).length,
         duration_ms: Date.now() - startTime,
         threshold_exceeded: result.threshold_exceeded,
         actions_taken: result.actions_taken,
@@ -341,7 +341,6 @@ export class ObservabilityService {
 
       // Create incident for sweep failure
       await this.createIncident({
-        incident_id: this.generateSecureId('inc'),
         severity: 'high',
         type: 'consistency_mismatch',
         title: 'Consistency Sweep Failed',
@@ -581,7 +580,7 @@ export class ObservabilityService {
     // Get job status
     const jobStatus = this.backgroundJobService.getJobStatus();
     
-    const jobMetrics: JobMetrics[] = jobStatus.map(job => ({
+    const jobMetrics: JobMetrics[] = jobStatus.map((job: any) => ({
       job_id: job.job_id,
       job_type: job.job_type,
       status: job.status,

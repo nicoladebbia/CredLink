@@ -94,7 +94,7 @@ export class ReplicationService {
            metadata.size >= 0 && 
            metadata.size <= this.MAX_MANIFEST_SIZE &&
            ['async', 'strict'].includes(metadata.replication_mode) &&
-           metadata.content_type && 
+           !!metadata.content_type && 
            metadata.content_type.length > 0 &&
            metadata.content_type.length <= 100;
   }
@@ -317,7 +317,7 @@ export class ReplicationService {
             failedCount++;
             
             // Mark as failed but keep in queue for retry
-            await this.replicationQueue.markTaskFailed(task.id, secondaryResult.error);
+            await this.replicationQueue.markTaskFailed(task.id, secondaryResult.error || 'Unknown error');
           }
 
         } catch (error) {
@@ -428,11 +428,7 @@ export class ReplicationService {
         throw new Error('Invalid sample size');
       }
 
-      return await this.consistencyChecker.checkConsistency(
-        this.primaryBucket,
-        this.secondaryBucket,
-        sampleSize
-      );
+      return await this.consistencyChecker.checkConsistency(sampleSize);
     } catch (error) {
       console.error('Failed to verify consistency:', error instanceof Error ? error.message : 'Unknown error');
       return {

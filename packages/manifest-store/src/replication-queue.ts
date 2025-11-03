@@ -1,6 +1,8 @@
 // Phase 21.2 Replication Queue for Async Manifest Replication
 // Ensures RPO ≤ 5 min with queue processing and retry logic
 
+import { KVNamespace } from '@cloudflare/workers-types';
+
 export interface ReplicationTask {
   id: string;
   hash: string;
@@ -417,7 +419,7 @@ export class ReplicationQueue {
   private async addToPendingSet(taskId: string): Promise<void> {
     const key = this.getPendingSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id);
+    const taskIds = current.split(',').filter((id: string) => id);
     
     // Limit the number of task IDs in the set
     if (taskIds.length >= this.MAX_LIMIT) {
@@ -432,14 +434,14 @@ export class ReplicationQueue {
   private async removeFromPendingSet(taskId: string): Promise<void> {
     const key = this.getPendingSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id && id !== taskId);
+    const taskIds = current.split(',').filter((id: string) => id && id !== taskId);
     await this.kv.put(key, taskIds.join(','));
   }
 
   private async addToCompletedSet(taskId: string): Promise<void> {
     const key = this.getCompletedSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id);
+    const taskIds = current.split(',').filter((id: string) => id);
     
     // Limit the number of task IDs in the set
     if (taskIds.length >= this.MAX_LIMIT) {
@@ -454,14 +456,14 @@ export class ReplicationQueue {
   private async removeFromCompletedSet(taskId: string): Promise<void> {
     const key = this.getCompletedSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id && id !== taskId);
+    const taskIds = current.split(',').filter((id: string) => id && id !== taskId);
     await this.kv.put(key, taskIds.join(','));
   }
 
   private async addToFailedSet(taskId: string): Promise<void> {
     const key = this.getFailedSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id);
+    const taskIds = current.split(',').filter((id: string) => id);
     
     // Limit the number of task IDs in the set
     if (taskIds.length >= this.MAX_LIMIT) {
@@ -476,28 +478,28 @@ export class ReplicationQueue {
   private async removeFromFailedSet(taskId: string): Promise<void> {
     const key = this.getFailedSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id && id !== taskId);
+    const taskIds = current.split(',').filter((id: string) => id && id !== taskId);
     await this.kv.put(key, taskIds.join(','));
   }
 
   private async getPendingTaskIds(limit: number): Promise<string[]> {
     const key = this.getPendingSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id);
+    const taskIds = current.split(',').filter((id: string) => id);
     return taskIds.slice(0, Math.min(limit, this.MAX_LIMIT));
   }
 
   private async getCompletedTaskIds(limit: number): Promise<string[]> {
     const key = this.getCompletedSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id);
+    const taskIds = current.split(',').filter((id: string) => id);
     return taskIds.slice(0, Math.min(limit, this.MAX_LIMIT));
   }
 
   private async getFailedTaskIds(limit: number): Promise<string[]> {
     const key = this.getFailedSetKey();
     const current = await this.kv.get(key) || '';
-    const taskIds = current.split(',').filter(id => id);
+    const taskIds = current.split(',').filter((id: string) => id);
     return taskIds.slice(0, Math.min(limit, this.MAX_LIMIT));
   }
 
