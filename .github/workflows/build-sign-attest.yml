@@ -102,7 +102,6 @@ jobs:
             --tag ${{ env.IMAGE }} \
             --no-cache \
             --pull \
-            --cgroup-manager=cgroupfs \
             -f Dockerfile.reproducible \
             .
       
