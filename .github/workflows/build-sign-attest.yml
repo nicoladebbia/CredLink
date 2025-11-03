@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+      IMAGE: ghcr.io/${{ lowercase(github.repository) }}:${{ github.sha }}
       SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp || '0' }}
     steps:
       - uses: actions/checkout@v4

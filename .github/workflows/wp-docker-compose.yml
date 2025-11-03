@@ -92,6 +92,9 @@ jobs:
 
     - name: Configure WordPress
       run: |
+        # Download WordPress first
+        wp --path=/var/www/html core download --allow-root
+        
         # Set up WordPress configuration
         wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql --allow-root
         
