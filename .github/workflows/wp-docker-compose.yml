@@ -92,8 +92,15 @@ jobs:
 
     - name: Configure WordPress
       run: |
+        # Fix permissions first
+        sudo chown -R www-data:www-data /var/www/html
+        sudo chmod -R 755 /var/www/html
+        
         # Download WordPress first
         wp --path=/var/www/html core download --allow-root
+        
+        # Set proper ownership after download
+        sudo chown -R www-data:www-data /var/www/html
         
         # Set up WordPress configuration
         wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql --allow-root
