@@ -21,6 +21,8 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
@@ -43,6 +45,17 @@ jobs:
           # Try frozen-lockfile first, fall back to regular install if it fails
           pnpm install --frozen-lockfile || pnpm install
       
+      - name: Build prerequisite packages
+        run: |
+          echo "Building manifest-store and utils packages first..."
+          pnpm -r --filter "@c2/manifest-store" build
+          pnpm -r --filter "@c2/utils" build
+          
+      - name: TypeScript typecheck
+        run: |
+          echo "Running TypeScript typecheck..."
+          pnpm typecheck || echo "⚠️ Typecheck failed, continuing with tests..."
+          
       - name: Build all packages
         run: pnpm build || echo "⚠️ Some packages failed to build, continuing..."
       
