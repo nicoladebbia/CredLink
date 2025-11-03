@@ -1,0 +1,59 @@
+{
+  "name": "@c2concierge/edge-connectors",
+  "version": "1.0.0",
+  "description": "C2 Concierge edge connectors for Cloudflare Workers and Vercel Middleware",
+  "main": "cloudflare-worker.js",
+  "scripts": {
+    "build": "npm run build:cloudflare && npm run build:vercel",
+    "build:cloudflare": "webpack --mode production --config webpack.cloudflare.config.js",
+    "build:vercel": "webpack --mode production --config webpack.vercel.config.js",
+    "dev:cloudflare": "wrangler dev",
+    "dev:vercel": "next dev",
+    "deploy:cloudflare": "wrangler deploy",
+    "test": "jest",
+    "lint": "eslint **/*.js"
+  },
+  "keywords": [
+    "c2pa",
+    "content-authenticity",
+    "edge",
+    "cloudflare",
+    "vercel",
+    "middleware",
+    "worker",
+    "cdn",
+    "headers"
+  ],
+  "author": "C2 Concierge Team",
+  "license": "MIT",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231025.0",
+    "@vercel/node": "^3.0.7",
+    "next": "^14.0.3",
+    "wrangler": "^3.22.1",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "directory": "packages/cms-connectors/edge"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "cloudflare-worker.js",
+    "vercel-middleware.js",
+    "README.md",
+    "package.json",
+    "dist/"
+  ]
+}

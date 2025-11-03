@@ -1,0 +1,42 @@
+{
+  "name": "@c2concierge/cms-connectors-shared",
+  "version": "1.0.0",
+  "description": "Shared functionality for C2 Concierge CMS connectors",
+  "main": "base-connector.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "node test/base-connector.test.js",
+    "lint": "eslint *.js",
+    "validate": "node scripts/validate-connectors.js"
+  },
+  "keywords": [
+    "c2pa",
+    "content-authenticity",
+    "cms",
+    "connectors",
+    "drupal",
+    "webflow",
+    "squarespace",
+    "ghost"
+  ],
+  "author": "C2 Concierge Team",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "directory": "packages/cms-connectors/shared"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

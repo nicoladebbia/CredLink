@@ -1,0 +1,53 @@
+{
+  "name": "@c2concierge/webflow-connector",
+  "version": "1.0.0",
+  "description": "C2 Concierge connector for Webflow with webhook handling and badge integration",
+  "main": "connector-webflow.js",
+  "type": "module",
+  "scripts": {
+    "start": "node webhook-server.js",
+    "dev": "nodemon webhook-server.js",
+    "test": "jest",
+    "lint": "eslint *.js",
+    "bundle": "webpack --mode production"
+  },
+  "keywords": [
+    "c2pa",
+    "content-authenticity",
+    "webflow",
+    "cms",
+    "connector",
+    "webhook",
+    "badge"
+  ],
+  "author": "C2 Concierge Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "directory": "packages/cms-connectors/webflow"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "connector-webflow.js",
+    "webhook-server.js",
+    "README.md",
+    "dist/"
+  ]
+}
