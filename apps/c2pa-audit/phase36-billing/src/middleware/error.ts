@@ -35,13 +35,17 @@ function formatErrorResponse(error: FastifyError, errorId: string): {
 } {
   // Handle validation errors
   if (error.name === 'ValidationError' || error.code === 'VALIDATION_ERROR') {
+    const isDevelopment = process.env['NODE_ENV'] === 'development';
+    
     return {
       statusCode: 400,
       body: {
         code: error.code || 'VALIDATION_ERROR',
         message: error.message || 'Request validation failed',
         error_id: errorId,
-        details: (error as any).details || undefined,
+        ...(isDevelopment && {
+          details: (error as any).details || undefined,
+        }),
       },
     };
   }
@@ -97,17 +101,21 @@ function formatErrorResponse(error: FastifyError, errorId: string): {
 
   // Handle Stripe errors
   if (error.type && error.type.startsWith('Stripe')) {
+    const isDevelopment = process.env['NODE_ENV'] === 'development';
+    
     return {
       statusCode: 400,
       body: {
         code: 'STRIPE_ERROR',
         message: 'Payment processing error',
         error_id: errorId,
-        details: {
-          stripe_error: error.message,
-          type: error.type,
-          code: error.code,
-        },
+        ...(isDevelopment && {
+          details: {
+            stripe_error: error.message,
+            type: error.type,
+            code: error.code,
+          },
+        }),
       },
     };
   }
@@ -215,11 +223,11 @@ function logError(error: FastifyError, request: any, errorId: string, requestId:
 
   // Log based on error severity
   if (error.statusCode && error.statusCode >= 500) {
-    console.error('🔴 SERVER ERROR:', JSON.stringify(logData));
+    console.error('🔴 SERVER ERROR:', JSON.stringify(logData, null, 2));
   } else if (error.statusCode && error.statusCode >= 400) {
-    console.warn('🟡 CLIENT ERROR:', JSON.stringify(logData));
+    console.warn('🟡 CLIENT ERROR:', JSON.stringify(logData, null, 2));
   } else {
-    console.error('🔴 UNEXPECTED ERROR:', JSON.stringify(logData));
+    console.error('🔴 UNEXPECTED ERROR:', JSON.stringify(logData, null, 2));
   }
 
   // Store critical errors in audit log
@@ -237,7 +245,7 @@ function storeErrorAuditLog(logData: any): void {
       level: 'audit',
       type: 'error_audit',
       ...logData,
-    }));
+    }, null, 2));
   } catch (error) {
     console.error('Failed to store error audit log:', error);
   }
@@ -247,7 +255,7 @@ function storeErrorAuditLog(logData: any): void {
  * Generate unique error ID
  */
 function generateErrorId(): string {
-  return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `err_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**

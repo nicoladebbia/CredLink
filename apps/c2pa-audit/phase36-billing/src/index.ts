@@ -1,6 +1,6 @@
 /**
  * Phase 36 Billing - Main Application
- * Self-Serve Onboarding & Billing System
+ * Self-Serve Onboarding & Billing System with Observability v2
  */
 
 import Fastify, { FastifyInstance, FastifyRequest } from 'fastify';
@@ -30,18 +30,51 @@ import { securityMiddleware } from '@/middleware/security';
 import { loggingMiddleware } from '@/middleware/logging';
 import { errorMiddleware } from '@/middleware/error';
 
+// OpenTelemetry imports
+import { initializeOpenTelemetry, otelConfig } from '@/otel-config';
+import { 
+  trace, 
+  SpanKind,
+} from '@opentelemetry/api';
+
+// Initialize OpenTelemetry first
+const sdk = initializeOpenTelemetry();
+
 // Load environment configuration
 const env = loadEnvironment();
 const configSummary = getConfigSummary(env);
 
-console.log('🚀 Starting Phase 36 Billing System');
+console.log('🚀 Starting Phase 36 Billing System with Observability v2');
 console.log('📊 Configuration:', JSON.stringify(configSummary, null, 2));
+console.log('📈 OpenTelemetry:', JSON.stringify(otelConfig, null, 2));
 
-// Create Fastify instance
+// Create deployment release span
+const tracer = trace.getTracer('c2pa-billing');
+const deploymentSpan = tracer.startSpan('system-deployment', {
+  kind: SpanKind.SERVER,
+  attributes: {
+    'service.name': env.OTEL_SERVICE_NAME,
+    'service.version': env.RELEASE_VERSION,
+    'deployment.environment': env.OTEL_DEPLOYMENT_ENVIRONMENT,
+    'release.sha': env.GIT_SHA,
+    'release.time': env.RELEASE_TIME,
+    'node.version': process.version,
+    'platform': process.platform,
+    'arch': process.arch,
+  },
+});
+
+deploymentSpan.setAttributes({
+  'system.startup': 'completed',
+  'timestamp': new Date().toISOString(),
+});
+
+deploymentSpan.end();
+
+// Create Fastify instance with OpenTelemetry instrumentation
 const fastify: FastifyInstance = Fastify({
   logger: {
     level: env.LOG_LEVEL,
-    prettyPrint: env.LOG_FORMAT === 'pretty',
   },
   trustProxy: true,
 });
@@ -65,6 +98,7 @@ async function registerPlugins() {
         connectSrc: ["'self'", "https://api.stripe.com"],
       },
     },
+    crossOriginEmbedderPolicy: false,
   });
 
   // Rate limiting
@@ -78,13 +112,16 @@ async function registerPlugins() {
   await fastify.register(multipart, {
     limits: {
       fileSize: env.MAX_ASSET_SIZE,
+      files: 5,
     },
+    attachFieldsToBody: true,
   });
 
   // Static files
   await fastify.register(staticFiles, {
     root: './public',
     prefix: '/public',
+    maxAge: 86400000, // 24 hours
   });
 
   // WebSocket support
@@ -100,7 +137,6 @@ async function initializeServices() {
     db: env.REDIS_DB,
     password: env.REDIS_PASSWORD,
     maxRetriesPerRequest: env.REDIS_MAX_RETRIES,
-    retryDelayOnFailover: 100,
     // CRITICAL: Security configurations
     tls: process.env['REDIS_TLS'] === 'true' ? {
       rejectUnauthorized: true,
@@ -115,10 +151,6 @@ async function initializeServices() {
     keepAlive: 30000,
     // CRITICAL: Security options
     enableAutoPipelining: true,
-    maxRetriesPerRequest: 3,
-    retryDelayOnFailover: 100,
-    // CRITICAL: Memory protection
-    maxMemoryPolicy: 'allkeys-lru',
   });
 
   // Stripe connection
@@ -372,7 +404,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'HEALTH_CHECK_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -387,7 +419,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(404).send({
         code: 'HEALTH_CHECK_NOT_FOUND',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Health check not found',
       });
     }
   });
@@ -517,7 +549,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(404).send({
         code: 'EXPORT_NOT_FOUND',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Export not found',
       });
     }
   });
@@ -525,6 +557,9 @@ async function registerRoutes(services: any) {
   // Stripe webhook - CRITICAL SECURITY
   fastify.post('/webhooks/stripe', {
     preHandler: [validationMiddleware],
+    config: {
+      rawBody: true,
+    },
   }, async (request: FastifyRequest, reply) => {
     try {
       const signature = request.headers['stripe-signature'] as string;
@@ -636,8 +671,14 @@ process.on('SIGTERM', async () => {
     await fastify.close();
     
     // Close Redis connections
-    const redis = require('ioredis');
-    // Note: In production, you'd track and close all Redis instances
+    if (services.redis) {
+      await services.redis.quit();
+    }
+    
+    // Shutdown OpenTelemetry
+    if (sdk) {
+      await sdk.shutdown();
+    }
     
     console.log('✅ Graceful shutdown completed');
     process.exit(0);
@@ -654,8 +695,14 @@ process.on('SIGINT', async () => {
     await fastify.close();
     
     // Close Redis connections
-    const redis = require('ioredis');
-    // Note: In production, you'd track and close all Redis instances
+    if (services.redis) {
+      await services.redis.quit();
+    }
+    
+    // Shutdown OpenTelemetry
+    if (sdk) {
+      await sdk.shutdown();
+    }
     
     console.log('✅ Graceful shutdown completed');
     process.exit(0);
@@ -665,7 +712,7 @@ process.on('SIGINT', async () => {
   }
 });
 
-// CRITICAL: Enhanced error handling
+// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('💥 Uncaught Exception:', error);
   // Log the error and exit immediately

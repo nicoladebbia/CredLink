@@ -36,6 +36,98 @@ const EnvSchema = z.object({
   STRIPE_VERIFY_EVENTS_METER_ID: z.string().min(1, 'Verify events meter ID is required'),
   STRIPE_RFC3161_TIMESTAMPS_METER_ID: z.string().min(1, 'RFC3161 timestamps meter ID is required'),
   
+  // RFC-3161 TSA configuration
+  RFC3161_TSA_ENDPOINT: z.string().url('RFC-3161 TSA endpoint must be a valid URL'),
+  RFC3161_TSA_USERNAME: z.string().optional(),
+  RFC3161_TSA_PASSWORD: z.string().optional(),
+  RFC3161_TSA_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1000 && n <= 30000, { message: 'TSA timeout must be between 1000ms and 30000ms' }).default('10000'),
+  
+  // OpenTelemetry configuration
+  OTEL_SERVICE_NAME: z.string().min(1).max(100).default('c2pa-billing'),
+  OTEL_SERVICE_NAMESPACE: z.string().min(1).max(100).default('c2pa'),
+  OTEL_SERVICE_VERSION: z.string().min(1).max(20).default('1.1.0'),
+  OTEL_DEPLOYMENT_ENVIRONMENT: z.enum(['development', 'staging', 'production']).default('development'),
+  OTEL_RESOURCE_ATTRIBUTES: z.string().optional(),
+  
+  // OpenTelemetry exporters
+  OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().default('http://localhost:4318'),
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.string().url().default('http://localhost:4318/v1/traces'),
+  OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: z.string().url().default('http://localhost:4318/v1/metrics'),
+  OTEL_EXPORTER_OTLP_LOGS_ENDPOINT: z.string().url().default('http://localhost:4318/v1/logs'),
+  OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
+  OTEL_EXPORTER_OTLP_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1000 && n <= 60000, { message: 'OTLP timeout must be between 1000ms and 60000ms' }).default('30000'),
+  OTEL_EXPORTER_OTLP_COMPRESSION: z.enum(['none', 'gzip']).default('gzip'),
+  
+  // OpenTelemetry sampling
+  OTEL_TRACE_SAMPLER: z.enum(['always_on', 'always_off', 'traceidratio', 'parentbased_always_on', 'parentbased_always_off', 'parentbased_traceidratio']).default('parentbased_traceidratio'),
+  OTEL_TRACE_SAMPLER_ARG: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0 && n <= 1, { message: 'Trace sampler arg must be between 0 and 1' }).default('0.01'),
+  
+  // OpenTelemetry batch processing
+  OTEL_BSP_MAX_BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 10000, { message: 'BSP max batch size must be between 1 and 10000' }).default('1024'),
+  OTEL_BSP_MAX_EXPORT_BATCH_SIZE: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 10000, { message: 'BSP max export batch size must be between 1 and 10000' }).default('512'),
+  OTEL_BSP_EXPORT_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1000 && n <= 30000, { message: 'BSP export timeout must be between 1000ms and 30000ms' }).default('30000'),
+  OTEL_BSP_SCHEDULE_DELAY: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 100 && n <= 5000, { message: 'BSP schedule delay must be between 100ms and 5000ms' }).default('5000'),
+  
+  // OpenTelemetry metrics
+  OTEL_METRIC_EXPORT_INTERVAL: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 10000 && n <= 300000, { message: 'Metric export interval must be between 10000ms and 300000ms' }).default('30000'),
+  OTEL_METRIC_EXPORT_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1000 && n <= 60000, { message: 'Metric export timeout must be between 1000ms and 60000ms' }).default('30000'),
+  
+  // Prometheus exporter
+  PROMETHEUS_ENDPOINT: z.string().min(1).max(50).default('0.0.0.0:9464'),
+  PROMETHEUS_NAMESPACE: z.string().min(1).max(50).default('c2pa'),
+  
+  // Loki exporter
+  LOKI_ENDPOINT: z.string().url().default('http://localhost:3100/loki/api/v1/push'),
+  LOKI_USERNAME: z.string().optional(),
+  LOKI_PASSWORD: z.string().optional(),
+  LOKI_TENANT_ID: z.string().optional(),
+  
+  // Tempo exporter
+  TEMPO_ENDPOINT: z.string().url().default('http://localhost:4318'),
+  TEMPO_API_KEY: z.string().optional(),
+  
+  // SLO configuration
+  SLO_WINDOW_DAYS: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 90, { message: 'SLO window must be between 1 and 90 days' }).default('30'),
+  SLO_SURVIVAL_REMOTE_TARGET: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0.9 && n <= 1, { message: 'SLO target must be between 0.9 and 1.0' }).default('0.999'),
+  SLO_SURVIVAL_EMBED_TARGET: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0.8 && n <= 1, { message: 'SLO target must be between 0.8 and 1.0' }).default('0.95'),
+  SLO_VERIFY_LATENCY_P95_TARGET: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 100 && n <= 10000, { message: 'Latency target must be between 100ms and 10000ms' }).default('600'),
+  SLO_SIGN_LATENCY_EMBED_P95_TARGET: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 100 && n <= 10000, { message: 'Latency target must be between 100ms and 10000ms' }).default('800'),
+  SLO_SIGN_LATENCY_REMOTE_P95_TARGET: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 100 && n <= 10000, { message: 'Latency target must be between 100ms and 10000ms' }).default('400'),
+  SLO_TSA_LATENCY_P95_TARGET: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 100 && n <= 10000, { message: 'Latency target must be between 100ms and 10000ms' }).default('300'),
+  
+  // Burn rate alerting
+  BURN_RATE_CRITICAL_MULTIPLIER: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 1 && n <= 100, { message: 'Burn rate multiplier must be between 1 and 100' }).default('14.4'),
+  BURN_RATE_HIGH_MULTIPLIER: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 1 && n <= 100, { message: 'Burn rate multiplier must be between 1 and 100' }).default('6.0'),
+  BURN_RATE_MODERATE_MULTIPLIER: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 1 && n <= 100, { message: 'Burn rate multiplier must be between 1 and 100' }).default('2.0'),
+  
+  // Alerting configuration
+  ALERT_WEBHOOK_URL: z.string().url().optional(),
+  ALERT_SLACK_WEBHOOK_URL: z.string().url().optional(),
+  ALERT_PAGERDUTY_INTEGRATION_KEY: z.string().optional(),
+  ALERT_EMAIL_SMTP_HOST: z.string().optional(),
+  ALERT_EMAIL_SMTP_PORT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 65535, { message: 'SMTP port must be between 1 and 65535' }).optional(),
+  ALERT_EMAIL_USERNAME: z.string().optional(),
+  ALERT_EMAIL_PASSWORD: z.string().optional(),
+  
+  // GameDay configuration
+  GAMEDAY_ENABLED: z.string().regex(/^(true|false)$/).transform(Boolean).default('false'),
+  GAMEDAY_FAILURE_INJECTION_RATE: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0 && n <= 1, { message: 'Failure injection rate must be between 0 and 1' }).default('0.0'),
+  
+  // Release configuration
+  GIT_SHA: z.string().min(7).max(40).regex(/^[a-f0-9]+$/).default('unknown'),
+  RELEASE_VERSION: z.string().min(1).max(20).default('1.1.0'),
+  RELEASE_TIME: z.string().datetime().default(() => new Date().toISOString()),
+  
+  // Cost tracking
+  COST_TRACKING_ENABLED: z.string().regex(/^(true|false)$/).transform(Boolean).default('true'),
+  COST_PER_SIGN_EVENT: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0, { message: 'Cost must be non-negative' }).default('0.01'),
+  COST_PER_VERIFY_EVENT: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0, { message: 'Cost must be non-negative' }).default('0.005'),
+  COST_PER_TSA_TIMESTAMP: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0, { message: 'Cost must be non-negative' }).default('0.50'),
+  LOG_COST_PER_GB: z.string().regex(/^\d+(\.\d+)?$/).transform(Number).refine(n => n >= 0, { message: 'Cost must be non-negative' }).default('0.50'),
+  
+  // Log budgeting
+  LOG_BUDGET_TENANT_GB_PER_MONTH: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 100, { message: 'Log budget must be between 1GB and 100GB' }).default('1'),
+  
   // Database configuration
   DATABASE_URL: z.string().url('Database URL must be a valid URL'),
   DATABASE_POOL_SIZE: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 100, { message: 'Database pool size must be between 1 and 100' }).default('10'),
@@ -84,7 +176,6 @@ const EnvSchema = z.object({
   // C2PA configuration
   CAI_VERIFY_ENDPOINT: z.string().url().default('https://verify.contentauthenticity.org'),
   MANIFEST_HOST_BASE_URL: z.string().url().default('https://manifests.c2pa.org'),
-  RFC3161_TSA_ENDPOINT: z.string().url().default('https://freetsa.org/tsr'),
   
   // File storage configuration
   ASSET_STORAGE_PATH: z.string().min(1).max(255).default('./assets'),
@@ -122,15 +213,36 @@ const EnvSchema = z.object({
   ALLOWED_ORIGINS: z.string()
     .transform(val => {
       const origins = val.split(',').map(o => o.trim());
-      // Validate each origin is a proper URL or localhost pattern
+      // CRITICAL: Enhanced origin validation to prevent bypass
       for (const origin of origins) {
-        if (origin !== '*' && !origin.match(/^https?:\/\/localhost:\d+$/) && !origin.match(/^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
-          throw new Error(`Invalid origin format: ${origin}`);
+        if (origin === '*') {
+          if (process.env['NODE_ENV'] === 'production') {
+            throw new Error('Wildcard origins not allowed in production');
+          }
+          continue;
+        }
+        
+        // Allow localhost with port for development
+        if (origin.match(/^https?:\/\/localhost:\d+$/)) {
+          continue;
+        }
+        
+        // CRITICAL: Strict domain validation - no wildcards, no IP addresses in production
+        if (process.env['NODE_ENV'] === 'production') {
+          // Must be HTTPS with exact domain match
+          if (!origin.match(/^https:\/\/[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/)) {
+            throw new Error(`Invalid production origin format - must be HTTPS with exact domain: ${origin}`);
+          }
+        } else {
+          // Development allows HTTP and subdomains
+          if (!origin.match(/^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+            throw new Error(`Invalid origin format: ${origin}`);
+          }
         }
       }
       return origins;
     })
-    .default(['http://localhost:3000']),
+    .default('http://localhost:3000'),
   CORS_CREDENTIALS: z.string().transform(val => val === 'true').default('true'),
   
   // Webhook configuration
@@ -147,10 +259,27 @@ const EnvSchema = z.object({
 export type EnvConfig = z.infer<typeof EnvSchema>;
 
 /**
- * Validate environment variables
+ * Validate environment variables with rate limiting protection
  */
+let envValidationAttempts = 0;
+const MAX_ENV_VALIDATION_ATTEMPTS = 10;
+const ENV_VALIDATION_WINDOW = 60000; // 1 minute
+let lastValidationReset = Date.now();
+
 export function validateEnvironment(): EnvConfig {
   try {
+    // CRITICAL: Rate limit environment validation attempts with proper window reset
+    const now = Date.now();
+    if (now - lastValidationReset > ENV_VALIDATION_WINDOW) {
+      envValidationAttempts = 0;
+      lastValidationReset = now;
+    }
+    
+    envValidationAttempts++;
+    if (envValidationAttempts > MAX_ENV_VALIDATION_ATTEMPTS) {
+      throw new Error('Environment validation rate limit exceeded');
+    }
+    
     return EnvSchema.parse(process.env);
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -160,10 +289,16 @@ export function validateEnvironment(): EnvConfig {
         code: err.code,
       }));
       
-      throw new Error(`Environment validation failed:\n${errors.map(e => `  ${e.variable}: ${e.message}`).join('\n')}`);
+      // CRITICAL: Sanitize error messages to prevent information disclosure
+      const sanitizedErrors = errors.map(e => ({
+        variable: e.variable,
+        message: e.message.replace(/[^\w\s\-:.,()]/g, ''), // Remove special chars
+      }));
+      
+      throw new Error(`Environment validation failed:\n${sanitizedErrors.map(e => `  ${e.variable}: ${e.message}`).join('\n')}`);
     }
     
-    throw new Error(`Environment validation failed: ${error}`);
+    throw new Error(`Environment validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 

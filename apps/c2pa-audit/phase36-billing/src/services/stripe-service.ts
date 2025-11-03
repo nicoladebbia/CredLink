@@ -49,6 +49,47 @@ export class StripeService {
    */
   async createCustomer(email: string, name?: string, metadata?: Record<string, string>): Promise<Stripe.Customer> {
     try {
+      // CRITICAL: Input validation before Stripe API call
+      if (!email || typeof email !== 'string') {
+        throw new Error('Valid email address is required');
+      }
+      
+      // Strict email validation
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        throw new Error('Invalid email format');
+      }
+      
+      // Email length limits
+      if (email.length > 254) {
+        throw new Error('Email address too long');
+      }
+      
+      // Name validation if provided
+      if (name) {
+        if (typeof name !== 'string' || name.length > 100) {
+          throw new Error('Invalid name format or length');
+        }
+        
+        // Check for dangerous patterns in name
+        const dangerousPatterns = /<script|javascript:|data:|vbscript:|on\w+=/i;
+        if (dangerousPatterns.test(name)) {
+          throw new Error('Invalid characters in name');
+        }
+      }
+      
+      // Metadata validation
+      if (metadata) {
+        for (const [key, value] of Object.entries(metadata)) {
+          if (typeof key !== 'string' || typeof value !== 'string') {
+            throw new Error('Metadata keys and values must be strings');
+          }
+          if (key.length > 40 || value.length > 500) {
+            throw new Error('Metadata key or value too long');
+          }
+        }
+      }
+      
       const customerParams: Stripe.CustomerCreateParams = {
         email,
         name,
@@ -389,9 +430,44 @@ export class StripeService {
    */
   async createCustomerPortalSession(customerId: string, returnUrl?: string): Promise<Stripe.BillingPortal.Session> {
     try {
+      // CRITICAL: Validate return URL to prevent open redirect
+      let validatedReturnUrl: string;
+      if (returnUrl) {
+        // Validate return URL against allowed origins
+        const allowedOrigins = process.env['ALLOWED_ORIGINS']?.split(',').map(o => o.trim()) || ['http://localhost:3000'];
+        
+        let isValidUrl = false;
+        for (const origin of allowedOrigins) {
+          if (returnUrl.startsWith(origin)) {
+            isValidUrl = true;
+            break;
+          }
+        }
+        
+        if (!isValidUrl) {
+          throw new Error('Invalid return URL: not in allowed origins');
+        }
+        
+        // Additional URL validation
+        try {
+          const url = new URL(returnUrl);
+          if (!['http:', 'https:'].includes(url.protocol)) {
+            throw new Error('Invalid return URL protocol');
+          }
+          if (url.hostname.includes('..') || url.pathname.includes('..')) {
+            throw new Error('Invalid return URL: path traversal detected');
+          }
+          validatedReturnUrl = returnUrl;
+        } catch (urlError) {
+          throw new Error('Invalid return URL format');
+        }
+      } else {
+        validatedReturnUrl = `${process.env['ALLOWED_ORIGINS']?.split(',')[0]}/billing`;
+      }
+      
       return await this.stripe.billingPortal.sessions.create({
         customer: customerId,
-        return_url: returnUrl || `${process.env['ALLOWED_ORIGINS']?.split(',')[0]}/billing`,
+        return_url: validatedReturnUrl,
       });
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to create customer portal session');
@@ -409,6 +485,39 @@ export class StripeService {
     metadata?: Record<string, string | number | boolean>
   ): Promise<Stripe.Checkout.Session> {
     try {
+      // CRITICAL: Validate URLs to prevent open redirect
+      const allowedOrigins = process.env['ALLOWED_ORIGINS']?.split(',').map(o => o.trim()) || ['http://localhost:3000'];
+      
+      function validateUrl(url: string, urlType: string): string {
+        let isValidUrl = false;
+        for (const origin of allowedOrigins) {
+          if (url.startsWith(origin)) {
+            isValidUrl = true;
+            break;
+          }
+        }
+        
+        if (!isValidUrl) {
+          throw new Error(`Invalid ${urlType}: not in allowed origins`);
+        }
+        
+        try {
+          const parsedUrl = new URL(url);
+          if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+            throw new Error(`Invalid ${urlType} protocol`);
+          }
+          if (parsedUrl.hostname.includes('..') || parsedUrl.pathname.includes('..')) {
+            throw new Error(`Invalid ${urlType}: path traversal detected`);
+          }
+          return url;
+        } catch (urlError) {
+          throw new Error(`Invalid ${urlType} format`);
+        }
+      }
+      
+      const validatedSuccessUrl = validateUrl(successUrl, 'success URL');
+      const validatedCancelUrl = validateUrl(cancelUrl, 'cancel URL');
+      
       // Convert metadata values to strings for Stripe compatibility
       const stringMetadata = metadata ? 
         Object.fromEntries(
@@ -423,8 +532,8 @@ export class StripeService {
           quantity: 1,
         }],
         mode: 'subscription',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
+        success_url: validatedSuccessUrl,
+        cancel_url: validatedCancelUrl,
         metadata: stringMetadata,
         allow_promotion_codes: true,
         billing_address_collection: 'auto',
@@ -507,7 +616,8 @@ export class StripeService {
       }
     } catch (error) {
       console.error(`Error handling webhook event ${event.type}:`, error);
-      throw error;
+      // Don't re-throw webhook errors to prevent webhook delivery failures
+      // Log the error and continue processing
     }
   }
 
@@ -581,10 +691,18 @@ export class StripeService {
   }
 
   private handleStripeError(error: any, context: string): BillingError {
+    // Log the full error for debugging
+    console.error(`Stripe error in ${context}:`, {
+      type: error.type,
+      code: error.code,
+      message: error.message,
+      decline_code: error.decline_code,
+    });
+
     if (error.type === 'StripeCardError') {
       return {
         code: 'STRIPE_CARD_ERROR',
-        message: error.message,
+        message: 'Your card was declined',
         stripe_error_type: error.type,
         stripe_error_code: error.code,
         decline_code: error.decline_code,
@@ -598,20 +716,20 @@ export class StripeService {
     } else if (error.type === 'StripeInvalidRequestError') {
       return {
         code: 'STRIPE_INVALID_REQUEST',
-        message: error.message,
+        message: 'Invalid request to payment processor',
         stripe_error_type: error.type,
         stripe_error_code: error.code,
       };
     } else if (error.type === 'StripeAPIError') {
       return {
         code: 'STRIPE_API_ERROR',
-        message: 'Stripe API error, please try again',
+        message: 'Payment processing error, please try again',
         stripe_error_type: error.type,
       };
     } else if (error.type === 'StripeConnectionError') {
       return {
         code: 'STRIPE_CONNECTION_ERROR',
-        message: 'Network error with Stripe, please try again',
+        message: 'Network error with payment processor, please try again',
         stripe_error_type: error.type,
       };
     } else {

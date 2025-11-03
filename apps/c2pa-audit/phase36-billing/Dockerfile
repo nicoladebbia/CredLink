@@ -19,6 +19,7 @@ COPY tsconfig.json ./
 # Install dependencies with security audit
 RUN npm ci --only=production && \
     npm audit fix --audit-level=moderate && \
+    npm audit --audit-level=high && \
     npm cache clean --force
 
 # Build stage
@@ -47,7 +48,12 @@ RUN chmod +x /usr/local/bin/healthcheck.sh
 RUN chown -R nodejs:nodejs /app && \
     chmod -R 755 /app && \
     chmod -R 644 /app/dist/*.js && \
-    find /app -type f -name "*.js" -exec chmod 644 {} \;
+    find /app -type f -name "*.js" -exec chmod 644 {} \; && \
+    find /app -type f -name "*.json" -exec chmod 600 {} \; && \
+    chmod 700 /app/dist && \
+    rm -rf /var/cache/apk/* && \
+    rm -rf /tmp/* && \
+    rm -rf /var/tmp/*
 
 # Switch to non-root user
 USER nodejs

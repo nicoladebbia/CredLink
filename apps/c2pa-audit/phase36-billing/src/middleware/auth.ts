@@ -7,13 +7,30 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { Redis } from 'ioredis';
 import { createHash, timingSafeEqual } from 'crypto';
 
-// Mock Redis instance for middleware (in production, this would be injected)
-const redis = new Redis({
+// Mock Redis instance for middleware (in production, this would be injected) - CRITICAL: Use TLS
+const redisConfig: any = {
   host: process.env['REDIS_HOST'] || 'localhost',
   port: parseInt(process.env['REDIS_PORT'] || '6379'),
   db: parseInt(process.env['REDIS_DB'] || '0'),
   password: process.env['REDIS_PASSWORD'],
-});
+  maxRetriesPerRequest: 3,
+  lazyConnect: true,
+  keepAlive: 30000,
+  connectTimeout: 10000,
+  commandTimeout: 5000,
+  family: 4,
+  enableAutoPipelining: true,
+};
+
+// Enable TLS in production environments
+if (process.env['NODE_ENV'] === 'production' || process.env['REDIS_TLS'] === 'true') {
+  redisConfig.tls = {
+    rejectUnauthorized: true,
+    checkServerIdentity: () => undefined,
+  };
+}
+
+const redis = new Redis(redisConfig);
 
 /**
  * Authentication middleware for API key validation
@@ -42,11 +59,21 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
 
     const apiKey = bearerMatch[1];
 
-    // CRITICAL: Updated API key format validation for new secure format
-    if (!/^c2pa_[a-z0-9]+_[a-f0-9]{64}[A-Za-z0-9]{22}$/.test(apiKey)) {
+    // CRITICAL: Enhanced API key format validation with entropy requirements
+    if (!/^c2pa_[a-z0-9]{8}_[a-f0-9]{64}[A-Za-z0-9]{22}$/.test(apiKey)) {
       reply.status(401).send({
         code: 'INVALID_API_KEY',
         message: 'Invalid API key format',
+      });
+      return;
+    }
+    
+    // CRITICAL: Additional entropy validation
+    const uniqueChars = new Set(apiKey).size;
+    if (uniqueChars < apiKey.length * 0.3) { // At least 30% unique characters
+      reply.status(401).send({
+        code: 'WEAK_API_KEY',
+        message: 'API key does not meet entropy requirements',
       });
       return;
     }
@@ -86,7 +113,7 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
 
   } catch (error) {
     console.error('Auth middleware error:', error);
-    reply.status(500).send({
+    reply.status(401).send({
       code: 'AUTH_ERROR',
       message: 'Authentication failed',
     });
@@ -111,11 +138,13 @@ export async function optionalAuthMiddleware(request: FastifyRequest, reply: Fas
 
     const apiKey = bearerMatch[1];
 
-    if (!/^[a-zA-Z0-9]{32,}$/.test(apiKey)) {
+    if (!/^c2pa_[a-z0-9]{8}_[a-f0-9]{64}[A-Za-z0-9]{22}$/.test(apiKey)) {
       return;
     }
-
-    const tenantData = await redis.get(`api_key:${apiKey}`);
+    
+    // CRITICAL: Hash API key for lookup even in optional auth
+    const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
+    const tenantData = await redis.get(`api_key:${hashedApiKey}`);
     if (!tenantData) {
       return;
     }
