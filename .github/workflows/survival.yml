@@ -39,6 +39,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y imagemagick curl bc jq
+          # Verify ImageMagick installation
+          magick -version
       
       - name: Install dependencies
         run: |
