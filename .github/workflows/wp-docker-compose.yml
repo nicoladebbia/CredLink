@@ -35,10 +35,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -pwordpress"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=10
         volumes:
           - mysql_data:/var/lib/mysql
 
@@ -101,14 +101,21 @@ jobs:
         
         # Wait for MySQL service to be available
         echo "Waiting for MySQL service to be ready..."
-        for i in {1..20}; do
+        for i in {1..30}; do
           if nc -z mysql 3306 2>/dev/null; then
             echo "MySQL service is ready!"
             break
           fi
-          echo "Attempt $i/20 - MySQL not ready, waiting 3 seconds..."
-          sleep 3
+          echo "Attempt $i/30 - MySQL not ready, waiting 5 seconds..."
+          sleep 5
         done
+        
+        # Test MySQL connection with proper error handling
+        echo "Testing MySQL connection..."
+        if ! nc -z mysql 3306; then
+          echo "❌ MySQL service is not accessible"
+          exit 1
+        fi
         
         # Set up WordPress configuration directly (WordPress CLI handles connection)
         wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql --allow-root
