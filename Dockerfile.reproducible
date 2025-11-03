@@ -200,22 +200,7 @@ EXPOSE 4101 4102 4103
 
 # Maximum security health check with comprehensive error handling
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "
-    const http = require('http');
-    const options = {
-      hostname: 'localhost',
-      port: 4101,
-      path: '/health',
-      method: 'GET',
-      timeout: 2000
-    };
-    const req = http.request(options, (res) => {
-      process.exit(res.statusCode === 200 ? 0 : 1);
-    });
-    req.on('error', () => process.exit(1));
-    req.on('timeout', () => process.exit(1));
-    req.end();
-  "
+  CMD node -e "const http = require('http'); const options = { hostname: 'localhost', port: 4101, path: '/health', method: 'GET', timeout: 2000 }; const req = http.request(options, (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }); req.on('error', () => process.exit(1)); req.on('timeout', () => process.exit(1)); req.end();"
 
 # Use dumb-init for proper signal handling and security
 ENTRYPOINT ["dumb-init", "--"]
