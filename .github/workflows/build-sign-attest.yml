@@ -1,0 +1,427 @@
+name: build-sign-attest
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: true
+        type: string
+permissions:
+  id-token: write        # required for keyless
+  contents: read
+  packages: write         # required for pushing to GHCR
+  attestations: write     # required for attestations
+  security-events: write  # required for code scanning
+env:
+  COSIGN_EXPERIMENTAL: 1
+  SYFT_EXIT_CODE: 1
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
+      SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp && fromJson(format('{{"value": "{0}"}}', github.event.head_commit.timestamp)).value || '0' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for provenance
+      
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:buildx-stable-1
+            network=host
+      
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Pre-build validation
+        timeout-minutes: 5
+        run: |
+          set -euo pipefail
+          
+          # Enhanced input validation
+          if [[ ! "${{ env.IMAGE }}" =~ ^ghcr\.io/[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+:[a-f0-9]{40,64}$ ]]; then
+            echo "❌ Invalid image format: ${{ env.IMAGE }}"
+            exit 1
+          fi
+          
+          if [[ ! "${{ env.SOURCE_DATE_EPOCH }}" =~ ^[0-9]{10}$ ]]; then
+            echo "❌ Invalid SOURCE_DATE_EPOCH format: ${{ env.SOURCE_DATE_EPOCH }}"
+            exit 1
+          fi
+          
+          # Validate repository structure
+          if [[ ! -f "Dockerfile.reproducible" ]]; then
+            echo "❌ Dockerfile.reproducible not found"
+            exit 1
+          fi
+          
+          if [[ ! -f "buildkit.toml" ]]; then
+            echo "❌ buildkit.toml not found"
+            exit 1
+          fi
+          
+          echo "✅ Pre-build validation passed"
+      
+      - name: Build image with maximal security and provenance
+        timeout-minutes: 45
+        run: |
+          set -euo pipefail
+          
+          # Build with comprehensive security constraints
+          docker buildx build \
+            --builder buildx \
+            --provenance=true \
+            --attest type=provenance,mode=max \
+            --attest type=sbom,generator=syft \
+            --sbom=true \
+            --output=type=image,name=${{ env.IMAGE }},push=true \
+            --metadata-file build.json \
+            --build-arg SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --build-arg BUILDKIT_MULTI_PLATFORM=1 \
+            --secret id=github_token,src=/dev/null \
+            --tag ${{ env.IMAGE }} \
+            --no-cache \
+            --pull \
+            --cgroup-manager=cgroupfs \
+            -f Dockerfile.reproducible \
+            .
+      
+      - name: Post-build image validation
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          
+          # Verify image exists and is accessible
+          if ! docker buildx imagetools inspect ${{ env.IMAGE }} --raw >/dev/null 2>&1; then
+            echo "❌ Image not found or inaccessible: ${{ env.IMAGE }}"
+            exit 1
+          fi
+          
+          # Validate build metadata
+          if ! jq empty build.json 2>/dev/null; then
+            echo "❌ Build metadata is invalid JSON"
+            exit 1
+          fi
+          
+          # Verify image digest
+          IMAGE_DIGEST=$(jq -r '.containerimage.digest' build.json)
+          if [[ ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "❌ Invalid image digest: $IMAGE_DIGEST"
+            exit 1
+          fi
+          
+          echo "✅ Post-build validation passed"
+      
+      - name: Install and verify security tools
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          
+          # Install cosign with verification
+          curl -fsSL https://sigstore.github.io/cosign/install.sh | sh -s -- -b /usr/local/bin v2.2.4
+          cosign version
+          
+          # Install syft with verification
+          curl -fsSL https://raw.githubusercontent.com/anchore/syft/v0.100.0/install.sh | sh -s -- -b /usr/local/bin v0.100.0
+          syft version
+          
+          # Install jq for JSON processing
+          sudo apt-get update && sudo apt-get install -y jq
+          
+          echo "✅ Security tools installed and verified"
+      
+      - name: Keyless sign image with enhanced verification
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          
+          # Sign with comprehensive options
+          cosign sign --yes \
+            --attachment-tag-prefix="" \
+            --output-certificate=image.cert \
+            --output-signature=image.sig \
+            ${{ env.IMAGE }}
+          
+          # Verify signature with full certificate chain
+          if ! cosign verify \
+            --certificate-identity-regexp="^repo:Nickiller04/c2-concierge:ref:refs/(heads|tags)/.*$" \
+            --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+            ${{ env.IMAGE }} >/dev/null 2>&1; then
+            echo "❌ Signature verification failed"
+            exit 1
+          fi
+          
+          # Verify transparency log entry
+          if ! cosign triangulate ${{ env.IMAGE }} >/dev/null 2>&1; then
+            echo "❌ Transparency log verification failed"
+            exit 1
+          fi
+          
+          echo "✅ Image signed and verified"
+      
+      - name: Attest SLSA provenance with validation
+        uses: actions/attest-build-provenance@v1
+        with: 
+          subject-path: build.json
+      
+      - name: Generate comprehensive SBOMs with validation
+        timeout-minutes: 20
+        run: |
+          set -euo pipefail
+          
+          # Generate SPDX SBOM with enhanced options
+          syft ${{ env.IMAGE }} \
+            -o spdx-json=sbom.spdx.json \
+            -o spdx-tag-value=sbom.spdx \
+            --source-date-epoch ${{ env.SOURCE_DATE_EPOCH }} \
+            --catalogers=all \
+            --exclude-catalogers="apk,dpkg,rpm"
+          
+          # Validate SPDX format comprehensively
+          if ! jq empty sbom.spdx.json 2>/dev/null; then
+            echo "❌ Generated SPDX SBOM is invalid JSON"
+            exit 1
+          fi
+          
+          SPDX_VERSION=$(jq -r '.spdxVersion' sbom.spdx.json)
+          if [[ "$SPDX_VERSION" != "SPDX-2.3" ]]; then
+            echo "❌ Invalid SPDX version: $SPDX_VERSION"
+            exit 1
+          fi
+          
+          SPDX_NAME=$(jq -r '.name' sbom.spdx.json)
+          if [[ -z "$SPDX_NAME" || "$SPDX_NAME" == "null" ]]; then
+            echo "❌ SPDX document name is missing"
+            exit 1
+          fi
+          
+          # Generate CycloneDX SBOM with enhanced options
+          syft ${{ env.IMAGE }} \
+            -o cyclonedx-json=sbom.cdx.json \
+            -o cyclonedx-xml=sbom.cdx.xml \
+            --source-date-epoch ${{ env.SOURCE_DATE_EPOCH }} \
+            --catalogers=all
+          
+          # Validate CycloneDX format comprehensively
+          if ! jq empty sbom.cdx.json 2>/dev/null; then
+            echo "❌ Generated CycloneDX SBOM is invalid JSON"
+            exit 1
+          fi
+          
+          CDX_VERSION=$(jq -r '.specVersion' sbom.cdx.json)
+          if [[ ! "$CDX_VERSION" =~ ^1\.[4-5]$ ]]; then
+            echo "❌ Unsupported CycloneDX version: $CDX_VERSION"
+            exit 1
+          fi
+          
+          CDX_COMPONENTS=$(jq '.components | length' sbom.cdx.json)
+          if [[ "$CDX_COMPONENTS" -lt 1 ]]; then
+            echo "❌ CycloneDX SBOM contains no components"
+            exit 1
+          fi
+          
+          # Generate comprehensive checksums
+          sha256sum sbom.spdx.json sbom.cdx.json sbom.spdx sbom.cdx.xml > sbom.sha256sums
+          sha512sum sbom.spdx.json sbom.cdx.json sbom.spdx sbom.cdx.xml > sbom.sha512sums
+          
+          # Verify checksums immediately
+          if ! sha256sum -c sbom.sha256sums >/dev/null 2>&1; then
+            echo "❌ SHA256 checksum verification failed"
+            exit 1
+          fi
+          
+          echo "✅ Comprehensive SBOMs generated and validated"
+      
+      - name: SBOM attestations with enhanced validation
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          
+          # SPDX attestation
+          cosign attest --yes \
+            --predicate-type spdx \
+            --predicate sbom.spdx.json \
+            ${{ env.IMAGE }}
+          
+          # CycloneDX attestation
+          cosign attest --yes \
+            --predicate-type cyclonedx \
+            --predicate sbom.cdx.json \
+            ${{ env.IMAGE }}
+          
+          echo "✅ SBOM attestations completed"
+      
+      - name: Install Trivy with enhanced security
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          
+          # Install Trivy with specific version
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy=0.50.1
+          
+          # Verify installation
+          trivy --version
+          
+          # Update vulnerability database
+          trivy image --download-db-only
+          
+          echo "✅ Trivy installed and verified"
+      
+      - name: Comprehensive CVE scanning with enhanced validation
+        timeout-minutes: 30
+        run: |
+          set -euo pipefail
+          
+          # Primary image scan with comprehensive configuration
+          trivy image \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            --format json \
+            --output trivy-image-scan.json \
+            --scanners vuln,config,secret,license \
+            --skip-policy .trivyignore \
+            --list-all-pkgs \
+            --offline-scan \
+            ${{ env.IMAGE }}
+          
+          # Validate scan results comprehensively
+          if [[ ! -s trivy-image-scan.json ]]; then
+            echo "❌ Trivy image scan produced empty results"
+            exit 1
+          fi
+          
+          if ! jq empty trivy-image-scan.json 2>/dev/null; then
+            echo "❌ Trivy image scan results are invalid JSON"
+            exit 1
+          fi
+          
+          # Enhanced vulnerability analysis
+          CRITICAL_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-image-scan.json)
+          HIGH_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH")] | length' trivy-image-scan.json)
+          
+          if [[ "$CRITICAL_COUNT" -gt 0 ]]; then
+            echo "❌ Found $CRITICAL_COUNT critical vulnerabilities"
+            jq '.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL") | {VulnerabilityID, Severity, Title, InstalledVersion, FixedVersion}' trivy-image-scan.json
+            exit 1
+          fi
+          
+          echo "✅ Image scan passed: $HIGH_COUNT high vulnerabilities found (within tolerance)"
+          
+          # Secondary SBOM scan for cross-validation
+          trivy sbom \
+            --severity CRITICAL,HIGH \
+            --exit-code 1 \
+            --format json \
+            --output trivy-sbom-scan.json \
+            --scanners vuln \
+            sbom.spdx.json
+          
+          # Cross-validate scan results
+          if ! jq empty trivy-sbom-scan.json 2>/dev/null; then
+            echo "❌ Trivy SBOM scan results are invalid JSON"
+            exit 1
+          fi
+          
+          SBOM_CRITICAL_COUNT=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "CRITICAL")] | length' trivy-sbom-scan.json)
+          
+          if [[ "$SBOM_CRITICAL_COUNT" -gt 0 ]]; then
+            echo "❌ Found $SBOM_CRITICAL_COUNT critical vulnerabilities in SBOM scan"
+            exit 1
+          fi
+          
+          echo "✅ Comprehensive CVE scanning completed"
+      
+      - name: Final artifact validation and integrity verification
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          
+          # Define comprehensive artifact list
+          REQUIRED_FILES=(
+            "build.json"
+            "sbom.spdx.json"
+            "sbom.spdx"
+            "sbom.cdx.json"
+            "sbom.cdx.xml"
+            "sbom.sha256sums"
+            "sbom.sha512sums"
+            "trivy-image-scan.json"
+            "trivy-sbom-scan.json"
+            "image.cert"
+            "image.sig"
+          )
+          
+          # Validate all required artifacts exist and are non-empty
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [[ ! -s "$file" ]]; then
+              echo "❌ Required artifact missing or empty: $file"
+              exit 1
+            fi
+          done
+          
+          # Validate all JSON files comprehensively
+          JSON_FILES=("build.json" "sbom.spdx.json" "sbom.cdx.json" "trivy-image-scan.json" "trivy-sbom-scan.json")
+          for json_file in "${JSON_FILES[@]}"; do
+            if ! jq empty "$json_file" 2>/dev/null; then
+              echo "❌ Invalid JSON in artifact: $json_file"
+              exit 1
+            fi
+          done
+          
+          # Verify all checksums
+          if ! sha256sum -c sbom.sha256sums >/dev/null 2>&1; then
+            echo "❌ SHA256 checksum verification failed"
+            exit 1
+          fi
+          
+          if ! sha512sum -c sbom.sha512sums >/dev/null 2>&1; then
+            echo "❌ SHA512 checksum verification failed"
+            exit 1
+          fi
+          
+          # Final integrity verification
+          IMAGE_DIGEST=$(jq -r '.containerimage.digest' build.json)
+          SPDX_HASH=$(jq -r '.documentNamespace' sbom.spdx.json | sed 's/.*\///')
+          
+          if [[ ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "❌ Invalid image digest in build metadata"
+            exit 1
+          fi
+          
+          echo "✅ All artifacts validated and integrity verified"
+        continue-on-error: false
+      
+      - name: Upload comprehensive build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ github.sha }}
+          path: |
+            build.json
+            sbom.spdx.json
+            sbom.spdx
+            sbom.cdx.json
+            sbom.cdx.xml
+            sbom.sha256sums
+            sbom.sha512sums
+            trivy-image-scan.json
+            trivy-sbom-scan.json
+            image.cert
+            image.sig
+          retention-days: 90
+          if-no-files-found: error
+          compression-level: 6

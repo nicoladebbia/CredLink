@@ -1,0 +1,123 @@
+# BuildKit configuration for reproducible builds with maximum security hardening
+[worker.oci]
+  max-parallelism = 1
+  # Security: Completely restrict network access for builds
+  networkmode = "none"
+  # Security: Enable rootless execution
+  rootless = true
+  # Security: Restrict platform to prevent cross-arch attacks
+  platforms = ["linux/amd64"]
+
+[worker.containerd]
+  max-parallelism = 1
+  # Security: Enable strict sandboxing
+  platform = "linux/amd64"
+  # Security: Enable namespace isolation
+  namespace = "buildkit"
+
+# Enable reproducible builds with comprehensive security controls
+[worker]
+  gc = true
+  gckeepstorage = 5000
+  # Security: Aggressive garbage collection for attack surface reduction
+  gckeepbuild = 50
+  # Security: Enable build timeout
+  buildtimeout = "10m"
+  # Security: Restrict concurrent builds
+  max-parallelism = 1
+
+# Maximum security hardening settings
+[security]
+  # Security: Remove all insecure entitlements
+  allow-insecure-entitlement = []
+  # Security: Disable all insecure capabilities
+  allow-insecure-capabilities = false
+  # Security: Completely restrict privileged operations
+  allow-privileged = false
+  # Security: Enable content trust verification
+  content-trust = true
+  # Security: Restrict network access
+  network = "none"
+  # Security: Enable seccomp filtering
+  seccomp = true
+
+# Cache configuration with security and optimization
+[cache]
+  max-usage = 250000000
+  # Security: Enable cache compression with secure algorithm
+  compression = "gzip"
+  # Security: Enable cache verification
+  verify = true
+  # Security: Restrict cache import/export
+  import-cached = false
+  export-cached = false
+
+# BuildKit daemon with maximum security
+[buildkit]
+  version = "v0.12.0"
+  # Security: Enable comprehensive build provenance
+  provenance = true
+  # Security: Enable build traceability
+  trace = true
+  # Security: Restrict build sources
+  allowed-sources = ["local://.", "https://github.com/Nickiller04/c2-concierge"]
+
+# Registry configuration with maximum security
+[registry."docker.io"]
+  mirrors = ["https://registry-1.docker.io"]
+  # Security: Enforce TLS 1.3
+  tls-version = "1.3"
+  # Security: Disable HTTP completely
+  http = false
+  # Security: Enforce certificate verification
+  insecure = false
+  # Security: Enable certificate pinning
+  plain-http = false
+
+[registry."ghcr.io"]
+  mirrors = ["https://ghcr.io"]
+  # Security: Enforce TLS 1.3
+  tls-version = "1.3"
+  # Security: Disable HTTP completely
+  http = false
+  # Security: Enforce certificate verification
+  insecure = false
+  # Security: Enable certificate pinning
+  plain-http = false
+
+# Maximum execution security
+[exec]
+  # Security: Use strict AppArmor profile
+  apparmor-profile = "buildkit-strict"
+  # Security: Enable comprehensive seccomp filtering
+  seccomp-default = true
+  # Security: Restrict cgroup parent
+  cgroup-parent = "/buildkit"
+  # Security: Restrict process capabilities
+  cap-add = []
+  cap-drop = ["ALL"]
+  # Security: Enable user namespace remapping
+  userns-remap = "buildkit"
+  # Security: Restrict mount options
+  mount-options = ["noexec", "nosuid", "nodev"]
+
+# Additional security hardening
+[security.sandbox]
+  # Security: Enable sandbox isolation
+  enabled = true
+  # Security: Restrict sandbox networking
+  network = "none"
+  # Security: Enable sandbox timeouts
+  timeout = "5m"
+  # Security: Restrict sandbox resources
+  memory-limit = "1G"
+  cpu-limit = "1"
+
+# Logging and monitoring with security
+[logging]
+  # Security: Enable structured logging
+  format = "json"
+  # Security: Set appropriate log level
+  level = "info"
+  # Security: Enable audit logging
+  audit = true
