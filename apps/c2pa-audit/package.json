@@ -12,6 +12,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:security": "vitest run --grep security",
+    "test:phase32": "tsx src/tests/phase32-acceptance.test.ts",
     "cli": "tsx src/cli/index.ts",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
@@ -62,7 +63,11 @@
     "diff",
     "audit",
     "lineage",
-    "contentauthenticity"
+    "contentauthenticity",
+    "license-enforcement",
+    "copyright",
+    "webhooks",
+    "creative-commons"
   ],
   "author": "C2 Concierge Team",
   "license": "MIT"
