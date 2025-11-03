@@ -35,12 +35,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -pwordpress"
+          --health-cmd="mysqladmin ping -h localhost"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=10
-        volumes:
-          - mysql_data:/var/lib/mysql
+          --health-retries=5
 
       wordpress:
         image: wordpress:6.4-php8.2-apache
@@ -99,15 +97,27 @@ jobs:
         # Download WordPress first
         wp --path=/var/www/html core download --allow-root
         
+        # Debug: Check if MySQL hostname resolves
+        echo "Debug: Testing MySQL hostname resolution..."
+        if nslookup mysql 2>/dev/null; then
+          echo "✅ MySQL hostname resolves"
+        else
+          echo "❌ MySQL hostname does not resolve"
+          echo "Available network interfaces:"
+          ip addr show
+          echo "Testing localhost connectivity..."
+          nc -z localhost 3306 2>/dev/null && echo "✅ localhost:3306 accessible" || echo "❌ localhost:3306 not accessible"
+        fi
+        
         # Wait for MySQL service to be available
         echo "Waiting for MySQL service to be ready..."
-        for i in {1..30}; do
+        for i in {1..20}; do
           if nc -z mysql 3306 2>/dev/null; then
             echo "MySQL service is ready!"
             break
           fi
-          echo "Attempt $i/30 - MySQL not ready, waiting 5 seconds..."
-          sleep 5
+          echo "Attempt $i/20 - MySQL not ready, waiting 3 seconds..."
+          sleep 3
         done
         
         # Test MySQL connection with proper error handling
