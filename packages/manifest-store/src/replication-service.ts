@@ -76,13 +76,13 @@ export class ReplicationService {
   }
 
   private validateHash(hash: string): boolean {
-    return hash && 
+    return !!hash && 
            hash.length <= this.MAX_HASH_LENGTH && 
            /^[a-fA-F0-9]+$/.test(hash);
   }
 
   private validateTenantId(tenantId: string): boolean {
-    return tenantId && 
+    return !!tenantId && 
            tenantId.length > 0 && 
            tenantId.length <= this.MAX_TENANT_ID_LENGTH &&
            /^[a-zA-Z0-9_-]+$/.test(tenantId);

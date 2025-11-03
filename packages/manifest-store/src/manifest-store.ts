@@ -756,7 +756,7 @@ export class ManifestStore {
 
   private generateSecureId(): string {
     const timestamp = Date.now();
-    const randomBytes = Buffer.from(crypto.randomBytes(16));
+    const randomBytes = Buffer.from(require('crypto').randomBytes(16));
     return `${timestamp}_${randomBytes.toString('hex')}`;
   }
 

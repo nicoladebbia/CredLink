@@ -185,17 +185,17 @@ export class ObservabilityService {
   }
 
   private validateIncidentId(incidentId: string): boolean {
-    return incidentId && 
+    return !!incidentId && 
            incidentId.length > 0 && 
            incidentId.length <= this.MAX_INCIDENT_ID_LENGTH &&
            /^[a-zA-Z0-9_-]+$/.test(incidentId);
   }
 
   private validateUserName(userName: string): boolean {
-    return userName && 
+    return !!userName && 
            userName.length > 0 && 
            userName.length <= this.MAX_USER_NAME_LENGTH &&
-           /^[a-zA-Z0-9_\-\s]+$/.test(userName);
+           /^[a-zA-Z0-9\s._-]+$/.test(userName);
   }
 
   private validateServiceName(serviceName: string): boolean {

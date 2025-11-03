@@ -135,7 +135,9 @@ export function murmur3_x86_32(data: string, seed: number = 0): number {
     // PERFORMANCE: Cache result (LRU eviction if needed)
     if (hashCache.size >= MAX_CACHE_SIZE) {
         const firstKey = hashCache.keys().next().value;
-        hashCache.delete(firstKey);
+        if (firstKey !== undefined) {
+            hashCache.delete(firstKey);
+        }
     }
     hashCache.set(cacheKey, h1);
     

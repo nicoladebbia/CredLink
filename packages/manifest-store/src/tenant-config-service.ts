@@ -93,7 +93,7 @@ export class TenantConfigService {
   }
 
   private validateTenantId(tenantId: string): boolean {
-    return tenantId && 
+    return !!tenantId && 
            tenantId.length > 0 && 
            tenantId.length <= this.MAX_TENANT_ID_LENGTH &&
            /^[a-zA-Z0-9_-]+$/.test(tenantId);

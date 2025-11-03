@@ -31,6 +31,9 @@ jobs:
       - name: Clean build artifacts
         run: pnpm clean || true
       
+      - name: Build dependencies
+        run: pnpm -r --filter "@c2/manifest-store" build || pnpm -r --filter "@c2/utils" build || true
+      
       - name: Type check
         run: pnpm typecheck
       
