@@ -347,7 +347,6 @@ export class ObservabilityService {
         description: `Consistency sweep failed with error: ${errorMsg}`,
         affected_services: ['consistency_checker'],
         metrics_snapshot: failedResult,
-        timestamp: new Date().toISOString(),
         acknowledged: false,
         resolved: false
       });

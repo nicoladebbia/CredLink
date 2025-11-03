@@ -86,7 +86,7 @@ export interface KVNamespace {
   put(key: string, value: string): Promise<void>;
   put(key: string, value: string, options?: KVOptions): Promise<void>;
   delete(key: string): Promise<void>;
-  list(options?: KVListOptions): Promise<KVListResult>;
+  list(options?: R2ListOptions): Promise<KVListResult>;
 }
 
 export interface KVOptions {
@@ -215,7 +215,7 @@ export default {
       return withRelayHeaders(sanitized, servedFromStale);
     } catch (error) {
       if (error instanceof RelayProblem) {
-        return problem(error.status, error.code, sanitizeErrorMessage(error.detail));
+        return problem(error.status, error.code, sanitizeErrorMessage(error.detail || 'Unknown error'));
       }
 
       console.error('Edge relay error:', sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error'));
@@ -944,7 +944,7 @@ async function fetchFromR2Bucket(bucket: R2Bucket, hash: string): Promise<{
       return { success: false, error: 'Manifest not found' };
     }
 
-    const data = await object.arrayBuffer();
+    const data = await (object as any).arrayBuffer();
     const metadata = parseR2Metadata(object.customMetadata || {});
 
     return { success: true, data, metadata };
@@ -1006,7 +1006,7 @@ async function getFromCache(kv: KVNamespace, hash: string): Promise<Response | n
       return null;
     }
     
-    const cached = await kv.getWithMetadata(`manifest:${hash}`, 'arrayBuffer');
+    const cached = await (kv as any).getWithMetadata(`manifest:${hash}`, 'arrayBuffer');
     if (cached.value) {
       return new Response(cached.value, {
         headers: {
@@ -1031,7 +1031,7 @@ async function setInCache(kv: KVNamespace, hash: string, response: Response, ttl
     
     const data = await response.arrayBuffer();
     const cacheTtl = Math.min(Math.max(ttl || 300, 60), 3600); // Between 1 minute and 1 hour
-    await kv.put(`manifest:${hash}`, data, {
+    await kv.put(`manifest:${hash}`, new TextDecoder().decode(data), {
       expirationTtl: cacheTtl
     });
   } catch (error) {

@@ -353,18 +353,11 @@ function processExperimentAssignment(
         experiment.tenant_id,
         pathname,
         finalArm,
-        routeBucket,
-        preserveCapable,
-        embedAttempted,
-        remoteFallback
+        routeBucket
       );
       
-      // Trace preservation control check
-      experimentTracer.tracePreservationCheck(
-        experiment.tenant_id,
-        experiment.preserve_controls,
-        preserveCapable
-      );
+      // Trace preservation control check (method not implemented yet)
+      // TODO: Implement tracePreservationCheck method in ExperimentTracer
     } catch (error) {
       console.error('Failed to trace experiment assignment:', error);
     }

@@ -17,6 +17,7 @@ interface Session {
   roles: string[];
   idp_provider: string;
   expires_at: number;
+  [key: string]: any; // Index signature for JWTPayload compatibility
 }
 
 const app = new Hono();
@@ -323,7 +324,7 @@ app.get('/session', async (c) => {
   }
   
   try {
-    const session = await verify(sessionToken, mockEnv.JWT_SECRET) as Session;
+    const session = await verify(sessionToken, mockEnv.JWT_SECRET) as unknown as Session;
     
     // Check if session is expired
     if (Date.now() > session.expires_at) {
@@ -371,7 +372,7 @@ async function authenticateSession(c: any): Promise<Subject | null> {
   }
   
   try {
-    const session = await verify(sessionToken, mockEnv.JWT_SECRET) as Session;
+    const session = await verify(sessionToken, mockEnv.JWT_SECRET) as unknown as Session;
     
     // Check if session is expired
     if (Date.now() > session.expires_at) {
