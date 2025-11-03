@@ -215,8 +215,8 @@ export class TSAService {
           },
           hashedMessage: request.messageImprint
         },
-        request.nonce,
-        tenantPolicy.accepted_trust_anchors
+        tenantPolicy.accepted_trust_anchors,
+        request.nonce
       );
 
       if (!verificationResult.valid) {
