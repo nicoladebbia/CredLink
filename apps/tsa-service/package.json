@@ -46,7 +46,7 @@
     "@typescript-eslint/eslint-plugin": "^8.14.0",
     "@typescript-eslint/parser": "^8.14.0",
     "npm-audit-resolver": "^2.0.0",
-    "audit-ci": "^7.6.0"
+    "audit-ci": "^7.1.0"
   },
   "keywords": [
     "rfc3161",
