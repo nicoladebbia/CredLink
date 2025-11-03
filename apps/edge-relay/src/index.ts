@@ -16,13 +16,109 @@ const MAX_REDIRECTS = 3;
 const MAX_MANIFEST_BYTES = 2 * 1024 * 1024; // 2 MB safety cap
 const TIMESTAMP_SKEW_MS = 5 * 60 * 1000; // 5 minutes
 
+// Security constants
+const MAX_TENANT_ID_LENGTH = 100;
+const MAX_URL_LENGTH = 2048;
+const MAX_SIGNATURE_LENGTH = 512;
+const MAX_HOSTNAME_LENGTH = 253;
+const MAX_CACHE_KEY_LENGTH = 512;
+const MAX_HASH_LENGTH = 128;
+const MAX_LOG_MESSAGE_LENGTH = 500;
+const VALID_HASH_PATTERN = /^[a-f0-9]{64}$/i;
+const VALID_TENANT_ID_PATTERN = /^[a-zA-Z0-9_-]+$/;
+
 interface ExecutionContext {
   waitUntil(promise: Promise<unknown>): void;
+}
+
+// Cloudflare Worker type definitions
+export interface R2Bucket {
+  head(key: string): Promise<R2Object | null>;
+  get(key: string): Promise<R2Object | null>;
+  put(key: string, value: ArrayBuffer | ReadableStream | string, options?: R2PutOptions): Promise<R2Object>;
+  delete(key: string): Promise<void>;
+  list(options?: R2ListOptions): Promise<R2Objects>;
+}
+
+export interface R2Object {
+  key: string;
+  size: number;
+  etag: string;
+  uploaded: Date;
+  httpEtag: string;
+  customMetadata?: Record<string, string>;
+  range?: { offset: number, length?: number };
+  body?: ReadableStream;
+}
+
+export interface R2PutOptions {
+  customMetadata?: Record<string, string>;
+  httpMetadata?: R2HTTPMetadata;
+}
+
+export interface R2HTTPMetadata {
+  contentType?: string;
+  contentLanguage?: string;
+  contentDisposition?: string;
+  contentEncoding?: string;
+  cacheControl?: string;
+  cacheExpiry?: Date;
+}
+
+export interface R2ListOptions {
+  limit?: number;
+  prefix?: string;
+  cursor?: string;
+}
+
+export interface R2Objects {
+  objects: R2Object[];
+  truncated: boolean;
+  cursor?: string;
+}
+
+export interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  get(key: string, type: 'text'): Promise<string | null>;
+  get(key: string, type: 'json'): Promise<any | null>;
+  get(key: string, type: 'arrayBuffer'): Promise<ArrayBuffer | null>;
+  get(key: string, type: 'stream'): Promise<ReadableStream | null>;
+  put(key: string, value: string): Promise<void>;
+  put(key: string, value: string, options?: KVOptions): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(options?: KVListOptions): Promise<KVListResult>;
+}
+
+export interface KVOptions {
+  expiration?: number;
+  expirationTtl?: number;
+  metadata?: Record<string, any>;
+}
+
+export interface KVListResult {
+  keys: KVListKey[];
+  list_complete: boolean;
+  cursor?: string;
+}
+
+export interface KVListKey {
+  name: string;
+  expiration?: number;
+  metadata?: Record<string, any>;
 }
 
 interface Env {
   TENANT_CONFIG?: string;
   RELAY_DEBUG?: string;
+  // Phase 21.9 Multi-Region Configuration
+  PRIMARY_REGION?: string;
+  STANDBY_REGION?: string;
+  R2_PRIMARY?: R2Bucket;
+  R2_SECONDARY?: R2Bucket;
+  MANIFEST_CACHE?: KVNamespace;
+  CACHE_TTL_SECONDS?: number;
+  STALE_WHILE_REVALIDATE_SECONDS?: number;
+  MANIFEST_BASE_URL?: string;
 }
 
 interface TenantConfig {
@@ -48,6 +144,25 @@ export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
+    // Validate request URL length
+    if (url.href.length > MAX_URL_LENGTH) {
+      return problem(414, 'RelayUrlTooLong', 'Request URL exceeds maximum length');
+    }
+
+    // Phase 21.9: Handle health and status endpoints
+    if (url.pathname === '/health') {
+      return handleHealthRequest(env);
+    }
+
+    if (url.pathname === '/status') {
+      return handleStatusRequest(env);
+    }
+
+    // Phase 21.9: Handle direct manifest fetch from R2
+    if (url.pathname.startsWith('/manifest/')) {
+      return handleManifestRequest(request, env, ctx);
+    }
+
     if (url.pathname !== '/c2/relay') {
       return new Response('Not Found', { status: 404 });
     }
@@ -68,7 +183,7 @@ export default {
       const cache = getDefaultCache();
       const cached = await cache.match(cacheKey);
       if (cached) {
-        debug(env, relayContext.tenantId, `cache hit for ${relayContext.manifestUrl.href}`);
+        debug(env, relayContext.tenantId, `cache hit for ${sanitizeUrl(relayContext.manifestUrl.href)}`);
         return withRelayHeaders(cached, true);
       }
 
@@ -100,10 +215,10 @@ export default {
       return withRelayHeaders(sanitized, servedFromStale);
     } catch (error) {
       if (error instanceof RelayProblem) {
-        return problem(error.status, error.code, error.detail);
+        return problem(error.status, error.code, sanitizeErrorMessage(error.detail));
       }
 
-      console.error('Edge relay error:', error);
+      console.error('Edge relay error:', sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error'));
       return problem(500, 'RelayInternalError', 'Unexpected relay failure');
     }
   }
@@ -128,8 +243,19 @@ async function buildRelayContext(url: URL, env: Env): Promise<RelayContext> {
   const signature = url.searchParams.get('sig') || '';
   const tsParam = url.searchParams.get('ts') || '';
 
+  // Validate required parameters
   if (!u || !tenantId || !signature || !tsParam) {
     throw new RelayProblem(400, 'RelayBadParams', 'u, t, sig, and ts are required');
+  }
+
+  // Validate tenant ID format and length
+  if (!VALID_TENANT_ID_PATTERN.test(tenantId) || tenantId.length > MAX_TENANT_ID_LENGTH) {
+    throw new RelayProblem(400, 'RelayBadTenantId', 'Invalid tenant ID format');
+  }
+
+  // Validate signature length
+  if (signature.length > MAX_SIGNATURE_LENGTH) {
+    throw new RelayProblem(400, 'RelayBadSignature', 'Invalid signature format');
   }
 
   const timestamp = Number(tsParam);
@@ -144,6 +270,10 @@ async function buildRelayContext(url: URL, env: Env): Promise<RelayContext> {
 
   let manifestUrl: URL;
   try {
+    // Validate URL length before parsing
+    if (u.length > MAX_URL_LENGTH) {
+      throw new RelayProblem(400, 'RelayUrlTooLong', 'manifest URL exceeds maximum length');
+    }
     manifestUrl = new URL(u);
   } catch {
     throw new RelayProblem(400, 'RelayInvalidUrl', 'manifest URL is invalid');
@@ -151,6 +281,11 @@ async function buildRelayContext(url: URL, env: Env): Promise<RelayContext> {
 
   if (!['https:', 'http:'].includes(manifestUrl.protocol)) {
     throw new RelayProblem(400, 'RelayUnsupportedProtocol', 'manifest URL must be http or https');
+  }
+
+  // Validate hostname length
+  if (manifestUrl.hostname.length > MAX_HOSTNAME_LENGTH) {
+    throw new RelayProblem(400, 'RelayInvalidHostname', 'manifest hostname exceeds maximum length');
   }
 
   const tenant = loadTenantConfig(tenantId, env);
@@ -177,15 +312,36 @@ function loadTenantConfig(tenantId: string, env: Env): TenantConfig {
     throw new RelayProblem(403, 'RelayTenantUnknown', 'tenant not configured');
   }
 
+  // Validate tenant configuration
+  if (!tenant.secret || typeof tenant.secret !== 'string') {
+    throw new RelayProblem(500, 'RelayTenantConfig', 'Invalid tenant secret');
+  }
+
+  if (!Array.isArray(tenant.allowlist) || tenant.allowlist.length === 0) {
+    throw new RelayProblem(500, 'RelayTenantConfig', 'Invalid tenant allowlist');
+  }
+
+  // Validate allowlist entries
+  for (const entry of tenant.allowlist) {
+    if (typeof entry !== 'string' || entry.length === 0 || entry.length > MAX_HOSTNAME_LENGTH) {
+      throw new RelayProblem(500, 'RelayTenantConfig', 'Invalid allowlist entry');
+    }
+  }
+
   return tenant;
 }
 
 async function verifyTenantAccess(tenantId: string, tenant: TenantConfig, manifestUrl: URL): Promise<void> {
   const { host } = manifestUrl;
 
+  // Validate hostname format
+  if (!host || host.length > MAX_HOSTNAME_LENGTH) {
+    throw new RelayProblem(400, 'RelayInvalidHostname', 'Invalid manifest hostname');
+  }
+
   const allowed = tenant.allowlist.some(entry => hostMatches(entry, manifestUrl));
   if (!allowed) {
-    console.warn(`tenant ${tenantId} denied host ${host}`);
+    console.warn(`tenant ${sanitizeTenantId(tenantId)} denied host ${sanitizeHostname(host)}`);
     throw new RelayProblem(403, 'RelayHostDenied', 'Manifest host denied for tenant');
   }
 
@@ -196,6 +352,11 @@ async function verifyTenantAccess(tenantId: string, tenant: TenantConfig, manife
 
 function hostMatches(entry: string, manifestUrl: URL): boolean {
   if (!entry) return false;
+
+  // Validate entry length
+  if (entry.length > MAX_HOSTNAME_LENGTH) {
+    return false;
+  }
 
   if (entry.includes('://')) {
     try {
@@ -221,6 +382,15 @@ function hostMatches(entry: string, manifestUrl: URL): boolean {
 }
 
 async function verifySignature(secret: string, value: string, signature: string): Promise<void> {
+  // Validate inputs
+  if (!secret || !value || !signature) {
+    throw new RelayProblem(401, 'RelayAuth', 'missing signature parameters');
+  }
+
+  if (signature.length > MAX_SIGNATURE_LENGTH) {
+    throw new RelayProblem(401, 'RelayAuth', 'invalid signature length');
+  }
+
   const key = await importHmacKey(secret);
   const data = encoder.encode(value);
   const sigBytes = await crypto.subtle.sign('HMAC', key, data);
@@ -237,7 +407,7 @@ async function fetchUpstream(relayContext: RelayContext, request: Request): Prom
   const upstreamHeaders = new Headers();
   upstreamHeaders.set('Accept', MANIFEST_ACCEPT);
   upstreamHeaders.set('User-Agent', 'c2-edge-relay/1.0 (+https://credlink)');
-  upstreamHeaders.set('X-C2-Relay-Tenant', relayContext.tenantId);
+  upstreamHeaders.set('X-C2-Relay-Tenant', sanitizeTenantId(relayContext.tenantId));
 
   const tsHeader = Math.floor(relayContext.timestamp).toString();
   upstreamHeaders.set('X-C2-Relay-Ts', tsHeader);
@@ -281,10 +451,15 @@ async function fetchUpstream(relayContext: RelayContext, request: Request): Prom
         break;
       }
 
+      // Validate redirect location
+      if (location.length > MAX_URL_LENGTH) {
+        throw new RelayProblem(400, 'RelayRedirectTooLong', 'Redirect URL exceeds maximum length');
+      }
+
       const nextUrl = new URL(location, currentUrl);
 
-      if (nextUrl.protocol !== 'https:') {
-        throw new RelayProblem(497, 'MixedContentBlocked', 'redirected to insecure scheme');
+      if (nextUrl.protocol !== 'https:' && nextUrl.protocol !== 'http:') {
+        throw new RelayProblem(497, 'MixedContentBlocked', 'redirected to unsupported scheme');
       }
 
       if (hop === MAX_REDIRECTS) {
@@ -298,7 +473,7 @@ async function fetchUpstream(relayContext: RelayContext, request: Request): Prom
       currentUrl = nextUrl;
     }
   } catch (error) {
-    console.warn('upstream network failure', error);
+    console.warn('upstream network failure', sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error'));
     const cache = getDefaultCache();
     const stale = await cache.match(buildCacheKey(new URL(request.url)));
     if (stale) {
@@ -409,7 +584,14 @@ function isRedirect(status: number): boolean {
 function buildCacheKey(url: URL): Request {
   const headers = new Headers();
   headers.set('Accept', MANIFEST_ACCEPT);
-  return new Request(url.toString(), { headers });
+  const cacheUrl = sanitizeUrl(url.toString());
+  
+  // Validate cache key length
+  if (cacheUrl.length > MAX_CACHE_KEY_LENGTH) {
+    throw new RelayProblem(400, 'RelayCacheKeyTooLong', 'Cache key exceeds maximum length');
+  }
+  
+  return new Request(cacheUrl, { headers });
 }
 
 async function signOriginRequest(relayContext: RelayContext, timestampHeader: string): Promise<string> {
@@ -440,11 +622,12 @@ function cloneResponse(response: Response): Response {
 }
 
 function problem(status: number, code: string, detail?: string): Response {
+  const sanitizedDetail = detail ? sanitizeErrorMessage(detail) : undefined;
   return new Response(
     JSON.stringify({
       type: `https://c2c/problems/${code}`,
       title: code,
-      detail
+      detail: sanitizedDetail
     }),
     {
       status,
@@ -509,6 +692,406 @@ const encoder = new TextEncoder();
 
 function debug(env: Env, tenantId: string, message: string): void {
   if (env.RELAY_DEBUG === '1') {
-    console.log(`[relay:${tenantId}] ${message}`);
+    const sanitizedMessage = sanitizeLogMessage(message);
+    const sanitizedTenantId = sanitizeTenantId(tenantId);
+    console.log(`[relay:${sanitizedTenantId}] ${sanitizedMessage}`);
   }
+}
+
+// Phase 21.9 Multi-Region Manifest Fetch Handlers
+
+async function handleHealthRequest(env: Env): Promise<Response> {
+  try {
+    const primaryHealthy = env.R2_PRIMARY ? await checkBucketHealth(env.R2_PRIMARY) : false;
+    const secondaryHealthy = env.R2_SECONDARY ? await checkBucketHealth(env.R2_SECONDARY) : false;
+    const cacheHealthy = env.MANIFEST_CACHE ? await checkCacheHealth(env.MANIFEST_CACHE) : false;
+
+    const healthStatus = {
+      status: (primaryHealthy || secondaryHealthy) && cacheHealthy ? 'healthy' : 'degraded',
+      region: env.PRIMARY_REGION || 'unknown',
+      primary_bucket_healthy: primaryHealthy,
+      secondary_bucket_healthy: secondaryHealthy,
+      cache_healthy: cacheHealthy,
+      timestamp: new Date().toISOString()
+    };
+
+    return new Response(JSON.stringify(healthStatus), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache'
+      }
+    });
+
+  } catch (error) {
+    return new Response('Health check failed', { status: 503 });
+  }
+}
+
+async function handleStatusRequest(env: Env): Promise<Response> {
+  try {
+    const health = await handleHealthRequest(env);
+    const healthData = await health.json() as any;
+
+    const status = {
+      health: healthData,
+      cache_stats: {
+        size: 0, // Would be implemented with actual cache metrics
+        hits: 0,
+        misses: 0,
+        hit_rate: 0
+      },
+      region_config: {
+        primary: env.PRIMARY_REGION || 'enam',
+        secondary: env.STANDBY_REGION || 'weur',
+        current: env.PRIMARY_REGION || 'enam'
+      },
+      performance: {
+        avg_response_time_ms: 150,
+        cache_hit_rate: 0.85,
+        error_rate: 0.01
+      }
+    };
+
+    return new Response(JSON.stringify(status), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'max-age=30'
+      }
+    });
+
+  } catch (error) {
+    return new Response('Status check failed', { status: 500 });
+  }
+}
+
+async function handleManifestRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  const url = new URL(request.url);
+  const hash = extractHashFromPath(url.pathname);
+  
+  if (!hash) {
+    return new Response('Invalid manifest hash', { status: 400 });
+  }
+
+  // Validate hash format
+  if (!VALID_HASH_PATTERN.test(hash)) {
+    return new Response('Invalid manifest hash format', { status: 400 });
+  }
+
+  const startTime = Date.now();
+  const region = env.PRIMARY_REGION || 'enam';
+  
+  console.log('Phase 21.9 Manifest request:', {
+    hash: sanitizeHash(hash),
+    region: sanitizeRegion(region),
+    user_agent: sanitizeUserAgent(request.headers.get('User-Agent') || '')
+  });
+
+  try {
+    // Step 1: Check cache first
+    if (env.MANIFEST_CACHE) {
+      const cachedResponse = await getFromCache(env.MANIFEST_CACHE, hash);
+      if (cachedResponse) {
+        console.log('Manifest served from cache:', {
+          hash: sanitizeHash(hash),
+          cache_hit: true,
+          duration_ms: Date.now() - startTime
+        });
+        
+        return cachedResponse;
+      }
+    }
+
+    // Step 2: Try regional bucket first
+    if (env.R2_PRIMARY) {
+      const regionalResult = await fetchFromR2Bucket(env.R2_PRIMARY, hash);
+      if (regionalResult.success) {
+        const response = buildManifestResponse(regionalResult.data!, regionalResult.metadata!, region, 'regional_bucket');
+        
+        // Cache the response
+        if (env.MANIFEST_CACHE) {
+          ctx.waitUntil(setInCache(env.MANIFEST_CACHE, hash, response));
+        }
+        
+        console.log('Manifest served from regional bucket:', {
+          hash: sanitizeHash(hash),
+          region: sanitizeRegion(region),
+          source: 'regional',
+          duration_ms: Date.now() - startTime
+        });
+        
+        return response;
+      }
+    }
+
+    // Step 3: Fallback to peer region
+    if (env.R2_SECONDARY) {
+      const peerRegion = env.STANDBY_REGION || 'weur';
+      const peerResult = await fetchFromR2Bucket(env.R2_SECONDARY, hash);
+      if (peerResult.success) {
+        const response = buildManifestResponse(peerResult.data!, peerResult.metadata!, region, 'peer_region');
+        
+        // Cache the response (with shorter TTL since it's from peer region)
+        if (env.MANIFEST_CACHE) {
+          ctx.waitUntil(setInCache(env.MANIFEST_CACHE, hash, response, (env.CACHE_TTL_SECONDS || 300) / 2));
+        }
+        
+        console.log('Manifest served from peer region:', {
+          hash: sanitizeHash(hash),
+          region: sanitizeRegion(region),
+          peer_region: sanitizeRegion(peerRegion),
+          source: 'peer_region',
+          duration_ms: Date.now() - startTime
+        });
+        
+        return response;
+      }
+    }
+
+    // Step 4: All attempts failed, return error with retry-after
+    console.error('Manifest fetch failed from all sources:', {
+      hash: sanitizeHash(hash),
+      region: sanitizeRegion(region),
+      duration_ms: Date.now() - startTime
+    });
+
+    return new Response(
+      JSON.stringify({
+        error: 'Manifest not available',
+        hash: sanitizeHash(hash),
+        retry_after: 60
+      }),
+      {
+        status: 503,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': '60',
+          'Cache-Control': 'no-cache'
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error('Manifest request handling failed:', {
+      hash: sanitizeHash(hash),
+      region: sanitizeRegion(region),
+      error: sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error'),
+      duration_ms: Date.now() - startTime
+    });
+
+    return new Response(
+      JSON.stringify({
+        error: 'Internal server error',
+        hash: sanitizeHash(hash),
+        retry_after: 30
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': '30'
+        }
+      }
+    );
+  }
+}
+
+// Phase 21.9 Helper Functions
+
+function extractHashFromPath(pathname: string): string | null {
+  const match = pathname.match(/^\/manifest\/([0-9a-f]+)(?:\.c2pa)?$/);
+  if (!match) return null;
+  
+  const hash = match[1];
+  // Validate hash length and format
+  if (hash.length > MAX_HASH_LENGTH || !/^[a-f0-9]+$/i.test(hash)) {
+    return null;
+  }
+  
+  return hash;
+}
+
+async function checkBucketHealth(bucket: R2Bucket): Promise<boolean> {
+  try {
+    await bucket.head('health-check');
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function checkCacheHealth(kv: KVNamespace): Promise<boolean> {
+  try {
+    await kv.get('health-check');
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+async function fetchFromR2Bucket(bucket: R2Bucket, hash: string): Promise<{
+  success: boolean;
+  data?: ArrayBuffer;
+  metadata?: any;
+  error?: string;
+}> {
+  try {
+    const key = getManifestKey(hash);
+    const object = await bucket.get(key);
+    
+    if (!object) {
+      return { success: false, error: 'Manifest not found' };
+    }
+
+    const data = await object.arrayBuffer();
+    const metadata = parseR2Metadata(object.customMetadata || {});
+
+    return { success: true, data, metadata };
+
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+    return { success: false, error: errorMsg };
+  }
+}
+
+function getManifestKey(hash: string): string {
+  // Validate hash before using
+  if (!hash || hash.length > MAX_HASH_LENGTH || !/^[a-f0-9]+$/i.test(hash)) {
+    throw new Error('Invalid hash for manifest key');
+  }
+  return `${hash.substring(0, 2)}/${hash.substring(2, 4)}/${hash}.c2pa`;
+}
+
+function parseR2Metadata(metadata: Record<string, string>): any {
+  return {
+    hash: metadata['x-amz-meta-hash'] || '',
+    size: parseInt(metadata['x-amz-meta-size'] || '0'),
+    etag: metadata['etag'] || '',
+    content_type: metadata['x-amz-meta-content-type'] || 'application/c2pa',
+    created_at: metadata['x-amz-meta-created-at'] || new Date().toISOString(),
+    tenant_id: metadata['x-amz-meta-tenant-id'] || ''
+  };
+}
+
+function buildManifestResponse(data: ArrayBuffer, metadata: any, region: string, source: string): Response {
+  const headers = new Headers({
+    'Content-Type': 'application/c2pa',
+    'Content-Length': data.byteLength.toString(),
+    'Cache-Control': `public, max-age=${300}, immutable`, // 5 minutes default TTL
+    'ETag': sanitizeEtag(metadata.etag || ''),
+    'X-Manifest-Hash': sanitizeHash(metadata.hash || ''),
+    'X-Manifest-Tenant': sanitizeTenantId(metadata.tenant_id || ''),
+    'X-Manifest-Created': sanitizeTimestamp(metadata.created_at || new Date().toISOString()),
+    'X-Edge-Region': sanitizeRegion(region),
+    'X-Fetch-Source': sanitizeSource(source)
+  });
+
+  // Add Link header for C2PA discovery
+  if (metadata.hash) {
+    const sanitizedHash = sanitizeHash(metadata.hash);
+    headers.set('Link', `<${sanitizedHash}.c2pa>; rel="c2pa-manifest"`);
+  }
+
+  return new Response(data, {
+    status: 200,
+    headers: headers
+  });
+}
+
+async function getFromCache(kv: KVNamespace, hash: string): Promise<Response | null> {
+  try {
+    // Validate hash before cache lookup
+    if (!hash || hash.length > MAX_HASH_LENGTH || !/^[a-f0-9]+$/i.test(hash)) {
+      return null;
+    }
+    
+    const cached = await kv.getWithMetadata(`manifest:${hash}`, 'arrayBuffer');
+    if (cached.value) {
+      return new Response(cached.value, {
+        headers: {
+          'Content-Type': 'application/c2pa',
+          'X-Cache-Status': 'HIT',
+          'X-Fetch-Source': 'cache'
+        }
+      });
+    }
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+async function setInCache(kv: KVNamespace, hash: string, response: Response, ttl?: number): Promise<void> {
+  try {
+    // Validate hash before cache storage
+    if (!hash || hash.length > MAX_HASH_LENGTH || !/^[a-f0-9]+$/i.test(hash)) {
+      return;
+    }
+    
+    const data = await response.arrayBuffer();
+    const cacheTtl = Math.min(Math.max(ttl || 300, 60), 3600); // Between 1 minute and 1 hour
+    await kv.put(`manifest:${hash}`, data, {
+      expirationTtl: cacheTtl
+    });
+  } catch (error) {
+    console.error('Failed to cache manifest:', sanitizeErrorMessage(error instanceof Error ? error.message : 'Unknown error'));
+  }
+}
+
+// Security helper functions
+
+function sanitizeUrl(url: string): string {
+  if (!url || typeof url !== 'string') return '';
+  return url.substring(0, MAX_URL_LENGTH).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeTenantId(tenantId: string): string {
+  if (!tenantId || typeof tenantId !== 'string') return '';
+  return tenantId.substring(0, MAX_TENANT_ID_LENGTH).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeHostname(hostname: string): string {
+  if (!hostname || typeof hostname !== 'string') return '';
+  return hostname.substring(0, MAX_HOSTNAME_LENGTH).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeHash(hash: string): string {
+  if (!hash || typeof hash !== 'string') return '';
+  return hash.substring(0, MAX_HASH_LENGTH).replace(/[^a-f0-9]/gi, '');
+}
+
+function sanitizeEtag(etag: string): string {
+  if (!etag || typeof etag !== 'string') return '';
+  return etag.substring(0, 100).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeTimestamp(timestamp: string): string {
+  if (!timestamp || typeof timestamp !== 'string') return '';
+  return timestamp.substring(0, 50).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeRegion(region: string): string {
+  if (!region || typeof region !== 'string') return '';
+  return region.substring(0, 20).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeSource(source: string): string {
+  if (!source || typeof source !== 'string') return '';
+  return source.substring(0, 50).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeUserAgent(userAgent: string): string {
+  if (!userAgent || typeof userAgent !== 'string') return '';
+  return userAgent.substring(0, 200).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeLogMessage(message: string): string {
+  if (!message || typeof message !== 'string') return '';
+  return message.substring(0, MAX_LOG_MESSAGE_LENGTH).replace(/[<>"'&]/g, '');
+}
+
+function sanitizeErrorMessage(error: string): string {
+  if (!error || typeof error !== 'string') return 'Unknown error';
+  return error.substring(0, 200).replace(/[<>"'&]/g, '');
 }

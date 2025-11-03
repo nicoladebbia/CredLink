@@ -33,6 +33,20 @@ function addSecurityHeaders(headers: Headers): void {
   headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 }
 
+function createSecurityHeaders(): Headers {
+  const headers = new Headers();
+  addSecurityHeaders(headers);
+  return headers;
+}
+
+function createHeadersWithSecurity(contentType: string): Headers {
+  const headers = new Headers({
+    'Content-Type': contentType
+  });
+  addSecurityHeaders(headers);
+  return headers;
+}
+
 function getClientId(request: Request): string {
   // Use IP address or a combination of headers for client identification
   const cfConnectingIp = request.headers.get('CF-Connecting-IP');
@@ -161,10 +175,7 @@ export async function handleRequest(request: Request, env: Record<string, string
         if (objectKey.includes('..') || objectKey.includes('\\') || objectKey.includes('//')) {
           return new Response('Invalid object key format', {
             status: 400,
-            headers: {
-              'Content-Type': 'text/plain',
-              ...addSecurityHeaders({})
-            }
+            headers: createHeadersWithSecurity('text/plain')
           });
         }
         
@@ -172,10 +183,7 @@ export async function handleRequest(request: Request, env: Record<string, string
         if (!/^[a-zA-Z0-9._-]+\.c2pa$/.test(objectKey)) {
           return new Response('Invalid object key format', {
             status: 400,
-            headers: {
-              'Content-Type': 'text/plain',
-              ...addSecurityHeaders({})
-            }
+            headers: createHeadersWithSecurity('text/plain')
           });
         }
         
@@ -196,10 +204,7 @@ export async function handleRequest(request: Request, env: Record<string, string
         if (objectKey.includes('..') || objectKey.includes('\\') || objectKey.includes('//')) {
           return new Response('Invalid object key format', {
             status: 400,
-            headers: {
-              'Content-Type': 'text/plain',
-              ...addSecurityHeaders({})
-            }
+            headers: createHeadersWithSecurity('text/plain')
           });
         }
         
@@ -207,10 +212,7 @@ export async function handleRequest(request: Request, env: Record<string, string
         if (!/^[a-zA-Z0-9._-]+\.c2pa$/.test(objectKey)) {
           return new Response('Invalid object key format', {
             status: 400,
-            headers: {
-              'Content-Type': 'text/plain',
-              ...addSecurityHeaders({})
-            }
+            headers: createHeadersWithSecurity('text/plain')
           });
         }
         
@@ -219,10 +221,7 @@ export async function handleRequest(request: Request, env: Record<string, string
 
       return new Response('Not Found', { 
         status: 404,
-        headers: {
-          'Content-Type': 'text/plain',
-          'Cache-Control': 'public, max-age=300' // Cache 404s for 5 minutes
-        }
+        headers: createHeadersWithSecurity('text/plain')
       });
 
     } catch (error) {
