@@ -1,0 +1,69 @@
+{
+  "name": "@c2pa/leaderboard",
+  "version": "1.1.0",
+  "description": "Public Survival Leaderboard - C2PA Content Credentials preservation testing",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "format:check": "prettier --check src/**/*.ts",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "leaderboard:run": "ts-node scripts/run-leaderboard.ts",
+    "leaderboard:validate": "ts-node scripts/validate-results.ts",
+    "leaderboard:publish": "ts-node scripts/publish-results.ts",
+    "pre-commit": "npm run type-check && npm run lint && npm run test"
+  },
+  "keywords": [
+    "c2pa",
+    "content-credentials",
+    "leaderboard",
+    "cdn",
+    "cms",
+    "testing"
+  ],
+  "author": "C2PA Audit Team",
+  "license": "MIT",
+  "dependencies": {
+    "@fastify/compress": "^6.2.0",
+    "@fastify/cors": "^8.4.0",
+    "@fastify/static": "^6.12.0",
+    "cheerio": "^1.0.0-rc.12",
+    "date-fns": "^2.30.0",
+    "fastify": "^4.24.3",
+    "ioredis": "^5.3.2",
+    "lodash": "^4.17.21",
+    "nanoid": "^5.0.4",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^3.3.2",
+    "pdf-parse": "^1.1.1",
+    "pino": "^8.16.2",
+    "rss-parser": "^3.13.0",
+    "sharp": "^0.32.6",
+    "yaml": "^2.3.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.201",
+    "@types/node": "^20.8.10",
+    "@types/node-cron": "^3.0.11",
+    "@types/node-fetch": "^2.6.9",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "@vitest/coverage-v8": "^0.34.6",
+    "dotenv": "^16.3.1",
+    "eslint": "^8.57.1",
+    "prettier": "^3.0.3",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
