@@ -20,11 +20,15 @@
   "exclude": [
     "node_modules",
     "dist",
+    "**/dist",
+    "**/node_modules",
+    "**/.artifacts",
     ".artifacts",
     "sandboxes",
     "scripts",
     "**/*.test.ts",
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "**/*.d.ts"
   ],
   "references": [
     {

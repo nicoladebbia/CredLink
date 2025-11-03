@@ -10,7 +10,7 @@
     "test": "pnpm -r test",
     "test:acceptance": "node packages/acceptance/bin/acceptance.mjs --matrix docs/hostile-path-matrix.yaml --out .artifacts/acceptance",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --build --force",
     "clean": "pnpm -r clean && rm -rf .artifacts",
     "bootstrap": "pnpm install && pnpm -r build",
     "security:audit": "pnpm audit --audit-level moderate",
