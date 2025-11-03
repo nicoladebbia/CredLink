@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 120
     env:
       IMAGE: ghcr.io/${{ github.repository }}:${{ github.sha }}
-      SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp && fromJson(format('{{"value": "{0}"}}', github.event.head_commit.timestamp)).value || '0' }}
+      SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp || '0' }}
     steps:
       - uses: actions/checkout@v4
         with:

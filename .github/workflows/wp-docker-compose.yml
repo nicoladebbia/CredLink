@@ -26,7 +26,7 @@ jobs:
     
     services:
       mysql:
-        image: mysql:${{ env.MYSQL_VERSION }}
+        image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: wordpress
           MYSQL_DATABASE: wordpress_test
@@ -43,7 +43,7 @@ jobs:
           - mysql_data:/var/lib/mysql
 
       wordpress:
-        image: wordpress:${{ env.WORDPRESS_VERSION }}-php${{ env.PHP_VERSION }}-apache
+        image: wordpress:6.4-php8.2-apache
         env:
           WORDPRESS_DB_HOST: mysql:3306
           WORDPRESS_DB_USER: wordpress
