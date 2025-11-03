@@ -225,7 +225,7 @@ export class Phase40EvidencePipeline {
         signer_trusted: Boolean(verificationResult.signer?.trusted),
         assertions_present: Boolean(verificationResult.assertions),
         warnings: Array.isArray(verificationResult.warnings) 
-          ? verificationResult.warnings.filter(w => typeof w === 'string').slice(0, 10)
+          ? verificationResult.warnings.filter((w: any) => typeof w === 'string').slice(0, 10)
           : [],
         error_code: verificationResult.error?.code && typeof verificationResult.error.code === 'string'
           ? verificationResult.error.code.substring(0, MAX_ERROR_CODE_LENGTH)

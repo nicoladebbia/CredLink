@@ -113,7 +113,6 @@ export class HealthEndpoints {
     // Detailed health check - for monitoring
     fastify.get('/health', {
       schema: {
-        description: 'Detailed health check with all components',
         tags: ['health']
       }
     }, this.health.bind(this));
@@ -121,7 +120,6 @@ export class HealthEndpoints {
     // Live status check - for status page
     fastify.get('/status', {
       schema: {
-        description: 'Live status for public status page',
         tags: ['health']
       }
     }, this.status.bind(this));
@@ -140,7 +138,7 @@ export class HealthEndpoints {
 
       reply.type('text/plain').send('ok');
     } catch (error) {
-      request.log.error('Health check failed:', error);
+      request.log.error({ error }, 'Health check failed:');
       reply.code(503).type('text/plain').send('error');
     }
   }
@@ -156,7 +154,7 @@ export class HealthEndpoints {
         reply.code(503).send(status);
       }
     } catch (error) {
-      request.log.error('Readiness check failed:', error);
+      request.log.error({ error }, 'Readiness check failed:');
       reply.code(503).send({
         status: 'error',
         ready: false,
@@ -172,7 +170,7 @@ export class HealthEndpoints {
       const status = await this.getHealthStatus();
       reply.code(200).send(status);
     } catch (error) {
-      request.log.error('Health check failed:', error);
+      request.log.error({ error }, 'Health check failed:');
       reply.code(503).send({
         status: 'error',
         timestamp: new Date().toISOString(),
@@ -210,7 +208,7 @@ export class HealthEndpoints {
 
       reply.code(200).send(publicStatus);
     } catch (error) {
-      request.log.error('Status check failed:', error);
+      request.log.error({ error }, 'Status check failed:');
       reply.code(503).send({
         service: `verify-api-${this.region}`,
         status: 'error',

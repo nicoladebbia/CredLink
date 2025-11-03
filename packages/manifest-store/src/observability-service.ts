@@ -346,9 +346,7 @@ export class ObservabilityService {
         title: 'Consistency Sweep Failed',
         description: `Consistency sweep failed with error: ${errorMsg}`,
         affected_services: ['consistency_checker'],
-        metrics_snapshot: failedResult,
-        acknowledged: false,
-        resolved: false
+        metrics_snapshot: failedResult
       });
 
       return failedResult;
