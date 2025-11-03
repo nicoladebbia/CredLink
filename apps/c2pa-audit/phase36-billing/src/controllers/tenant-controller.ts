@@ -35,6 +35,15 @@ export class TenantController {
     try {
       const createRequest = request.body as CreateTenantRequest;
 
+      // CRITICAL: Validate request structure
+      if (!createRequest || typeof createRequest !== 'object') {
+        reply.status(400).send({
+          code: 'INVALID_REQUEST',
+          message: 'Request body is required and must be an object',
+        });
+        return;
+      }
+
       // Validate request
       await this.validateCreateTenantRequest(createRequest);
 
@@ -53,6 +62,25 @@ export class TenantController {
   async getTenant(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
       const { tenantId } = request.params as { tenantId: string };
+
+      // CRITICAL: Validate tenant ID parameter
+      if (!tenantId || typeof tenantId !== 'string' || tenantId.trim().length === 0) {
+        reply.status(400).send({
+          code: 'INVALID_TENANT_ID',
+          message: 'Tenant ID is required and must be a non-empty string',
+        });
+        return;
+      }
+
+      // CRITICAL: Validate tenant ID format
+      if (!/^t_[a-z0-9]+_[a-f0-9]{24}$/.test(tenantId)) {
+        reply.status(400).send({
+          code: 'INVALID_TENANT_ID_FORMAT',
+          message: 'Tenant ID format is invalid',
+        });
+        return;
+      }
+
       const tenant = await this.tenantService.getTenant(tenantId);
 
       if (!tenant) {
@@ -358,16 +386,25 @@ export class TenantController {
   private handleError(error: any, reply: FastifyReply): void {
     console.error('Tenant controller error:', error);
 
+    // CRITICAL: Generate unique error ID for tracking
+    const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     if (error.code && error.message) {
       // APIError
       const statusCode = this.getStatusCodeFromError(error.code);
-      reply.status(statusCode).send(error);
+      reply.status(statusCode).send({
+        ...error,
+        error_id: errorId,
+        timestamp: new Date().toISOString(),
+      });
     } else if (error.name === 'ValidationError') {
       // Validation error
       reply.status(400).send({
         code: 'VALIDATION_ERROR',
         message: error.message,
         details: error.details,
+        error_id: errorId,
+        timestamp: new Date().toISOString(),
       });
     } else if (error.name === 'StripeError') {
       // Stripe error
@@ -378,6 +415,8 @@ export class TenantController {
           stripe_error: error.message,
           type: error.type,
         },
+        error_id: errorId,
+        timestamp: new Date().toISOString(),
       });
     } else {
       // Unknown error
@@ -385,6 +424,8 @@ export class TenantController {
         code: 'INTERNAL_ERROR',
         message: 'An internal error occurred',
         details: process.env['NODE_ENV'] === 'development' ? { error: error.message } : undefined,
+        error_id: errorId,
+        timestamp: new Date().toISOString(),
       });
     }
   }

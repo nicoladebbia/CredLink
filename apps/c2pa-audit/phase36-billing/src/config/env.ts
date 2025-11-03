@@ -41,9 +41,37 @@ const EnvSchema = z.object({
   DATABASE_POOL_SIZE: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 100, { message: 'Database pool size must be between 1 and 100' }).default('10'),
   DATABASE_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1000 && n <= 60000, { message: 'Database timeout must be between 1000ms and 60000ms' }).default('30000'),
   
-  // Security configuration
-  JWT_SECRET: z.string().min(64, 'JWT secret must be at least 64 characters'),
-  API_KEY_SECRET: z.string().min(32, 'API key secret must be at least 32 characters'),
+  // Security configuration - CRITICAL VALIDATION
+  JWT_SECRET: z.string()
+    .min(128, 'JWT secret must be at least 128 characters for production security')
+    .refine(secret => {
+      // Check for sufficient entropy - must contain uppercase, lowercase, numbers, and special chars
+      const hasUpper = /[A-Z]/.test(secret);
+      const hasLower = /[a-z]/.test(secret);
+      const hasNumbers = /\d/.test(secret);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(secret);
+      const notCommonPattern = !/^(password|secret|key|jwt|test|demo)/i.test(secret);
+      
+      if (process.env['NODE_ENV'] === 'production') {
+        return hasUpper && hasLower && hasNumbers && hasSpecial && notCommonPattern;
+      }
+      return hasUpper && hasLower && hasNumbers;
+    }, { message: 'JWT secret must contain uppercase, lowercase, numbers, and special characters (no common patterns in production)' }),
+    
+  API_KEY_SECRET: z.string()
+    .min(64, 'API key secret must be at least 64 characters for production security')
+    .refine(secret => {
+      const hasUpper = /[A-Z]/.test(secret);
+      const hasLower = /[a-z]/.test(secret);
+      const hasNumbers = /\d/.test(secret);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(secret);
+      const notCommonPattern = !/^(api|key|secret|test|demo)/i.test(secret);
+      
+      if (process.env['NODE_ENV'] === 'production') {
+        return hasUpper && hasLower && hasNumbers && hasSpecial && notCommonPattern;
+      }
+      return hasUpper && hasLower && hasNumbers;
+    }, { message: 'API key secret must contain uppercase, lowercase, numbers, and special characters (no common patterns in production)' }),
   SESSION_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 300000 && n <= 86400000, { message: 'Session timeout must be between 5 minutes and 24 hours' }).default('3600000'),
   RATE_LIMIT_WINDOW: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 60000 && n <= 3600000, { message: 'Rate limit window must be between 1 minute and 1 hour' }).default('900000'),
   MAX_REQUESTS_PER_WINDOW: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 10 && n <= 10000, { message: 'Max requests per window must be between 10 and 10000' }).default('100'),
@@ -90,8 +118,19 @@ const EnvSchema = z.object({
   METRICS_PORT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1024 && n <= 65535, { message: 'Metrics port must be between 1024 and 65535' }).default('9090'),
   HEALTH_CHECK_INTERVAL: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 10000 && n <= 300000, { message: 'Health check interval must be between 10 seconds and 5 minutes' }).default('30000'),
   
-  // CORS configuration
-  ALLOWED_ORIGINS: z.string().transform(val => val.split(',').map(o => o.trim())).default(['http://localhost:3000']),
+  // CORS configuration - CRITICAL SECURITY
+  ALLOWED_ORIGINS: z.string()
+    .transform(val => {
+      const origins = val.split(',').map(o => o.trim());
+      // Validate each origin is a proper URL or localhost pattern
+      for (const origin of origins) {
+        if (origin !== '*' && !origin.match(/^https?:\/\/localhost:\d+$/) && !origin.match(/^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)) {
+          throw new Error(`Invalid origin format: ${origin}`);
+        }
+      }
+      return origins;
+    })
+    .default(['http://localhost:3000']),
   CORS_CREDENTIALS: z.string().transform(val => val === 'true').default('true'),
   
   // Webhook configuration

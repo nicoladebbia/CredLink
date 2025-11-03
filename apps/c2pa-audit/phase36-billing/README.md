@@ -1,483 +1,296 @@
-# Phase 36: Self-Serve Onboarding & Billing (v1.1)
+# Phase 36 Billing System
 
-A comprehensive self-serve onboarding and billing system for C2PA audit services, featuring tenant provisioning, Stripe Billing integration, usage metering, install health monitoring, and compliance features.
+A secure, enterprise-grade self-serve onboarding and billing system for C2PA services with Stripe integration.
 
 ## 🚀 Features
 
-### Core Functionality
-- **Tenant Provisioning**: Automated tenant creation with per-tenant API keys
-- **Stripe Billing Integration**: Full billing lifecycle with trials, usage-based pricing, and smart retries
-- **Onboarding Wizard**: Prescriptive 10-step onboarding with auto-validation and blocking tasks
-- **Usage Metering**: Real-time usage tracking with Stripe integration
-- **Install Health Monitoring**: Survival SLO monitoring with automated health checks
-- **Data Export & Cancellation**: Clean tenant cancellation with comprehensive data export
+- **Secure Tenant Management**: Cryptographically secure API key generation and authentication
+- **Stripe Integration**: Complete billing, subscription, and usage metering
+- **Usage-Based Billing**: Real-time usage tracking and reporting
+- **Security Hardened**: Zero-tolerance security with comprehensive vulnerability mitigation
+- **Enterprise Ready**: Production-ready with monitoring, logging, and compliance
 
-### Advanced Features
-- **CAI Verify Integration**: Demo asset verification and smoke testing
-- **RFC-3161 Timestamping**: Compliant timestamp service integration
-- **Security & Compliance**: Enterprise-grade security with audit trails
-- **Real-time Monitoring**: WebSocket support for live updates
-- **Comprehensive Testing**: Full acceptance test suite
+## 🔐 Security Features
 
-## 📋 System Requirements
+- **API Key Security**: SHA-256 hashed storage with timing-safe comparison
+- **Rate Limiting**: Redis-backed rate limiting with fail-open behavior
+- **Input Validation**: Comprehensive sanitization against XSS, SQL, and injection attacks
+- **CORS Protection**: Strict origin validation and security headers
+- **Webhook Security**: Stripe signature verification with timeout protection
+- **Environment Validation**: Strong entropy requirements for secrets
 
-- Node.js 18+ 
-- Redis 6+
-- PostgreSQL 13+ (optional, for persistent storage)
-- Stripe account with billing products configured
-- CAI Verify service endpoint
-- RFC-3161 Time Stamp Authority (TSA) endpoint
+## 📋 Prerequisites
+
+- Node.js 18.0.0 or higher
+- npm 8.0.0 or higher
+- Redis 6.0 or higher
+- Stripe account with API keys
 
 ## 🛠️ Installation
 
-### 1. Clone and Install Dependencies
-
+1. **Clone and install dependencies**
 ```bash
-cd apps/c2pa-audit/phase36-billing
-npm install
+git clone <repository-url>
+cd phase36-billing
+npm ci
 ```
 
-### 2. Environment Configuration
-
-Copy the example environment file and configure:
-
+2. **Configure environment variables**
 ```bash
 cp .env.example .env
+# Edit .env with your secure configuration
 ```
 
-### 3. Required Environment Variables
-
-#### Core Configuration
+3. **Set up Redis**
 ```bash
-# Server
-NODE_ENV=production
-PORT=3002
-HOST=0.0.0.0
-LOG_LEVEL=info
-LOG_FORMAT=json
+# Using Docker
+docker run -d --name redis -p 6379:6379 redis:7-alpine --requirepass your-secure-password
 
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0
-REDIS_PASSWORD=your_redis_password
-REDIS_MAX_RETRIES=3
+# Or install locally
+# Follow Redis installation guide for your platform
 ```
 
-#### Stripe Configuration
+4. **Build and start**
 ```bash
-# Stripe Billing
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_API_VERSION=2023-10-16
-
-# Price IDs
-STRIPE_STARTER_PRICE_ID=price_...
-STRIPE_PRO_PRICE_ID=price_...
-STRIPE_ENTERPRISE_PRICE_ID=price_...
-
-# Usage Meters
-STRIPE_SIGN_EVENTS_METER_ID=meter_...
-STRIPE_VERIFY_EVENTS_METER_ID=meter_...
-STRIPE_RFC3161_TIMESTAMPS_METER_ID=meter_...
-
-# Features
-ENABLE_STRIPE_RADAR=true
-ENABLE_SMART_RETRIES=true
-```
-
-#### Trial Configuration
-```bash
-# Trial Settings
-TRIAL_DURATION_DAYS=14
-TRIAL_ASSET_CAP=200
-REQUIRE_CARD_UPFRONT=true
-```
-
-#### External Services
-```bash
-# CAI Verify
-CAI_VERIFY_ENDPOINT=https://cai-verify.example.com/api
-
-# RFC-3161 TSA
-RFC3161_TSA_ENDPOINT=https://tsa.example.com/api
-
-# Storage
-EXPORT_STORAGE_PATH=/var/lib/phase36/exports
-MANIFEST_HOST_BASE_URL=https://manifests.example.com
-```
-
-#### Security
-```bash
-# API Keys
-API_KEY_SECRET=your_strong_secret_key_here
-
-# CORS
-ALLOWED_ORIGINS=https://app.example.com,https://admin.example.com
-CORS_CREDENTIALS=true
-
-# Rate Limiting
-MAX_REQUESTS_PER_WINDOW=1000
-RATE_LIMIT_WINDOW=60000
-MAX_ASSET_SIZE=104857600
-```
-
-#### Compliance
-```bash
-# Data Retention
-MANIFEST_RETENTION_DAYS=3650
-DATA_RETENTION_DAYS=2555
-USAGE_RETENTION_DAYS=365
-
-# Email (for notifications)
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=noreply@example.com
-SMTP_PASS=your_smtp_password
-```
-
-### 4. Database Setup (Optional)
-
-If using PostgreSQL for persistent storage:
-
-```bash
-# Create database
-createdb phase36_billing
-
-# Run migrations
-npm run migrate
-```
-
-### 5. Start the Application
-
-```bash
-# Development
-npm run dev
-
-# Production
+npm run build
 npm start
 ```
 
-## 📊 API Documentation
+## 🔧 Configuration
+
+### Environment Variables
+
+**Security Configuration (Required)**
+- `JWT_SECRET`: 128+ character secret with maximum entropy
+- `API_KEY_SECRET`: 64+ character secret with special characters
+- `REDIS_PASSWORD`: Strong Redis password with special characters
+
+**Stripe Configuration (Required)**
+- `STRIPE_SECRET_KEY`: Your Stripe secret key
+- `STRIPE_WEBHOOK_SECRET`: Your webhook signing secret
+- `STRIPE_STARTER_PRICE_ID`: Starter plan price ID
+- `STRIPE_PRO_PRICE_ID`: Pro plan price ID
+- `STRIPE_ENTERPRISE_PRICE_ID`: Enterprise plan price ID
+
+**Database Configuration**
+- `REDIS_HOST`: Redis server host
+- `REDIS_PORT`: Redis server port
+- `REDIS_DB`: Redis database number
+- `REDIS_TLS`: Enable TLS in production
+
+### Security Requirements
+
+- **JWT Secret**: Minimum 128 characters with uppercase, lowercase, numbers, and special characters
+- **API Key Secret**: Minimum 64 characters with uppercase, lowercase, numbers, and special characters
+- **Redis Password**: Strong password with special characters
+- **CORS Origins**: Restrict to specific domains in production
+
+## 📚 API Documentation
 
 ### Authentication
 
-All API requests (except public endpoints) require authentication using Bearer tokens:
+All API endpoints require authentication using API keys in the `Authorization` header:
 
-```bash
-Authorization: Bearer your_tenant_api_key
+```
+Authorization: Bearer c2pa_<timestamp>_<random_hex>_<entropy>
 ```
 
-### Core Endpoints
+### Key Endpoints
 
 #### Tenant Management
-```bash
-# Create tenant
-POST /tenants
-{
-  "email": "user@example.com",
-  "company_name": "Example Corp",
-  "plan": "starter",
-  "payment_method_id": "pm_stripe_payment_method",
-  "domains": ["https://example.com"],
-  "cms": "wordpress",
-  "manifest_host": "https://manifests.example.com"
-}
-
-# Get tenant
-GET /tenants/{tenantId}
-
-# Update tenant
-PUT /tenants/{tenantId}
-```
-
-#### Onboarding Wizard
-```bash
-# Get wizard status
-GET /tenants/{tenantId}/wizard
-
-# Execute wizard step
-POST /tenants/{tenantId}/wizard/{step}
-{
-  // Step-specific data
-}
-```
+- `POST /tenants` - Create new tenant
+- `GET /tenants/:tenantId` - Get tenant details
+- `PUT /tenants/:tenantId` - Update tenant
+- `DELETE /tenants/:tenantId` - Cancel tenant
 
 #### Billing
-```bash
-# Get available plans
-GET /billing/plans
-
-# Create customer portal session
-POST /billing/portal
-{
-  "return_url": "https://app.example.com/billing"
-}
-
-# Get billing summary
-GET /billing/summary
-```
+- `GET /billing/plans` - Get available plans
+- `GET /billing/usage-tiers/:eventType` - Get usage pricing tiers
+- `POST /billing/portal` - Create customer portal session
 
 #### Usage
-```bash
-# Record usage events
-POST /usage
-{
-  "events": [
-    {
-      "event_type": "sign_events",
-      "value": 5,
-      "timestamp": "2023-12-01T10:00:00Z",
-      "metadata": {
-        "asset_type": "image",
-        "format": "jpeg"
-      }
-    }
-  ]
-}
+- `POST /usage/report` - Report usage events
+- `GET /usage/:tenantId` - Get tenant usage
 
-# Get usage statistics
-GET /billing/usage?start_date=2023-12-01&end_date=2023-12-31
-```
-
-#### Install Health
-```bash
-# Perform health check
-POST /install/check
-{
-  "tenant_id": "tenant_123",
-  "demo_asset_url": "https://example.com/demo.jpg",
-  "test_page_url": "https://example.com/test"
-}
-```
-
-#### CAI Verify Integration
-```bash
-# Verify asset
-POST /verify
-{
-  "url": "https://example.com/asset.jpg",
-  "format": "json",
-  "include_thumbnail": false,
-  "include_manifest": true
-}
-
-# Perform smoke test
-POST /smoke-test
-{
-  "asset_url": "https://example.com/asset.jpg",
-  "transformations": ["resize", "compress", "crop"]
-}
-```
-
-#### RFC-3161 Timestamping
-```bash
-# Create timestamp
-POST /timestamps
-{
-  "tenant_id": "tenant_123",
-  "asset_hash": "a1b2c3d4...",
-  "content_url": "https://example.com/asset.jpg"
-}
-
-# Verify timestamp
-GET /timestamps/{timestampId}/verify
-```
+#### Webhooks
+- `POST /webhooks/stripe` - Stripe webhook handler
 
 ## 🧪 Testing
 
-### Running Tests
-
 ```bash
-# Unit tests
+# Run all tests
 npm test
 
-# Integration tests
-npm run test:integration
-
-# Acceptance tests
-npm run test:acceptance
-
-# Coverage
+# Run with coverage
 npm run test:coverage
+
+# Run security tests
+npm run test:security
+
+# Run specific test file
+npm test -- tenant.test.ts
 ```
-
-### Test Configuration
-
-Create a test environment file:
-
-```bash
-cp .env.example .env.test
-```
-
-Configure test-specific values:
-- Use Stripe test keys
-- Use test Redis instance
-- Mock external services
-
-## 🔧 Configuration
-
-### Stripe Product Setup
-
-1. **Create Products** in Stripe Dashboard:
-   - Starter Plan: $199/month
-   - Pro Plan: $699/month  
-   - Enterprise Plan: $2,000/month
-
-2. **Configure Usage Meters**:
-   - Sign Events: Tiered pricing
-   - Verify Events: Tiered pricing
-   - RFC-3161 Timestamps: $0.50 per timestamp
-
-3. **Set Up Webhooks**:
-   - Configure webhook endpoint: `{baseUrl}/webhooks/stripe`
-   - Enable events: `invoice.payment_succeeded`, `customer.subscription.updated`, etc.
-
-### Redis Configuration
-
-```bash
-# Redis configuration for production
-redis-server --maxmemory 2gb --maxmemory-policy allkeys-lru
-```
-
-### Security Configuration
-
-- Enable HTTPS in production
-- Configure proper CORS origins
-- Set up rate limiting
-- Enable Stripe Radar for fraud detection
-- Use environment variables for secrets
-
-## 📈 Monitoring & Observability
-
-### Health Checks
-
-```bash
-# System health
-GET /health
-
-# Redis health
-GET /health/redis
-
-# Stripe health
-GET /health/stripe
-```
-
-### Metrics
-
-The system exposes metrics for:
-- Request rates and response times
-- Usage events by type
-- Billing events and revenue
-- Error rates and types
-- Health check results
-
-### Logging
-
-Structured JSON logging with correlation IDs:
-- Request/response logging
-- Error tracking with stack traces
-- Business event logging
-- Security event logging
 
 ## 🚀 Deployment
 
 ### Docker Deployment
 
-```dockerfile
-# Build image
-docker build -t phase36-billing .
-
-# Run container
-docker run -d \
-  --name phase36-billing \
-  -p 3002:3002 \
-  --env-file .env \
-  phase36-billing
+1. **Build Docker image**
+```bash
+docker build -t c2pa-billing:latest .
 ```
 
-### Kubernetes Deployment
+2. **Run with Docker Compose**
+```bash
+# Configure environment
+cp .env.example .env
+# Edit .env with production values
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: phase36-billing
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: phase36-billing
-  template:
-    metadata:
-      labels:
-        app: phase36-billing
-    spec:
-      containers:
-      - name: phase36-billing
-        image: phase36-billing:latest
-        ports:
-        - containerPort: 3002
-        envFrom:
-        - secretRef:
-            name: phase36-secrets
+# Start services
+docker-compose up -d
+
+# Check health
+curl http://localhost:3002/health
 ```
 
-## 🔒 Security Considerations
+### Production Deployment
 
-- **API Key Management**: Secure generation and storage of tenant API keys
-- **Data Encryption**: Encrypt sensitive data at rest and in transit
-- **Input Validation**: Comprehensive validation of all inputs
-- **Rate Limiting**: Prevent abuse with configurable rate limits
-- **Audit Logging**: Complete audit trail of all actions
-- **PCI Compliance**: Follow PCI DSS for payment processing
+1. **Security Checklist**
+   - [ ] Generate 128+ character JWT secrets with maximum entropy
+   - [ ] Generate 64+ character API key secrets with special characters
+   - [ ] Configure Redis with TLS and strong passwords
+   - [ ] Set up SSL/TLS for all external connections
+   - [ ] Configure proper CORS origins
+   - [ ] Enable all security headers
+   - [ ] Set up monitoring and alerting
+   - [ ] Configure database with SSL
 
-## 📝 Compliance
+2. **Environment Setup**
+```bash
+# Production environment
+NODE_ENV=production
+LOG_LEVEL=info
+LOG_FORMAT=json
 
-### Data Retention
-- Manifests: 10 years
-- Usage data: 1 year
-- Export data: 7 years
-- Audit logs: 7 years
+# Security
+JWT_SECRET=your-128-char-secret-with-maximum-entropy
+API_KEY_SECRET=your-64-char-secret-with-special-chars
+REDIS_PASSWORD=your-strong-redis-password
+REDIS_TLS=true
 
-### Privacy
-- GDPR-compliant data handling
-- Right to export and delete
-- Data minimization principles
-- Secure data export functionality
+# CORS
+ALLOWED_ORIGINS=https://app.c2pa.org,https://admin.c2pa.org
+```
 
-## 🤝 Contributing
+## 📊 Monitoring
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+### Health Check
 
-## 📄 License
+```bash
+curl http://localhost:3002/health
+```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Response:
+```json
+{
+  "status": "healthy",
+  "checks": {
+    "database": true,
+    "redis": true,
+    "stripe": true,
+    "storage": true
+  },
+  "timestamp": "2023-12-07T10:30:00.000Z",
+  "version": "1.1.0"
+}
+```
+
+### Metrics
+
+- **Rate Limiting**: Monitor `X-RateLimit-*` headers
+- **Response Times**: Track API response performance
+- **Error Rates**: Monitor 4xx/5xx response rates
+- **Usage Metrics**: Track tenant usage and billing events
+
+## 🔒 Security Auditing
+
+### Automated Security Testing
+
+```bash
+# Run security audit
+npm run security:audit
+
+# Check for outdated dependencies
+npm run security:check
+
+# Run linting with security rules
+npm run lint
+```
+
+### Security Headers
+
+All responses include comprehensive security headers:
+- `Content-Security-Policy`: Strict CSP directives
+- `X-Frame-Options`: DENY
+- `X-Content-Type-Options`: nosniff
+- `Referrer-Policy`: strict-origin-when-cross-origin
+- `Permissions-Policy`: Restricted API access
+
+## 🛠️ Development
+
+### Scripts
+
+```bash
+# Development
+npm run dev          # Start development server
+npm run build        # Build for production
+npm start           # Start production server
+
+# Code Quality
+npm run lint        # Run ESLint
+npm run lint:fix    # Fix ESLint issues
+npm run format      # Format code with Prettier
+
+# Testing
+npm test            # Run tests
+npm run test:coverage  # Run with coverage
+npm run test:security   # Run security tests
+```
+
+### Project Structure
+
+```
+src/
+├── config/         # Configuration and environment validation
+├── controllers/    # HTTP request handlers
+├── middleware/     # Authentication, validation, security
+├── services/       # Business logic and external integrations
+├── types/          # TypeScript type definitions
+├── utils/          # Utility functions
+└── index.ts        # Application entry point
+```
+
+## 📝 License
+
+MIT License - see LICENSE file for details.
 
 ## 🆘 Support
 
-For support and questions:
-- Create an issue in the repository
-- Check the documentation
-- Review the test cases for usage examples
+- **Issues**: [GitHub Issues](https://github.com/c2pa/concierge/issues)
+- **Security**: Report security issues to security@c2pa.org
+- **Documentation**: [C2PA Documentation](https://docs.c2pa.org)
 
 ## 🔄 Version History
 
 ### v1.1.0 (Current)
-- Complete self-serve onboarding flow
-- Stripe Billing integration
-- Usage metering and billing
-- Install health monitoring
-- CAI Verify integration
-- RFC-3161 timestamping
-- Comprehensive test suite
+- Complete security hardening
+- Enhanced API key generation and validation
+- Redis-backed rate limiting
+- Comprehensive input sanitization
+- Production-ready deployment configurations
 
-### Future Releases
-- Multi-currency support
-- Advanced analytics dashboard
-- Mobile app integration
-- Enhanced compliance features
+### v1.0.0
+- Initial release
+- Basic tenant management
+- Stripe integration
+- Usage metering

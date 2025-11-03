@@ -154,7 +154,7 @@ export class StripeService {
   /**
    * Create usage event for metered billing
    */
-  async createUsageEvent(event: UsageEvent): Promise<Stripe.Billing.MeterEvent> {
+  async createUsageEvent(event: UsageEvent, customerId: string): Promise<Stripe.Billing.MeterEvent> {
     try {
       const meterId = this.getMeterId(event.event_type);
       if (!meterId) {
@@ -162,13 +162,13 @@ export class StripeService {
       }
 
       return await this.stripe.billing.meterEvent.create({
-        event_name: event.event_type,
+        event_name: event.event_type as 'sign_events' | 'verify_events' | 'rfc3161_timestamps',
         payload: {
           value: event.value.toString(),
-          stripe_customer_id: event.tenant_id, // Will be replaced with actual customer ID
+          stripe_customer_id: customerId,
         },
         timestamp: Math.floor(new Date(event.timestamp).getTime() / 1000),
-        metadata: event.metadata,
+        metadata: event.metadata || {},
       });
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to create usage event');
@@ -178,8 +178,8 @@ export class StripeService {
   /**
    * Create usage event batch for efficiency
    */
-  async createUsageEventsBatch(events: UsageEvent[]): Promise<Stripe.Billing.MeterEvent[]> {
-    const promises = events.map(event => this.createUsageEvent(event));
+  async createUsageEventsBatch(events: UsageEvent[], customerId: string): Promise<Stripe.Billing.MeterEvent[]> {
+    const promises = events.map(event => this.createUsageEvent(event, customerId));
     return Promise.all(promises);
   }
 
@@ -406,9 +406,15 @@ export class StripeService {
     priceId: string,
     successUrl: string,
     cancelUrl: string,
-    metadata?: Record<string, string>
+    metadata?: Record<string, string | number | boolean>
   ): Promise<Stripe.Checkout.Session> {
     try {
+      // Convert metadata values to strings for Stripe compatibility
+      const stringMetadata = metadata ? 
+        Object.fromEntries(
+          Object.entries(metadata).map(([key, value]) => [key, String(value)])
+        ) : undefined;
+
       return await this.stripe.checkout.sessions.create({
         customer: customerId,
         payment_method_types: ['card'],
@@ -419,7 +425,7 @@ export class StripeService {
         mode: 'subscription',
         success_url: successUrl,
         cancel_url: cancelUrl,
-        metadata,
+        metadata: stringMetadata,
         allow_promotion_codes: true,
         billing_address_collection: 'auto',
       });
@@ -433,11 +439,27 @@ export class StripeService {
    */
   verifyWebhookSignature(payload: string, signature: string): StripeWebhookEvent {
     try {
+      // CRITICAL: Validate inputs
+      if (!payload || typeof payload !== 'string') {
+        throw new Error('Invalid payload: must be non-empty string');
+      }
+      if (!signature || typeof signature !== 'string') {
+        throw new Error('Invalid signature: must be non-empty string');
+      }
+      if (!this.config.webhookSecret) {
+        throw new Error('Webhook secret not configured');
+      }
+
       const event = this.stripe.webhooks.constructEvent(
         payload,
         signature,
         this.config.webhookSecret
       );
+      
+      // CRITICAL: Validate event structure
+      if (!event || !event.type || !event.data) {
+        throw new Error('Invalid webhook event structure');
+      }
       
       return event as StripeWebhookEvent;
     } catch (error) {
@@ -449,33 +471,43 @@ export class StripeService {
    * Handle webhook events
    */
   async handleWebhookEvent(event: StripeWebhookEvent): Promise<void> {
-    switch (event.type) {
-      case 'invoice.payment_succeeded':
-        await this.handlePaymentSucceeded(event);
-        break;
-      case 'invoice.payment_failed':
-        await this.handlePaymentFailed(event);
-        break;
-      case 'customer.subscription.created':
-        await this.handleSubscriptionCreated(event);
-        break;
-      case 'customer.subscription.updated':
-        await this.handleSubscriptionUpdated(event);
-        break;
-      case 'customer.subscription.deleted':
-        await this.handleSubscriptionDeleted(event);
-        break;
-      case 'invoice.finalized':
-        await this.handleInvoiceFinalized(event);
-        break;
-      case 'charge.succeeded':
-        await this.handleChargeSucceeded(event);
-        break;
-      case 'charge.failed':
-        await this.handleChargeFailed(event);
-        break;
-      default:
-        console.log(`Unhandled webhook event type: ${event.type}`);
+    // CRITICAL: Validate event before processing
+    if (!event || !event.type || !event.data) {
+      throw new Error('Invalid webhook event structure');
+    }
+
+    try {
+      switch (event.type) {
+        case 'invoice.payment_succeeded':
+          await this.handlePaymentSucceeded(event);
+          break;
+        case 'invoice.payment_failed':
+          await this.handlePaymentFailed(event);
+          break;
+        case 'customer.subscription.created':
+          await this.handleSubscriptionCreated(event);
+          break;
+        case 'customer.subscription.updated':
+          await this.handleSubscriptionUpdated(event);
+          break;
+        case 'customer.subscription.deleted':
+          await this.handleSubscriptionDeleted(event);
+          break;
+        case 'invoice.finalized':
+          await this.handleInvoiceFinalized(event);
+          break;
+        case 'charge.succeeded':
+          await this.handleChargeSucceeded(event);
+          break;
+        case 'charge.failed':
+          await this.handleChargeFailed(event);
+          break;
+        default:
+          console.log(`Unhandled webhook event type: ${event.type}`);
+      }
+    } catch (error) {
+      console.error(`Error handling webhook event ${event.type}:`, error);
+      throw error;
     }
   }
 
@@ -535,7 +567,7 @@ export class StripeService {
   // PRIVATE UTILITIES
   // ============================================================================
 
-  private getMeterId(eventType: string): string {
+  private getMeterId(eventType: 'sign_events' | 'verify_events' | 'rfc3161_timestamps'): string {
     switch (eventType) {
       case 'sign_events':
         return this.config.meters.sign_events;

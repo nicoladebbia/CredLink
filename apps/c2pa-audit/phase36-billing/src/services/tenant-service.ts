@@ -85,8 +85,8 @@ export class TenantService {
       stripe_subscription_id: subscription.id,
       plan: request.plan,
       trial: this.initializeTrial(subscription.trial_end!),
-      policy: this.initializePolicy(request),
-      install: this.initializeInstall(request),
+      policy: this.initializePolicy(request, tenantId),
+      install: this.initializeInstall(request, tenantId),
       usage: this.initializeUsage(),
       billing: this.initializeBilling(subscription),
       created_at: new Date().toISOString(),
@@ -275,7 +275,7 @@ export class TenantService {
     await this.storeTenant(tenant);
 
     // Push usage to Stripe (async)
-    this.pushUsageToStripe(tenantId, eventType, value).catch(error => {
+    this.pushUsageToStripe(tenant.stripe_customer_id, eventType, value).catch(error => {
       console.error(`Failed to push usage to Stripe for tenant ${tenantId}:`, error);
     });
   }
@@ -319,11 +319,18 @@ export class TenantService {
   // ============================================================================
 
   private generateTenantId(): string {
-    return `t_${randomBytes(16).toString('hex')}`;
+    const timestamp = Date.now().toString(36);
+    const randomPart = randomBytes(12).toString('hex');
+    return `t_${timestamp}_${randomPart}`;
   }
 
   private generateApiKey(): string {
-    return `c2pa_${randomBytes(32).toString('hex')}`;
+    // Generate cryptographically secure API key with maximum entropy
+    const timestamp = Date.now().toString(36);
+    const randomPart = randomBytes(32).toString('hex');
+    const entropy = randomBytes(16).toString('base64').replace(/[+/=]/g, '');
+    
+    return `c2pa_${timestamp}_${randomPart}_${entropy}`;
   }
 
   private hashApiKey(apiKey: string): string {
@@ -359,20 +366,20 @@ export class TenantService {
     };
   }
 
-  private initializePolicy(request: CreateTenantRequest): TenantPolicy {
+  private initializePolicy(request: CreateTenantRequest, tenantId: string): TenantPolicy {
     return {
       mode: 'remote-first',
       badge: true,
       verify_sdk_version: this.config.verifySdkVersion,
-      manifest_host: request.manifest_host || `${this.config.manifestHostBaseUrl}/${this.generateTenantId()}`,
+      manifest_host: request.manifest_host || `${this.config.manifestHostBaseUrl}/${tenantId}`,
     };
   }
 
-  private initializeInstall(request: CreateTenantRequest): TenantInstall {
+  private initializeInstall(request: CreateTenantRequest, tenantId: string): TenantInstall {
     return {
       domains: request.domains,
       cms: request.cms,
-      manifest_host: request.manifest_host || `${this.config.manifestHostBaseUrl}/${this.generateTenantId()}`,
+      manifest_host: request.manifest_host || `${this.config.manifestHostBaseUrl}/${tenantId}`,
       link_header_configured: false,
       plugin_installed: false,
       demo_asset_verified: false,
@@ -444,8 +451,16 @@ export class TenantService {
     );
   }
 
-  private async pushUsageToStripe(tenantId: string, eventType: string, value: number): Promise<void> {
-    const tenant = await this.getTenant(tenantId);
+  /**
+   * Push usage event to Stripe for billing
+   */
+  private async pushUsageToStripe(
+    customerId: string,
+    eventType: 'sign_events' | 'verify_events' | 'rfc3161_timestamps',
+    value: number,
+    metadata?: Record<string, string>
+  ): Promise<void> {
+    const tenant = await this.getTenant(customerId);
     if (!tenant) {
       return;
     }
@@ -470,7 +485,7 @@ export class TenantService {
     }
   }
 
-  private getMeterId(eventType: string): string | null {
+  private getMeterId(eventType: 'sign_events' | 'verify_events' | 'rfc3161_timestamps'): string | null {
     switch (eventType) {
       case 'sign_events':
         return process.env['STRIPE_SIGN_EVENTS_METER_ID']!;

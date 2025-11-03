@@ -89,7 +89,7 @@ export interface UsageEvent {
   event_type: 'sign_events' | 'verify_events' | 'rfc3161_timestamps';
   value: number;
   timestamp: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
 export interface UsageWindow {
@@ -151,6 +151,8 @@ export interface HealthCheckDetails {
   demo_asset_remote: boolean;
   discoverable: boolean;
   smoke_test_results: SmokeTestResult[];
+  errors?: string[];
+  warnings?: string[];
 }
 
 export interface SmokeTestResult {
@@ -239,7 +241,7 @@ export type WizardStep =
 
 export interface WizardStepData {
   completed: boolean;
-  data: Record<string, any>;
+  data: Record<string, string | number | boolean>;
   validation_results?: ValidationResult[];
   errors?: string[];
   completed_at?: string;
@@ -249,7 +251,7 @@ export interface ValidationResult {
   check: string;
   passed: boolean;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, string | number | boolean>;
 }
 
 // ============================================================================
@@ -371,7 +373,7 @@ export interface RFC3161TimestampRequest {
   tenant_id: string;
   asset_hash: string;
   content_url?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string | number | boolean>;
 }
 
 export interface RFC3161TimestampResponse {
@@ -397,7 +399,7 @@ export interface TimestampVerificationResult {
 export interface APIError {
   code: string;
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, string | number | boolean>;
   request_id?: string;
 }
 

@@ -44,11 +44,21 @@ export class BillingController {
   async getUsageTiers(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
       const { eventType } = request.params as { eventType: string };
-      
-      if (!['sign_events', 'verify_events', 'rfc3161_timestamps'].includes(eventType)) {
+
+      // CRITICAL: Validate event type parameter
+      if (!eventType || typeof eventType !== 'string') {
         reply.status(400).send({
           code: 'INVALID_EVENT_TYPE',
-          message: 'Event type must be one of: sign_events, verify_events, rfc3161_timestamps',
+          message: 'Event type is required and must be a string',
+        });
+        return;
+      }
+      
+      const validEventTypes = ['sign_events', 'verify_events', 'rfc3161_timestamps'];
+      if (!validEventTypes.includes(eventType)) {
+        reply.status(400).send({
+          code: 'INVALID_EVENT_TYPE',
+          message: `Event type must be one of: ${validEventTypes.join(', ')}`,
         });
         return;
       }
@@ -67,6 +77,35 @@ export class BillingController {
     try {
       const { tenantId } = (request as any).tenant; // From auth middleware
       const { return_url } = request.body as any;
+
+      // CRITICAL: Validate tenant from auth middleware
+      if (!tenantId) {
+        reply.status(401).send({
+          code: 'UNAUTHORIZED',
+          message: 'Authentication required',
+        });
+        return;
+      }
+
+      // CRITICAL: Validate return URL
+      if (!return_url || typeof return_url !== 'string') {
+        reply.status(400).send({
+          code: 'INVALID_RETURN_URL',
+          message: 'Return URL is required and must be a string',
+        });
+        return;
+      }
+
+      // CRITICAL: Validate return URL format
+      try {
+        new URL(return_url);
+      } catch {
+        reply.status(400).send({
+          code: 'INVALID_RETURN_URL',
+          message: 'Return URL must be a valid URL',
+        });
+        return;
+      }
 
       // Get tenant's Stripe customer ID
       const tenant = await this.getTenantById(tenantId);

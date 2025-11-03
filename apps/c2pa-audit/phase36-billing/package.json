@@ -3,14 +3,24 @@
   "version": "1.1.0",
   "description": "Phase 36 - Self-Serve Onboarding & Billing with Stripe Integration",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "lint": "eslint src --ext .ts",
-    "format": "prettier --write src/**/*.ts"
+    "test:security": "npm audit && npm run lint",
+    "lint": "eslint src --ext .ts --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:check": "npm outdated && npm audit",
+    "precommit": "npm run lint && npm run test",
+    "prepush": "npm run build && npm run test:security"
   },
   "dependencies": {
     "fastify": "^4.24.3",
@@ -26,7 +36,7 @@
     "pino": "^8.17.2",
     "pino-pretty": "^10.3.1",
     "node-cron": "^3.0.3",
-    "node-fetch": "^2.7.0",
+    "node-fetch": "^3.3.2",
     "dotenv": "^16.3.1",
     "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",
@@ -39,14 +49,15 @@
     "csv-writer": "^1.6.0",
     "puppeteer": "^21.6.1",
     "axios": "^1.6.2",
-    "crypto": "^1.0.1",
-    "tar": "^6.2.0"
+    "tar": "^6.2.0",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5"
   },
   "devDependencies": {
     "@types/node": "^20.8.10",
     "@types/lodash": "^4.14.201",
     "@types/node-cron": "^3.0.11",
-    "@types/node-fetch": "^2.6.9",
+    "@types/node-fetch": "^3.3.2",
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/uuid": "^9.0.7",
@@ -59,10 +70,15 @@
     "eslint": "^8.53.0",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
-    "prettier": "^3.0.3"
+    "prettier": "^3.0.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
+    "supertest": "^6.3.3",
+    "@types/supertest": "^2.0.16"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
   },
   "keywords": [
     "c2pa",
@@ -72,8 +88,26 @@
     "tenant",
     "api-keys",
     "usage-metering",
-    "content-authenticity"
+    "content-authenticity",
+    "security",
+    "payment-processing"
   ],
   "author": "C2PA Concierge Team",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/c2pa/concierge.git",
+    "directory": "apps/c2pa-audit/phase36-billing"
+  },
+  "bugs": {
+    "url": "https://github.com/c2pa/concierge/issues"
+  },
+  "homepage": "https://github.com/c2pa/concierge#readme",
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write",
+      "git add"
+    ]
+  }
 }
