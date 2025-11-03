@@ -216,7 +216,7 @@ export class TSAService {
           hashedMessage: request.messageImprint
         },
         request.nonce,
-        tenantPolicy.acceptedTrustAnchors
+        tenantPolicy.accepted_trust_anchors
       );
 
       if (!verificationResult.valid) {

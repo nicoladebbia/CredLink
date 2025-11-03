@@ -80,7 +80,7 @@ export class DigiCertAdapter extends TSAProviderAdapter {
           'Accept': 'application/timestamp-reply',
           'User-Agent': 'C2-Concierge-TSA-Service/1.0'
         },
-        body: encodedRequest.buffer,
+        body: new Uint8Array(encodedRequest.buffer),
         signal: controller.signal
       });
       
@@ -187,7 +187,7 @@ export class GlobalSignAdapter extends TSAProviderAdapter {
           'Accept': 'application/timestamp-reply',
           'User-Agent': 'C2-Concierge-TSA-Service/1.0'
         },
-        body: encodedRequest.buffer,
+        body: new Uint8Array(encodedRequest.buffer),
         signal: controller.signal
       });
       
@@ -290,7 +290,7 @@ export class SectigoAdapter extends TSAProviderAdapter {
           'Accept': 'application/timestamp-reply',
           'User-Agent': 'C2-Concierge-TSA-Service/1.0'
         },
-        body: encodedRequest.buffer,
+        body: new Uint8Array(encodedRequest.buffer),
         signal: controller.signal
       });
       

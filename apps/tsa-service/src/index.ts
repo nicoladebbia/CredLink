@@ -195,7 +195,7 @@ app.post('/tsa/sign', async (c) => {
     }
 
     // Check permissions
-    if (!authManager.hasPermission(auth.tenant, 'tsa:sign')) {
+    if (!auth.tenant || !authManager.hasPermission(auth.tenant, 'tsa:sign')) {
       return c.json({
         success: false,
         error: 'Insufficient permissions'
@@ -286,7 +286,10 @@ app.post('/tsa/sign', async (c) => {
       }
       
     } catch (error) {
-      console.warn('Imprint decoding failed', { error: error.message, imprintLength: imprint.length });
+      console.warn('Imprint decoding failed', { 
+        error: error instanceof Error ? error.message : String(error), 
+        imprintLength: imprint.length 
+      });
       return c.json({
         success: false,
         error: 'Invalid imprint encoding'
@@ -479,7 +482,7 @@ app.get('/metrics', async (c) => {
   }
   
   const auth = await authManager.authenticateRequest(apiKey);
-  if (!auth.success || !authManager.hasPermission(auth.tenant, 'tsa:read')) {
+  if (!auth.success || !auth.tenant || !authManager.hasPermission(auth.tenant, 'tsa:read')) {
     return c.json({
       success: false,
       error: 'Insufficient permissions'

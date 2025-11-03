@@ -144,7 +144,7 @@ export class OpenSSLParityTester {
       return await this.validator.validateToken(
         mockToken,
         mockToken.tstInfo.messageImprint,
-        undefined,
+        mockToken.tstInfo.nonce,
         trustAnchors
       );
 
