@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2 Concierge Offline Verification Badge</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>C2 Concierge Offline Verification</h1>
+            <div class="offline-indicator">
+                <span class="status-dot offline"></span>
+                <span>Offline Mode</span>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- File Drop Area -->
+            <section class="drop-area" id="dropArea">
+                <div class="drop-content">
+                    <div class="drop-icon">📁</div>
+                    <h2>Drop Asset Here</h2>
+                    <p>or click to select a file</p>
+                    <input type="file" id="fileInput" accept="image/*,video/*,audio/*" hidden>
+                </div>
+            </section>
+
+            <!-- Verification Result -->
+            <section class="verification-result" id="verificationResult" hidden>
+                <div class="result-header">
+                    <div class="verdict-badge" id="verdictBadge">
+                        <span class="verdict-icon" id="verdictIcon"></span>
+                        <span class="verdict-text" id="verdictText"></span>
+                    </div>
+                    <div class="asset-info">
+                        <h3 id="assetName">Asset Name</h3>
+                        <p id="assetId">Asset ID</p>
+                    </div>
+                </div>
+
+                <div class="result-details">
+                    <!-- Signature Verification -->
+                    <div class="detail-section">
+                        <h4>🔐 Signature Verification</h4>
+                        <div class="detail-item">
+                            <span class="label">Status:</span>
+                            <span class="value" id="signatureStatus"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Issuer:</span>
+                            <span class="value" id="signatureIssuer"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Valid From:</span>
+                            <span class="value" id="signatureValidFrom"></span>
+                        </div>
+                    </div>
+
+                    <!-- Content Binding -->
+                    <div class="detail-section">
+                        <h4>🔗 Content Binding</h4>
+                        <div class="detail-item">
+                            <span class="label">Integrity:</span>
+                            <span class="value" id="contentIntegrity"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Hash Algorithm:</span>
+                            <span class="value" id="hashAlgorithm"></span>
+                        </div>
+                    </div>
+
+                    <!-- Timestamp Verification -->
+                    <div class="detail-section" id="timestampSection" hidden>
+                        <h4>⏰ Timestamp Verification</h4>
+                        <div class="detail-item">
+                            <span class="label">RFC 3161:</span>
+                            <span class="value" id="timestampStatus"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">TSA:</span>
+                            <span class="value" id="timestampTsa"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Timestamped:</span>
+                            <span class="value" id="timestampTime"></span>
+                        </div>
+                    </div>
+
+                    <!-- Trust Information -->
+                    <div class="detail-section">
+                        <h4>🛡️ Trust Information</h4>
+                        <div class="detail-item">
+                            <span class="label">Trust Pack:</span>
+                            <span class="value" id="trustPack"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">As-Of Date:</span>
+                            <span class="value" id="trustAsOf"></span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="label">Age:</span>
+                            <span class="value" id="trustAge"></span>
+                        </div>
+                    </div>
+
+                    <!-- Warnings -->
+                    <div class="warnings-section" id="warningsSection" hidden>
+                        <h4>⚠️ Warnings</h4>
+                        <ul id="warningsList"></ul>
+                    </div>
+
+                    <!-- Unresolved References -->
+                    <div class="unresolved-section" id="unresolvedSection" hidden>
+                        <h4>🌐 Unresolved References (Offline)</h4>
+                        <ul id="unresolvedList"></ul>
+                        <p class="offline-note">
+                            These references require network access and cannot be verified offline.
+                            Scan the QR code below to re-check online.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- QR Code Section -->
+                <section class="qr-section" id="qrSection" hidden>
+                    <h4>📱 Online Re-check</h4>
+                    <div class="qr-container">
+                        <div id="qrcode"></div>
+                        <p class="qr-instruction">
+                            Scan this QR code to re-check verification online<br>
+                            for current revocation status and remote references.
+                        </p>
+                    </div>
+                </section>
+            </section>
+
+            <!-- Loading State -->
+            <section class="loading" id="loadingSection" hidden>
+                <div class="loading-content">
+                    <div class="spinner"></div>
+                    <h3>Verifying Asset...</h3>
+                    <p>This may take a few moments.</p>
+                </div>
+            </section>
+
+            <!-- Error State -->
+            <section class="error" id="errorSection" hidden>
+                <div class="error-content">
+                    <div class="error-icon">❌</div>
+                    <h3>Verification Failed</h3>
+                    <p id="errorMessage">An error occurred during verification.</p>
+                    <button class="retry-button" onclick="resetVerification()">Try Again</button>
+                </div>
+            </section>
+
+            <!-- QR Code Section -->
+            <section class="qr-section" id="qrSection" hidden>
+                <div class="qr-content">
+                    <h3>📱 Online Re-check</h3>
+                    <div class="qr-container">
+                        <div class="qr-code">
+                            <canvas id="qrCanvas"></canvas>
+                        </div>
+                        <div class="qr-info">
+                            <p><strong>Scan to verify online:</strong></p>
+                            <p class="qr-url" id="qrUrl"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <p>C2 Concierge Offline Verification Kit v1.0.0</p>
+                <p>Network Access: DISABLED | Security Level: MAXIMUM</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Load C2PA WebAssembly Module -->
+    <script src="app.js"></script>
+</body>
+</html>
