@@ -109,31 +109,23 @@ jobs:
           nc -z localhost 3306 2>/dev/null && echo "✅ localhost:3306 accessible" || echo "❌ localhost:3306 not accessible"
         fi
         
-        # Get MySQL container IP address
-        echo "Getting MySQL container IP..."
-        MYSQL_IP=$(getent hosts mysql | awk '{ print $1 }' || echo "127.0.0.1")
-        echo "MySQL IP: $MYSQL_IP"
+        # Try different approaches to connect to MySQL
+        echo "Testing MySQL connection approaches..."
         
-        # Wait for MySQL service to be available using IP
-        echo "Waiting for MySQL service to be ready at $MYSQL_IP:3306..."
-        for i in {1..20}; do
-          if nc -z $MYSQL_IP 3306 2>/dev/null; then
-            echo "MySQL service is ready!"
-            break
-          fi
-          echo "Attempt $i/20 - MySQL not ready, waiting 3 seconds..."
-          sleep 3
-        done
-        
-        # Test MySQL connection with proper error handling
-        echo "Testing MySQL connection..."
-        if ! nc -z $MYSQL_IP 3306; then
-          echo "❌ MySQL service is not accessible at $MYSQL_IP:3306"
+        # Try localhost first (since debug showed it works)
+        if nc -z localhost 3306 2>/dev/null; then
+          echo "✅ MySQL accessible via localhost"
+          MYSQL_HOST="localhost"
+        elif nc -z 127.0.0.1 3306 2>/dev/null; then
+          echo "✅ MySQL accessible via 127.0.0.1"
+          MYSQL_HOST="127.0.0.1"
+        else
+          echo "❌ MySQL not accessible via localhost or 127.0.0.1"
           exit 1
         fi
         
-        # Set up WordPress configuration using IP address
-        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=$MYSQL_IP:3306 --allow-root
+        # Set up WordPress configuration using working host
+        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=$MYSQL_HOST --allow-root
         
         # Install WordPress
         wp --path=/var/www/html core install --url=http://localhost:8080 --title="C2 Concierge Test" --admin_user=admin --admin_password=password --admin_email=test@example.com --allow-root
