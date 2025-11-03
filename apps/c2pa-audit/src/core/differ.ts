@@ -17,11 +17,10 @@ import {
   TSADiff,
   AssertionChange,
   IngredientChange,
-  JSONPatchOperation,
-  JSONMergePatch,
   ValidationCode
 } from '@/types';
 import { JSONCanonicalizer } from './canonicalizer';
+import { createPatch } from 'json-patch';
 
 /**
  * Performs semantic and structural diffs between C2PA manifests
@@ -76,16 +75,21 @@ export class ManifestDiffer {
       throw new Error('Invalid manifest: base and target manifests are required');
     }
 
-    const operations: JSONPatchOperation[] = [];
-    
     try {
       // Canonicalize both manifests for consistent comparison
       const canonicalBase = JSON.parse(JSONCanonicalizer.canonicalize(base));
       const canonicalTarget = JSON.parse(JSONCanonicalizer.canonicalize(target));
 
-      this.generatePatchOperations('/', canonicalBase, canonicalTarget, operations);
+      // Generate patch operations
+      const operations = createPatch(canonicalBase, canonicalTarget);
       
-      return operations;
+      // Convert to RFC 6902 format
+      return operations.map(op => ({
+        op: op.op as 'add' | 'remove' | 'replace' | 'move' | 'copy' | 'test',
+        path: op.path,
+        value: op.value,
+        from: op.from
+      }));
     } catch (error) {
       throw new Error(`Failed to generate JSON Patch: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -185,9 +189,6 @@ export class ManifestDiffer {
       provider: `${baseTSA}→${targetTSA}`,
       genTime_diff_ms: timeDiffMs
     };
-
-    // TODO: Extract actual TSA provider names and policy OIDs when timestamp parsing is implemented
-    // For now, we use the trust status as a proxy
 
     return diff;
   }

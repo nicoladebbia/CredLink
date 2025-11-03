@@ -125,7 +125,10 @@ class C2PAAuditCLI {
       spinner.text = 'Validating manifests...';
 
       // Validate manifests
-      const trustAnchors: any[] = []; // TODO: Load from config
+      // Load trust anchors from environment or configuration
+      const trustAnchors: any[] = process.env.C2PA_TRUST_ANCHORS 
+        ? JSON.parse(process.env.C2PA_TRUST_ANCHORS) 
+        : [];
       const baseValidation = await ManifestValidator.validateManifest(baseManifest, trustAnchors);
       const targetValidation = await ManifestValidator.validateManifest(targetManifest, trustAnchors);
 
@@ -204,7 +207,10 @@ class C2PAAuditCLI {
       spinner.text = 'Building lineage graph...';
 
       // Build lineage
-      const trustAnchors: any[] = []; // TODO: Load from config
+      // Load trust anchors from environment or configuration
+      const trustAnchors: any[] = process.env.C2PA_TRUST_ANCHORS 
+        ? JSON.parse(process.env.C2PA_TRUST_ANCHORS) 
+        : [];
       const lineage = await LineageReconstructor.buildLineage(
         manifest, 
         trustAnchors, 
@@ -263,8 +269,11 @@ class C2PAAuditCLI {
         asset_path: resolve(options.asset)
       };
 
+      // Extract JUMBF structure if requested
       if (options.includeJumbf) {
-        // TODO: Extract JUMBF structure
+        // JUMBF structure extraction would be implemented here
+        // For now, we'll note it in the output
+        console.log(chalk.yellow('Note: JUMBF structure extraction not yet implemented'));
         result.jumbf_map = { note: 'JUMBF extraction not yet implemented' };
       }
 
@@ -303,7 +312,10 @@ class C2PAAuditCLI {
 
       const manifest = await ManifestParser.parseManifest(manifestData.buffer);
 
-      const trustAnchors: any[] = []; // TODO: Load from config
+      // Load trust anchors from environment or configuration
+      const trustAnchors: any[] = process.env.C2PA_TRUST_ANCHORS 
+        ? JSON.parse(process.env.C2PA_TRUST_ANCHORS) 
+        : [];
       const validation = await ManifestValidator.validateManifest(manifest, trustAnchors);
 
       spinner.succeed('Validation complete');

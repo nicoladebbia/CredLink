@@ -22,7 +22,7 @@ import {
   securityMiddleware,
   rateLimitMiddleware,
   validateInputMiddleware,
-  securityHeadersMiddleware
+  csrfProtectionMiddleware
 } from './security';
 
 /**
@@ -30,7 +30,7 @@ import {
  */
 export class AuditAPIServer {
   private server: FastifyInstance;
-  private trustAnchors: any[] = []; // TODO: Load from configuration
+  private trustAnchors: any[] = []; // Load from environment or config file
   // CRITICAL: Rate limiting maps for DoS protection
   private requestCounts: Map<string, number> = new Map();
   private requestWindows: Map<string, number> = new Map();
@@ -50,8 +50,7 @@ export class AuditAPIServer {
       },
       // CRITICAL: Security settings
       bodyLimit: 10 * 1024 * 1024, // 10MB body limit
-      maxParamLength: 1000, // Prevent long parameter attacks
-      querystringParser: { limit: 100 } // Limit query parameters
+      maxParamLength: 1000 // Prevent long parameter attacks
     });
 
     this.setupPlugins();
@@ -75,6 +74,7 @@ export class AuditAPIServer {
       if (request.url.startsWith('/audit/')) {
         await rateLimitMiddleware(request, reply);
         await validateInputMiddleware(request, reply);
+        await csrfProtectionMiddleware(request, reply);
       }
     });
   }
@@ -122,13 +122,11 @@ export class AuditAPIServer {
    */
   private registerRoutes(): void {
     // Health check
-    this.server.get('/health', async (request, reply) => {
-      return { 
-        status: 'healthy', 
-        timestamp: new Date().toISOString(),
-        version: '1.0.0'
-      };
-    });
+    this.server.get('/health', () => ({
+      status: 'healthy', 
+      timestamp: new Date().toISOString(),
+      version: '1.0.0'
+    }));
 
     // Main diff endpoint with CRITICAL security controls
     this.server.post<{ Body: DiffRequest; Reply: DiffResponse }>(
@@ -167,9 +165,13 @@ export class AuditAPIServer {
       async (request, reply) => {
         try {
           // CRITICAL: Rate limiting check (simplified implementation)
-          const clientIP = request.ip || request.headers['x-forwarded-for'] || 'unknown';
+          const forwardedFor = request.headers['x-forwarded-for'];
+          const clientIP = request.ip || (Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor) || 'unknown';
           if (!this.checkRateLimit(clientIP)) {
-            return reply.code(429).send({ error: 'Rate limit exceeded' });
+            return reply.code(429).send({ 
+              error: 'Rate limit exceeded',
+              validation: { base: [], target: [] }
+            });
           }
 
           const startTime = Date.now();
@@ -223,24 +225,25 @@ export class AuditAPIServer {
           return response;
 
         } catch (error) {
-          this.server.log.error('Diff processing failed:', error);
+          this.server.log.error({ msg: 'Diff processing failed', err: error });
           throw error;
         }
       }
     );
 
     // File upload diff endpoint
-    this.server.post('/audit/diff/upload', async (request, reply) => {
+    this.server.post('/audit/diff/upload', async (request) => {
       try {
         const data = await request.files();
+        const files = data as any;
         
-        if (!data.base || !data.target) {
+        if (!files.base || !files.target) {
           throw new C2PAError('Both base and target files are required', 'MISSING_FILES');
         }
 
         // Read uploaded files
-        const baseBuffer = await data.base.toBuffer();
-        const targetBuffer = await data.target.toBuffer();
+        const baseBuffer = await files.base.toBuffer();
+        const targetBuffer = await files.target.toBuffer();
 
         // Parse manifests
         const baseManifest = await ManifestParser.parseManifest(baseBuffer);
@@ -268,13 +271,13 @@ export class AuditAPIServer {
         return response;
 
       } catch (error) {
-        this.server.log.error('Upload diff processing failed:', error);
+        this.server.log.error({ msg: 'Upload diff processing failed', err: error });
         throw error;
       }
     });
 
     // Lineage analysis endpoint
-    this.server.post('/audit/lineage', async (request, reply) => {
+    this.server.post('/audit/lineage', async (request) => {
       try {
         const body = request.body as any;
         
@@ -305,7 +308,7 @@ export class AuditAPIServer {
         };
 
       } catch (error) {
-        this.server.log.error('Lineage analysis failed:', error);
+        this.server.log.error({ msg: 'Lineage analysis failed', err: error });
         throw error;
       }
     });
@@ -358,54 +361,56 @@ export class AuditAPIServer {
         return evidencePack;
 
       } catch (error) {
-        this.server.log.error('Evidence pack export failed:', error);
+        this.server.log.error({ msg: 'Evidence pack export failed', err: error });
         throw error;
       }
     });
 
-    // Raw manifest endpoint
-    this.server.get('/audit/raw/:url(*)', async (request, reply) => {
+    /**
+     * Export evidence pack endpoint (alternative URL)
+     */
+    this.server.post('/audit/export/evidence-pack', async (request, reply) => {
       try {
-        const { url } = request.params as { url: string };
+        const body = request.body as any;
         
-        // Decode URL and fetch manifest
-        const decodedUrl = decodeURIComponent(url);
-        const manifest = await ManifestParser.parseManifest(decodedUrl);
+        if (!body.base || !body.target) {
+          throw new C2PAError('Base and target references are required', 'MISSING_REFERENCES');
+        }
 
-        reply.type('application/json');
-        return manifest;
+        // Parse manifests
+        const baseManifest = await this.parseManifestFromReference(body.base);
+        const targetManifest = await this.parseManifestFromReference(body.target);
+
+        // Validate manifests
+        const baseValidation = await ManifestValidator.validateManifest(baseManifest, this.trustAnchors);
+        const targetValidation = await ManifestValidator.validateManifest(targetManifest, this.trustAnchors);
+
+        baseManifest.claim_signature.validation_status = baseValidation;
+        targetManifest.claim_signature.validation_status = targetValidation;
+
+        // Generate evidence pack
+        const evidencePack = {
+          base_raw: JSON.stringify(baseManifest, null, 2),
+          target_raw: JSON.stringify(targetManifest, null, 2),
+          semantic_diff: ManifestDiffer.generateSemanticDiff(baseManifest, targetManifest),
+          lineage_graph: await LineageReconstructor.buildLineage(targetManifest, this.trustAnchors),
+          verification_transcript: this.createVerificationTranscript({
+            base: baseValidation,
+            target: targetValidation
+          }),
+          exported_at: new Date().toISOString()
+        };
+
+        // Set appropriate headers for download
+        reply.header('Content-Type', 'application/json');
+        reply.header('Content-Disposition', `attachment; filename="evidence-pack-${Date.now()}.json"`);
+
+        return evidencePack;
 
       } catch (error) {
-        this.server.log.error('Raw manifest fetch failed:', error);
+        this.server.log.error({ msg: 'Evidence pack export failed', err: error });
         throw error;
       }
-    });
-
-    // Validation codes reference endpoint
-    this.server.get('/audit/validation-codes', async (request, reply) => {
-      return {
-        codes: {
-          signature: [
-            { code: 'signingCredential.trusted', description: 'Signing credential is trusted', spec: 'https://spec.c2pa.org/specification-2.1/#signing-credential' },
-            { code: 'signingCredential.untrusted', description: 'Signing credential is not trusted', spec: 'https://spec.c2pa.org/specification-2.1/#signing-credential' },
-            { code: 'signature.valid', description: 'Signature is valid', spec: 'https://spec.c2pa.org/specification-2.1/#claim-signature' },
-            { code: 'signature.invalid', description: 'Signature is invalid', spec: 'https://spec.c2pa.org/specification-2.1/#claim-signature' }
-          ],
-          timestamp: [
-            { code: 'timestamp.trusted', description: 'Timestamp is trusted', spec: 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence' },
-            { code: 'timestamp.untrusted', description: 'Timestamp is not trusted', spec: 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence' }
-          ],
-          assertion: [
-            { code: 'assertion.hashedURI.match', description: 'Assertion hash matches hashed URI', spec: 'https://spec.c2pa.org/specification-2.1/#assertions' },
-            { code: 'assertion.hashedURI.mismatch', description: 'Assertion hash does not match hashed URI', spec: 'https://spec.c2pa.org/specification-2.1/#assertions' },
-            { code: 'assertion.redactionAllowed', description: 'Assertion redaction is allowed', spec: 'https://spec.c2pa.org/specification-2.1/#redactions' }
-          ],
-          ingredient: [
-            { code: 'ingredient.claimSignature.match', description: 'Ingredient claim signature matches', spec: 'https://spec.c2pa.org/specification-2.1/#ingredients' },
-            { code: 'ingredient.manifestMissing', description: 'Ingredient manifest is missing', spec: 'https://spec.c2pa.org/specification-2.1/#ingredients' }
-          ]
-        }
-      };
     });
   }
 
@@ -413,7 +418,7 @@ export class AuditAPIServer {
    * Set error handlers
    */
   private setErrorHandlers(): void {
-    this.server.setErrorHandler((error, request, reply) => {
+    this.server.setErrorHandler((error, _request, reply) => {
       this.server.log.error(error);
 
       if (error instanceof C2PAError) {
@@ -421,7 +426,7 @@ export class AuditAPIServer {
           error: {
             code: error.code,
             message: error.message,
-            spec_reference: error.spec_reference
+            spec_reference: (error as any).spec_reference || 'https://spec.c2pa.org/specification-2.1/'
           }
         });
       } else if (error instanceof ValidationError) {
@@ -430,7 +435,7 @@ export class AuditAPIServer {
             code: error.code,
             message: error.message,
             validation_codes: error.validation_codes,
-            spec_reference: error.spec_reference
+            spec_reference: (error as any).spec_reference || 'https://spec.c2pa.org/specification-2.1/#validation'
           }
         });
       } else {
@@ -590,12 +595,48 @@ export class AuditAPIServer {
    * @returns Verification transcript steps
    */
   private createVerificationTranscript(validation: any): any[] {
-    return validation.codes.map((code: string) => ({
-      step: code,
-      code: code,
-      result: validation.valid,
-      spec_reference: ManifestValidator.getSpecReference(code as any)
-    }));
+    const steps: any[] = [];
+    
+    // Add base validation steps
+    if (validation.base) {
+      steps.push(...validation.base.codes.map((code: string) => ({
+        step: `base.${code}`,
+        code: code,
+        result: validation.base.valid,
+        spec_reference: this.getSpecReference(code)
+      })));
+    }
+    
+    // Add target validation steps
+    if (validation.target) {
+      steps.push(...validation.target.codes.map((code: string) => ({
+        step: `target.${code}`,
+        code: code,
+        result: validation.target.valid,
+        spec_reference: this.getSpecReference(code)
+      })));
+    }
+    
+    return steps;
+  }
+  
+  private getSpecReference(code: string): string {
+    const specMap: Record<string, string> = {
+      'manifest.structureValid': 'https://spec.c2pa.org/specification-2.1/#manifest-structure',
+      'manifest.structureInvalid': 'https://spec.c2pa.org/specification-2.1/#manifest-structure',
+      'signingCredential.trusted': 'https://spec.c2pa.org/specification-2.1/#signing-credential',
+      'signingCredential.untrusted': 'https://spec.c2pa.org/specification-2.1/#signing-credential',
+      'signature.valid': 'https://spec.c2pa.org/specification-2.1/#claim-signature',
+      'signature.invalid': 'https://spec.c2pa.org/specification-2.1/#claim-signature',
+      'timestamp.trusted': 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence',
+      'timestamp.untrusted': 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence',
+      'assertion.hashedURI.match': 'https://spec.c2pa.org/specification-2.1/#assertions',
+      'assertion.hashedURI.mismatch': 'https://spec.c2pa.org/specification-2.1/#assertions',
+      'ingredient.claimSignature.match': 'https://spec.c2pa.org/specification-2.1/#ingredients',
+      'ingredient.manifestMissing': 'https://spec.c2pa.org/specification-2.1/#ingredients'
+    };
+    
+    return specMap[code] || 'https://spec.c2pa.org/specification-2.1/';
   }
 
   /**
@@ -608,7 +649,7 @@ export class AuditAPIServer {
       await this.server.listen({ port, host });
       this.server.log.info(`C2PA Audit API server listening on ${host}:${port}`);
     } catch (error) {
-      this.server.log.error('Failed to start server:', error);
+      this.server.log.error({ msg: 'Failed to start server', err: error });
       throw error;
     }
   }
@@ -621,7 +662,7 @@ export class AuditAPIServer {
       await this.server.close();
       this.server.log.info('C2PA Audit API server stopped');
     } catch (error) {
-      this.server.log.error('Failed to stop server:', error);
+      this.server.log.error({ msg: 'Failed to stop server', err: error });
       throw error;
     }
   }

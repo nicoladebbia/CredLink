@@ -56,7 +56,7 @@ export interface Assertion {
 }
 
 export interface Ingredient {
-  /** Relationship to parent */
+  /** Relationship to parent - Phase 30 Variant Linking */
   relationship: 'parentOf' | 'inputTo' | 'componentOf';
   /** Active manifest hash */
   active_manifest: string;
@@ -66,6 +66,10 @@ export interface Ingredient {
   manifest?: C2PAManifest;
   /** Validation status */
   validation_status: ValidationStatus;
+  /** Phase 30: Hashed URI for parent/child linking */
+  hashed_uri?: string;
+  /** Phase 30: Asset URL for remote discovery */
+  asset_url?: string;
 }
 
 export interface Redaction {
@@ -173,7 +177,7 @@ export type ValidationCode =
   | 'manifest.structureValid'
   | 'manifest.structureInvalid'
   | 'manifest.versionSupported'
-  | 'manifest.versionUnsupported';
+  | 'manifest.versionUnsupported'
 
 // ============================================================================
 // Diff Types (RFC 6902 / RFC 7386)
@@ -366,6 +370,8 @@ export interface DiffResponse {
     base: ValidationCode[];
     target: ValidationCode[];
   };
+  /** Error information (optional) */
+  error?: string;
 }
 
 export interface EvidencePack {
@@ -478,6 +484,73 @@ export interface UITab {
 }
 
 // ============================================================================
+// Phase 30 Variant Linking Types
+// ============================================================================
+
+export interface VariantLinkingMode {
+  /** Linking mode: rendition or derivative */
+  mode: 'rendition' | 'derivative';
+  /** Whether to embed manifest or use remote discovery */
+  embed: boolean;
+  /** Remote manifest URL */
+  manifest_url: string;
+}
+
+export interface DerivativeManifestRequest {
+  /** Parent manifest URL */
+  parent_manifest: string;
+  /** Asset URL for this derivative */
+  asset_url: string;
+  /** Relationship type */
+  relationship: 'parentOf';
+  /** Actions performed */
+  actions: VariantAction[];
+}
+
+export interface VariantAction {
+  /** Action type */
+  type: 'c2pa.transcoded' | 'c2pa.cropped' | 'c2pa.edited' | 'c2pa.placed' | 'c2pa.repackaged';
+  /** Action parameters */
+  parameters: Record<string, unknown>;
+}
+
+export interface DerivativeManifestResponse {
+  /** Child manifest URL */
+  child_manifest: string;
+  /** Ingredient reference */
+  ingredient_ref: string;
+  /** Link header for HTTP */
+  link_header: string;
+}
+
+export interface RenditionRegistry {
+  /** Asset ID */
+  asset_id: string;
+  /** Manifest URL */
+  manifest_url: string;
+  /** Variant routes */
+  variant_routes: VariantRoute[];
+  /** Mode */
+  mode: 'rendition';
+}
+
+export interface VariantRoute {
+  /** Route pattern */
+  pattern: string;
+  /** Link header */
+  link_header: string;
+}
+
+export interface VariantPolicy {
+  /** Asset ID + transform key */
+  key: string;
+  /** Linking mode */
+  mode: VariantLinkingMode;
+  /** Actions for derivatives */
+  actions?: VariantAction[];
+}
+
+// ============================================================================
 // Error Types
 // ============================================================================
 
@@ -511,5 +584,16 @@ export class ParsingError extends C2PAError {
   ) {
     super(message, 'PARSING_ERROR', spec_reference);
     this.name = 'ParsingError';
+  }
+}
+
+export class VariantLinkingError extends C2PAError {
+  constructor(
+    message: string,
+    public variant_type: string,
+    spec_reference?: string
+  ) {
+    super(message, 'VARIANT_LINKING_ERROR', spec_reference);
+    this.name = 'VariantLinkingError';
   }
 }

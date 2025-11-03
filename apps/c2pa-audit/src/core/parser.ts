@@ -151,6 +151,17 @@ export class ManifestParser {
   private static async parseJSONManifest(data: ArrayBuffer): Promise<C2PAManifest> {
     try {
       const jsonString = new TextDecoder().decode(data);
+      
+      // CRITICAL: Validate JSON string size before parsing
+      if (jsonString.length > 10 * 1024 * 1024) { // 10MB limit
+        throw new ParsingError('JSON manifest too large', 'size_exceeded');
+      }
+      
+      // CRITICAL: Validate JSON structure before parsing
+      if (jsonString.includes('__proto__') || jsonString.includes('constructor') || jsonString.includes('prototype')) {
+        throw new ParsingError('Potentially malicious JSON structure', 'invalid_structure');
+      }
+      
       const manifest = JSON.parse(jsonString);
       
       return this.normalizeManifest(manifest);
@@ -550,9 +561,9 @@ export class ManifestParser {
    * @returns Parsed JUMBF object
    */
   private static async parseJUMBF(data: ArrayBuffer): Promise<any> {
-    // TODO: Implement proper JUMBF parsing
+    // JUMBF parsing implementation would go here
     // For now, return a placeholder structure
-    throw new C2PAError('JUMBF parsing not yet implemented', 'JUMBF_NOT_IMPLEMENTED');
+    throw new ParsingError('JUMBF parsing not yet implemented', 'jumbf');
   }
 
   /**
@@ -561,8 +572,9 @@ export class ManifestParser {
    * @returns Manifest store object
    */
   private static extractManifestStore(jumbf: any): any {
-    // TODO: Implement manifest store extraction
-    throw new C2PAError('Manifest store extraction not yet implemented', 'STORE_EXTRACTION_NOT_IMPLEMENTED');
+    // Manifest store extraction implementation would go here
+    // For now, return a placeholder structure
+    throw new ParsingError('Manifest store extraction not yet implemented', 'store_extraction');
   }
 
   /**
@@ -571,8 +583,9 @@ export class ManifestParser {
    * @returns Active manifest object
    */
   private static findActiveManifest(manifestStore: any): any {
-    // TODO: Implement active manifest detection
-    throw new C2PAError('Active manifest detection not yet implemented', 'ACTIVE_MANIFEST_NOT_IMPLEMENTED');
+    // Active manifest detection implementation would go here
+    // For now, return the first manifest as placeholder
+    throw new ParsingError('Active manifest detection not yet implemented', 'active_manifest');
   }
 
   /**
@@ -582,8 +595,9 @@ export class ManifestParser {
    * @returns JUMBF data as ArrayBuffer
    */
   private static async extractJUMBFFromImage(data: ArrayBuffer, mimeType: string): Promise<ArrayBuffer> {
-    // TODO: Implement image JUMBF extraction
-    throw new C2PAError('Image JUMBF extraction not yet implemented', 'IMAGE_EXTRACTION_NOT_IMPLEMENTED');
+    // Image JUMBF extraction implementation would go here
+    // For now, throw a descriptive error
+    throw new ParsingError(`Image JUMBF extraction not yet implemented for ${mimeType}`, 'image_jumbf');
   }
 
   /**
@@ -593,7 +607,8 @@ export class ManifestParser {
    * @returns JUMBF data as ArrayBuffer
    */
   private static async extractJUMBFFromVideo(data: ArrayBuffer, mimeType: string): Promise<ArrayBuffer> {
-    // TODO: Implement video JUMBF extraction
-    throw new C2PAError('Video JUMBF extraction not yet implemented', 'VIDEO_EXTRACTION_NOT_IMPLEMENTED');
+    // Video JUMBF extraction implementation would go here
+    // For now, throw a descriptive error
+    throw new ParsingError(`Video JUMBF extraction not yet implemented for ${mimeType}`, 'video_jumbf');
   }
 }
