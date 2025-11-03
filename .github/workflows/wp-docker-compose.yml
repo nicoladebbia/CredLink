@@ -35,7 +35,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=3
@@ -99,21 +99,8 @@ jobs:
         # Download WordPress first
         wp --path=/var/www/html core download --allow-root
         
-        # Install MySQL client and wait for MySQL to be ready
-        sudo apt-get update && sudo apt-get install -y mysql-client
-        echo "Waiting for MySQL to be ready..."
-        # Try connecting to MySQL with longer timeout and better error handling
-        for i in {1..30}; do
-          if mysql -h mysql -u wordpress -pwordpress -e "SELECT 1" 2>/dev/null; then
-            echo "MySQL is ready!"
-            break
-          fi
-          echo "Attempt $i/30 - MySQL not ready, waiting 5 seconds..."
-          sleep 5
-        done
-        
-        # Set up WordPress configuration
-        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql:3306 --allow-root
+        # Set up WordPress configuration directly (WordPress CLI handles connection)
+        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql --allow-root
         
         # Install WordPress
         wp --path=/var/www/html core install --url=http://localhost:8080 --title="C2 Concierge Test" --admin_user=admin --admin_password=password --admin_email=test@example.com --allow-root
