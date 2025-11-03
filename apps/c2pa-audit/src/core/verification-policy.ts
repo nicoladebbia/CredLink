@@ -1,7 +1,10 @@
 /**
  * Verification Policy Engine
  * Manages and applies verification policies for C2PA manifests
+ * Enhanced with strict validation and security controls
  */
+
+import { C2PAManifest } from '../types/index.js';
 
 export interface VerificationPolicy {
   /** Policy ID */
@@ -67,6 +70,11 @@ export interface AppliedRule {
  * Verification policy engine for C2PA manifests
  */
 export class VerificationPolicyEngine {
+  private static readonly MAX_POLICIES = 100;
+  private static readonly MAX_RULES_PER_POLICY = 50;
+  private static readonly MAX_CONDITION_LENGTH = 1000;
+  private static readonly ALLOWED_OPERATORS = ['==', '!=', '>', '<', '>=', '<=', '&&', '||', '!'];
+  
   private policies: Map<string, VerificationPolicy> = new Map();
   private activePolicies: Set<string> = new Set();
 
@@ -81,8 +89,13 @@ export class VerificationPolicyEngine {
     // Validate policy
     this.validatePolicy(policy);
     
+    // Check limits
+    if (this.policies.size >= VerificationPolicyEngine.MAX_POLICIES) {
+      throw new Error('Maximum number of policies exceeded');
+    }
+    
     // Add to policies
-    this.policies.set(policy.id, policy);
+    this.policies.set(policy.id, { ...policy });
     
     // Add to active policies if marked as active
     if (policy.active) {
@@ -94,6 +107,10 @@ export class VerificationPolicyEngine {
    * Remove a verification policy
    */
   removePolicy(policyId: string): boolean {
+    if (!policyId || typeof policyId !== 'string') {
+      throw new Error('Policy ID must be a non-empty string');
+    }
+    
     const removed = this.policies.delete(policyId);
     if (removed) {
       this.activePolicies.delete(policyId);
@@ -105,14 +122,19 @@ export class VerificationPolicyEngine {
    * Get a verification policy
    */
   getPolicy(policyId: string): VerificationPolicy | undefined {
-    return this.policies.get(policyId);
+    if (!policyId || typeof policyId !== 'string') {
+      throw new Error('Policy ID must be a non-empty string');
+    }
+    
+    const policy = this.policies.get(policyId);
+    return policy ? { ...policy } : undefined;
   }
 
   /**
    * List all verification policies
    */
   listPolicies(): VerificationPolicy[] {
-    return Array.from(this.policies.values());
+    return Array.from(this.policies.values()).map(policy => ({ ...policy }));
   }
 
   /**
@@ -121,13 +143,18 @@ export class VerificationPolicyEngine {
   listActivePolicies(): VerificationPolicy[] {
     return Array.from(this.activePolicies)
       .map(id => this.policies.get(id))
-      .filter(policy => policy !== undefined) as VerificationPolicy[];
+      .filter(policy => policy !== undefined)
+      .map(policy => ({ ...policy! }));
   }
 
   /**
    * Activate a policy
    */
   activatePolicy(policyId: string): boolean {
+    if (!policyId || typeof policyId !== 'string') {
+      throw new Error('Policy ID must be a non-empty string');
+    }
+    
     const policy = this.policies.get(policyId);
     if (!policy) {
       return false;
@@ -142,6 +169,10 @@ export class VerificationPolicyEngine {
    * Deactivate a policy
    */
   deactivatePolicy(policyId: string): boolean {
+    if (!policyId || typeof policyId !== 'string') {
+      throw new Error('Policy ID must be a non-empty string');
+    }
+    
     const policy = this.policies.get(policyId);
     if (!policy) {
       return false;
@@ -155,39 +186,54 @@ export class VerificationPolicyEngine {
   /**
    * Evaluate manifest against active policies
    */
-  evaluateManifest(manifest: any): PolicyEvaluationResult {
+  evaluateManifest(manifest: C2PAManifest): PolicyEvaluationResult {
+    if (!manifest || typeof manifest !== 'object') {
+      throw new Error('Manifest must be a valid object');
+    }
+    
     const appliedRules: AppliedRule[] = [];
     const warnings: string[] = [];
     const errors: string[] = [];
     let allowed = true;
 
-    // Get active policies
-    const activePolicies = this.listActivePolicies();
+    try {
+      // Get active policies
+      const activePolicies = this.listActivePolicies();
 
-    for (const policy of activePolicies) {
-      for (const rule of policy.rules) {
-        try {
-          const result = this.evaluateRule(rule, manifest);
-          appliedRules.push(result);
+      for (const policy of activePolicies) {
+        for (const rule of policy.rules) {
+          try {
+            const result = this.evaluateRule(rule, manifest);
+            appliedRules.push(result);
 
-          if (result.matched) {
-            switch (result.result) {
-              case 'denied':
-                allowed = false;
-                errors.push(`Policy ${policy.id} - Rule ${rule.id}: ${rule.description}`);
-                break;
-              case 'warning':
-                warnings.push(`Policy ${policy.id} - Rule ${rule.id}: ${rule.description}`);
-                break;
-              case 'allowed':
-                // Rule passed, no action needed
-                break;
+            if (result.matched) {
+              switch (result.result) {
+                case 'denied':
+                  allowed = false;
+                  errors.push(`Policy ${policy.id} - Rule ${rule.id}: ${rule.description}`);
+                  break;
+                case 'warning':
+                  warnings.push(`Policy ${policy.id} - Rule ${rule.id}: ${rule.description}`);
+                  break;
+                case 'allowed':
+                  // Rule passed, no action needed
+                  break;
+              }
+            }
+          } catch (error) {
+            const errorMsg = `Policy ${policy.id} - Rule ${rule.id}: Evaluation failed - ${error}`;
+            errors.push(errorMsg);
+            
+            // Critical rule failures result in denial
+            if (rule.severity === 'critical') {
+              allowed = false;
             }
           }
-        } catch (error) {
-          errors.push(`Policy ${policy.id} - Rule ${rule.id}: Evaluation failed - ${error}`);
         }
       }
+    } catch (error) {
+      errors.push(`Policy evaluation failed: ${error}`);
+      allowed = false;
     }
 
     return {
@@ -202,7 +248,7 @@ export class VerificationPolicyEngine {
   /**
    * Evaluate a single rule against a manifest
    */
-  private evaluateRule(rule: PolicyRule, manifest: any): AppliedRule {
+  private evaluateRule(rule: PolicyRule, manifest: C2PAManifest): AppliedRule {
     const context = this.buildRuleContext(rule, manifest);
     const matched = this.evaluateCondition(rule.condition, context);
 
@@ -222,17 +268,17 @@ export class VerificationPolicyEngine {
     }
 
     return {
-      rule,
+      rule: { ...rule },
       matched,
       result,
-      context
+      context: { ...context }
     };
   }
 
   /**
    * Build context for rule evaluation
    */
-  private buildRuleContext(rule: PolicyRule, manifest: any): Record<string, unknown> {
+  private buildRuleContext(rule: PolicyRule, manifest: C2PAManifest): Record<string, unknown> {
     const context: Record<string, unknown> = {
       manifest,
       rule_type: rule.type,
@@ -245,12 +291,14 @@ export class VerificationPolicyEngine {
         context['signature'] = manifest.claim_signature;
         context['has_signature'] = !!manifest.claim_signature;
         context['signature_algorithm'] = manifest.claim_signature?.protected?.alg;
+        context['signature_valid'] = manifest.claim_signature?.validation_status?.valid;
         break;
 
       case 'assertion':
         context['assertions'] = manifest.assertions || [];
         context['assertion_count'] = (manifest.assertions || []).length;
-        context['has_actions'] = (manifest.assertions || []).some((a: any) => a.label === 'c2pa.actions');
+        context['has_actions'] = (manifest.assertions || []).some(a => a.label === 'c2pa.actions');
+        context['has_ingredients'] = (manifest.assertions || []).some(a => a.label === 'c2pa.ingredients');
         break;
 
       case 'ingredient':
@@ -261,12 +309,14 @@ export class VerificationPolicyEngine {
       case 'timestamp':
         context['timestamp'] = manifest.timestamp;
         context['has_timestamp'] = !!manifest.timestamp;
+        context['timestamp_valid'] = this.isValidTimestamp(manifest.timestamp);
         break;
 
       case 'manifest':
         context['manifest_hash'] = manifest.manifest_hash;
         context['claim_generator'] = manifest.claim_generator;
         context['version'] = manifest.claim_generator_version;
+        context['manifest_valid'] = manifest.claim_signature?.validation_status?.valid;
         break;
     }
 
@@ -274,73 +324,153 @@ export class VerificationPolicyEngine {
   }
 
   /**
+   * Validate timestamp format
+   */
+  private isValidTimestamp(timestamp: string | undefined): boolean {
+    if (!timestamp || typeof timestamp !== 'string') {
+      return false;
+    }
+    
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+    if (!iso8601Regex.test(timestamp)) {
+      return false;
+    }
+    
+    const date = new Date(timestamp);
+    return !isNaN(date.getTime()) && date.getFullYear() >= 2000 && date.getFullYear() <= 2050;
+  }
+
+  /**
    * Evaluate rule condition
    */
   private evaluateCondition(condition: string, context: Record<string, unknown>): boolean {
+    if (!condition || typeof condition !== 'string') {
+      throw new Error('Condition must be a non-empty string');
+    }
+    
+    if (condition.length > VerificationPolicyEngine.MAX_CONDITION_LENGTH) {
+      throw new Error('Condition too long');
+    }
+
     try {
-      // Simple condition evaluator - in production, use a proper expression engine
-      // This is a simplified implementation for demonstration
+      // Safe condition evaluator - prevents code injection
+      let evalCondition = condition.trim();
 
-      // Replace common patterns
-      let evalCondition = condition
-        .replace(/has_signature/g, String(context['has_signature']))
-        .replace(/has_timestamp/g, String(context['has_timestamp']))
-        .replace(/has_actions/g, String(context['has_actions']))
-        .replace(/assertion_count/g, String(context['assertion_count']))
-        .replace(/ingredient_count/g, String(context['ingredient_count']));
-
-      // Evaluate simple expressions
-      if (evalCondition.includes('==')) {
-        const parts = evalCondition.split('==').map(p => p.trim());
-        return parts[0] === parts[1];
+      // Validate allowed operators
+      const hasInvalidOperators = VerificationPolicyEngine.ALLOWED_OPERATORS.some(op => 
+        evalCondition.includes(op) && !this.isValidOperatorUsage(evalCondition, op)
+      );
+      
+      if (hasInvalidOperators) {
+        throw new Error('Invalid operator usage in condition');
       }
 
-      if (evalCondition.includes('!=')) {
-        const parts = evalCondition.split('!=').map(p => p.trim());
-        return parts[0] !== parts[1];
-      }
+      // Replace context variables safely
+      evalCondition = this.replaceContextVariables(evalCondition, context);
 
-      if (evalCondition.includes('>')) {
-        const parts = evalCondition.split('>').map(p => p.trim());
-        return Number(parts[0]) > Number(parts[1]);
-      }
-
-      if (evalCondition.includes('<')) {
-        const parts = evalCondition.split('<').map(p => p.trim());
-        return Number(parts[0]) < Number(parts[1]);
-      }
-
-      if (evalCondition.includes('>=')) {
-        const parts = evalCondition.split('>=').map(p => p.trim());
-        return Number(parts[0]) >= Number(parts[1]);
-      }
-
-      if (evalCondition.includes('<=')) {
-        const parts = evalCondition.split('<=').map(p => p.trim());
-        return Number(parts[0]) <= Number(parts[1]);
-      }
-
-      // Simple boolean evaluation
-      return evalCondition === 'true';
+      // Evaluate simple expressions safely
+      return this.evaluateSimpleExpression(evalCondition);
     } catch (error) {
       throw new Error(`Condition evaluation failed: ${error}`);
     }
   }
 
   /**
+   * Validate operator usage
+   */
+  private isValidOperatorUsage(condition: string, operator: string): boolean {
+    // Basic validation to prevent dangerous operations
+    if (operator === '!' && condition.includes('!!')) {
+      return false; // Prevent double negation that could hide issues
+    }
+    
+    return true;
+  }
+
+  /**
+   * Replace context variables safely
+   */
+  private replaceContextVariables(condition: string, context: Record<string, unknown>): string {
+    let result = condition;
+    
+    // Replace known variables with their string representations
+    const replacements: Record<string, string> = {
+      'has_signature': String(context['has_signature'] || false),
+      'has_timestamp': String(context['has_timestamp'] || false),
+      'has_actions': String(context['has_actions'] || false),
+      'has_ingredients': String(context['has_ingredients'] || false),
+      'signature_valid': String(context['signature_valid'] || false),
+      'timestamp_valid': String(context['timestamp_valid'] || false),
+      'manifest_valid': String(context['manifest_valid'] || false),
+      'assertion_count': String(context['assertion_count'] || 0),
+      'ingredient_count': String(context['ingredient_count'] || 0),
+      'signature_algorithm': String(context['signature_algorithm'] || ''),
+    };
+
+    for (const [variable, value] of Object.entries(replacements)) {
+      const regex = new RegExp(`\\b${variable}\\b`, 'g');
+      result = result.replace(regex, value);
+    }
+
+    return result;
+  }
+
+  /**
+   * Evaluate simple expressions safely
+   */
+  private evaluateSimpleExpression(expression: string): boolean {
+    // Remove any remaining potential dangerous characters
+    const cleanExpression = expression.replace(/[^0-9.=!<>&|() ]/g, '');
+
+    // Handle basic comparisons
+    if (cleanExpression.includes('==')) {
+      const parts = cleanExpression.split('==').map(p => p.trim());
+      return parts[0] === parts[1];
+    }
+
+    if (cleanExpression.includes('!=')) {
+      const parts = cleanExpression.split('!=').map(p => p.trim());
+      return parts[0] !== parts[1];
+    }
+
+    if (cleanExpression.includes('>=')) {
+      const parts = cleanExpression.split('>=').map(p => p.trim());
+      return Number(parts[0]) >= Number(parts[1]);
+    }
+
+    if (cleanExpression.includes('<=')) {
+      const parts = cleanExpression.split('<=').map(p => p.trim());
+      return Number(parts[0]) <= Number(parts[1]);
+    }
+
+    if (cleanExpression.includes('>')) {
+      const parts = cleanExpression.split('>').map(p => p.trim());
+      return Number(parts[0]) > Number(parts[1]);
+    }
+
+    if (cleanExpression.includes('<')) {
+      const parts = cleanExpression.split('<').map(p => p.trim());
+      return Number(parts[0]) < Number(parts[1]);
+    }
+
+    // Simple boolean evaluation
+    return cleanExpression === 'true';
+  }
+
+  /**
    * Validate a verification policy
    */
   private validatePolicy(policy: VerificationPolicy): void {
-    if (!policy.id || typeof policy.id !== 'string') {
-      throw new Error('Policy ID is required and must be a string');
+    if (!policy.id || typeof policy.id !== 'string' || policy.id.length > 100) {
+      throw new Error('Policy ID is required, must be a string, and max 100 characters');
     }
 
-    if (!policy.name || typeof policy.name !== 'string') {
-      throw new Error('Policy name is required and must be a string');
+    if (!policy.name || typeof policy.name !== 'string' || policy.name.length > 200) {
+      throw new Error('Policy name is required, must be a string, and max 200 characters');
     }
 
-    if (!policy.version || typeof policy.version !== 'string') {
-      throw new Error('Policy version is required and must be a string');
+    if (!policy.version || typeof policy.version !== 'string' || policy.version.length > 50) {
+      throw new Error('Policy version is required, must be a string, and max 50 characters');
     }
 
     if (!Array.isArray(policy.rules)) {
@@ -349,6 +479,10 @@ export class VerificationPolicyEngine {
 
     if (policy.rules.length === 0) {
       throw new Error('Policy must have at least one rule');
+    }
+
+    if (policy.rules.length > VerificationPolicyEngine.MAX_RULES_PER_POLICY) {
+      throw new Error('Policy exceeds maximum number of rules');
     }
 
     // Validate each rule
@@ -361,12 +495,16 @@ export class VerificationPolicyEngine {
    * Validate a policy rule
    */
   private validateRule(rule: PolicyRule): void {
-    if (!rule.id || typeof rule.id !== 'string') {
-      throw new Error('Rule ID is required and must be a string');
+    if (!rule.id || typeof rule.id !== 'string' || rule.id.length > 100) {
+      throw new Error('Rule ID is required, must be a string, and max 100 characters');
     }
 
     if (!rule.condition || typeof rule.condition !== 'string') {
       throw new Error('Rule condition is required and must be a string');
+    }
+
+    if (rule.condition.length > VerificationPolicyEngine.MAX_CONDITION_LENGTH) {
+      throw new Error('Rule condition exceeds maximum length');
     }
 
     if (!['allow', 'deny', 'warn'].includes(rule.action)) {
@@ -379,6 +517,10 @@ export class VerificationPolicyEngine {
 
     if (!['signature', 'assertion', 'ingredient', 'timestamp', 'manifest'].includes(rule.type)) {
       throw new Error('Rule type must be one of: signature, assertion, ingredient, timestamp, manifest');
+    }
+
+    if (!rule.description || typeof rule.description !== 'string' || rule.description.length > 500) {
+      throw new Error('Rule description is required, must be a string, and max 500 characters');
     }
   }
 
@@ -461,6 +603,14 @@ export class VerificationPolicyEngine {
           action: 'deny',
           severity: 'error',
           description: 'Manifest must have a timestamp'
+        },
+        {
+          id: 'require-valid-timestamp',
+          type: 'timestamp',
+          condition: 'timestamp_valid == true',
+          action: 'deny',
+          severity: 'error',
+          description: 'Manifest timestamp must be valid'
         }
       ]
     };
@@ -503,7 +653,7 @@ export class VerificationPolicyEngine {
    * Export policies to JSON
    */
   exportToJSON(): string {
-    const policies = Array.from(this.policies.values());
+    const policies = this.listPolicies();
     return JSON.stringify(policies, null, 2);
   }
 
@@ -511,14 +661,32 @@ export class VerificationPolicyEngine {
    * Import policies from JSON
    */
   importFromJSON(json: string): void {
+    if (!json || typeof json !== 'string') {
+      throw new Error('JSON must be a non-empty string');
+    }
+    
+    let policies: VerificationPolicy[];
     try {
-      const policies = JSON.parse(json) as VerificationPolicy[];
+      policies = JSON.parse(json);
       
-      for (const policy of policies) {
-        this.addPolicy(policy);
+      if (!Array.isArray(policies)) {
+        throw new Error('JSON must be an array of policies');
+      }
+      
+      if (policies.length > VerificationPolicyEngine.MAX_POLICIES) {
+        throw new Error('Too many policies in import');
       }
     } catch (error) {
-      throw new Error(`Failed to import policies: ${error}`);
+      throw new Error(`Failed to parse JSON: ${error}`);
+    }
+    
+    // Clear existing policies
+    this.policies.clear();
+    this.activePolicies.clear();
+    
+    // Import new policies
+    for (const policy of policies) {
+      this.addPolicy(policy);
     }
   }
 }

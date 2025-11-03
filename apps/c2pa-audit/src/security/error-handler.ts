@@ -258,17 +258,32 @@ export class SecureErrorHandler {
    * Log error securely
    */
   private logError(error: SecureError, context?: ErrorContext): void {
+    // NEVER log sensitive details in production
     const logEntry = {
       timestamp: error.timestamp,
       type: error.type,
       code: error.code,
       message: error.message,
-      details: error.details,
+      // Only include non-sensitive error details
+      hasDetails: !!error.details,
+      detailCount: error.details ? Object.keys(error.details).length : 0,
+      // Only include sanitized context
       context: context ? this.sanitizeContext(context) : undefined
     };
 
-    // In production, this would use a secure logging service
-    console.error('[SECURE_ERROR]', JSON.stringify(logEntry, null, 2));
+    // In production, use structured logging with appropriate log levels
+    // CRITICAL: Never log full error details as they may contain sensitive data
+    if (error.type === ErrorType.SECURITY || error.type === ErrorType.CRYPTOGRAPHIC) {
+      // Security errors should go to security monitoring system
+      console.error('[SECURITY_ALERT]', JSON.stringify({
+        timestamp: error.timestamp,
+        type: error.type,
+        code: error.code,
+        context: context ? { endpoint: context.endpoint, method: context.method } : undefined
+      }));
+    } else {
+      console.error('[ERROR]', JSON.stringify(logEntry));
+    }
   }
 
   /**

@@ -288,6 +288,45 @@ export class SecureCredentialManager {
       return false;
     }
     
-    return createHash('sha256').update(a).digest() === createHash('sha256').update(b).digest();
+    // Use proper constant-time comparison
+    let result = 0;
+    for (let i = 0; i < a.length; i++) {
+      result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    }
+    
+    return result === 0;
+  }
+
+  /**
+   * Secure memory cleanup - overwrite sensitive data
+   */
+  secureCleanup(): void {
+    // Clear all credentials
+    this.credentials.clear();
+    
+    // Overwrite encryption key in memory
+    if (this.encryptionKey) {
+      this.encryptionKey.fill(0);
+    }
+  }
+
+  /**
+   * Generate cryptographically secure random key
+   */
+  static generateSecureKey(): string {
+    return randomBytes(32).toString('hex');
+  }
+
+  /**
+   * Validate key strength requirements
+   */
+  static validateKeyStrength(key: string): boolean {
+    // Key must be at least 32 characters (256 bits when hex-encoded)
+    if (!key || key.length < 32) {
+      return false;
+    }
+    
+    // Key must be valid hex
+    return /^[a-fA-F0-9]+$/.test(key);
   }
 }

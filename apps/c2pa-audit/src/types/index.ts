@@ -1,6 +1,7 @@
 /**
  * C2PA Types and Interfaces
  * Core type definitions for C2PA manifest validation and audit
+ * Enhanced with strict validation and security constraints
  */
 
 // ============================================================================
@@ -29,7 +30,7 @@ export interface C2PAManifest {
 export interface ClaimSignature {
   /** JWS header */
   protected: {
-    alg: string;
+    alg: 'ES256' | 'ES384' | 'ES512' | 'RS256' | 'RS384' | 'RS512';
     kid?: string;
     iat?: number;
     x5c?: string[];
@@ -160,7 +161,7 @@ export type ValidationCode =
   | 'manifest.structureValid'
   | 'manifest.structureInvalid'
   | 'manifest.versionSupported'
-  | 'manifest.versionUnsupported'
+  | 'manifest.versionUnsupported';
 
 // ============================================================================
 // Diff Types (RFC 6902 / RFC 7386)

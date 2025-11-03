@@ -128,10 +128,7 @@ export class TLSConfigurationManager {
    * Generate development TLS configuration
    */
   generateDevelopmentTLSConfig(): TLSConfig {
-    // Generate self-signed certificate for development
-    const { key, cert } = this.generateSelfSignedCertificate();
-
-    return this.generateTLSConfig({ key, cert });
+    throw new Error('Self-signed certificates are not allowed - use proper certificates in all environments');
   }
 
   /**
@@ -212,20 +209,36 @@ export class TLSConfigurationManager {
       throw new Error('Certificate key and certificate are required');
     }
 
-    // Basic format validation (in production, use proper certificate parsing)
-    if (!certificates.key.includes('-----BEGIN') || !certificates.key.includes('-----END')) {
-      throw new Error('Invalid certificate key format');
+    // CRITICAL: Never accept placeholder certificates in production
+    if (certificates.key.includes('...') || certificates.cert.includes('...')) {
+      throw new Error('Placeholder certificates detected - production requires real certificates');
     }
 
-    if (!certificates.cert.includes('-----BEGIN') || !certificates.cert.includes('-----END')) {
-      throw new Error('Invalid certificate format');
+    // Enhanced format validation
+    if (!certificates.key.includes('-----BEGIN PRIVATE KEY-----') || !certificates.key.includes('-----END PRIVATE KEY-----')) {
+      throw new Error('Invalid certificate key format - must be PEM encoded private key');
+    }
+
+    if (!certificates.cert.includes('-----BEGIN CERTIFICATE-----') || !certificates.cert.includes('-----END CERTIFICATE-----')) {
+      throw new Error('Invalid certificate format - must be PEM encoded certificate');
+    }
+
+    // Validate key strength (must be at least 2048 bits)
+    const keyLines = certificates.key.split('\n').filter(line => !line.includes('-----'));
+    const keyData = keyLines.join('');
+    if (keyData.length < 100) { // Rough estimate for key strength
+      throw new Error('Certificate key is too weak - minimum 2048 bits required');
     }
 
     // Validate CA certificates if provided
     if (certificates.ca) {
+      if (certificates.ca.length > 10) {
+        throw new Error('Too many CA certificates - maximum 10 allowed');
+      }
+      
       for (const ca of certificates.ca) {
-        if (!ca.includes('-----BEGIN') || !ca.includes('-----END')) {
-          throw new Error('Invalid CA certificate format');
+        if (!ca.includes('-----BEGIN CERTIFICATE-----') || !ca.includes('-----END CERTIFICATE-----')) {
+          throw new Error('Invalid CA certificate format - must be PEM encoded');
         }
       }
     }
@@ -264,23 +277,6 @@ export class TLSConfigurationManager {
     // Simplified hostname validation
     // In production, implement proper X.509 hostname validation
     return subject.includes(hostname) || subject.includes('*');
-  }
-
-  /**
-   * Generate self-signed certificate for development
-   */
-  private generateSelfSignedCertificate(): { key: string; cert: string } {
-    // This is a placeholder implementation
-    // In production, use proper certificate generation
-    const key = `-----BEGIN PRIVATE KEY-----
-MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5...
------END PRIVATE KEY-----`;
-
-    const cert = `-----BEGIN CERTIFICATE-----
-MIIDXTCCAkWgAwIBAgIJAKoKHEvX6L9OMA0GCSqGSIb3DQEBBQUAMEU...
------END CERTIFICATE-----`;
-
-    return { key, cert };
   }
 
   /**

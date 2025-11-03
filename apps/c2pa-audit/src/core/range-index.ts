@@ -1,7 +1,10 @@
 /**
  * Range Index Generator
  * Generates and manages range indices for C2PA manifest components
+ * Enhanced with strict validation and security controls
  */
+
+import { createHash } from 'crypto';
 
 export interface RangeIndex {
   /** Start index */
@@ -25,10 +28,22 @@ export interface RangeIndexMap {
  * Generates range indices for manifest components
  */
 export class RangeIndexGenerator {
+  private static readonly MAX_CONTENT_LENGTH = 10000000; // 10MB
+  private static readonly MAX_INDICES_PER_COMPONENT = 10000;
+  private static readonly MAX_COMPONENTS = 1000;
+  
   private indices: Map<string, RangeIndex[]> = new Map();
   private content: string;
 
   constructor(content: string) {
+    if (typeof content !== 'string') {
+      throw new Error('Content must be a string');
+    }
+    
+    if (content.length > RangeIndexGenerator.MAX_CONTENT_LENGTH) {
+      throw new Error('Content too large for indexing');
+    }
+    
     this.content = content;
     this.generateAllIndices();
   }
@@ -37,12 +52,38 @@ export class RangeIndexGenerator {
    * Generate range index for a specific component
    */
   generateIndex(component: string, pattern: RegExp): RangeIndex[] {
+    if (!component || typeof component !== 'string') {
+      throw new Error('Component name must be a non-empty string');
+    }
+    
+    if (!(pattern instanceof RegExp)) {
+      throw new Error('Pattern must be a RegExp');
+    }
+    
+    if (this.indices.size >= RangeIndexGenerator.MAX_COMPONENTS) {
+      throw new Error('Maximum number of components exceeded');
+    }
+
     const componentIndices: RangeIndex[] = [];
     let match;
 
+    // Reset regex lastIndex to ensure consistent behavior
+    pattern.lastIndex = 0;
+
     while ((match = pattern.exec(this.content)) !== null) {
+      if (componentIndices.length >= RangeIndexGenerator.MAX_INDICES_PER_COMPONENT) {
+        break;
+      }
+      
       const startIndex = match.index;
+      if (startIndex === undefined) continue;
+      
       const endIndex = startIndex + match[0].length;
+
+      // Validate indices are within bounds
+      if (startIndex < 0 || endIndex > this.content.length || startIndex > endIndex) {
+        continue;
+      }
 
       componentIndices.push({
         start: startIndex,
@@ -64,6 +105,10 @@ export class RangeIndexGenerator {
    * Get range indices for a component
    */
   getIndices(component: string): RangeIndex[] {
+    if (!component || typeof component !== 'string') {
+      throw new Error('Component name must be a non-empty string');
+    }
+    
     return this.indices.get(component) || [];
   }
 
@@ -74,7 +119,7 @@ export class RangeIndexGenerator {
     const result: RangeIndexMap = {};
     
     this.indices.forEach((indices, component) => {
-      result[component] = indices;
+      result[component] = [...indices]; // Return copy to prevent mutation
     });
 
     return result;
@@ -84,6 +129,10 @@ export class RangeIndexGenerator {
    * Find component at position
    */
   findComponentAtPosition(position: number): { component: string; index: RangeIndex } | null {
+    if (typeof position !== 'number' || position < 0 || position > this.content.length) {
+      throw new Error('Position must be a valid number within content bounds');
+    }
+    
     let result: { component: string; index: RangeIndex } | null = null;
     
     this.indices.forEach((indices, component) => {
@@ -128,6 +177,11 @@ export class RangeIndexGenerator {
           if (prevIndex && index.start < prevIndex.end) {
             errors.push(`${component}[${i}]: Overlaps with previous index (${prevIndex.start}-${prevIndex.end})`);
           }
+        }
+
+        // Validate component name
+        if (index.component !== component) {
+          errors.push(`${component}[${i}]: Component mismatch (${index.component} vs ${component})`);
         }
       }
     });
@@ -219,6 +273,10 @@ export class RangeIndexGenerator {
    * Get line number for byte position
    */
   private getLineNumber(bytePosition: number): number {
+    if (bytePosition < 0 || bytePosition > this.content.length) {
+      throw new Error('Byte position out of bounds');
+    }
+    
     const text = this.content.substring(0, bytePosition);
     return text.split('\n').length;
   }
@@ -227,7 +285,33 @@ export class RangeIndexGenerator {
    * Extract content for a range index
    */
   extractContent(index: RangeIndex): string {
+    this.validateRangeIndex(index);
     return this.content.substring(index.start, index.end);
+  }
+
+  /**
+   * Validate a single range index
+   */
+  private validateRangeIndex(index: RangeIndex): void {
+    if (!index || typeof index !== 'object') {
+      throw new Error('Invalid range index: must be an object');
+    }
+    
+    if (typeof index.start !== 'number' || typeof index.end !== 'number') {
+      throw new Error('Invalid range index: start and end must be numbers');
+    }
+    
+    if (index.start < 0 || index.end > this.content.length || index.start > index.end) {
+      throw new Error('Invalid range index: out of bounds or invalid range');
+    }
+    
+    if (!['byte', 'character', 'line'].includes(index.type)) {
+      throw new Error('Invalid range index: invalid type');
+    }
+    
+    if (!index.component || typeof index.component !== 'string') {
+      throw new Error('Invalid range index: component must be a non-empty string');
+    }
   }
 
   /**
@@ -242,42 +326,27 @@ export class RangeIndexGenerator {
         return;
       }
 
+      const sortedIndices = [...indices].sort((a, b) => a.start - b.start);
       const merged: RangeIndex[] = [];
-      const firstIndex = indices[0];
-      if (!firstIndex) {
-        mergedIndices.set(component, []);
-        return;
-      }
-
-      let current: RangeIndex = {
-        start: firstIndex.start,
-        end: firstIndex.end,
-        type: firstIndex.type,
-        component: firstIndex.component,
-        ...(firstIndex.metadata && { metadata: firstIndex.metadata })
-      };
-
-      for (let i = 1; i < indices.length; i++) {
-        const next = indices[i];
-        if (!next) continue;
-
-        if (next.start <= current.end) {
+      
+      for (const index of sortedIndices) {
+        if (merged.length === 0) {
+          merged.push({ ...index });
+          continue;
+        }
+        
+        const last = merged[merged.length - 1];
+        if (!last) continue;
+        
+        if (index.start <= last.end) {
           // Overlapping or adjacent - merge them
-          current.end = Math.max(current.end, next.end);
+          last.end = Math.max(last.end, index.end);
         } else {
-          // No overlap - add current and start new
-          merged.push(current);
-          current = {
-            start: next.start,
-            end: next.end,
-            type: next.type,
-            component: next.component,
-            ...(next.metadata && { metadata: next.metadata })
-          };
+          // No overlap - add new index
+          merged.push({ ...index });
         }
       }
-
-      merged.push(current);
+      
       mergedIndices.set(component, merged);
     });
     
@@ -288,6 +357,10 @@ export class RangeIndexGenerator {
    * Filter indices by type
    */
   filterByType(type: 'byte' | 'character' | 'line'): RangeIndexMap {
+    if (!['byte', 'character', 'line'].includes(type)) {
+      throw new Error('Invalid index type');
+    }
+    
     const result: RangeIndexMap = {};
 
     this.indices.forEach((indices, component) => {
@@ -350,7 +423,17 @@ export class RangeIndexGenerator {
    * Import indices from JSON
    */
   static importFromJSON(json: string): RangeIndexGenerator {
-    const data = JSON.parse(json);
+    if (!json || typeof json !== 'string') {
+      throw new Error('JSON must be a non-empty string');
+    }
+    
+    let data: RangeIndexMap;
+    try {
+      data = JSON.parse(json);
+    } catch (error) {
+      throw new Error('Invalid JSON format');
+    }
+    
     const generator = new RangeIndexGenerator('');
     
     // Clear existing indices
@@ -358,7 +441,10 @@ export class RangeIndexGenerator {
 
     // Import indices from data
     for (const [component, indices] of Object.entries(data)) {
-      generator.indices.set(component, indices as RangeIndex[]);
+      if (!Array.isArray(indices)) {
+        throw new Error(`Invalid indices for component ${component}: must be an array`);
+      }
+      generator.indices.set(component, indices);
     }
 
     return generator;
@@ -368,6 +454,10 @@ export class RangeIndexGenerator {
    * Validate timestamp format in range indices
    */
   static validateTimestamp(timestamp: string): boolean {
+    if (!timestamp || typeof timestamp !== 'string') {
+      return false;
+    }
+    
     const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
     return iso8601Regex.test(timestamp);
   }
@@ -376,8 +466,13 @@ export class RangeIndexGenerator {
    * Generate hash for range index content
    */
   generateHashForIndex(index: RangeIndex, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): string {
+    this.validateRangeIndex(index);
+    
+    if (!['sha256', 'sha384', 'sha512'].includes(algorithm)) {
+      throw new Error('Invalid hash algorithm');
+    }
+    
     const content = this.extractContent(index);
-    const crypto = require('crypto');
-    return crypto.createHash(algorithm).update(content, 'utf8').digest('hex');
+    return createHash(algorithm).update(content, 'utf8').digest('hex');
   }
 }

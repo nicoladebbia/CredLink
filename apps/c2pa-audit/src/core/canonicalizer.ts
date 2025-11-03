@@ -1,16 +1,24 @@
 /**
  * JSON Canonicalizer
  * Implements RFC 8785 JSON Canonicalization Scheme for C2PA
+ * Enhanced with strict validation and security controls
  */
 
+import { createHash } from 'crypto';
+
 export class JSONCanonicalizer {
+  private static readonly MAX_NESTING_DEPTH = 100;
+  private static readonly MAX_STRING_LENGTH = 1000000; // 1MB
+  private static readonly MAX_ARRAY_LENGTH = 10000;
+  private static readonly MAX_OBJECT_KEYS = 10000;
+
   /**
    * Canonicalize a JSON object according to RFC 8785
    * @param obj - The JSON object to canonicalize
    * @returns Canonicalized JSON string
    */
   static canonicalize(obj: unknown): string {
-    return this.canonicalizeValue(obj);
+    return this.canonicalizeValue(obj, 0);
   }
 
   /**
@@ -20,14 +28,26 @@ export class JSONCanonicalizer {
    * @returns Hex-encoded hash
    */
   static hash(data: string, algorithm: 'sha256' | 'sha384' | 'sha512'): string {
-    const crypto = require('crypto');
-    return crypto.createHash(algorithm).update(data, 'utf8').digest('hex');
+    if (!data || typeof data !== 'string') {
+      throw new Error('Invalid data for hashing: must be non-empty string');
+    }
+    
+    if (data.length > this.MAX_STRING_LENGTH) {
+      throw new Error('Data too large for canonicalization');
+    }
+
+    return createHash(algorithm).update(data, 'utf8').digest('hex');
   }
 
   /**
    * Canonicalize a value based on its type
    */
-  private static canonicalizeValue(value: unknown): string {
+  private static canonicalizeValue(value: unknown, depth: number): string {
+    // Prevent stack overflow from deeply nested objects
+    if (depth > this.MAX_NESTING_DEPTH) {
+      throw new Error('Maximum nesting depth exceeded during canonicalization');
+    }
+
     if (value === null) {
       return 'null';
     }
@@ -45,11 +65,11 @@ export class JSONCanonicalizer {
     }
 
     if (Array.isArray(value)) {
-      return this.canonicalizeArray(value);
+      return this.canonicalizeArray(value, depth + 1);
     }
 
-    if (typeof value === 'object') {
-      return this.canonicalizeObject(value as Record<string, unknown>);
+    if (typeof value === 'object' && value !== null) {
+      return this.canonicalizeObject(value as Record<string, unknown>, depth + 1);
     }
 
     throw new Error(`Unsupported type: ${typeof value}`);
@@ -60,7 +80,7 @@ export class JSONCanonicalizer {
    */
   private static canonicalizeNumber(num: number): string {
     if (!isFinite(num)) {
-      throw new Error('Numbers must be finite');
+      throw new Error('Numbers must be finite for canonicalization');
     }
 
     // Handle integer and floating point numbers
@@ -86,12 +106,16 @@ export class JSONCanonicalizer {
   private static convertScientificToDecimal(scientific: string): string {
     const parts = scientific.toLowerCase().split('e');
     if (parts.length !== 2 || !parts[0] || !parts[1]) {
-      return scientific;
+      throw new Error('Invalid scientific notation format');
     }
 
     const mantissa = parts[0];
     const exponentStr = parts[1];
     const exponent = parseInt(exponentStr, 10);
+
+    if (isNaN(exponent)) {
+      throw new Error('Invalid exponent in scientific notation');
+    }
 
     if (exponent === 0) {
       return mantissa;
@@ -141,6 +165,10 @@ export class JSONCanonicalizer {
    * Canonicalize a string according to RFC 8785
    */
   private static canonicalizeString(str: string): string {
+    if (str.length > this.MAX_STRING_LENGTH) {
+      throw new Error('String too large for canonicalization');
+    }
+
     // Escape special characters
     let escaped = '';
     for (let i = 0; i < str.length; i++) {
@@ -165,17 +193,27 @@ export class JSONCanonicalizer {
   /**
    * Canonicalize an array according to RFC 8785
    */
-  private static canonicalizeArray(arr: unknown[]): string {
-    const elements = arr.map(item => this.canonicalizeValue(item));
+  private static canonicalizeArray(arr: unknown[], depth: number): string {
+    if (arr.length > this.MAX_ARRAY_LENGTH) {
+      throw new Error('Array too large for canonicalization');
+    }
+
+    const elements = arr.map(item => this.canonicalizeValue(item, depth));
     return `[${elements.join(',')}]`;
   }
 
   /**
    * Canonicalize an object according to RFC 8785
    */
-  private static canonicalizeObject(obj: Record<string, unknown>): string {
+  private static canonicalizeObject(obj: Record<string, unknown>, depth: number): string {
+    const keys = Object.keys(obj);
+    
+    if (keys.length > this.MAX_OBJECT_KEYS) {
+      throw new Error('Object has too many keys for canonicalization');
+    }
+
     // Get all keys and sort them lexicographically by code point
-    const keys = Object.keys(obj).sort((a, b) => {
+    const sortedKeys = keys.sort((a, b) => {
       // Compare strings by their UTF-16 code units
       const lenA = a.length;
       const lenB = b.length;
@@ -194,9 +232,9 @@ export class JSONCanonicalizer {
     });
 
     // Canonicalize each key-value pair
-    const pairs = keys.map(key => {
+    const pairs = sortedKeys.map(key => {
       const canonicalKey = this.canonicalizeString(key);
-      const canonicalValue = this.canonicalizeValue(obj[key]);
+      const canonicalValue = this.canonicalizeValue(obj[key], depth);
       return `${canonicalKey}:${canonicalValue}`;
     });
 
@@ -208,6 +246,10 @@ export class JSONCanonicalizer {
    */
   static validateCanonicalized(original: unknown, canonicalized: string): boolean {
     try {
+      if (!canonicalized || typeof canonicalized !== 'string') {
+        return false;
+      }
+      
       const reCanonicalized = this.canonicalize(original);
       return reCanonicalized === canonicalized;
     } catch (error) {
@@ -228,6 +270,10 @@ export class JSONCanonicalizer {
    * Compare two canonicalized strings
    */
   static compareCanonicalized(a: string, b: string): number {
+    if (!a || !b || typeof a !== 'string' || typeof b !== 'string') {
+      throw new Error('Invalid inputs for comparison: must be non-empty strings');
+    }
+    
     if (a === b) return 0;
     return a < b ? -1 : 1;
   }
@@ -236,32 +282,12 @@ export class JSONCanonicalizer {
    * Check if a value is canonicalizable
    */
   static isCanonicalizable(value: unknown): boolean {
-    if (value === null || typeof value === 'boolean' || typeof value === 'string') {
+    try {
+      this.canonicalize(value);
       return true;
+    } catch (error) {
+      return false;
     }
-
-    if (typeof value === 'number') {
-      return isFinite(value);
-    }
-
-    if (Array.isArray(value)) {
-      return value.every(item => this.isCanonicalizable(item));
-    }
-
-    if (typeof value === 'object') {
-      const obj = value as Record<string, unknown>;
-      const keys = Object.keys(obj);
-      
-      // Check that all keys are strings
-      if (!keys.every(key => typeof key === 'string')) {
-        return false;
-      }
-
-      // Check that all values are canonicalizable
-      return Object.values(obj).every(val => this.isCanonicalizable(val));
-    }
-
-    return false;
   }
 
   /**
@@ -281,10 +307,19 @@ export class JSONCanonicalizer {
     }
 
     if (Array.isArray(value)) {
+      if (value.length > this.MAX_ARRAY_LENGTH) {
+        throw new Error('Array too large for cloning');
+      }
       return value.map(item => this.deepCloneAndCanonicalize(item));
     }
 
     const obj = value as Record<string, unknown>;
+    const keys = Object.keys(obj);
+    
+    if (keys.length > this.MAX_OBJECT_KEYS) {
+      throw new Error('Object has too many keys for cloning');
+    }
+    
     const cloned: Record<string, unknown> = {};
     
     for (const [key, val] of Object.entries(obj)) {
