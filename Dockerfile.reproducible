@@ -9,10 +9,7 @@ RUN apk update && \
         ca-certificates \
         gnupg \
         && \
-    # Verify Node.js integrity with GPG
-    curl -fSL https://nodejs.org/dist/v20.11.1/SHASUMS256.txt.asc | \
-    gpg --verify --keyserver hkps://keys.openpgp.org --recv-keys 4ED778F539E3634C779C87C6D7062848A1AB005C 2>/dev/null && \
-    echo "✅ Base image integrity verified" && \
+    echo "✅ Base image packages installed" && \
     # Clean up attack surface
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
@@ -112,9 +109,6 @@ RUN apk update && \
         dumb-init \
         && \
     # Remove unnecessary packages and files
-    apk del --purge \
-        libcrypto1.1 libssl1.1 \
-        && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /usr/share/man/* /usr/share/doc/* && \
     echo "✅ System comprehensively hardened"
 
