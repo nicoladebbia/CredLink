@@ -2,7 +2,7 @@
  * Phase 19: Marketplace Connectors - Manifest Assertion Builder
  * Builds IPTC-compliant C2PA license assertions from provider metadata
  */
-import { LicenseAssertion, ReleaseAssertion, ProviderManifestAssertion, ProviderAssetMetadata } from './types.js';
+import { LicenseAssertion, ReleaseAssertion, ProviderManifestAssertion, ProviderAssetMetadata, ValidationResult } from './types.js';
 export type { LicenseAssertion, ReleaseAssertion, ProviderManifestAssertion, ProviderAssetMetadata, LicenseProvider } from './types.js';
 /**
  * Build license assertion from provider metadata with IPTC fields
@@ -27,10 +27,11 @@ export declare function getManifestStoragePath(manifestHash: string): string;
 /**
  * Validate license assertion against IPTC requirements
  */
-export declare function validateLicenseAssertion(assertion: LicenseAssertion): {
-    valid: boolean;
-    errors: string[];
-};
+export declare function validateLicenseAssertion(assertion: LicenseAssertion): ValidationResult;
+/**
+ * Validate complete manifest assertion
+ */
+export declare function validateManifestAssertion(assertion: ProviderManifestAssertion): ValidationResult;
 /**
  * Format license information for badge display
  */
@@ -39,3 +40,4 @@ export declare function formatLicenseForBadge(assertion: LicenseAssertion): stri
  * Generate badge clickthrough URL
  */
 export declare function generateBadgeUrl(assertion: LicenseAssertion, baseUrl: string, manifestHash: string): string;
+//# sourceMappingURL=assertion-builder.d.ts.map

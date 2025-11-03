@@ -3,3 +3,4 @@
  * IPTC-compliant license assertions for C2PA manifests
  */
 export {};
+//# sourceMappingURL=types.js.map

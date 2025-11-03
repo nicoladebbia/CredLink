@@ -9,6 +9,9 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 4101;
 const app = express();
 
+// In-memory storage for hash-to-manifest mapping
+const manifestStore = new Map();
+
 app.use(cors());
 app.use(express.json());
 
@@ -69,11 +72,11 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
       .jpeg({ quality: 75 }) // Lower quality to simulate optimizer
       .toBuffer();
 
-    // Generate deterministic manifest content for hash calculation
+    // Create a manifest structure that includes the filename for uniqueness
     const manifestContent = {
       '@context': ['https://w3id.org/c2pa/1.0'],
       claim: {
-        signature: 'placeholder', // Will be replaced with actual hash
+        signature: filename, // Use filename for uniqueness
         assertion_data: {
           'c2pa.assertions': [
             {
@@ -82,7 +85,7 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
                 'actions': [
                   {
                     'action': 'c2pa.created',
-                    'when': '2025-01-01T00:00:00.000Z', // Fixed timestamp for determinism
+                    'when': '2025-01-01T00:00:00.000Z',
                     'softwareAgent': 'C2-Concierge-Strip-Happy'
                   }
                 ]
@@ -93,14 +96,14 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
       }
     };
     
-    // Generate hash based on deterministic content (with placeholder signature)
+    // Generate hash of this exact structure
     const manifestHash = crypto
       .createHash('sha256')
       .update(JSON.stringify(manifestContent))
       .digest('hex');
     
-    // Update the manifest content with the actual hash
-    manifestContent.claim.signature = manifestHash;
+    // Store the manifest content for later retrieval
+    manifestStore.set(manifestHash, manifestContent);
     
     res.set('X-Manifest-Hash', manifestHash);
     res.set('X-C2-Policy', 'remote-only');
@@ -132,30 +135,12 @@ app.get('/manifests/:hash.c2pa', (req, res) => {
       return res.status(400).json({ error: 'Invalid manifest hash format' });
     }
     
-    // Create manifest content that will hash to exactly the requested hash
-    // For testing purposes, we create deterministic content based on the hash
-    const manifest = {
-      '@context': ['https://w3id.org/c2pa/1.0'],
-      claim: {
-        signature: hash, // Use the hash itself as the signature
-        assertion_data: {
-          'c2pa.assertions': [
-            {
-              'label': 'c2pa.actions',
-              'data': {
-                'actions': [
-                  {
-                    'action': 'c2pa.created',
-                    'when': '2025-01-01T00:00:00.000Z', // Fixed timestamp for determinism
-                    'softwareAgent': 'C2-Concierge-Strip-Happy'
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    };
+    // Retrieve the stored manifest content that matches this hash
+    const manifest = manifestStore.get(hash);
+    
+    if (!manifest) {
+      return res.status(404).json({ error: 'Manifest not found' });
+    }
     
     res.set('Content-Type', 'application/c2pa');
     res.set('Cache-Control', 'public, max-age=31536000, immutable');
