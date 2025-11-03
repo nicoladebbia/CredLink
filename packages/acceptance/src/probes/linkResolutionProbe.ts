@@ -54,7 +54,14 @@ export async function probeLinkResolution(
     if (linkHeader) {
       const match = linkHeader.match(/<([^>]+)>;\s*rel="c2pa-manifest"/);
       if (match) {
-        manifestUrl = match[1];
+        let rawManifestUrl = match[1];
+        // Convert relative URL to absolute URL
+        if (rawManifestUrl.startsWith('/')) {
+          const assetUrlObj = new URL(assetUrl);
+          manifestUrl = `${assetUrlObj.protocol}//${assetUrlObj.host}${rawManifestUrl}`;
+        } else {
+          manifestUrl = rawManifestUrl;
+        }
         // Security: Validate extracted manifest URL
         if (!isValidUrl(manifestUrl)) {
           throw new Error(`Invalid manifest URL: ${manifestUrl}`);

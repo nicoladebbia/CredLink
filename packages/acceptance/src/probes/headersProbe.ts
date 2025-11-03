@@ -15,12 +15,15 @@ export async function probeHeaders(assetUrl: string): Promise<{
   const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
   try {
+    console.log(`🔍 Probing headers for: ${assetUrl}`);
     const response = await fetch(assetUrl, { 
       method: 'HEAD',
       signal: controller.signal
     });
     
     clearTimeout(timeoutId);
+    
+    console.log(`🔍 Response status: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch headers: ${response.status} ${response.statusText}`);

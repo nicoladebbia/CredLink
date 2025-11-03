@@ -52,8 +52,19 @@ export async function runScenario(
     try {
       inputBuffer = readFileSync(join(__dirname, fixturePath));
     } catch (error) {
-      // Create a proper test buffer if fixture doesn't exist yet
-      inputBuffer = Buffer.from('test-image-content-for-phase-0');
+      // Create a proper test image buffer if fixture doesn't exist yet
+      console.log('Creating test image buffer...');
+      const sharp = (await import('sharp')).default;
+      inputBuffer = await sharp({
+        create: {
+          width: 100,
+          height: 100,
+          channels: 3,
+          background: { r: 255, g: 0, b: 0 }
+        }
+      })
+      .jpeg({ quality: 90 })
+      .toBuffer();
     }
 
     // Apply transforms
