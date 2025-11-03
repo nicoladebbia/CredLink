@@ -101,6 +101,7 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
     
     res.set('X-Manifest-Hash', manifestHash);
     res.set('X-C2-Policy', 'remote-only');
+    res.set('Link', `</manifests/${manifestHash}.c2pa>; rel="c2pa-manifest"`);
     
     // CSP headers to block embed extraction
     res.set('Content-Security-Policy', "default-src 'none'; img-src 'self' data:; frame-ancestors 'none'");

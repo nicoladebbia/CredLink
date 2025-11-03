@@ -79,6 +79,7 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
     res.set('X-C2-Policy', 'remote-only');
     res.set('Cache-Control', 'public, max-age=3600');
     res.set('Content-Type', 'image/jpeg');
+    res.set('Link', `</manifests/${manifestHash}.c2pa>; rel="c2pa-manifest"`);
     
     // Security: Add anti-CSRF and security headers
     res.set('X-Content-Type-Options', 'nosniff');

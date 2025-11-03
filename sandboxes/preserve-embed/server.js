@@ -113,6 +113,7 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
     res.set('X-C2-Policy', 'preserve-allowed');
     res.set('Cache-Control', 'public, max-age=3600');
     res.set('Content-Type', 'image/jpeg');
+    res.set('Link', `</manifests/${manifestHash}.c2pa>; rel="c2pa-manifest"`);
     
     res.send(imageBuffer);
   } catch (error) {
