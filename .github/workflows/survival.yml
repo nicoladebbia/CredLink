@@ -8,6 +8,12 @@ on:
     # Run daily at 14:00 UTC (10:00 EST)
     - cron: '0 14 * * *'
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
 jobs:
   matrix-run:
     runs-on: ubuntu-latest
