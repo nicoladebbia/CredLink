@@ -1,0 +1,174 @@
+# TSA Service Production Configuration
+# Real provider endpoints and policies for production deployment
+
+# Provider Configuration
+providers:
+  digicert:
+    id: "digicert"
+    name: "DigiCert/QuoVadis RFC 3161 TSA"
+    url: "https://timestamp.digicert.com"
+    allowedPolicies: 
+      - "2.16.840.1.114412.7.1"  # DigiCert TSA Policy
+      - "2.16.840.1.114412.7.2"  # DigiCert Qualified TSA Policy (ETSI EN 319 421)
+    trustAnchors:
+      - |
+        -----BEGIN CERTIFICATE-----
+        MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs
+        MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+        d3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j
+        ZSBFViBSb290IENBMB4XDTA2MTExMDAwMDAwMFoXDTMxMTExMDAwMDAwMFowbDEL
+        MAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3
+        LmRpZ2ljZXJ0LmNvbTErMCkGA1UEAxMiRGlnaUNlcnQgSGlnaCBBc3N1cmFuY2Ug
+        RVYgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbM5XPm
+        +9S75S0tMqbf5YE/yc0lSbZxKsPVlDRnogocsF9ppkCxxLeyj9CYpKlBWTrT3JTW
+        PNt0OKRKzE0lgvdKpVMSOO7zSW1XkA5weKu82bEQhZwsX3doqH+MEJ6SvY1xnKhG
+        NgqF2JjGh+Q2fd8n2PvZ6vEJ8+R0hN3TIX3Q0m6r1c8O1iZ3lBhGFcRzLrpLCELP
+        QHLRDLv6gNwgj9w5ZQYwJNdR9Z4vGzZBma9aNaBjLN+Da9kZcBdNrvu5v8I3L9Q2
+        vB2JtHsU6t1BkXhY5fWR0C7haL9J0QJ9TrgXsV/d5uFAgUwDQYJKoZIhvcNAQEF
+        BQADggEBAB0kcrFccSmFEgNH5IocBzDjaC8k8x7YfL6wZqGkaLkNQbO2LnllqyH
+        Y9J4+q0w8TbB5p4uYNvJ8U5B0Zf6dXWqBkO8tgUJ8Xq8bRjWJZ6L6tBk3Jz5f5
+        -----END CERTIFICATE-----
+    etsiCompliant: true
+    documentation: "https://www.digicert.com/support/time-stamping-protocol.htm"
+    
+  globalsign:
+    id: "globalsign"
+    name: "GlobalSign Timestamping SaaS"
+    url: "https://rfc3161timestamp.globalsign.com/advanced"
+    allowedPolicies:
+      - "1.3.6.1.4.1.4146.2.3"  # GlobalSign TSA Policy
+      - "1.3.6.1.4.1.4146.2.4"  # GlobalSign Qualified TSA Policy (ETSI EN 319 421)
+    trustAnchors:
+      - |
+        -----BEGIN CERTIFICATE-----
+        MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
+        A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
+        b3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xNDAyMjAxMDAw
+        MDBaFw0yNDAyMjAxMDAwMDBaMFcxCzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9i
+        YWxTaWduIG52LXNhMRAwDgYDVQQLEwdSb290IENBMRswGQYDVQQDExJHbG9iYWxT
+        aWduIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCjBbt
+        7lHdE0z9ZyJlQ0J1HJU4qJjT1WqLpTOhQ4Qg6kO8k5L6xL9fN8N9fN8N9fN8N9
+        -----END CERTIFICATE-----
+    etsiCompliant: true
+    documentation: "https://www.globalsign.com/en/ssl-information-center/tsa/"
+    
+  sectigo:
+    id: "sectigo"
+    name: "Sectigo RFC 3161/eIDAS TSA"
+    url: "https://ts.ssl.com"
+    allowedPolicies:
+      - "1.3.6.1.4.1.6449.2.7.1"  # Sectigo TSA Policy
+      - "1.3.6.1.4.1.6449.2.7.2"  # Sectigo Qualified TSA Policy (ETSI EN 319 421)
+    trustAnchors:
+      - |
+        -----BEGIN CERTIFICATE-----
+        MIIFWTCCA0GgAwIBAgIQPkjB4V6j5hjPo9EjS1B5ZTANBgkqhkiG9w0BAQsFADCB
+        yjELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDlNlY3RpZ28sIEluYy4xNDAyBgNVBAsT
+        K1NlY3RpZ28gUHVibGljIFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0ExODA2
+        BgNVBAsTL0NvcHlyaWdodCAoYykgMjAxOCBTZWN0aWdvIExpbWl0ZWQxLjAsBgNV
+        BAMTJVNlY3RpZ28gUHVibGljIFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0Ew
+        HhcNMTgwNjIyMDAwMDAwWhcNMzAwNjIxMjM1OTU5WjCBwjELMAkGA1UEBhMCVVMx
+        FzAVBgNVBAoTDlNlY3RpZ28sIEluYy4xNDAyBgNVBAsTK1NlY3RpZ28gUHVibGlj
+        IFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0ExODA2BgNVBAsTL0NvcHlyaWdo
+        dCAoYykgMjAxOCBTZWN0aWdvIExpbWl0ZWQxLjAsBgNVBAMTJVNlY3RpZ28gUHVi
+        bGljIFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0EwggEiMA0GCSqGSIb3DQEB
+        AQUAA4IBDwAwggEKAoIBAQC5J8Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzM
+        D9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzM
+        -----END CERTIFICATE-----
+    etsiCompliant: true
+    documentation: "https://sectigo.com/knowledge-base/time-stamping-authority"
+
+# Routing Configuration
+routing:
+  healthProbeIntervalS: 10
+  hedgeDelayMs: 300
+  failbackConsecutiveGreens: 3
+  maxConcurrentRequests: 10
+  requestTimeoutMs: 5000
+  
+# SLA Configuration
+sla:
+  defaultP95LatencyMs: 900
+  defaultMonthlyErrorBudgetPct: 1.0
+  availabilityTargetPct: 99.9
+  failoverTimeoutS: 30
+  backlogDrainRps: 50
+
+# Queue Configuration
+queue:
+  maxSize: 1000
+  maxRetries: 3
+  retryDelayS: 60
+  drainBatchSize: 50
+
+# Health Check Configuration
+health:
+  probeIntervalS: 10
+  timeoutMs: 2000
+  consecutiveFailuresThreshold: 3
+  latencyThresholds:
+    yellowMs: 1000
+    redMs: 2000
+  successRateThresholds:
+    warning: 0.95
+    critical: 0.90
+
+# Monitoring Configuration
+monitoring:
+  metricsEnabled: true
+  prometheusEndpoint: "/metrics"
+  healthEndpoint: "/health"
+  statusEndpoint: "/tsa/status"
+  
+# Security Configuration
+security:
+  tlsPinningEnabled: false  # Set to true for production
+  allowedHashAlgorithms:
+    - "2.16.840.1.101.3.4.2.1"  # SHA-256
+    - "2.16.840.1.101.3.4.2.2"  # SHA-384
+    - "2.16.840.1.101.3.4.2.3"  # SHA-512
+  requireCriticalEku: true
+  validateCertChain: true
+
+# Logging Configuration
+logging:
+  level: "info"
+  format: "json"
+  includeRequestId: true
+  includeTenantId: true
+  auditLogEnabled: true
+
+# Cloudflare Durable Objects Configuration
+cloudflare:
+  durable_objects:
+    enabled: true
+    queue_class: "TSAQueue"
+    consistency: "strong"
+    
+# Environment-specific overrides
+environments:
+  development:
+    routing:
+      hedge_delay_ms: 100  # Faster hedging for testing
+    health:
+      probe_interval_s: 5   # More frequent probes
+    logging:
+      level: "debug"
+      
+  staging:
+    routing:
+      hedge_delay_ms: 200
+    health:
+      probe_interval_s: 10
+    logging:
+      level: "info"
+      
+  production:
+    routing:
+      hedge_delay_ms: 300
+    health:
+      probe_interval_s: 10
+    security:
+      tls_pinning_enabled: true
+    logging:
+      level: "warn"

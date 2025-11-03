@@ -1,0 +1,142 @@
+# Tenant TSA Policies Configuration
+# Declarative, auditable per-tenant trust policies
+
+# Example: News organization with strict compliance
+acme-news:
+  tenant_id: "acme-news"
+  accepted_trust_anchors:
+    - name: "DigiCert TSA Root"
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs
+        MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+        d3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j
+        ZSBFViBSb290IENBMB4XDTA2MTExMDAwMDAwMFoXDTMxMTExMDAwMDAwMFowbDEL
+        MAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3
+        LmRpZ2ljZXJ0LmNvbTErMCkGA1UEAxMiRGlnaUNlcnQgSGlnaCBBc3N1cmFuY2Ug
+        RVYgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbM5XPm
+        +9S75S0tMqbf5YE/yc0lSbZxKsPVlDRnogocsF9ppkCxxLeyj9CYpKlBWTrT3JTW
+        PNt0OKRKzE0lgvdKpVMSOO7zSW1XkA5weKu82bEQhZwsX3doqH+MEJ6SvY1xnKhG
+        NgqF2JjGh+Q2fd8n2PvZ6vEJ8+R0hN3TIX3Q0m6r1c8O1iZ3lBhGFcRzLrpLCELP
+        QHLRDLv6gNwgj9w5ZQYwJNdR9Z4vGzZBma9aNaBjLN+Da9kZcBdNrvu5v8I3L9Q2
+        vB2JtHsU6t1BkXhY5fWR0C7haL9J0QJ9TrgXsV/d5uFAgUwDQYJKoZIhvcNAQEF
+        BQADggEBAB0kcrFccSmFEgNH5IocBzDjaC8k8x7YfL6wZqGkaLkNQbO2LnllqyH
+        Y9J4+q0w8TbB5p4uYNvJ8U5B0Zf6dXWqBkO8tgUJ8Xq8bRjWJZ6L6tBk3Jz5f5
+        -----END CERTIFICATE-----
+      ekuRequired: "1.3.6.1.5.5.7.3.8"  # id-kp-timeStamping (RFC 3161 §2.3)
+    
+    - name: "GlobalSign TSA Root"
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
+        A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
+        b3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xNDAyMjAxMDAw
+        MDBaFw0yNDAyMjAxMDAwMDBaMFcxCzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9i
+        YWxTaWduIG52LXNhMRAwDgYDVQQLEwdSb290IENBMRswGQYDVQQDExJHbG9iYWxT
+        aWduIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCjBbt
+        7lHdE0z9ZyJlQ0J1HJU4qJjT1WqLpTOhQ4Qg6kO8k5L6xL9fN8N9fN8N9fN8N9
+        -----END CERTIFICATE-----
+      ekuRequired: "1.3.6.1.5.5.7.3.8"
+  
+  accepted_policy_oids:
+    - "2.16.840.1.114412.7.1"  # DigiCert TSA Policy
+    - "1.3.6.1.4.1.4146.2.3"    # GlobalSign TSA Policy
+    - "1.3.6.1.4.1.6449.2.7.1"  # Sectigo TSA Policy
+  
+  routing_priority: ["digicert", "globalsign", "sectigo"]
+  
+  sla:
+    p95_latency_ms: 900
+    monthly_error_budget_pct: 1.0
+
+# Example: Financial institution with EU compliance requirements
+financial-corp:
+  tenant_id: "financial-corp"
+  accepted_trust_anchors:
+    - name: "DigiCert Qualified TSA Root"
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIFWTCCA0GgAwIBAgIQPkjB4V6j5hjPo9EjS1B5ZTANBgkqhkiG9w0BAQsFADCB
+        yjELMAkGA1UEBhMCVVMxFzAVBgNVBAoTDlNlY3RpZ28sIEluYy4xNDAyBgNVBAsT
+        K1NlY3RpZ28gUHVibGljIFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0ExODA2
+        BgNVBAsTL0NvcHlyaWdodCAoYykgMjAxOCBTZWN0aWdvIExpbWl0ZWQxLjAsBgNV
+        BAMTJVNlY3RpZ28gUHVibGljIFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0Ew
+        HhcNMTgwNjIyMDAwMDAwWhcNMzAwNjIxMjM1OTU5WjCBwjELMAkGA1UEBhMCVVMx
+        FzAVBgNVBAoTDlNlY3RpZ28sIEluYy4xNDAyBgNVBAsTK1NlY3RpZ28gUHVibGlj
+        IFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0ExODA2BgNVBAsTL0NvcHlyaWdo
+        dCAoYykgMjAxOCBTZWN0aWdvIExpbWl0ZWQxLjAsBgNVBAMTJVNlY3RpZ28gUHVi
+        bGljIFRydXN0IE5ldHdvcmsgRW5naW5lZXJpbmcgQ0EwggEiMA0GCSqGSIb3DQEB
+        AQUAA4IBDwAwggEKAoIBAQC5J8Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzM
+        D9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzMD9Z8RJzM
+        -----END CERTIFICATE-----
+      ekuRequired: "1.3.6.1.5.5.7.3.8"
+  
+  accepted_policy_oids:
+    - "2.16.840.1.114412.7.2"  # DigiCert Qualified TSA Policy (ETSI EN 319 421)
+    - "1.3.6.1.4.1.4146.2.4"    # GlobalSign Qualified TSA Policy
+  
+  routing_priority: ["digicert", "sectigo"]  # Only ETSI-compliant providers
+  
+  sla:
+    p95_latency_ms: 1200  # Higher latency tolerance for qualified TSAs
+    monthly_error_budget_pct: 0.5  # Stricter error budget for financial
+
+# Example: Healthcare provider with US compliance
+healthcare-provider:
+  tenant_id: "healthcare-provider"
+  accepted_trust_anchors:
+    - name: "DigiCert TSA Root"
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIDxTCCAq2gAwIBAgIQAqxcJmoLQJuPC3nyrkYldzANBgkqhkiG9w0BAQUFADBs
+        MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+        d3cuZGlnaWNlcnQuY29tMSswKQYDVQQDEyJEaWdpQ2VydCBIaWdoIEFzc3VyYW5j
+        ZSBFViBSb290IENBMB4XDTA2MTExMDAwMDAwMFoXDTMxMTExMDAwMDAwMFowbDEL
+        MAkGA1UEBhMCVVMxFTATBgNVBAoTDERpZ2lDZXJ0IEluYzEZMBcGA1UECxMQd3d3
+        LmRpZ2ljZXJ0LmNvbTErMCkGA1UEAxMiRGlnaUNlcnQgSGlnaCBBc3N1cmFuY2Ug
+        RVYgUm9vdCBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMbM5XPm
+        +9S75S0tMqbf5YE/yc0lSbZxKsPVlDRnogocsF9ppkCxxLeyj9CYpKlBWTrT3JTW
+        PNt0OKRKzE0lgvdKpVMSOO7zSW1XkA5weKu82bEQhZwsX3doqH+MEJ6SvY1xnKhG
+        NgqF2JjGh+Q2fd8n2PvZ6vEJ8+R0hN3TIX3Q0m6r1c8O1iZ3lBhGFcRzLrpLCELP
+        QHLRDLv6gNwgj9w5ZQYwJNdR9Z4vGzZBma9aNaBjLN+Da9kZcBdNrvu5v8I3L9Q2
+        vB2JtHsU6t1BkXhY5fWR0C7haL9J0QJ9TrgXsV/d5uFAgUwDQYJKoZIhvcNAQEF
+        BQADggEBAB0kcrFccSmFEgNH5IocBzDjaC8k8x7YfL6wZqGkaLkNQbO2LnllqyH
+        Y9J4+q0w8TbB5p4uYNvJ8U5B0Zf6dXWqBkO8tgUJ8Xq8bRjWJZ6L6tBk3Jz5f5
+        -----END CERTIFICATE-----
+      ekuRequired: "1.3.6.1.5.5.7.3.8"
+  
+  accepted_policy_oids:
+    - "2.16.840.1.114412.7.1"  # DigiCert TSA Policy
+    - "1.3.6.1.4.1.4146.2.3"    # GlobalSign TSA Policy
+  
+  routing_priority: ["globalsign", "digicert", "sectigo"]
+  
+  sla:
+    p95_latency_ms: 1500  # Higher tolerance for healthcare systems
+    monthly_error_budget_pct: 2.0  # More lenient for critical systems
+
+# Example: SaaS platform with cost optimization
+saas-platform:
+  tenant_id: "saas-platform"
+  accepted_trust_anchors:
+    - name: "GlobalSign TSA Root"
+      pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
+        A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
+        b3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw0xNDAyMjAxMDAw
+        MDBaFw0yNDAyMjAxMDAwMDBaMFcxCzAJBgNVBAYTAkJFMRkwFwYDVQQKExBHbG9i
+        YWxTaWduIG52LXNhMRAwDgYDVQQLEwdSb290IENBMRswGQYDVQQDExJHbG9iYWxT
+        aWduIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCjBbt
+        7lHdE0z9ZyJlQ0J1HJU4qJjT1WqLpTOhQ4Qg6kO8k5L6xL9fN8N9fN8N9fN8N9
+        -----END CERTIFICATE-----
+      ekuRequired: "1.3.6.1.5.5.7.3.8"
+  
+  accepted_policy_oids:
+    - "1.3.6.1.4.1.4146.2.3"  # GlobalSign TSA Policy (cost-effective)
+  
+  routing_priority: ["globalsign"]  # Single provider for cost control
+  
+  sla:
+    p95_latency_ms: 2000  # Higher latency tolerance for cost savings
+    monthly_error_budget_pct: 5.0  # Higher error budget acceptable

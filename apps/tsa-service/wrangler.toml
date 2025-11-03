@@ -1,0 +1,51 @@
+# TSA Service Cloudflare Workers Configuration
+name = "tsa-service"
+main = "dist/index.js"
+compatibility_date = "2023-11-03"
+compatibility_flags = ["nodejs_compat"]
+
+# Durable Objects for queue management
+[[durable_objects.bindings]]
+name = "TSA_QUEUE"
+class_name = "TSAQueue"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+LOG_LEVEL = "info"
+
+# KV namespace for configuration storage (optional)
+# [[kv_namespaces]]
+# binding = "TSA_CONFIG"
+# id = "your-kv-namespace-id"
+# preview_id = "your-preview-kv-namespace-id"
+
+# D1 database for audit logs (optional)
+# [[d1_databases]]
+# binding = "TSA_DB"
+# database_name = "tsa-audit-db"
+# database_id = "your-d1-database-id"
+
+# Limits and configuration
+[limits]
+cpu_ms = 50000
+
+# Build configuration
+[build]
+command = "pnpm build"
+
+# Development configuration
+[dev]
+port = 8787
+local_protocol = "http"
+upstream_protocol = "https"
+
+# Staging environment
+[env.staging]
+name = "tsa-service-staging"
+vars = { ENVIRONMENT = "staging", LOG_LEVEL = "debug" }
+
+# Production environment
+[env.production]
+name = "tsa-service"
+vars = { ENVIRONMENT = "production", LOG_LEVEL = "info" }
