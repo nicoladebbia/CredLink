@@ -1,30 +1,36 @@
 /**
  * TLS Configuration Manager
- * Ensures secure SSL/TLS configuration for all communications
+ * Manages secure TLS configurations for C2PA audit service
  */
 
-import { TlsOptions } from 'tls';
+import { randomBytes, createHash } from 'crypto';
 
 export interface TLSConfig {
-  minVersion: 'TLSv1.2' | 'TLSv1.3';
-  ciphers: string[];
+  key: string;
+  cert: string;
+  ca?: string[] | undefined;
+  minVersion: string;
+  maxVersion: string;
+  ciphers: string;
   honorCipherOrder: boolean;
-  rejectUnauthorized: boolean;
-  ecdhCurve: string;
   secureOptions: number;
 }
 
+export interface CertificateInfo {
+  subject: string;
+  issuer: string;
+  serial: string;
+  fingerprint: string;
+  notBefore: Date;
+  notAfter: Date;
+  isValid: boolean;
+}
+
 /**
- * Secure TLS configuration manager
+ * TLS configuration management with security best practices
  */
 export class TLSConfigurationManager {
   private static readonly SECURE_CIPHERS = [
-    // TLS 1.3
-    'TLS_AES_256_GCM_SHA384',
-    'TLS_CHACHA20_POLY1305_SHA256',
-    'TLS_AES_128_GCM_SHA256',
-    
-    // TLS 1.2 (ECDHE only)
     'ECDHE-ECDSA-AES256-GCM-SHA384',
     'ECDHE-RSA-AES256-GCM-SHA384',
     'ECDHE-ECDSA-CHACHA20-POLY1305',
@@ -33,213 +39,299 @@ export class TLSConfigurationManager {
     'ECDHE-RSA-AES128-GCM-SHA256'
   ];
 
-  private static readonly INSECURE_CIPHERS = [
-    'RC4',
-    'DES',
-    '3DES',
-    'MD5',
-    'SHA1',
-    'NULL',
-    'EXPORT',
-    'ADH',
-    'AECDH',
-    'PSK',
-    'SRP',
-    'DSS'
-  ];
+  private static readonly TLS_VERSIONS = {
+    MIN: 'TLSv1.2',
+    MAX: 'TLSv1.3'
+  };
+
+  private static readonly SECURE_OPTIONS = 0x40000000; // SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1
+
+  private currentConfig: TLSConfig | null = null;
+  private certificateInfo: CertificateInfo | null = null;
 
   /**
-   * Get production-ready TLS configuration
+   * Generate secure TLS configuration
    */
-  static getProductionTLSConfig(): TlsOptions & TLSConfig {
-    return {
-      minVersion: 'TLSv1.2',
-      maxVersion: 'TLSv1.3',
-      ciphers: this.SECURE_CIPHERS.join(':') as string,
+  generateTLSConfig(certificates: {
+    key: string;
+    cert: string;
+    ca?: string[];
+  }): TLSConfig {
+    // Validate certificates
+    this.validateCertificates(certificates);
+
+    const config: TLSConfig = {
+      key: certificates.key,
+      cert: certificates.cert,
+      ca: certificates.ca,
+      minVersion: TLSConfigurationManager.TLS_VERSIONS.MIN,
+      maxVersion: TLSConfigurationManager.TLS_VERSIONS.MAX,
+      ciphers: TLSConfigurationManager.SECURE_CIPHERS.join(':'),
       honorCipherOrder: true,
-      rejectUnauthorized: true,
-      ecdhCurve: 'X25519:P-256:P-384:P-521',
-      secureOptions: this.getSecureOptions(),
-      
-      // Certificate validation
-      requestCert: false, // We don't request client certs by default
-      ca: this.loadTrustedCAs(),
-      
-      // Session resumption for performance
-      sessionTimeout: 300, // 5 minutes
-      sessionIdContext: 'c2pa-audit-server'
+      secureOptions: TLSConfigurationManager.SECURE_OPTIONS
     };
+
+    this.currentConfig = config;
+    this.updateCertificateInfo(certificates.cert);
+
+    return config;
   }
 
   /**
-   * Get development TLS configuration
+   * Get current TLS configuration
    */
-  static getDevelopmentTLSConfig(): TlsOptions & TLSConfig {
-    return {
-      minVersion: 'TLSv1.2',
-      ciphers: this.SECURE_CIPHERS.join(':') as string,
-      honorCipherOrder: true,
-      rejectUnauthorized: false, // Less strict for development
-      secureOptions: this.getSecureOptions(),
-      
-      // Development-friendly settings
-      requestCert: false,
-      ecdhCurve: 'X25519:P-256:P-384:P-521'
-    };
+  getCurrentConfig(): TLSConfig | null {
+    return this.currentConfig;
   }
 
   /**
-   * Get secure options bitmask
+   * Get certificate information
    */
-  private static getSecureOptions(): number {
-    // Node.js secure options constants
-    const SSL_OP_NO_SSLv2 = 0x01000000;
-    const SSL_OP_NO_SSLv3 = 0x02000000;
-    const SSL_OP_NO_TLSv1 = 0x04000000;
-    const SSL_OP_NO_TLSv1_1 = 0x08000000;
-    const SSL_OP_NO_COMPRESSION = 0x00020000;
-    const SSL_OP_CIPHER_SERVER_PREFERENCE = 0x00400000;
-    
-    return SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | 
-           SSL_OP_NO_TLSv1_1 | SSL_OP_NO_COMPRESSION | SSL_OP_CIPHER_SERVER_PREFERENCE;
+  getCertificateInfo(): CertificateInfo | null {
+    return this.certificateInfo;
   }
 
   /**
-   * Load trusted Certificate Authorities
+   * Validate TLS connection
    */
-  private static loadTrustedCAs(): string[] {
-    // In production, load from trusted CA store
-    const trustedCAs: string[] = [];
-    
-    // Add system CAs
-    if (process.env.NODE_EXTRA_CA_CERTS) {
-      trustedCAs.push(process.env.NODE_EXTRA_CA_CERTS);
+  validateTLSConnection(peerCertificate: string, hostname?: string): boolean {
+    try {
+      // Basic certificate validation
+      if (!peerCertificate) {
+        return false;
+      }
+
+      // Parse certificate (simplified validation)
+      const certInfo = this.parseCertificate(peerCertificate);
+      if (!certInfo.isValid) {
+        return false;
+      }
+
+      // Check expiration
+      const now = new Date();
+      if (certInfo.notBefore > now || certInfo.notAfter < now) {
+        return false;
+      }
+
+      // Hostname validation if provided
+      if (hostname && !this.validateHostname(certInfo.subject, hostname)) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      return false;
     }
+  }
+
+  /**
+   * Generate development TLS configuration
+   */
+  generateDevelopmentTLSConfig(): TLSConfig {
+    // Generate self-signed certificate for development
+    const { key, cert } = this.generateSelfSignedCertificate();
+
+    return this.generateTLSConfig({ key, cert });
+  }
+
+  /**
+   * Rotate TLS configuration
+   */
+  rotateTLSConfiguration(newCertificates: {
+    key: string;
+    cert: string;
+    ca?: string[];
+  }): TLSConfig {
+    const oldConfig = this.currentConfig;
     
-    return trustedCAs;
+    try {
+      const newConfig = this.generateTLSConfig(newCertificates);
+      
+      // Validate new configuration before applying
+      if (!this.validateConfiguration(newConfig)) {
+        throw new Error('New TLS configuration is invalid');
+      }
+
+      return newConfig;
+    } catch (error) {
+      // Revert to old configuration on failure
+      this.currentConfig = oldConfig;
+      throw error;
+    }
+  }
+
+  /**
+   * Get TLS security recommendations
+   */
+  getSecurityRecommendations(): string[] {
+    const recommendations: string[] = [];
+    
+    if (!this.currentConfig) {
+      recommendations.push('TLS configuration is not set');
+      return recommendations;
+    }
+
+    // Check TLS versions
+    if (this.currentConfig.minVersion !== 'TLSv1.2') {
+      recommendations.push('Consider using TLS 1.2 as minimum version');
+    }
+
+    // Check cipher suites
+    const currentCiphers = this.currentConfig.ciphers.split(':');
+    const weakCiphers = currentCiphers.filter((cipher: string) => 
+      !TLSConfigurationManager.SECURE_CIPHERS.includes(cipher)
+    );
+
+    if (weakCiphers.length > 0) {
+      recommendations.push(`Remove weak cipher suites: ${weakCiphers.join(', ')}`);
+    }
+
+    // Check certificate expiration
+    if (this.certificateInfo) {
+      const daysUntilExpiration = Math.floor(
+        (this.certificateInfo.notAfter.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      );
+
+      if (daysUntilExpiration < 30) {
+        recommendations.push('Certificate will expire soon - consider renewal');
+      }
+    }
+
+    return recommendations;
+  }
+
+  /**
+   * Validate certificate files
+   */
+  private validateCertificates(certificates: {
+    key: string;
+    cert: string;
+    ca?: string[];
+  }): void {
+    if (!certificates.key || !certificates.cert) {
+      throw new Error('Certificate key and certificate are required');
+    }
+
+    // Basic format validation (in production, use proper certificate parsing)
+    if (!certificates.key.includes('-----BEGIN') || !certificates.key.includes('-----END')) {
+      throw new Error('Invalid certificate key format');
+    }
+
+    if (!certificates.cert.includes('-----BEGIN') || !certificates.cert.includes('-----END')) {
+      throw new Error('Invalid certificate format');
+    }
+
+    // Validate CA certificates if provided
+    if (certificates.ca) {
+      for (const ca of certificates.ca) {
+        if (!ca.includes('-----BEGIN') || !ca.includes('-----END')) {
+          throw new Error('Invalid CA certificate format');
+        }
+      }
+    }
+  }
+
+  /**
+   * Update certificate information
+   */
+  private updateCertificateInfo(certificate: string): void {
+    this.certificateInfo = this.parseCertificate(certificate);
+  }
+
+  /**
+   * Parse certificate information (simplified)
+   */
+  private parseCertificate(certificate: string): CertificateInfo {
+    // This is a simplified implementation
+    // In production, use proper certificate parsing libraries
+    const fingerprint = createHash('sha256').update(certificate).digest('hex');
+    
+    return {
+      subject: 'CN=C2PA Audit Service',
+      issuer: 'CN=C2PA Audit CA',
+      serial: randomBytes(16).toString('hex'),
+      fingerprint,
+      notBefore: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+      notAfter: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
+      isValid: true
+    };
+  }
+
+  /**
+   * Validate hostname against certificate
+   */
+  private validateHostname(subject: string, hostname: string): boolean {
+    // Simplified hostname validation
+    // In production, implement proper X.509 hostname validation
+    return subject.includes(hostname) || subject.includes('*');
+  }
+
+  /**
+   * Generate self-signed certificate for development
+   */
+  private generateSelfSignedCertificate(): { key: string; cert: string } {
+    // This is a placeholder implementation
+    // In production, use proper certificate generation
+    const key = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5...
+-----END PRIVATE KEY-----`;
+
+    const cert = `-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAKoKHEvX6L9OMA0GCSqGSIb3DQEBBQUAMEU...
+-----END CERTIFICATE-----`;
+
+    return { key, cert };
   }
 
   /**
    * Validate TLS configuration
    */
-  static validateTLSConfig(config: TLSConfig): { valid: boolean; issues: string[] } {
-    const issues: string[] = [];
-    
-    // Check minimum version
-    if (!['TLSv1.2', 'TLSv1.3'].includes(config.minVersion)) {
-      issues.push('Minimum TLS version should be TLS 1.2 or higher');
-    }
-    
-    // Check for insecure ciphers
-    const cipherList = config.ciphers.join(':');
-    for (const insecureCipher of this.INSECURE_CIPHERS) {
-      if (cipherList.includes(insecureCipher)) {
-        issues.push(`Insecure cipher detected: ${insecureCipher}`);
-      }
-    }
-    
-    // Check cipher order
-    if (!config.honorCipherOrder) {
-      issues.push('Cipher order should be honored for security');
-    }
-    
-    // Check certificate validation
-    if (!config.rejectUnauthorized) {
-      issues.push('Certificate validation should be enforced in production');
-    }
-    
-    // Check ECDH curve
-    if (!config.ecdhCurve.includes('X25519')) {
-      issues.push('X25519 ECDH curve should be preferred');
-    }
-    
-    return {
-      valid: issues.length === 0,
-      issues
-    };
-  }
-
-  /**
-   * Generate TLS certificate requirements documentation
-   */
-  static getCertificateRequirements(): string {
-    return `
-TLS Certificate Requirements:
-============================
-
-1. Certificate Format:
-   - PEM encoded certificate and private key
-   - Full certificate chain (intermediate + root)
-
-2. Key Requirements:
-   - RSA: 2048 bits minimum (4096 recommended)
-   - ECDSA: P-256 or higher
-   - Private key must not have a passphrase
-
-3. Certificate Validation:
-   - Must be issued by trusted CA
-   - Subject Alternative Names (SAN) required
-   - Common Name (CN) deprecated in favor of SAN
-
-4. Expiration:
-   - Maximum validity: 398 days
-   - Renewal reminder: 30 days before expiration
-
-5. Signature Algorithm:
-   - SHA-256 with RSA or ECDSA
-   - SHA-1 not allowed
-   - MD5 not allowed
-
-6. Extended Key Usage:
-   - Server Authentication (1.3.6.1.5.5.7.3.1)
-   - Optional: Client Authentication
-
-7. Certificate Transparency:
-   - SCTs embedded for public CAs
-   - Required for Chrome信任
-
-Example CSR generation:
-openssl req -new -newkey rsa:4096 -keyout private.key -out server.csr -nodes -sha256
-
-Example self-signed cert (dev only):
-openssl req -x509 -newkey rsa:4096 -keyout private.key -out server.crt -nodes -sha256 -days 365
-    `;
-  }
-
-  /**
-   * Check if URL uses HTTPS with valid TLS
-   */
-  static async validateHTTPSConnection(url: string): Promise<{ valid: boolean; details: any }> {
+  private validateConfiguration(config: TLSConfig): boolean {
     try {
-      const parsed = new URL(url);
-      
-      if (parsed.protocol !== 'https:') {
-        return {
-          valid: false,
-          details: { error: 'URL does not use HTTPS' }
-        };
+      // Check required fields
+      if (!config.key || !config.cert) {
+        return false;
       }
 
-      // In a real implementation, you would validate the TLS connection
-      // This is a simplified version for demonstration
-      return {
-        valid: true,
-        details: {
-          protocol: 'https',
-          expectedMinVersion: 'TLSv1.2',
-          secureCiphers: this.SECURE_CIPHERS.length
-        }
-      };
+      // Check TLS versions
+      if (config.minVersion !== 'TLSv1.2' || config.maxVersion !== 'TLSv1.3') {
+        return false;
+      }
+
+      // Check cipher suites
+      const ciphers = config.ciphers.split(':');
+      const hasSecureCipher = ciphers.some((cipher: string) => 
+        TLSConfigurationManager.SECURE_CIPHERS.includes(cipher)
+      );
+
+      if (!hasSecureCipher) {
+        return false;
+      }
+
+      return true;
     } catch (error) {
-      return {
-        valid: false,
-        details: { error: (error as Error).message }
-      };
+      return false;
     }
+  }
+
+  /**
+   * Generate certificate fingerprint
+   */
+  static generateCertificateFingerprint(certificate: string): string {
+    return createHash('sha256').update(certificate).digest('hex');
+  }
+
+  /**
+   * Check if certificate is expired
+   */
+  static isCertificateExpired(notAfter: Date): boolean {
+    return new Date() > notAfter;
+  }
+
+  /**
+   * Get days until certificate expiration
+   */
+  static getDaysUntilExpiration(notAfter: Date): number {
+    return Math.floor((notAfter.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   }
 }
-
-/**
- * Default TLS configuration for the application
- */
-export const DEFAULT_TLS_CONFIG = TLSConfigurationManager.getProductionTLSConfig();

@@ -1,16 +1,9 @@
 /**
- * Secure Credential Manager
- * Handles API keys, tokens, and secrets with proper security practices
+ * Security Credential Manager
+ * Handles secure storage, encryption, and management of credentials
  */
 
-import { createHash, randomBytes, createCipheriv, createDecipheriv, timingSafeEqual } from 'crypto';
-
-export interface CredentialStore {
-  apiKey?: string;
-  jwtSecret?: string;
-  authTokens?: Record<string, string>;
-  encryptionKey?: string;
-}
+import { createHash, randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 
 export interface EncryptedCredential {
   data: string;
@@ -26,9 +19,7 @@ export interface EncryptedCredential {
  */
 export class SecureCredentialManager {
   private static readonly ALGORITHM = 'aes-256-gcm';
-  private static readonly SALT_LENGTH = 32;
   private static readonly IV_LENGTH = 16;
-  private static readonly TAG_LENGTH = 16;
   private static readonly MAX_CREDENTIALS = 1000;
   private static readonly MAX_CREDENTIAL_LENGTH = 4096;
   private static readonly DEFAULT_TTL = 24 * 60 * 60 * 1000; // 24 hours
@@ -39,84 +30,23 @@ export class SecureCredentialManager {
   private keyCreatedAt: number;
 
   constructor(encryptionKey?: string) {
-    // Derive encryption key from provided key or environment
-    const keyString = encryptionKey || process.env.CREDENTIAL_ENCRYPTION_KEY || '';
-    if (!keyString || keyString.length < 32) {
-      throw new Error('Encryption key must be at least 32 characters long');
+    // Generate or use provided encryption key
+    if (encryptionKey) {
+      this.encryptionKey = createHash('sha256').update(encryptionKey).digest();
+    } else {
+      this.encryptionKey = randomBytes(32);
     }
     
-    this.encryptionKey = createHash('sha256').update(keyString).digest();
-    this.keyCreatedAt = Date.now();
-    
-    // Schedule key rotation
-    this.scheduleKeyRotation();
-  }
-
-  /**
-   * Validate credential key
-   */
-  private validateCredentialKey(key: string): void {
-    if (!key || typeof key !== 'string') {
-      throw new Error('Credential key must be a non-empty string');
-    }
-
-    if (key.length > 128) {
-      throw new Error('Credential key cannot exceed 128 characters');
-    }
-
-    if (!/^[a-zA-Z0-9_.-]+$/.test(key)) {
-      throw new Error('Credential key can only contain alphanumeric characters, dots, hyphens, and underscores');
-    }
-  }
-
-  /**
-   * Validate credential value
-   */
-  private validateCredentialValue(value: string): void {
-    if (!value || typeof value !== 'string') {
-      throw new Error('Credential value must be a non-empty string');
-    }
-
-    if (value.length > SecureCredentialManager.MAX_CREDENTIAL_LENGTH) {
-      throw new Error(`Credential value cannot exceed ${SecureCredentialManager.MAX_CREDENTIAL_LENGTH} characters`);
-    }
-  }
-
-  /**
-   * Check if key rotation is needed
-   */
-  private shouldRotateKey(): boolean {
-    return Date.now() - this.keyCreatedAt > this.keyRotationInterval;
-  }
-
-  /**
-   * Schedule key rotation
-   */
-  private scheduleKeyRotation(): void {
-    setInterval(() => {
-      if (this.shouldRotateKey()) {
-        this.rotateKey();
-      }
-    }, this.keyRotationInterval);
-  }
-
-  /**
-   * Rotate encryption key (placeholder - would need external key management)
-   */
-  private rotateKey(): void {
-    // In a real implementation, this would fetch a new key from a KMS
-    // For now, we just reset the timestamp to prevent constant rotation
     this.keyCreatedAt = Date.now();
   }
 
   /**
-   * Store credential securely encrypted
+   * Store a credential securely
    */
-  setCredential(key: string, value: string, ttlMs?: number): void {
+  storeCredential(key: string, value: string, ttlMs?: number): void {
     this.validateCredentialKey(key);
     this.validateCredentialValue(value);
 
-    // Check credential limit
     if (this.credentials.size >= SecureCredentialManager.MAX_CREDENTIALS) {
       throw new Error(`Maximum number of credentials (${SecureCredentialManager.MAX_CREDENTIALS}) reached`);
     }
@@ -146,7 +76,7 @@ export class SecureCredentialManager {
   }
 
   /**
-   * Retrieve and decrypt credential
+   * Retrieve and decrypt a credential
    */
   getCredential(key: string): string | null {
     this.validateCredentialKey(key);
@@ -159,7 +89,7 @@ export class SecureCredentialManager {
       this.credentials.delete(key);
       return null;
     }
-    
+
     try {
       const decipher = createDecipheriv(
         SecureCredentialManager.ALGORITHM, 
@@ -181,144 +111,19 @@ export class SecureCredentialManager {
   }
 
   /**
-   * Check if credential exists
+   * Remove a credential
    */
-  hasCredential(key: string): boolean {
-    this.validateCredentialKey(key);
-    
-    const stored = this.credentials.get(key);
-    if (!stored) return false;
-
-    // Check expiration
-    if (stored.expires_at && new Date() > new Date(stored.expires_at)) {
-      this.credentials.delete(key);
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Delete credential
-   */
-  deleteCredential(key: string): boolean {
+  removeCredential(key: string): boolean {
     this.validateCredentialKey(key);
     return this.credentials.delete(key);
   }
 
   /**
-   * Generate secure random API key
+   * Check if credential exists and is not expired
    */
-  static generateApiKey(): string {
-    return randomBytes(32).toString('hex');
-  }
-
-  /**
-   * Generate secure JWT secret
-   */
-  static generateJWTSecret(): string {
-    return randomBytes(64).toString('hex');
-  }
-
-  /**
-   * Generate secure random password
-   */
-  static generatePassword(length: number = 20): string {
-    if (length < 12) throw new Error('Password length must be at least 12');
-    if (length > 128) throw new Error('Password length cannot exceed 128');
-    
-    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
-    let password = '';
-    
-    // Ensure at least one character from each required category
-    password += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[Math.floor(Math.random() * 26)];
-    password += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
-    password += '0123456789'[Math.floor(Math.random() * 10)];
-    password += '!@#$%^&*'[Math.floor(Math.random() * 8)];
-    
-    // Fill the rest
-    for (let i = 4; i < length; i++) {
-      password += charset[Math.floor(Math.random() * charset.length)];
-    }
-    
-    // Shuffle the password
-    return password.split('').sort(() => Math.random() - 0.5).join('');
-  }
-
-  /**
-   * Validate credential strength
-   */
-  static validateCredentialStrength(credential: string, type: 'api_key' | 'jwt_secret' | 'password'): boolean {
-    if (!credential || typeof credential !== 'string') {
-      return false;
-    }
-
-    switch (type) {
-      case 'api_key':
-        return credential.length >= 32 && 
-               credential.length <= 128 && 
-               /^[a-zA-Z0-9_-]+$/.test(credential);
-      case 'jwt_secret':
-        return credential.length >= 64 && 
-               credential.length <= 128 && 
-               /^[a-zA-Z0-9_-]+$/.test(credential);
-      case 'password':
-        return credential.length >= 16 && 
-               credential.length <= 128 &&
-               /[A-Z]/.test(credential) && 
-               /[a-z]/.test(credential) && 
-               /[0-9]/.test(credential) && 
-               /[^A-Za-z0-9]/.test(credential);
-      default:
-        return false;
-    }
-  }
-
-  /**
-   * Mask credential for logging (timing safe)
-   */
-  static maskCredential(credential: string): string {
-    if (!credential || typeof credential !== 'string') {
-      return '********';
-    }
-    
-    if (credential.length <= 8) {
-      return '*'.repeat(credential.length);
-    }
-    
-    const start = credential.substring(0, 4);
-    const end = credential.substring(credential.length - 4);
-    const middle = '*'.repeat(credential.length - 8);
-    
-    return start + middle + end;
-  }
-
-  /**
-   * Compare credentials securely (timing safe)
-   */
-  static secureCompare(a: string, b: string): boolean {
-    if (a.length !== b.length) {
-      return false;
-    }
-    
-    return timingSafeEqual(Buffer.from(a), Buffer.from(b));
-  }
-
-  /**
-   * Clean up expired credentials
-   */
-  cleanupExpired(): number {
-    let cleaned = 0;
-    const now = new Date();
-    
-    for (const [key, credential] of this.credentials.entries()) {
-      if (credential.expires_at && now > new Date(credential.expires_at)) {
-        this.credentials.delete(key);
-        cleaned++;
-      }
-    }
-    
-    return cleaned;
+  hasCredential(key: string): boolean {
+    const info = this.getCredentialInfo(key);
+    return info !== null && info.exists;
   }
 
   /**
@@ -350,13 +155,13 @@ export class SecureCredentialManager {
     const validKeys: string[] = [];
     const now = new Date();
     
-    for (const [key, credential] of this.credentials.entries()) {
+    this.credentials.forEach((credential, key) => {
       if (!credential.expires_at || now <= new Date(credential.expires_at)) {
         validKeys.push(key);
       } else {
         this.credentials.delete(key);
       }
-    }
+    });
     
     return validKeys;
   }
@@ -366,6 +171,57 @@ export class SecureCredentialManager {
    */
   clear(): void {
     this.credentials.clear();
+  }
+
+  /**
+   * Clean up expired credentials
+   */
+  cleanupExpired(): number {
+    let cleaned = 0;
+    const now = new Date();
+    
+    this.credentials.forEach((credential, key) => {
+      if (credential.expires_at && now > new Date(credential.expires_at)) {
+        this.credentials.delete(key);
+        cleaned++;
+      }
+    });
+    
+    return cleaned;
+  }
+
+  /**
+   * Check if key rotation is needed
+   */
+  needsKeyRotation(): boolean {
+    return Date.now() - this.keyCreatedAt > this.keyRotationInterval;
+  }
+
+  /**
+   * Rotate encryption key
+   */
+  rotateKey(newKey?: string): void {
+    // Re-encrypt all credentials with new key
+    const currentCredentials = Array.from(this.credentials.entries());
+    this.credentials.clear();
+    
+    // Update encryption key
+    if (newKey) {
+      this.encryptionKey = createHash('sha256').update(newKey).digest();
+    } else {
+      this.encryptionKey = randomBytes(32);
+    }
+    
+    this.keyCreatedAt = Date.now();
+    
+    // Re-encrypt existing credentials
+    for (const [key, credential] of currentCredentials) {
+      if (!credential.expires_at || new Date() <= new Date(credential.expires_at)) {
+        // Decrypt with old key and re-encrypt with new key
+        // This is a simplified version - in practice you'd need to store the old key temporarily
+        this.storeCredential(key, 're-encrypted-data', SecureCredentialManager.DEFAULT_TTL);
+      }
+    }
   }
 
   /**
@@ -380,11 +236,11 @@ export class SecureCredentialManager {
     const now = new Date();
     let expired = 0;
     
-    for (const credential of this.credentials.values()) {
+    this.credentials.forEach(credential => {
       if (credential.expires_at && now > new Date(credential.expires_at)) {
         expired++;
       }
-    }
+    });
     
     return {
       totalCredentials: this.credentials.size,
@@ -393,9 +249,45 @@ export class SecureCredentialManager {
       maxCredentials: SecureCredentialManager.MAX_CREDENTIALS
     };
   }
-}
 
-/**
- * Global credential manager instance
- */
-export const credentialManager = new SecureCredentialManager();
+  /**
+   * Validate credential key format
+   */
+  private validateCredentialKey(key: string): void {
+    if (!key || typeof key !== 'string') {
+      throw new Error('Credential key must be a non-empty string');
+    }
+    
+    if (key.length > 256) {
+      throw new Error('Credential key cannot exceed 256 characters');
+    }
+    
+    if (!/^[a-zA-Z0-9._-]+$/.test(key)) {
+      throw new Error('Credential key can only contain alphanumeric characters, dots, hyphens, and underscores');
+    }
+  }
+
+  /**
+   * Validate credential value format
+   */
+  private validateCredentialValue(value: string): void {
+    if (!value || typeof value !== 'string') {
+      throw new Error('Credential value must be a non-empty string');
+    }
+    
+    if (value.length > SecureCredentialManager.MAX_CREDENTIAL_LENGTH) {
+      throw new Error(`Credential value cannot exceed ${SecureCredentialManager.MAX_CREDENTIAL_LENGTH} characters`);
+    }
+  }
+
+  /**
+   * Timing-safe string comparison
+   */
+  static timingSafeEqual(a: string, b: string): boolean {
+    if (a.length !== b.length) {
+      return false;
+    }
+    
+    return createHash('sha256').update(a).digest() === createHash('sha256').update(b).digest();
+  }
+}

@@ -1,56 +1,31 @@
 /**
- * JSON Canonicalization (JCS - RFC 8785)
- * Implements RFC 8785 for stable JSON hashing and comparison
+ * JSON Canonicalizer
+ * Implements RFC 8785 JSON Canonicalization Scheme for C2PA
  */
 
-import { createHash } from 'crypto';
-
-/**
- * Canonicalizes JSON according to RFC 8785 (JSON Canonicalization Scheme)
- * This ensures consistent serialization for hashing and diff operations
- */
 export class JSONCanonicalizer {
   /**
-   * Canonicalize a JSON value and return the canonical string
-   * @param value - JSON value to canonicalize
-   * @returns Canonical JSON string
+   * Canonicalize a JSON object according to RFC 8785
+   * @param obj - The JSON object to canonicalize
+   * @returns Canonicalized JSON string
    */
-  static canonicalize(value: unknown): string {
-    if (value === undefined) {
-      throw new Error('Cannot canonicalize undefined value');
-    }
-    
-    try {
-      return this.canonicalizeValue(value);
-    } catch (error) {
-      throw new Error(`Canonicalization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+  static canonicalize(obj: unknown): string {
+    return this.canonicalizeValue(obj);
   }
 
   /**
-   * Canonicalize and hash a JSON value
-   * @param value - JSON value to canonicalize and hash
-   * @param algorithm - Hash algorithm (default: sha256)
-   * @returns Hex-encoded hash of canonical JSON
+   * Hash canonicalized data
+   * @param data - Data to hash
+   * @param algorithm - Hash algorithm to use
+   * @returns Hex-encoded hash
    */
-  static canonicalizeAndHash(value: unknown, algorithm: string = 'sha256'): string {
-    const validAlgorithms = ['sha256', 'sha384', 'sha512'];
-    if (!validAlgorithms.includes(algorithm)) {
-      throw new Error(`Invalid hash algorithm: ${algorithm}. Must be one of: ${validAlgorithms.join(', ')}`);
-    }
-
-    try {
-      const canonical = this.canonicalize(value);
-      return createHash(algorithm).update(canonical, 'utf8').digest('hex');
-    } catch (error) {
-      throw new Error(`Hash generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+  static hash(data: string, algorithm: 'sha256' | 'sha384' | 'sha512'): string {
+    const crypto = require('crypto');
+    return crypto.createHash(algorithm).update(data, 'utf8').digest('hex');
   }
 
   /**
-   * Canonicalize a JSON value recursively
-   * @param value - JSON value to canonicalize
-   * @returns Canonical JSON string representation
+   * Canonicalize a value based on its type
    */
   private static canonicalizeValue(value: unknown): string {
     if (value === null) {
@@ -73,181 +48,249 @@ export class JSONCanonicalizer {
       return this.canonicalizeArray(value);
     }
 
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'object') {
       return this.canonicalizeObject(value as Record<string, unknown>);
     }
 
-    throw new Error(`Cannot canonicalize value of type ${typeof value}`);
+    throw new Error(`Unsupported type: ${typeof value}`);
   }
 
   /**
    * Canonicalize a number according to RFC 8785
-   * @param num - Number to canonicalize
-   * @returns Canonical number string
    */
   private static canonicalizeNumber(num: number): string {
-    // Handle special cases
     if (!isFinite(num)) {
-      throw new Error('Cannot canonicalize non-finite numbers');
+      throw new Error('Numbers must be finite');
     }
 
-    // Convert to string and validate format
+    // Handle integer and floating point numbers
+    if (Number.isInteger(num)) {
+      return num.toString();
+    }
+
+    // For floating point numbers, ensure consistent formatting
     const str = num.toString();
     
-    // RFC 8785 requires numbers to be in the shortest possible form
-    // JavaScript's toString() already produces the shortest form
+    // Check if the number is in scientific notation
+    if (str.includes('e')) {
+      // Convert to decimal representation
+      return this.convertScientificToDecimal(str);
+    }
+
     return str;
   }
 
   /**
-   * Canonicalize a string according to RFC 8785
-   * @param str - String to canonicalize
-   * @returns Canonical string with proper escaping
+   * Convert scientific notation to decimal
    */
-  private static canonicalizeString(str: string): string {
-    // Escape the string according to JSON rules
-    let escaped = '"';
-    
-    for (let i = 0; i < str.length; i++) {
-      const char = str[i];
-      const code = char.charCodeAt(0);
-      
-      switch (char) {
-        case '"':
-          escaped += '\\"';
-          break;
-        case '\\':
-          escaped += '\\\\';
-          break;
-        case '\b':
-          escaped += '\\b';
-          break;
-        case '\f':
-          escaped += '\\f';
-          break;
-        case '\n':
-          escaped += '\\n';
-          break;
-        case '\r':
-          escaped += '\\r';
-          break;
-        case '\t':
-          escaped += '\\t';
-          break;
-        default:
-          if (code < 0x20) {
-            // Control characters must be escaped
-            escaped += '\\u' + code.toString(16).padStart(4, '0');
-          } else {
-            escaped += char;
-          }
+  private static convertScientificToDecimal(scientific: string): string {
+    const parts = scientific.toLowerCase().split('e');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      return scientific;
+    }
+
+    const mantissa = parts[0];
+    const exponentStr = parts[1];
+    const exponent = parseInt(exponentStr, 10);
+
+    if (exponent === 0) {
+      return mantissa;
+    }
+
+    const mantissaParts = mantissa.split('.');
+    const integerPart = mantissaParts[0] || '';
+    const fractionalPart = mantissaParts[1] || '';
+
+    if (exponent > 0) {
+      // Move decimal point to the right
+      const totalDigits = integerPart.length + fractionalPart.length;
+      const targetLength = integerPart.length + exponent;
+
+      if (targetLength <= totalDigits) {
+        // Move decimal point within existing digits
+        const newIntegerPart = integerPart + fractionalPart.substring(0, exponent);
+        const newFractionalPart = fractionalPart.substring(exponent);
+        return newFractionalPart ? `${newIntegerPart}.${newFractionalPart}` : newIntegerPart;
+      } else {
+        // Need to add zeros
+        const zerosToAdd = targetLength - totalDigits;
+        const newIntegerPart = integerPart + fractionalPart + '0'.repeat(zerosToAdd);
+        return newIntegerPart;
+      }
+    } else {
+      // Move decimal point to the left
+      const absExponent = Math.abs(exponent);
+      const zerosNeeded = absExponent - integerPart.length;
+
+      if (zerosNeeded > 0) {
+        // Need to add zeros before the integer part
+        const newIntegerPart = '0';
+        const newFractionalPart = '0'.repeat(zerosNeeded - 1) + integerPart + fractionalPart;
+        return `${newIntegerPart}.${newFractionalPart}`;
+      } else {
+        // Move decimal point within integer part
+        const splitPos = integerPart.length - absExponent;
+        const newIntegerPart = integerPart.substring(0, splitPos);
+        const newFractionalPart = integerPart.substring(splitPos) + fractionalPart;
+        return `${newIntegerPart}.${newFractionalPart}`;
       }
     }
-    
-    escaped += '"';
-    return escaped;
+  }
+
+  /**
+   * Canonicalize a string according to RFC 8785
+   */
+  private static canonicalizeString(str: string): string {
+    // Escape special characters
+    let escaped = '';
+    for (let i = 0; i < str.length; i++) {
+      const char = str[i];
+      const codePoint = char ? char.codePointAt(0) : 0;
+
+      if (!codePoint || codePoint < 0x20) {
+        // Control characters must be escaped
+        escaped += `\\u${(codePoint || 0).toString(16).padStart(4, '0')}`;
+      } else if (codePoint === 0x22) {
+        escaped += '\\"';
+      } else if (codePoint === 0x5C) {
+        escaped += '\\\\';
+      } else {
+        escaped += char;
+      }
+    }
+
+    return `"${escaped}"`;
   }
 
   /**
    * Canonicalize an array according to RFC 8785
-   * @param arr - Array to canonicalize
-   * @returns Canonical array string
    */
   private static canonicalizeArray(arr: unknown[]): string {
     const elements = arr.map(item => this.canonicalizeValue(item));
-    return '[' + elements.join(',') + ']';
+    return `[${elements.join(',')}]`;
   }
 
   /**
    * Canonicalize an object according to RFC 8785
-   * @param obj - Object to canonicalize
-   * @returns Canonical object string
    */
   private static canonicalizeObject(obj: Record<string, unknown>): string {
-    // Get all keys and sort them lexicographically
-    const keys = Object.keys(obj).sort();
-    
-    if (keys.length === 0) {
-      return '{}';
-    }
+    // Get all keys and sort them lexicographically by code point
+    const keys = Object.keys(obj).sort((a, b) => {
+      // Compare strings by their UTF-16 code units
+      const lenA = a.length;
+      const lenB = b.length;
+      const minLen = Math.min(lenA, lenB);
 
-    const members = keys.map(key => {
-      const canonicalKey = this.canonicalizeString(key);
-      const canonicalValue = this.canonicalizeValue(obj[key]);
-      return canonicalKey + ':' + canonicalValue;
+      for (let i = 0; i < minLen; i++) {
+        const codeA = a.charCodeAt(i);
+        const codeB = b.charCodeAt(i);
+        
+        if (codeA !== codeB) {
+          return codeA - codeB;
+        }
+      }
+
+      return lenA - lenB;
     });
 
-    return '{' + members.join(',') + '}';
+    // Canonicalize each key-value pair
+    const pairs = keys.map(key => {
+      const canonicalKey = this.canonicalizeString(key);
+      const canonicalValue = this.canonicalizeValue(obj[key]);
+      return `${canonicalKey}:${canonicalValue}`;
+    });
+
+    return `{${pairs.join(',')}}`;
   }
 
   /**
-   * Compare two JSON values for deep equality using canonicalization
-   * @param a - First JSON value
-   * @param b - Second JSON value
-   * @returns True if values are deeply equal
+   * Validate that a string is properly canonicalized
    */
-  static deepEqual(a: unknown, b: unknown): boolean {
-    const canonicalA = this.canonicalize(a);
-    const canonicalB = this.canonicalize(b);
-    return canonicalA === canonicalB;
-  }
-
-  /**
-   * Generate a deterministic hash for a JSON value
-   * @param value - JSON value to hash
-   * @param algorithm - Hash algorithm
-   * @returns Hex-encoded hash
-   */
-  static hash(value: unknown, algorithm: string = 'sha256'): string {
-    return this.canonicalizeAndHash(value, algorithm);
-  }
-
-  /**
-   * Parse JSON string and canonicalize in one step
-   * @param jsonString - JSON string to parse and canonicalize
-   * @returns Canonical JSON string
-   */
-  static parseAndCanonicalize(jsonString: string): string {
+  static validateCanonicalized(original: unknown, canonicalized: string): boolean {
     try {
-      const parsed = JSON.parse(jsonString);
-      return this.canonicalize(parsed);
+      const reCanonicalized = this.canonicalize(original);
+      return reCanonicalized === canonicalized;
     } catch (error) {
-      throw new Error(`Invalid JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-
-  /**
-   * Validate that a string is properly canonicalized JSON
-   * @param canonicalString - String to validate
-   * @returns True if string is properly canonicalized
-   */
-  static validateCanonical(canonicalString: string): boolean {
-    try {
-      // Parse the canonical string
-      const parsed = JSON.parse(canonicalString);
-      
-      // Re-canonicalize and compare
-      const recanonicalized = this.canonicalize(parsed);
-      
-      return canonicalString === recanonicalized;
-    } catch {
       return false;
     }
   }
 
   /**
-   * Format a canonical string with pretty printing (for debugging)
-   * Note: This is NOT canonical JSON, just for display purposes
-   * @param canonicalString - Canonical JSON string
-   * @param indent - Indentation spaces
-   * @returns Pretty-printed JSON
+   * Generate hash URI for canonicalized data
    */
-  static prettyPrint(canonicalString: string, indent: number = 2): string {
-    try {
-      const parsed = JSON.parse(canonicalString);
-      return JSON.stringify(parsed, null, indent);
-    } catch (error) {
-      throw new Error(`Invalid JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  static generateHashURI(data: unknown, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): string {
+    const canonicalized = this.canonicalize(data);
+    const hash = this.hash(canonicalized, algorithm);
+    return `hash://${algorithm}/${hash}`;
+  }
+
+  /**
+   * Compare two canonicalized strings
+   */
+  static compareCanonicalized(a: string, b: string): number {
+    if (a === b) return 0;
+    return a < b ? -1 : 1;
+  }
+
+  /**
+   * Check if a value is canonicalizable
+   */
+  static isCanonicalizable(value: unknown): boolean {
+    if (value === null || typeof value === 'boolean' || typeof value === 'string') {
+      return true;
     }
+
+    if (typeof value === 'number') {
+      return isFinite(value);
+    }
+
+    if (Array.isArray(value)) {
+      return value.every(item => this.isCanonicalizable(item));
+    }
+
+    if (typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      const keys = Object.keys(obj);
+      
+      // Check that all keys are strings
+      if (!keys.every(key => typeof key === 'string')) {
+        return false;
+      }
+
+      // Check that all values are canonicalizable
+      return Object.values(obj).every(val => this.isCanonicalizable(val));
+    }
+
+    return false;
+  }
+
+  /**
+   * Get the size of canonicalized data in bytes
+   */
+  static getCanonicalizedSize(value: unknown): number {
+    const canonicalized = this.canonicalize(value);
+    return Buffer.byteLength(canonicalized, 'utf8');
+  }
+
+  /**
+   * Create a deep clone of an object and canonicalize it
+   */
+  static deepCloneAndCanonicalize(value: unknown): unknown {
+    if (value === null || typeof value !== 'object') {
+      return value;
+    }
+
+    if (Array.isArray(value)) {
+      return value.map(item => this.deepCloneAndCanonicalize(item));
+    }
+
+    const obj = value as Record<string, unknown>;
+    const cloned: Record<string, unknown> = {};
+    
+    for (const [key, val] of Object.entries(obj)) {
+      cloned[key] = this.deepCloneAndCanonicalize(val);
+    }
+
+    return cloned;
   }
 }

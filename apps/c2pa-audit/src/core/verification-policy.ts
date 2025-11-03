@@ -1,614 +1,524 @@
 /**
- * Phase 31 - Verification Policy Engine
- * Implements fast, safe verification with caching and performance budgets
+ * Verification Policy Engine
+ * Manages and applies verification policies for C2PA manifests
  */
 
-import { createHash } from 'crypto';
-
-export interface VerificationRequest {
-  manifestUrl: string;
-  mode: 'full' | 'sample' | 'boundary';
-  streamId?: string;
-  timestamp?: string;
-  rangeId?: string;
-}
-
-export interface VerificationResult {
-  valid: boolean;
-  issuer?: string;
-  tsa?: string;
-  verifiedAt: string;
-  manifestHash: string;
-  trustChain: Array<{
-    subject: string;
-    issuer: string;
-    trusted: boolean;
-  }>;
-  performance: {
-    duration: number;
-    cacheHit: boolean;
-  };
-}
-
 export interface VerificationPolicy {
-  boundaryVerification: 'full' | 'sample';
-  samplingRate: number;
-  cacheTTL: number;
-  maxVerificationsPerMinute: number;
-  cpuBudgetPercent: number;
-  networkTimeout: number;
+  /** Policy ID */
+  id: string;
+  /** Policy name */
+  name: string;
+  /** Policy description */
+  description: string;
+  /** Policy version */
+  version: string;
+  /** Whether policy is active */
+  active: boolean;
+  /** Policy rules */
+  rules: PolicyRule[];
+  /** Policy creation timestamp */
+  created_at: string;
+  /** Policy last updated timestamp */
+  updated_at: string;
 }
 
+export interface PolicyRule {
+  /** Rule ID */
+  id: string;
+  /** Rule type */
+  type: 'signature' | 'assertion' | 'ingredient' | 'timestamp' | 'manifest';
+  /** Rule condition (expression) */
+  condition: string;
+  /** Rule action */
+  action: 'allow' | 'deny' | 'warn';
+  /** Rule severity */
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  /** Rule description */
+  description: string;
+  /** Rule metadata */
+  metadata?: Record<string, unknown>;
+}
+
+export interface PolicyEvaluationResult {
+  /** Overall evaluation result */
+  allowed: boolean;
+  /** Applied rules */
+  applied_rules: AppliedRule[];
+  /** Warnings generated */
+  warnings: string[];
+  /** Errors generated */
+  errors: string[];
+  /** Evaluation timestamp */
+  evaluated_at: string;
+}
+
+export interface AppliedRule {
+  /** Rule that was applied */
+  rule: PolicyRule;
+  /** Whether the rule matched */
+  matched: boolean;
+  /** Rule result */
+  result: 'allowed' | 'denied' | 'warning';
+  /** Context information */
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Verification policy engine for C2PA manifests
+ */
 export class VerificationPolicyEngine {
-  private cache = new Map<string, { result: VerificationResult; expiry: number }>();
-  private rateLimitTracker = new Map<string, number[]>();
-  private ipRateLimitTracker = new Map<string, number[]>();
-  private performanceMetrics = {
-    totalVerifications: 0,
-    cacheHits: 0,
-    averageDuration: 0,
-    cpuUsage: 0
-  };
+  private policies: Map<string, VerificationPolicy> = new Map();
+  private activePolicies: Set<string> = new Set();
 
-  // Default policy configuration
-  private readonly defaultPolicy: VerificationPolicy = {
-    boundaryVerification: 'full',
-    samplingRate: 3, // Verify every 3rd segment
-    cacheTTL: 60000, // 60 seconds
-    maxVerificationsPerMinute: 12,
-    cpuBudgetPercent: 5,
-    networkTimeout: 5000
-  };
-
-  private currentPolicy: VerificationPolicy;
-  private readonly MAX_TRACKED_ENTITIES = 10000; // Prevent memory exhaustion
-  private readonly MAX_MANIFEST_SIZE = 10 * 1024 * 1024; // 10MB limit
-  private readonly MAX_URL_LENGTH = 2048;
-
-  constructor(policy?: Partial<VerificationPolicy>) {
-    this.currentPolicy = { ...this.defaultPolicy, ...policy };
-    
-    // Cleanup old entries every 5 minutes to prevent memory leaks
-    setInterval(() => this.cleanupRateLimitMaps(), 5 * 60 * 1000);
+  constructor() {
+    this.loadDefaultPolicies();
   }
 
   /**
-   * Validate and sanitize verification request
+   * Add a verification policy
    */
-  private validateRequest(request: VerificationRequest): void {
-    // Validate manifest URL
-    if (!request.manifestUrl || typeof request.manifestUrl !== 'string') {
-      throw new Error('Manifest URL is required');
-    }
-
-    if (request.manifestUrl.length > this.MAX_URL_LENGTH) {
-      throw new Error('Manifest URL exceeds maximum length');
-    }
-
-    try {
-      const url = new URL(request.manifestUrl);
-      if (url.protocol !== 'https:') {
-        throw new Error('Only HTTPS manifest URLs are allowed');
-      }
-      
-      // Prevent private/internal IP access
-      if (this.isPrivateIP(url.hostname)) {
-        throw new Error('Access to private IP addresses is not allowed');
-      }
-    } catch (error) {
-      throw new Error('Invalid manifest URL format');
-    }
-
-    // Validate mode
-    if (!['full', 'sample', 'boundary'].includes(request.mode)) {
-      throw new Error('Invalid verification mode');
-    }
-
-    // Validate stream ID if provided
-    if (request.streamId && !/^[a-zA-Z0-9_-]{1,64}$/.test(request.streamId)) {
-      throw new Error('Invalid stream ID format');
-    }
-
-    // Validate timestamp if provided
-    if (request.timestamp) {
-      const timestamp = new Date(request.timestamp);
-      if (isNaN(timestamp.getTime()) || 
-          timestamp < new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) ||
-          timestamp > new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)) {
-        throw new Error('Invalid timestamp');
-      }
+  addPolicy(policy: VerificationPolicy): void {
+    // Validate policy
+    this.validatePolicy(policy);
+    
+    // Add to policies
+    this.policies.set(policy.id, policy);
+    
+    // Add to active policies if marked as active
+    if (policy.active) {
+      this.activePolicies.add(policy.id);
     }
   }
 
   /**
-   * Check if hostname is a private IP
+   * Remove a verification policy
    */
-  private isPrivateIP(hostname: string): boolean {
-    const privateRanges = [
-      /^10\./,
-      /^172\.(1[6-9]|2[0-9]|3[0-1])\./,
-      /^192\.168\./,
-      /^127\./,
-      /^169\.254\./,
-      /^::1$/,
-      /^fc00:/,
-      /^fe80:/
-    ];
-    
-    return privateRanges.some(range => range.test(hostname));
+  removePolicy(policyId: string): boolean {
+    const removed = this.policies.delete(policyId);
+    if (removed) {
+      this.activePolicies.delete(policyId);
+    }
+    return removed;
   }
 
   /**
-   * Execute verification with policy enforcement
+   * Get a verification policy
    */
-  async verify(request: VerificationRequest & { clientIP?: string }): Promise<VerificationResult> {
-    const startTime = performance.now();
-
-    // Validate and sanitize request
-    this.validateRequest(request);
-
-    // Check rate limiting (both stream-based and IP-based)
-    if (!this.checkRateLimit(request.streamId || 'anonymous')) {
-      throw new Error('Rate limit exceeded for verification requests');
-    }
-    
-    if (request.clientIP && !this.checkIPRateLimit(request.clientIP)) {
-      throw new Error('IP rate limit exceeded for verification requests');
-    }
-
-    // Check cache first
-    const cacheKey = this.getCacheKey(request);
-    const cached = this.getCachedResult(cacheKey);
-    
-    if (cached) {
-      this.performanceMetrics.cacheHits++;
-      return {
-        ...cached,
-        performance: {
-          duration: 0,
-          cacheHit: true
-        }
-      };
-    }
-
-    // Perform verification based on mode
-    let result: VerificationResult;
-    
-    switch (request.mode) {
-      case 'boundary':
-        result = await this.performFullVerification(request);
-        break;
-      case 'full':
-        result = await this.performFullVerification(request);
-        break;
-      case 'sample':
-        result = await this.performSampleVerification(request);
-        break;
-      default:
-        throw new Error(`Unknown verification mode: ${request.mode}`);
-    }
-
-    // Update performance metrics
-    const duration = performance.now() - startTime;
-    this.updatePerformanceMetrics(duration, false);
-
-    // Cache result
-    this.setCachedResult(cacheKey, result);
-
-    return {
-      ...result,
-      performance: {
-        duration,
-        cacheHit: false
-      }
-    };
+  getPolicy(policyId: string): VerificationPolicy | undefined {
+    return this.policies.get(policyId);
   }
 
   /**
-   * Perform full verification (boundaries and critical points)
+   * List all verification policies
    */
-  private async performFullVerification(request: VerificationRequest): Promise<VerificationResult> {
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Verification timeout')), this.currentPolicy.networkTimeout);
-    });
-
-    const verificationPromise = this.doVerification(request, true);
-
-    try {
-      return await Promise.race([verificationPromise, timeoutPromise]) as VerificationResult;
-    } catch (error) {
-      return this.createErrorResult(request, error as Error);
-    }
+  listPolicies(): VerificationPolicy[] {
+    return Array.from(this.policies.values());
   }
 
   /**
-   * Perform sample verification (lightweight)
+   * List active verification policies
    */
-  private async performSampleVerification(request: VerificationRequest): Promise<VerificationResult> {
-    // Sample verification only checks manifest hash and basic structure
-    try {
-      const response = await fetch(request.manifestUrl, {
-        method: 'HEAD',
-        signal: AbortSignal.timeout(this.currentPolicy.networkTimeout),
-        headers: {
-          'User-Agent': 'C2PA-Audit-Tool/1.0',
-          'Accept': 'application/json, application/c2pa, */*'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Manifest fetch failed: ${response.status}`);
-      }
-
-      const etag = response.headers.get('etag') || '';
-      const lastModified = response.headers.get('last-modified') || '';
-      
-      // Create lightweight result for sampling
-      return {
-        valid: true, // Assume valid for sampling
-        manifestHash: this.hashFromHeaders(etag, lastModified),
-        verifiedAt: new Date().toISOString(),
-        trustChain: [],
-        performance: {
-          duration: 0,
-          cacheHit: false
-        }
-      };
-
-    } catch (error) {
-      return this.createErrorResult(request, error as Error);
-    }
+  listActivePolicies(): VerificationPolicy[] {
+    return Array.from(this.activePolicies)
+      .map(id => this.policies.get(id))
+      .filter(policy => policy !== undefined) as VerificationPolicy[];
   }
 
   /**
-   * Core verification implementation
+   * Activate a policy
    */
-  private async doVerification(request: VerificationRequest, fullCheck: boolean): Promise<VerificationResult> {
-    // Fetch manifest with size limits
-    const manifestResponse = await fetch(request.manifestUrl, {
-      signal: AbortSignal.timeout(this.currentPolicy.networkTimeout),
-      headers: {
-        'User-Agent': 'C2PA-Audit-Tool/1.0',
-        'Accept': 'application/json, application/c2pa, */*'
-      }
-    });
-
-    if (!manifestResponse.ok) {
-      throw new Error(`Failed to fetch manifest: ${manifestResponse.status}`);
-    }
-
-    // Check content length
-    const contentLength = manifestResponse.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > this.MAX_MANIFEST_SIZE) {
-      throw new Error('Manifest exceeds maximum size limit');
-    }
-
-    const manifestData = await manifestResponse.arrayBuffer();
-    
-    // Verify size after download
-    if (manifestData.byteLength > this.MAX_MANIFEST_SIZE) {
-      throw new Error('Manifest exceeds maximum size limit');
-    }
-
-    const manifestHash = await this.hashArrayBuffer(manifestData);
-
-    if (!fullCheck) {
-      // Sample verification - just check we can fetch and hash
-      return {
-        valid: true,
-        manifestHash,
-        verifiedAt: new Date().toISOString(),
-        trustChain: [],
-        performance: {
-          duration: 0,
-          cacheHit: false
-        }
-      };
-    }
-
-    // Full verification would validate signatures, trust chains, etc.
-    // This is a placeholder for the actual C2PA verification logic
-    const trustChain = await this.validateTrustChain(manifestData);
-    const isValid = trustChain.every(link => link.trusted);
-
-    return {
-      valid: isValid,
-      issuer: trustChain[0]?.subject,
-      tsa: 'GlobalSign', // Placeholder TSA
-      manifestHash,
-      verifiedAt: new Date().toISOString(),
-      trustChain,
-      performance: {
-        duration: 0,
-        cacheHit: false
-      }
-    };
-  }
-
-  /**
-   * Validate trust chain (placeholder implementation)
-   */
-  private async validateTrustChain(manifestData: ArrayBuffer): Promise<Array<{ subject: string; issuer: string; trusted: boolean }>> {
-    // This would implement actual C2PA trust chain validation
-    // For now, return a mock valid chain
-    return [
-      {
-        subject: 'C2PA Content Creator',
-        issuer: 'C2PA Root CA',
-        trusted: true
-      }
-    ];
-  }
-
-  /**
-   * Check rate limiting per stream/viewer
-   */
-  private checkRateLimit(streamId: string): boolean {
-    const now = Date.now();
-    const windowStart = now - 60000; // 1 minute window
-    
-    if (!this.rateLimitTracker.has(streamId)) {
-      this.rateLimitTracker.set(streamId, []);
-    }
-
-    const requests = this.rateLimitTracker.get(streamId)!;
-    
-    // Clean old requests
-    const validRequests = requests.filter(timestamp => timestamp > windowStart);
-    this.rateLimitTracker.set(streamId, validRequests);
-
-    // Check limit
-    if (validRequests.length >= this.currentPolicy.maxVerificationsPerMinute) {
+  activatePolicy(policyId: string): boolean {
+    const policy = this.policies.get(policyId);
+    if (!policy) {
       return false;
     }
 
-    // Add current request
-    validRequests.push(now);
+    policy.active = true;
+    this.activePolicies.add(policyId);
     return true;
   }
 
   /**
-   * Check IP-based rate limiting (more restrictive)
+   * Deactivate a policy
    */
-  private checkIPRateLimit(clientIP: string): boolean {
-    const now = Date.now();
-    const windowStart = now - 60000; // 1 minute window
-    const maxPerIP = this.currentPolicy.maxVerificationsPerMinute * 2; // 2x stream limit
-    
-    if (!this.ipRateLimitTracker.has(clientIP)) {
-      this.ipRateLimitTracker.set(clientIP, []);
-    }
-
-    const requests = this.ipRateLimitTracker.get(clientIP)!;
-    
-    // Clean old requests
-    const validRequests = requests.filter(timestamp => timestamp > windowStart);
-    this.ipRateLimitTracker.set(clientIP, validRequests);
-
-    // Check limit
-    if (validRequests.length >= maxPerIP) {
+  deactivatePolicy(policyId: string): boolean {
+    const policy = this.policies.get(policyId);
+    if (!policy) {
       return false;
     }
 
-    // Add current request
-    validRequests.push(now);
+    policy.active = false;
+    this.activePolicies.delete(policyId);
     return true;
   }
 
   /**
-   * Cleanup old rate limit entries to prevent memory exhaustion
+   * Evaluate manifest against active policies
    */
-  private cleanupRateLimitMaps(): void {
-    const now = Date.now();
-    const windowStart = now - 60000; // 1 minute window
-    
-    // Clean stream-based tracker
-    for (const [key, timestamps] of this.rateLimitTracker.entries()) {
-      const validTimestamps = timestamps.filter(t => t > windowStart);
-      if (validTimestamps.length === 0) {
-        this.rateLimitTracker.delete(key);
-      } else {
-        this.rateLimitTracker.set(key, validTimestamps);
+  evaluateManifest(manifest: any): PolicyEvaluationResult {
+    const appliedRules: AppliedRule[] = [];
+    const warnings: string[] = [];
+    const errors: string[] = [];
+    let allowed = true;
+
+    // Get active policies
+    const activePolicies = this.listActivePolicies();
+
+    for (const policy of activePolicies) {
+      for (const rule of policy.rules) {
+        try {
+          const result = this.evaluateRule(rule, manifest);
+          appliedRules.push(result);
+
+          if (result.matched) {
+            switch (result.result) {
+              case 'denied':
+                allowed = false;
+                errors.push(`Policy ${policy.id} - Rule ${rule.id}: ${rule.description}`);
+                break;
+              case 'warning':
+                warnings.push(`Policy ${policy.id} - Rule ${rule.id}: ${rule.description}`);
+                break;
+              case 'allowed':
+                // Rule passed, no action needed
+                break;
+            }
+          }
+        } catch (error) {
+          errors.push(`Policy ${policy.id} - Rule ${rule.id}: Evaluation failed - ${error}`);
+        }
       }
     }
-    
-    // Clean IP-based tracker
-    for (const [key, timestamps] of this.ipRateLimitTracker.entries()) {
-      const validTimestamps = timestamps.filter(t => t > windowStart);
-      if (validTimestamps.length === 0) {
-        this.ipRateLimitTracker.delete(key);
-      } else {
-        this.ipRateLimitTracker.set(key, validTimestamps);
+
+    return {
+      allowed,
+      applied_rules: appliedRules,
+      warnings,
+      errors,
+      evaluated_at: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Evaluate a single rule against a manifest
+   */
+  private evaluateRule(rule: PolicyRule, manifest: any): AppliedRule {
+    const context = this.buildRuleContext(rule, manifest);
+    const matched = this.evaluateCondition(rule.condition, context);
+
+    let result: 'allowed' | 'denied' | 'warning' = 'allowed';
+    if (matched) {
+      switch (rule.action) {
+        case 'deny':
+          result = 'denied';
+          break;
+        case 'warn':
+          result = 'warning';
+          break;
+        case 'allow':
+          result = 'allowed';
+          break;
       }
     }
-    
-    // Prevent unbounded growth
-    if (this.rateLimitTracker.size > this.MAX_TRACKED_ENTITIES) {
-      const entries = Array.from(this.rateLimitTracker.entries())
-        .sort((a, b) => Math.min(...b[1]) - Math.min(...a[1]))
-        .slice(0, this.MAX_TRACKED_ENTITIES);
-      this.rateLimitTracker = new Map(entries);
-    }
-    
-    if (this.ipRateLimitTracker.size > this.MAX_TRACKED_ENTITIES) {
-      const entries = Array.from(this.ipRateLimitTracker.entries())
-        .sort((a, b) => Math.min(...b[1]) - Math.min(...a[1]))
-        .slice(0, this.MAX_TRACKED_ENTITIES);
-      this.ipRateLimitTracker = new Map(entries);
-    }
-  }
 
-  /**
-   * Generate cache key for request
-   */
-  private getCacheKey(request: VerificationRequest): string {
-    const keyData = `${request.manifestUrl}:${request.mode}:${request.streamId || ''}`;
-    return createHash('sha256').update(keyData).digest('hex').substring(0, 16);
-  }
-
-  /**
-   * Get cached result if valid
-   */
-  private getCachedResult(key: string): VerificationResult | null {
-    const cached = this.cache.get(key);
-    
-    if (!cached) return null;
-    
-    if (Date.now() > cached.expiry) {
-      this.cache.delete(key);
-      return null;
-    }
-
-    return cached.result;
-  }
-
-  /**
-   * Set cached result with TTL
-   */
-  private setCachedResult(key: string, result: VerificationResult): void {
-    this.cache.set(key, {
+    return {
+      rule,
+      matched,
       result,
-      expiry: Date.now() + this.currentPolicy.cacheTTL
-    });
-    
-    // Prevent cache from growing too large
-    if (this.cache.size > this.MAX_TRACKED_ENTITIES) {
-      const entries = Array.from(this.cache.entries())
-        .sort((a, b) => a[1].expiry - b[1].expiry)
-        .slice(0, this.MAX_TRACKED_ENTITIES);
-      this.cache = new Map(entries);
-    }
+      context
+    };
   }
 
   /**
-   * Create error result
+   * Build context for rule evaluation
    */
-  private createErrorResult(request: VerificationRequest, error: Error): VerificationResult {
-    return {
-      valid: false,
-      manifestHash: '',
-      verifiedAt: new Date().toISOString(),
-      trustChain: [],
-      performance: {
-        duration: 0,
-        cacheHit: false
+  private buildRuleContext(rule: PolicyRule, manifest: any): Record<string, unknown> {
+    const context: Record<string, unknown> = {
+      manifest,
+      rule_type: rule.type,
+      timestamp: new Date().toISOString()
+    };
+
+    // Add specific context based on rule type
+    switch (rule.type) {
+      case 'signature':
+        context['signature'] = manifest.claim_signature;
+        context['has_signature'] = !!manifest.claim_signature;
+        context['signature_algorithm'] = manifest.claim_signature?.protected?.alg;
+        break;
+
+      case 'assertion':
+        context['assertions'] = manifest.assertions || [];
+        context['assertion_count'] = (manifest.assertions || []).length;
+        context['has_actions'] = (manifest.assertions || []).some((a: any) => a.label === 'c2pa.actions');
+        break;
+
+      case 'ingredient':
+        context['ingredients'] = manifest.ingredients || [];
+        context['ingredient_count'] = (manifest.ingredients || []).length;
+        break;
+
+      case 'timestamp':
+        context['timestamp'] = manifest.timestamp;
+        context['has_timestamp'] = !!manifest.timestamp;
+        break;
+
+      case 'manifest':
+        context['manifest_hash'] = manifest.manifest_hash;
+        context['claim_generator'] = manifest.claim_generator;
+        context['version'] = manifest.claim_generator_version;
+        break;
+    }
+
+    return context;
+  }
+
+  /**
+   * Evaluate rule condition
+   */
+  private evaluateCondition(condition: string, context: Record<string, unknown>): boolean {
+    try {
+      // Simple condition evaluator - in production, use a proper expression engine
+      // This is a simplified implementation for demonstration
+
+      // Replace common patterns
+      let evalCondition = condition
+        .replace(/has_signature/g, String(context['has_signature']))
+        .replace(/has_timestamp/g, String(context['has_timestamp']))
+        .replace(/has_actions/g, String(context['has_actions']))
+        .replace(/assertion_count/g, String(context['assertion_count']))
+        .replace(/ingredient_count/g, String(context['ingredient_count']));
+
+      // Evaluate simple expressions
+      if (evalCondition.includes('==')) {
+        const parts = evalCondition.split('==').map(p => p.trim());
+        return parts[0] === parts[1];
       }
-    };
+
+      if (evalCondition.includes('!=')) {
+        const parts = evalCondition.split('!=').map(p => p.trim());
+        return parts[0] !== parts[1];
+      }
+
+      if (evalCondition.includes('>')) {
+        const parts = evalCondition.split('>').map(p => p.trim());
+        return Number(parts[0]) > Number(parts[1]);
+      }
+
+      if (evalCondition.includes('<')) {
+        const parts = evalCondition.split('<').map(p => p.trim());
+        return Number(parts[0]) < Number(parts[1]);
+      }
+
+      if (evalCondition.includes('>=')) {
+        const parts = evalCondition.split('>=').map(p => p.trim());
+        return Number(parts[0]) >= Number(parts[1]);
+      }
+
+      if (evalCondition.includes('<=')) {
+        const parts = evalCondition.split('<=').map(p => p.trim());
+        return Number(parts[0]) <= Number(parts[1]);
+      }
+
+      // Simple boolean evaluation
+      return evalCondition === 'true';
+    } catch (error) {
+      throw new Error(`Condition evaluation failed: ${error}`);
+    }
   }
 
   /**
-   * Generate hash from HTTP headers
+   * Validate a verification policy
    */
-  private hashFromHeaders(etag: string, lastModified: string): string {
-    const data = `${etag}:${lastModified}`;
-    return createHash('sha256').update(data).digest('hex').substring(0, 16);
-  }
-
-  /**
-   * Hash array buffer using Web Crypto API
-   */
-  private async hashArrayBuffer(data: ArrayBuffer): Promise<string> {
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return Array.from(new Uint8Array(hash))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-  }
-
-  /**
-   * Update performance metrics
-   */
-  private updatePerformanceMetrics(duration: number, cacheHit: boolean): void {
-    this.performanceMetrics.totalVerifications++;
-    
-    if (cacheHit) {
-      this.performanceMetrics.cacheHits++;
+  private validatePolicy(policy: VerificationPolicy): void {
+    if (!policy.id || typeof policy.id !== 'string') {
+      throw new Error('Policy ID is required and must be a string');
     }
 
-    // Update rolling average with exponential smoothing
-    const alpha = 0.1; // Smoothing factor
-    this.performanceMetrics.averageDuration = 
-      this.performanceMetrics.averageDuration * (1 - alpha) + duration * alpha;
+    if (!policy.name || typeof policy.name !== 'string') {
+      throw new Error('Policy name is required and must be a string');
+    }
+
+    if (!policy.version || typeof policy.version !== 'string') {
+      throw new Error('Policy version is required and must be a string');
+    }
+
+    if (!Array.isArray(policy.rules)) {
+      throw new Error('Policy rules must be an array');
+    }
+
+    if (policy.rules.length === 0) {
+      throw new Error('Policy must have at least one rule');
+    }
+
+    // Validate each rule
+    for (const rule of policy.rules) {
+      this.validateRule(rule);
+    }
   }
 
   /**
-   * Get current performance metrics
+   * Validate a policy rule
    */
-  getPerformanceMetrics() {
-    return {
-      ...this.performanceMetrics,
-      cacheHitRate: this.performanceMetrics.totalVerifications > 0 
-        ? this.performanceMetrics.cacheHits / this.performanceMetrics.totalVerifications 
-        : 0
+  private validateRule(rule: PolicyRule): void {
+    if (!rule.id || typeof rule.id !== 'string') {
+      throw new Error('Rule ID is required and must be a string');
+    }
+
+    if (!rule.condition || typeof rule.condition !== 'string') {
+      throw new Error('Rule condition is required and must be a string');
+    }
+
+    if (!['allow', 'deny', 'warn'].includes(rule.action)) {
+      throw new Error('Rule action must be one of: allow, deny, warn');
+    }
+
+    if (!['info', 'warning', 'error', 'critical'].includes(rule.severity)) {
+      throw new Error('Rule severity must be one of: info, warning, error, critical');
+    }
+
+    if (!['signature', 'assertion', 'ingredient', 'timestamp', 'manifest'].includes(rule.type)) {
+      throw new Error('Rule type must be one of: signature, assertion, ingredient, timestamp, manifest');
+    }
+  }
+
+  /**
+   * Load default verification policies
+   */
+  private loadDefaultPolicies(): void {
+    // Basic signature verification policy
+    const signaturePolicy: VerificationPolicy = {
+      id: 'basic-signature-verification',
+      name: 'Basic Signature Verification',
+      description: 'Ensures manifests have valid cryptographic signatures',
+      version: '1.0.0',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rules: [
+        {
+          id: 'require-signature',
+          type: 'signature',
+          condition: 'has_signature == true',
+          action: 'deny',
+          severity: 'error',
+          description: 'Manifest must have a signature'
+        },
+        {
+          id: 'require-valid-algorithm',
+          type: 'signature',
+          condition: 'signature_algorithm == "ES256" || signature_algorithm == "RS256"',
+          action: 'warn',
+          severity: 'warning',
+          description: 'Signature should use a supported algorithm'
+        }
+      ]
     };
+
+    // Basic assertion verification policy
+    const assertionPolicy: VerificationPolicy = {
+      id: 'basic-assertion-verification',
+      name: 'Basic Assertion Verification',
+      description: 'Ensures manifests have required assertions',
+      version: '1.0.0',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rules: [
+        {
+          id: 'require-actions',
+          type: 'assertion',
+          condition: 'has_actions == true',
+          action: 'deny',
+          severity: 'error',
+          description: 'Manifest must have c2pa.actions assertion'
+        },
+        {
+          id: 'limit-assertions',
+          type: 'assertion',
+          condition: 'assertion_count <= 100',
+          action: 'warn',
+          severity: 'warning',
+          description: 'Manifest should not have too many assertions'
+        }
+      ]
+    };
+
+    // Basic timestamp verification policy
+    const timestampPolicy: VerificationPolicy = {
+      id: 'basic-timestamp-verification',
+      name: 'Basic Timestamp Verification',
+      description: 'Ensures manifests have valid timestamps',
+      version: '1.0.0',
+      active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rules: [
+        {
+          id: 'require-timestamp',
+          type: 'timestamp',
+          condition: 'has_timestamp == true',
+          action: 'deny',
+          severity: 'error',
+          description: 'Manifest must have a timestamp'
+        }
+      ]
+    };
+
+    this.addPolicy(signaturePolicy);
+    this.addPolicy(assertionPolicy);
+    this.addPolicy(timestampPolicy);
   }
 
   /**
-   * Update policy
+   * Get policy statistics
    */
-  updatePolicy(newPolicy: Partial<VerificationPolicy>): void {
-    // Validate new policy values
-    if (newPolicy.maxVerificationsPerMinute !== undefined) {
-      if (newPolicy.maxVerificationsPerMinute < 1 || newPolicy.maxVerificationsPerMinute > 1000) {
-        throw new Error('maxVerificationsPerMinute must be between 1 and 1000');
+  getStatistics(): {
+    totalPolicies: number;
+    activePolicies: number;
+    totalRules: number;
+    policyTypes: Record<string, number>;
+  } {
+    const policies = Array.from(this.policies.values());
+    const policyTypes: Record<string, number> = {};
+    let totalRules = 0;
+
+    for (const policy of policies) {
+      totalRules += policy.rules.length;
+      
+      for (const rule of policy.rules) {
+        policyTypes[rule.type] = (policyTypes[rule.type] || 0) + 1;
       }
     }
 
-    if (newPolicy.cacheTTL !== undefined) {
-      if (newPolicy.cacheTTL < 1000 || newPolicy.cacheTTL > 3600000) {
-        throw new Error('cacheTTL must be between 1 second and 1 hour');
-      }
-    }
-
-    if (newPolicy.networkTimeout !== undefined) {
-      if (newPolicy.networkTimeout < 1000 || newPolicy.networkTimeout > 30000) {
-        throw new Error('networkTimeout must be between 1 second and 30 seconds');
-      }
-    }
-
-    this.currentPolicy = { ...this.currentPolicy, ...newPolicy };
-  }
-
-  /**
-   * Get current policy
-   */
-  getPolicy(): VerificationPolicy {
-    return { ...this.currentPolicy };
-  }
-
-  /**
-   * Clear cache and rate limits
-   */
-  reset(): void {
-    this.cache.clear();
-    this.rateLimitTracker.clear();
-    this.ipRateLimitTracker.clear();
-    this.performanceMetrics = {
-      totalVerifications: 0,
-      cacheHits: 0,
-      averageDuration: 0,
-      cpuUsage: 0
-    };
-  }
-
-  /**
-   * Get cache statistics
-   */
-  getCacheStats() {
     return {
-      size: this.cache.size,
-      maxSize: this.MAX_TRACKED_ENTITIES,
-      utilization: this.cache.size / this.MAX_TRACKED_ENTITIES
+      totalPolicies: policies.length,
+      activePolicies: this.activePolicies.size,
+      totalRules,
+      policyTypes
     };
   }
 
   /**
-   * Get rate limit statistics
+   * Export policies to JSON
    */
-  getRateLimitStats() {
-    return {
-      streamTrackerSize: this.rateLimitTracker.size,
-      ipTrackerSize: this.ipRateLimitTracker.size,
-      maxTrackedEntities: this.MAX_TRACKED_ENTITIES
-    };
+  exportToJSON(): string {
+    const policies = Array.from(this.policies.values());
+    return JSON.stringify(policies, null, 2);
+  }
+
+  /**
+   * Import policies from JSON
+   */
+  importFromJSON(json: string): void {
+    try {
+      const policies = JSON.parse(json) as VerificationPolicy[];
+      
+      for (const policy of policies) {
+        this.addPolicy(policy);
+      }
+    } catch (error) {
+      throw new Error(`Failed to import policies: ${error}`);
+    }
   }
 }

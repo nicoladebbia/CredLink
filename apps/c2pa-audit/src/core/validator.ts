@@ -1,81 +1,74 @@
 /**
  * C2PA Manifest Validator
- * Implements spec-compliant validation with exact error codes
- * Follows C2PA 2.2 specification validation rules
- */
-
-import { createHash } from 'crypto';
-import { 
-  C2PAManifest, 
-  ClaimSignature, 
-  Assertion, 
-  Ingredient, 
-  Certificate,
-  TimeStampToken,
-  ValidationStatus,
-  ValidationCode,
-  ValidationError,
-  C2PAError
-} from '@/types';
-import { JSONCanonicalizer } from './canonicalizer';
-
-/**
  * Validates C2PA manifests according to specification
  */
+
+import {
+  C2PAManifest,
+  ClaimSignature,
+  Assertion,
+  Ingredient,
+  Certificate,
+  ValidationStatus,
+  ValidationCode
+} from '../types/index.js';
+
+/**
+ * C2PA Manifest Validation Engine
+ * Validates manifests according to C2PA 2.1 specification
+ */
 export class ManifestValidator {
-  // Security constants for validation
+  // Configuration constants
+  private static readonly MAX_MANIFEST_SIZE = 10 * 1024 * 1024; // 10MB
+  private static readonly MAX_ASSERTIONS = 1000;
+  private static readonly MAX_INGREDIENTS = 100;
+  private static readonly MAX_NESTING_DEPTH = 10;
+  
+  // Allowed signature algorithms
   private static readonly ALLOWED_SIGNATURE_ALGORITHMS = new Set([
-    'ES256', 'ES384', 'ES512',
-    'PS256', 'PS384', 'PS512',
-    'RS256', 'RS384', 'RS512'
+    'ES256',
+    'ES384', 
+    'ES512',
+    'RS256',
+    'RS384',
+    'RS512',
+    'PS256',
+    'PS384',
+    'PS512'
   ]);
-
+  
+  // Required assertion types
   private static readonly REQUIRED_ASSERTIONS = new Set([
-    'c2pa.actions'
-  ]);
-
-  private static readonly TRUSTED_TSA_POLICIES = new Set([
-    '2.16.840.1.114412.7.1', // DigiCert TSA Policy
-    '1.3.6.1.4.1.4146.2.3',  // GlobalSign TSA Policy
-    '1.3.6.1.4.1.6449.2.7.1'  // Sectigo TSA Policy
+    'c2pa.actions',
+    'c2pa.hash_data'
   ]);
 
   /**
    * Validate a complete C2PA manifest
    * @param manifest - Manifest to validate
-   * @param trustAnchors - Trusted certificate anchors
-   * @returns Validation status with spec-compliant codes
+   * @param trustAnchors - Trusted certificates for validation
+   * @returns Complete validation result
    */
   static async validateManifest(
     manifest: C2PAManifest,
-    trustAnchors: Certificate[] = []
+    trustAnchors: Certificate[]
   ): Promise<ValidationStatus> {
-    // CRITICAL: Input validation to prevent malformed data attacks
+    // Input validation
     if (!manifest || typeof manifest !== 'object') {
       return {
         valid: false,
         codes: ['manifest.structureInvalid'],
-        summary: 'Invalid manifest object'
+        summary: 'Manifest is not a valid object'
       };
     }
 
-    // CRITICAL: Prevent excessive manifest size (DoS protection)
+    // Size validation
     const manifestSize = JSON.stringify(manifest).length;
-    if (manifestSize > 10 * 1024 * 1024) { // 10MB limit
+    if (manifestSize > this.MAX_MANIFEST_SIZE) {
       return {
         valid: false,
         codes: ['manifest.structureInvalid'],
-        summary: 'Manifest too large'
-      };
-    }
-
-    // CRITICAL: Prevent excessive nested structures (stack overflow protection)
-    const maxDepth = this.getMaxDepth(manifest);
-    if (maxDepth > 100) {
-      return {
-        valid: false,
-        codes: ['manifest.structureInvalid'],
-        summary: 'Manifest nesting too deep'
+        summary: `Manifest size ${manifestSize} exceeds maximum ${this.MAX_MANIFEST_SIZE}`
       };
     }
 
@@ -91,7 +84,7 @@ export class ManifestValidator {
       }
 
       // 2. Validate claim signature
-      const signatureValidation = await this.validateClaimSignature(
+      const signatureValidation = this.validateClaimSignature(
         manifest.claim_signature,
         trustAnchors
       );
@@ -107,59 +100,36 @@ export class ManifestValidator {
         isValid = false;
       }
 
-      // 4. Validate timestamp token if present
-      if (manifest.claim_signature.protected.iat) {
-        const timestampValidation = await this.validateTimestampToken(manifest);
-        codes.push(...timestampValidation.codes);
-        if (!timestampValidation.valid) {
-          isValid = false;
-        }
-      }
-
-      // 5. Validate ingredients if present
+      // 4. Validate ingredients if present
       if (manifest.ingredients && manifest.ingredients.length > 0) {
-        // CRITICAL: Limit number of ingredients to prevent DoS
-        if (manifest.ingredients.length > 1000) {
-          codes.push('ingredient.validationFailed');
-          isValid = false;
-        } else {
-          const ingredientValidation = await this.validateIngredients(
-            manifest.ingredients,
-            trustAnchors
-          );
-          codes.push(...ingredientValidation.codes);
-          if (!ingredientValidation.valid) {
-            isValid = false;
-          }
-        }
-      }
-
-      // 6. Validate redactions if present
-      if (manifest.redactions && manifest.redactions.length > 0) {
-        const redactionValidation = this.validateRedactions(manifest);
-        codes.push(...redactionValidation.codes);
-        if (!redactionValidation.valid) {
+        const ingredientValidation = this.validateIngredients(manifest.ingredients);
+        codes.push(...ingredientValidation.codes);
+        if (!ingredientValidation.valid) {
           isValid = false;
         }
       }
 
-      return {
-        valid: isValid,
-        codes: this.deduplicateCodes(codes),
-        summary: this.generateValidationSummary(isValid, codes)
-      };
+      // 5. Validate timestamp
+      const timestampValidation = await this.validateTimestampToken(manifest);
+      codes.push(...timestampValidation.codes);
+      if (!timestampValidation.valid) {
+        isValid = false;
+      }
 
     } catch (error) {
-      return {
-        valid: false,
-        codes: ['manifest.structureInvalid'],
-        summary: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      };
+      codes.push('manifest.structureInvalid');
+      isValid = false;
     }
+
+    return {
+      valid: isValid,
+      codes: this.deduplicateCodes(codes),
+      summary: this.generateValidationSummary(isValid, codes)
+    };
   }
 
   /**
-   * Validate basic manifest structure
+   * Validate manifest structure
    * @param manifest - Manifest to validate
    * @returns Structure validation result
    */
@@ -167,8 +137,8 @@ export class ManifestValidator {
     const codes: ValidationCode[] = [];
     let isValid = true;
 
-    // Check required fields
-    if (!manifest.manifest_hash || manifest.manifest_hash.length === 0) {
+    // Validate required fields
+    if (!manifest.manifest_hash || typeof manifest.manifest_hash !== 'string') {
       codes.push('manifest.structureInvalid');
       isValid = false;
     }
@@ -183,15 +153,6 @@ export class ManifestValidator {
       isValid = false;
     }
 
-    if (!Array.isArray(manifest.assertions)) {
-      codes.push('manifest.structureInvalid');
-      isValid = false;
-    }
-
-    if (isValid) {
-      codes.push('manifest.structureValid');
-    }
-
     return {
       valid: isValid,
       codes,
@@ -200,46 +161,38 @@ export class ManifestValidator {
   }
 
   /**
-   * Validate claim signature and certificate chain
+   * Validate claim signature
    * @param claimSignature - Claim signature to validate
-   * @param trustAnchors - Trusted certificate anchors
+   * @param certificates - Certificate chain for validation
    * @returns Signature validation result
    */
-  private static async validateClaimSignature(
-    claimSignature: ClaimSignature,
-    trustAnchors: Certificate[]
-  ): Promise<ValidationStatus> {
+  private static validateClaimSignature(claimSignature: ClaimSignature, certificates: Certificate[]): ValidationStatus {
     const codes: ValidationCode[] = [];
     let isValid = true;
 
     try {
-      // Validate signature algorithm
-      const alg = claimSignature.protected.alg;
-      if (!alg || !this.ALLOWED_SIGNATURE_ALGORITHMS.has(alg)) {
-        codes.push('signature.algorithmNotAllowed');
-        isValid = false;
-      }
-
-      // Validate certificate chain
-      const chainValidation = this.validateCertificateChain(
-        claimSignature.certificate_chain,
-        trustAnchors
-      );
-      codes.push(...chainValidation.codes);
-      if (!chainValidation.valid) {
-        isValid = false;
-      }
-
       // Validate signature format
       if (!claimSignature.signature || claimSignature.signature.length === 0) {
         codes.push('signature.invalid');
         isValid = false;
       }
 
+      // Validate algorithm
+      if (!claimSignature.protected?.alg || !this.ALLOWED_SIGNATURE_ALGORITHMS.has(claimSignature.protected.alg)) {
+        codes.push('signature.algorithmNotAllowed');
+        isValid = false;
+      }
+
+      // Validate certificate chain
+      if (!claimSignature.certificate_chain || !Array.isArray(claimSignature.certificate_chain) || claimSignature.certificate_chain.length === 0) {
+        codes.push('signingCredential.untrusted');
+        isValid = false;
+      }
+
       // Cryptographic signature verification
       // In production, this would verify the JWS signature using the certificate chain
       // For now, we validate the structure and check trust status
-      const trustedCert = chain.find(cert => cert.trusted && !cert.revoked);
+      const trustedCert = certificates.find(cert => cert.trusted && !cert.revoked);
       
       if (!trustedCert) {
         codes.push('signingCredential.untrusted');
@@ -270,13 +223,31 @@ export class ManifestValidator {
     const codes: ValidationCode[] = [];
     let isValid = true;
 
-    // Check for required assertions
-    const assertionLabels = new Set(assertions.map(a => a.label));
-    for (const required of this.REQUIRED_ASSERTIONS) {
-      if (!assertionLabels.has(required)) {
-        codes.push('assertion.missing');
-        isValid = false;
+    if (!assertions || !Array.isArray(assertions)) {
+      codes.push('assertion.missing');
+      return {
+        valid: false,
+        codes,
+        summary: 'Assertions array is missing or invalid'
+      };
+    }
+
+    if (assertions.length > this.MAX_ASSERTIONS) {
+      codes.push('manifest.structureInvalid');
+      isValid = false;
+    }
+
+    // Check required assertions
+    const missingAssertions: string[] = [];
+    this.REQUIRED_ASSERTIONS.forEach(required => {
+      if (!assertions.some(a => a.label === required)) {
+        missingAssertions.push(required);
       }
+    });
+
+    if (missingAssertions.length > 0) {
+      codes.push('manifest.structureInvalid');
+      isValid = false;
     }
 
     // Validate each assertion
@@ -310,40 +281,68 @@ export class ManifestValidator {
       isValid = false;
     }
 
-    // Validate hashed URI
-    if (!assertion.hashed_uri || typeof assertion.hashed_uri !== 'string') {
-      codes.push('assertion.missing');
+    // Validate assertion data
+    if (!assertion.data || typeof assertion.data !== 'object') {
+      codes.push('assertion.hashedURI.mismatch');
       isValid = false;
-    } else if (assertion.data) {
-      // Verify hash URI matches the data
-      const computedHash = JSONCanonicalizer.hash(assertion.data, 'sha256');
-      const expectedHash = `hash://sha256/${computedHash}`;
-      
-      if (assertion.hashed_uri !== expectedHash) {
-        codes.push('assertion.hashedURI.mismatch');
-        isValid = false;
-      } else {
-        codes.push('assertion.hashedURI.match');
-      }
-    }
-
-    // Validate redaction status
-    if (assertion.redacted) {
-      // Check if redaction is allowed for this assertion type
-      if (this.REQUIRED_ASSERTIONS.has(assertion.label)) {
-        codes.push('assertion.invalidRedaction');
-        isValid = false;
-      } else {
-        codes.push('assertion.redactionAllowed');
-      }
-    } else {
-      codes.push('assertion.notRedacted');
     }
 
     return {
       valid: isValid,
       codes,
-      summary: isValid ? `Assertion ${assertion.label} is valid` : `Assertion ${assertion.label} is invalid`
+      summary: isValid ? 'Assertion is valid' : 'Assertion is invalid'
+    };
+  }
+
+  /**
+   * Validate ingredients array
+   * @param ingredients - Ingredients to validate
+   * @returns Ingredient validation result
+   */
+  private static validateIngredients(ingredients: Ingredient[]): ValidationStatus {
+    const codes: ValidationCode[] = [];
+    let isValid = true;
+
+    if (!Array.isArray(ingredients)) {
+      codes.push('ingredient.validationFailed');
+      return {
+        valid: false,
+        codes,
+        summary: 'Ingredients array is invalid'
+      };
+    }
+
+    if (ingredients.length > this.MAX_INGREDIENTS) {
+      codes.push('manifest.structureInvalid');
+      isValid = false;
+    }
+
+    // Validate each ingredient
+    for (const ingredient of ingredients) {
+      if (!ingredient.active_manifest || typeof ingredient.active_manifest !== 'string') {
+        codes.push('ingredient.manifestMissing');
+        isValid = false;
+      }
+
+      if (!ingredient.claim_signature || typeof ingredient.claim_signature !== 'string') {
+        codes.push('ingredient.validationFailed');
+        isValid = false;
+      }
+
+      // Check nesting depth
+      if (ingredient.manifest?.ingredients) {
+        const depth = this.getMaxDepth(ingredient);
+        if (depth > this.MAX_NESTING_DEPTH) {
+          codes.push('ingredient.validationFailed');
+          isValid = false;
+        }
+      }
+    }
+
+    return {
+      valid: isValid,
+      codes: this.deduplicateCodes(codes),
+      summary: isValid ? 'All ingredients are valid' : 'Some ingredients are invalid'
     };
   }
 
@@ -357,25 +356,25 @@ export class ManifestValidator {
     let isValid = true;
 
     try {
-      // Timestamp token validation
-      // In production, this would verify the RFC 3161 timestamp signature
-      // For now, we validate the structure and check trusted TSA policies
-      // Note: Actual TSA policy validation would require extracting the TimeStampToken
-      
-      // For now, check if timestamp is present and reasonable
-      if (manifest.claim_signature.protected.iat) {
-        const iat = manifest.claim_signature.protected.iat;
-        const now = Math.floor(Date.now() / 1000);
-        
-        // Check if timestamp is not in the future (with 5 minute tolerance)
-        if (iat > now + 300) {
-          codes.push('timestamp.invalid');
-          isValid = false;
-        } else {
-          codes.push('timestamp.trusted');
-        }
-      } else {
+      // For now, we'll validate the timestamp field in the manifest
+      if (!manifest.timestamp || typeof manifest.timestamp !== 'string') {
         codes.push('timestamp.missing');
+        return {
+          valid: false,
+          codes,
+          summary: 'Timestamp is missing'
+        };
+      }
+
+      // Validate timestamp format
+      const timestampTime = new Date(manifest.timestamp);
+      const now = new Date();
+      
+      if (isNaN(timestampTime.getTime()) || timestampTime > now) {
+        codes.push('timestamp.invalid');
+        isValid = false;
+      } else {
+        codes.push('timestamp.trusted');
       }
 
     } catch (error) {
@@ -386,198 +385,26 @@ export class ManifestValidator {
     return {
       valid: isValid,
       codes,
-      summary: isValid ? 'Timestamp is valid' : 'Timestamp is invalid'
+      summary: isValid ? 'Timestamp token is valid' : 'Timestamp token is invalid'
     };
   }
 
   /**
-   * Validate ingredient manifests
-   * @param ingredients - Ingredients to validate
-   * @param trustAnchors - Trusted certificate anchors
-   * @returns Ingredient validation result
+   * Get maximum nesting depth of ingredient relationships
+   * @param ingredient - Root ingredient
+   * @returns Maximum nesting depth
    */
-  private static async validateIngredients(
-    ingredients: Ingredient[],
-    trustAnchors: Certificate[]
-  ): Promise<ValidationStatus> {
-    const codes: ValidationCode[] = [];
-    let isValid = true;
-
-    for (const ingredient of ingredients) {
-      const ingredientValidation = await this.validateSingleIngredient(
-        ingredient,
-        trustAnchors
-      );
-      codes.push(...ingredientValidation.codes);
-      if (!ingredientValidation.valid) {
-        isValid = false;
-      }
-    }
-
-    return {
-      valid: isValid,
-      codes: this.deduplicateCodes(codes),
-      summary: isValid ? 'All ingredients are valid' : 'Some ingredients are invalid'
-    };
-  }
-
-  /**
-   * Validate a single ingredient
-   * @param ingredient - Ingredient to validate
-   * @param trustAnchors - Trusted certificate anchors
-   * @returns Ingredient validation result
-   */
-  private static async validateSingleIngredient(
-    ingredient: Ingredient,
-    trustAnchors: Certificate[]
-  ): Promise<ValidationStatus> {
-    const codes: ValidationCode[] = [];
-    let isValid = true;
-
-    // Validate ingredient structure
-    if (!ingredient.active_manifest || !ingredient.claim_signature) {
-      codes.push('ingredient.manifestMissing');
-      isValid = false;
-    }
-
-    // Recursive ingredient validation would be implemented here
-    // For now, we validate the immediate ingredients only
-    // Full recursive validation would require fetching all referenced manifests
-    // This would require fetching and validating the ingredient manifest
-    
-    if (isValid) {
-      codes.push('ingredient.claimSignature.match');
-    }
-
-    return {
-      valid: isValid,
-      codes,
-      summary: isValid ? 'Ingredient is valid' : 'Ingredient is invalid'
-    };
-  }
-
-  /**
-   * Validate redactions
-   * @param manifest - Manifest with redactions
-   * @returns Redaction validation result
-   */
-  private static validateRedactions(manifest: C2PAManifest): ValidationStatus {
-    const codes: ValidationCode[] = [];
-    let isValid = true;
-
-    if (!manifest.redactions || manifest.redactions.length === 0) {
-      return {
-        valid: true,
-        codes: [],
-        summary: 'No redactions to validate'
-      };
-    }
-
-    for (const redaction of manifest.redactions) {
-      // Check if redaction is allowed
-      const affectedAssertion = manifest.assertions.find(a => 
-        a.hashed_uri.includes(redaction.jumbf_uri)
-      );
-
-      if (affectedAssertion && this.REQUIRED_ASSERTIONS.has(affectedAssertion.label)) {
-        codes.push('assertion.invalidRedaction');
-        isValid = false;
-      }
-    }
-
-    return {
-      valid: isValid,
-      codes: this.deduplicateCodes(codes),
-      summary: isValid ? 'Redactions are valid' : 'Some redactions are invalid'
-    };
-  }
-
-  /**
-   * Validate certificate chain against trust anchors
-   * @param chain - Certificate chain to validate
-   * @param trustAnchors - Trusted certificate anchors
-   * @returns Certificate validation result
-   */
-  private static validateCertificateChain(
-    chain: Certificate[],
-    trustAnchors: Certificate[]
-  ): ValidationStatus {
-    const codes: ValidationCode[] = [];
-    let isValid = true;
-
-    if (!chain || chain.length === 0) {
-      codes.push('signingCredential.untrusted');
-      return {
-        valid: false,
-        codes,
-        summary: 'No certificate chain provided'
-      };
-    }
-
-    // Check if any certificate in the chain is trusted
-    const trustedCert = chain.find(cert => 
-      trustAnchors.some(anchor => 
-        anchor.thumbprint === cert.thumbprint && 
-        anchor.trusted && 
-        !cert.revoked
-      )
-    );
-
-    if (trustedCert) {
-      codes.push('signingCredential.trusted');
-    } else {
-      codes.push('signingCredential.untrusted');
-      isValid = false;
-    }
-
-    // Check for revoked certificates
-    const revokedCert = chain.find(cert => cert.revoked);
-    if (revokedCert) {
-      codes.push('signingCredential.revoked');
-      isValid = false;
-    }
-
-    // Check for expired certificates
-    const now = new Date();
-    const expiredCert = chain.find(cert => 
-      new Date(cert.not_after) < now
-    );
-    if (expiredCert) {
-      codes.push('signingCredential.expired');
-      isValid = false;
-    }
-
-    return {
-      valid: isValid,
-      codes,
-      summary: isValid ? 'Certificate chain is trusted' : 'Certificate chain is not trusted'
-    };
-  }
-
-  /**
-   * CRITICAL: Calculate maximum nesting depth to prevent stack overflow attacks
-   * @param obj - Object to analyze
-   * @param currentDepth - Current depth
-   * @returns Maximum depth
-   */
-  private static getMaxDepth(obj: any, currentDepth: number = 0): number {
-    if (!obj || typeof obj !== 'object') {
+  private static getMaxDepth(ingredient: Ingredient, currentDepth: number = 1): number {
+    if (!ingredient.manifest?.ingredients || ingredient.manifest.ingredients.length === 0) {
       return currentDepth;
     }
-    
-    if (currentDepth > 100) {
-      return currentDepth; // Early exit for deep objects
-    }
-    
+
     let maxDepth = currentDepth;
-    
-    for (const value of Object.values(obj)) {
-      if (typeof value === 'object' && value !== null) {
-        const depth = this.getMaxDepth(value, currentDepth + 1);
-        maxDepth = Math.max(maxDepth, depth);
-      }
+    for (const childIngredient of ingredient.manifest.ingredients) {
+      const childDepth = this.getMaxDepth(childIngredient, currentDepth + 1);
+      maxDepth = Math.max(maxDepth, childDepth);
     }
-    
+
     return maxDepth;
   }
 
@@ -587,31 +414,42 @@ export class ManifestValidator {
    * @returns Deduplicated codes
    */
   private static deduplicateCodes(codes: ValidationCode[]): ValidationCode[] {
-    return [...new Set(codes)];
+    const uniqueCodes: ValidationCode[] = [];
+    const seen = new Set<string>();
+    
+    for (const code of codes) {
+      if (!seen.has(code)) {
+        seen.add(code);
+        uniqueCodes.push(code);
+      }
+    }
+    
+    return uniqueCodes;
   }
 
   /**
    * Generate human-readable validation summary
-   * @param isValid - Overall validation result
-   * @param codes - Validation codes
+   * @param isValid - Whether validation passed
+   * @param codes - Validation codes encountered
    * @returns Summary string
    */
   private static generateValidationSummary(isValid: boolean, codes: ValidationCode[]): string {
     if (isValid) {
-      return 'Manifest is valid and trusted';
+      return 'Manifest validation passed successfully';
     }
 
-    const errorCodes = codes.filter(code => 
-      !code.includes('.valid') && 
-      !code.includes('.match') && 
-      !code.includes('.trusted')
-    );
+    const errorCount = codes.filter(code => 
+      code.includes('invalid') || code.includes('missing') || code.includes('untrusted')
+    ).length;
 
-    if (errorCodes.length > 0) {
-      return `Manifest validation failed: ${errorCodes.join(', ')}`;
+    const warningCount = codes.length - errorCount;
+
+    let summary = `Manifest validation failed with ${errorCount} error(s)`;
+    if (warningCount > 0) {
+      summary += ` and ${warningCount} warning(s)`;
     }
 
-    return 'Manifest validation failed with unspecified errors';
+    return summary;
   }
 
   /**
@@ -625,27 +463,27 @@ export class ManifestValidator {
       'signingCredential.untrusted': 'https://spec.c2pa.org/specification-2.1/#signing-credential',
       'signingCredential.revoked': 'https://spec.c2pa.org/specification-2.1/#signing-credential',
       'signingCredential.expired': 'https://spec.c2pa.org/specification-2.1/#signing-credential',
-      'signature.valid': 'https://spec.c2pa.org/specification-2.1/#claim-signature',
-      'signature.invalid': 'https://spec.c2pa.org/specification-2.1/#claim-signature',
-      'signature.algorithmNotAllowed': 'https://spec.c2pa.org/specification-2.1/#claim-signature',
-      'timestamp.trusted': 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence',
-      'timestamp.untrusted': 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence',
-      'timestamp.invalid': 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence',
-      'timestamp.missing': 'https://spec.c2pa.org/specification-2.1/#timestamp-evidence',
+      'signature.valid': 'https://spec.c2pa.org/specification-2.1/#signature',
+      'signature.invalid': 'https://spec.c2pa.org/specification-2.1/#signature',
+      'signature.algorithmNotAllowed': 'https://spec.c2pa.org/specification-2.1/#signature-algorithms',
+      'timestamp.trusted': 'https://spec.c2pa.org/specification-2.1/#timestamp',
+      'timestamp.untrusted': 'https://spec.c2pa.org/specification-2.1/#timestamp',
+      'timestamp.invalid': 'https://spec.c2pa.org/specification-2.1/#timestamp',
+      'timestamp.missing': 'https://spec.c2pa.org/specification-2.1/#timestamp',
       'assertion.hashedURI.match': 'https://spec.c2pa.org/specification-2.1/#assertions',
       'assertion.hashedURI.mismatch': 'https://spec.c2pa.org/specification-2.1/#assertions',
       'assertion.missing': 'https://spec.c2pa.org/specification-2.1/#assertions',
-      'assertion.notRedacted': 'https://spec.c2pa.org/specification-2.1/#redactions',
-      'assertion.invalidRedaction': 'https://spec.c2pa.org/specification-2.1/#redactions',
-      'assertion.redactionAllowed': 'https://spec.c2pa.org/specification-2.1/#redactions',
+      'assertion.notRedacted': 'https://spec.c2pa.org/specification-2.1/#assertions',
+      'assertion.invalidRedaction': 'https://spec.c2pa.org/specification-2.1/#assertions',
+      'assertion.redactionAllowed': 'https://spec.c2pa.org/specification-2.1/#assertions',
       'ingredient.claimSignature.match': 'https://spec.c2pa.org/specification-2.1/#ingredients',
       'ingredient.claimSignature.mismatch': 'https://spec.c2pa.org/specification-2.1/#ingredients',
       'ingredient.manifestMissing': 'https://spec.c2pa.org/specification-2.1/#ingredients',
       'ingredient.validationFailed': 'https://spec.c2pa.org/specification-2.1/#ingredients',
-      'manifest.structureValid': 'https://spec.c2pa.org/specification-2.1/#manifest-structure',
-      'manifest.structureInvalid': 'https://spec.c2pa.org/specification-2.1/#manifest-structure',
-      'manifest.versionSupported': 'https://spec.c2pa.org/specification-2.1/#version',
-      'manifest.versionUnsupported': 'https://spec.c2pa.org/specification-2.1/#version'
+      'manifest.structureValid': 'https://spec.c2pa.org/specification-2.1/#manifest',
+      'manifest.structureInvalid': 'https://spec.c2pa.org/specification-2.1/#manifest',
+      'manifest.versionSupported': 'https://spec.c2pa.org/specification-2.1/#manifest',
+      'manifest.versionUnsupported': 'https://spec.c2pa.org/specification-2.1/#manifest'
     };
 
     return references[code] || 'https://spec.c2pa.org/specification-2.1/';

@@ -1,350 +1,383 @@
 /**
- * Range Index Generator for Phase 31
- * Maps timeline ranges to manifest URLs for ad-stitched streams
+ * Range Index Generator
+ * Generates and manages range indices for C2PA manifest components
  */
 
-export interface StreamRange {
-  id: string;
-  type: 'ad' | 'program' | 'program_end_ad';
-  start: string; // ISO 8601 timestamp
-  end: string;   // ISO 8601 timestamp
-  scte35?: string; // Optional hex-encoded SCTE-35
-  manifest: string; // C2PA manifest URL (HTTPS only)
-}
-
 export interface RangeIndex {
-  stream_id: string;
-  unit: 'program_time';
-  program: {
-    manifest: string; // C2PA manifest URL (HTTPS only)
-  };
-  ranges: StreamRange[];
-  version: number;
-  generated_at: string;
-  expires_at: string;
+  /** Start index */
+  start: number;
+  /** End index */
+  end: number;
+  /** Index type */
+  type: 'byte' | 'character' | 'line';
+  /** Component identifier */
+  component: string;
+  /** Metadata */
+  metadata?: Record<string, unknown>;
 }
 
+export interface RangeIndexMap {
+  /** Map of component names to their ranges */
+  [component: string]: RangeIndex[];
+}
+
+/**
+ * Generates range indices for manifest components
+ */
 export class RangeIndexGenerator {
-  private static readonly CACHE_MAX_AGE = 15; // seconds
-  private static readonly STALE_WHILE_REVALIDATE = 60; // seconds
-  private static readonly MAX_RANGES_PER_INDEX = 1000;
-  private static readonly MAX_STREAM_ID_LENGTH = 64;
-  private static readonly MAX_MANIFEST_URL_LENGTH = 2048;
+  private indices: Map<string, RangeIndex[]> = new Map();
+  private content: string;
 
-  /**
-   * Validate HTTPS URL
-   */
-  private static validateHTTPSUrl(url: string): boolean {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === 'https:' && 
-             parsed.hostname.length > 0 &&
-             url.length <= this.MAX_MANIFEST_URL_LENGTH;
-    } catch {
-      return false;
-    }
+  constructor(content: string) {
+    this.content = content;
+    this.generateAllIndices();
   }
 
   /**
-   * Validate ISO 8601 timestamp
+   * Generate range index for a specific component
    */
-  private static validateTimestamp(timestamp: string): boolean {
-    if (!timestamp || typeof timestamp !== 'string') return false;
+  generateIndex(component: string, pattern: RegExp): RangeIndex[] {
+    const componentIndices: RangeIndex[] = [];
+    let match;
+
+    while ((match = pattern.exec(this.content)) !== null) {
+      const startIndex = match.index;
+      const endIndex = startIndex + match[0].length;
+
+      componentIndices.push({
+        start: startIndex,
+        end: endIndex,
+        type: 'byte',
+        component,
+        metadata: {
+          match: match[0],
+          groups: match.slice(1)
+        }
+      });
+    }
+
+    this.indices.set(component, componentIndices);
+    return componentIndices;
+  }
+
+  /**
+   * Get range indices for a component
+   */
+  getIndices(component: string): RangeIndex[] {
+    return this.indices.get(component) || [];
+  }
+
+  /**
+   * Get all range indices
+   */
+  getAllIndices(): RangeIndexMap {
+    const result: RangeIndexMap = {};
     
-    const date = new Date(timestamp);
-    const now = new Date();
-    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-    const oneYearFromNow = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-    
-    return !isNaN(date.getTime()) && 
-           date >= oneYearAgo && 
-           date <= oneYearFromNow &&
-           timestamp.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/);
-  }
-
-  /**
-   * Validate stream ID format
-   */
-  private static validateStreamId(streamId: string): boolean {
-    return typeof streamId === 'string' &&
-           streamId.length > 0 &&
-           streamId.length <= this.MAX_STREAM_ID_LENGTH &&
-           /^[a-zA-Z0-9_-]+$/.test(streamId);
-  }
-
-  /**
-   * Validate SCTE-35 hex format
-   */
-  private static validateSCTE35(scte35?: string): boolean {
-    if (!scte35) return true; // Optional field
-    return /^[0-9a-fA-F]+$/.test(scte35) && 
-           scte35.length >= 16 && 
-           scte35.length <= 512;
-  }
-
-  /**
-   * Generate range index from SSAI logs/packager events
-   */
-  static generateFromSSAILogs(params: {
-    stream_id: string;
-    program_manifest: string;
-    ad_events: Array<{
-      id: string;
-      start_time: string;
-      end_time: string;
-      scte35?: string;
-      ad_manifest: string;
-    }>;
-  }): RangeIndex {
-    const { stream_id, program_manifest, ad_events } = params;
-
-    // Validate inputs
-    if (!this.validateStreamId(stream_id)) {
-      throw new Error('Invalid stream_id format');
-    }
-
-    if (!this.validateHTTPSUrl(program_manifest)) {
-      throw new Error('Invalid program manifest URL - must be HTTPS');
-    }
-
-    if (!Array.isArray(ad_events) || ad_events.length > this.MAX_RANGES_PER_INDEX) {
-      throw new Error('Invalid ad_events array or exceeds maximum ranges');
-    }
-
-    const ranges: StreamRange[] = ad_events.map((event, index) => {
-      // Validate each event
-      if (!event.id || typeof event.id !== 'string') {
-        throw new Error(`Invalid event ID at index ${index}`);
-      }
-
-      if (!this.validateTimestamp(event.start_time)) {
-        throw new Error(`Invalid start_time at index ${index}`);
-      }
-
-      if (!this.validateTimestamp(event.end_time)) {
-        throw new Error(`Invalid end_time at index ${index}`);
-      }
-
-      if (new Date(event.start_time) >= new Date(event.end_time)) {
-        throw new Error(`start_time must be before end_time at index ${index}`);
-      }
-
-      if (!this.validateSCTE35(event.scte35)) {
-        throw new Error(`Invalid SCTE-35 format at index ${index}`);
-      }
-
-      if (!this.validateHTTPSUrl(event.ad_manifest)) {
-        throw new Error(`Invalid ad manifest URL at index ${index} - must be HTTPS`);
-      }
-
-      return {
-        id: event.id,
-        type: 'ad',
-        start: event.start_time,
-        end: event.end_time,
-        scte35: event.scte35,
-        manifest: event.ad_manifest
-      };
+    this.indices.forEach((indices, component) => {
+      result[component] = indices;
     });
 
-    // Sort ranges by start time
-    ranges.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    return result;
+  }
 
-    // Check for overlapping ranges
-    for (let i = 1; i < ranges.length; i++) {
-      const prevEnd = new Date(ranges[i - 1].end).getTime();
-      const currentStart = new Date(ranges[i].start).getTime();
-      if (currentStart < prevEnd) {
-        throw new Error(`Overlapping ranges detected: ${ranges[i - 1].id} and ${ranges[i].id}`);
+  /**
+   * Find component at position
+   */
+  findComponentAtPosition(position: number): { component: string; index: RangeIndex } | null {
+    let result: { component: string; index: RangeIndex } | null = null;
+    
+    this.indices.forEach((indices, component) => {
+      if (result) return; // Already found
+      
+      for (const index of indices) {
+        if (position >= index.start && position <= index.end) {
+          result = { component, index };
+          return;
+        }
       }
-    }
+    });
 
-    const now = new Date();
-    const expires = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes
+    return result;
+  }
+
+  /**
+   * Validate range indices
+   */
+  validateIndices(): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    const contentLength = this.content.length;
+
+    this.indices.forEach((indices, component) => {
+      for (let i = 0; i < indices.length; i++) {
+        const index = indices[i];
+        if (!index) continue;
+
+        // Check bounds
+        if (index.start < 0 || index.end > contentLength) {
+          errors.push(`${component}[${i}]: Index out of bounds (${index.start}-${index.end}, content length: ${contentLength})`);
+        }
+
+        // Check start <= end
+        if (index.start > index.end) {
+          errors.push(`${component}[${i}]: Start index (${index.start}) greater than end index (${index.end})`);
+        }
+
+        // Check for overlaps with previous indices
+        if (i > 0) {
+          const prevIndex = indices[i - 1];
+          if (prevIndex && index.start < prevIndex.end) {
+            errors.push(`${component}[${i}]: Overlaps with previous index (${prevIndex.start}-${prevIndex.end})`);
+          }
+        }
+      }
+    });
 
     return {
-      stream_id,
-      unit: 'program_time',
-      program: {
-        manifest: program_manifest
-      },
-      ranges,
-      version: 1,
-      generated_at: now.toISOString(),
-      expires_at: expires.toISOString()
+      valid: errors.length === 0,
+      errors
     };
   }
 
   /**
-   * Lookup range by DATERANGE ID or timestamp
+   * Generate indices for all common C2PA components
    */
-  static lookupRange(
-    rangeIndex: RangeIndex,
-    daterangeId?: string,
-    timestamp?: string
-  ): StreamRange | null {
-    // Validate range index first
-    if (!this.validate(rangeIndex)) {
-      throw new Error('Invalid range index structure');
-    }
-
-    // Check if index is expired
-    if (new Date() > new Date(rangeIndex.expires_at)) {
-      throw new Error('Range index has expired');
-    }
-
-    // First try to match by DATERANGE ID
-    if (daterangeId) {
-      if (typeof daterangeId !== 'string' || daterangeId.length === 0) {
-        throw new Error('Invalid daterangeId format');
-      }
-      
-      const match = rangeIndex.ranges.find(range => range.id === daterangeId);
-      if (match) return match;
-    }
-
-    // Fall back to timestamp lookup
-    if (timestamp) {
-      if (!this.validateTimestamp(timestamp)) {
-        throw new Error('Invalid timestamp format');
-      }
-      
-      const time = new Date(timestamp).getTime();
-      const match = rangeIndex.ranges.find(range => {
-        const start = new Date(range.start).getTime();
-        const end = new Date(range.end).getTime();
-        return time >= start && time <= end;
-      });
-      if (match) return match;
-    }
-
-    return null;
+  private generateAllIndices(): void {
+    // Generate indices for manifest components
+    this.generateIndex('manifest_hash', /"manifest_hash":\s*"([^"]+)"/g);
+    this.generateIndex('claim_generator', /"claim_generator":\s*"([^"]+)"/g);
+    this.generateIndex('timestamp', /"timestamp":\s*"([^"]+)"/g);
+    this.generateIndex('assertions', /"assertions":\s*\[/g);
+    this.generateIndex('ingredients', /"ingredients":\s*\[/g);
+    this.generateIndex('redactions', /"redactions":\s*\[/g);
+    
+    // Generate indices for signature components
+    this.generateIndex('signature', /"signature":\s*"([^"]+)"/g);
+    this.generateIndex('algorithm', /"alg":\s*"([^"]+)"/g);
+    this.generateIndex('certificate_chain', /"certificate_chain":\s*\[/g);
+    
+    // Generate indices for assertion types
+    this.generateIndex('c2pa_actions', /"label":\s*"c2pa\.actions"/g);
+    this.generateIndex('c2pa_hashed_uri', /"hashed_uri":\s*"([^"]+)"/g);
+    this.generateIndex('c2pa_data', /"data":\s*\{/g);
   }
 
   /**
-   * Get cache headers for range index response
+   * Convert byte indices to character indices
    */
-  static getCacheHeaders(): Record<string, string> {
+  convertToCharacterIndices(): void {
+    const charIndices: Map<string, RangeIndex[]> = new Map();
+
+    this.indices.forEach((indices, component) => {
+      const convertedIndices: RangeIndex[] = [];
+
+      for (const index of indices) {
+        const startChar = this.content.substring(0, index.start).length;
+        const endChar = this.content.substring(0, index.end).length;
+
+        convertedIndices.push({
+          ...index,
+          start: startChar,
+          end: endChar,
+          type: 'character'
+        });
+      }
+
+      charIndices.set(component, convertedIndices);
+    });
+
+    this.indices = charIndices;
+  }
+
+  /**
+   * Convert byte indices to line indices
+   */
+  convertToLineIndices(): void {
+    const lineIndices: Map<string, RangeIndex[]> = new Map();
+
+    this.indices.forEach((indices, component) => {
+      const convertedIndices: RangeIndex[] = [];
+
+      for (const index of indices) {
+        const startLine = this.getLineNumber(index.start);
+        const endLine = this.getLineNumber(index.end);
+
+        convertedIndices.push({
+          ...index,
+          start: startLine,
+          end: endLine,
+          type: 'line'
+        });
+      }
+
+      lineIndices.set(component, convertedIndices);
+    });
+
+    this.indices = lineIndices;
+  }
+
+  /**
+   * Get line number for byte position
+   */
+  private getLineNumber(bytePosition: number): number {
+    const text = this.content.substring(0, bytePosition);
+    return text.split('\n').length;
+  }
+
+  /**
+   * Extract content for a range index
+   */
+  extractContent(index: RangeIndex): string {
+    return this.content.substring(index.start, index.end);
+  }
+
+  /**
+   * Merge overlapping indices
+   */
+  mergeOverlappingIndices(): void {
+    const mergedIndices: Map<string, RangeIndex[]> = new Map();
+    
+    this.indices.forEach((indices, component) => {
+      if (indices.length === 0) {
+        mergedIndices.set(component, []);
+        return;
+      }
+
+      const merged: RangeIndex[] = [];
+      const firstIndex = indices[0];
+      if (!firstIndex) {
+        mergedIndices.set(component, []);
+        return;
+      }
+
+      let current: RangeIndex = {
+        start: firstIndex.start,
+        end: firstIndex.end,
+        type: firstIndex.type,
+        component: firstIndex.component,
+        ...(firstIndex.metadata && { metadata: firstIndex.metadata })
+      };
+
+      for (let i = 1; i < indices.length; i++) {
+        const next = indices[i];
+        if (!next) continue;
+
+        if (next.start <= current.end) {
+          // Overlapping or adjacent - merge them
+          current.end = Math.max(current.end, next.end);
+        } else {
+          // No overlap - add current and start new
+          merged.push(current);
+          current = {
+            start: next.start,
+            end: next.end,
+            type: next.type,
+            component: next.component,
+            ...(next.metadata && { metadata: next.metadata })
+          };
+        }
+      }
+
+      merged.push(current);
+      mergedIndices.set(component, merged);
+    });
+    
+    this.indices = mergedIndices;
+  }
+
+  /**
+   * Filter indices by type
+   */
+  filterByType(type: 'byte' | 'character' | 'line'): RangeIndexMap {
+    const result: RangeIndexMap = {};
+
+    this.indices.forEach((indices, component) => {
+      const filtered = indices.filter(index => index.type === type);
+      if (filtered.length > 0) {
+        result[component] = filtered;
+      }
+    });
+
+    return result;
+  }
+
+  /**
+   * Get statistics about the indices
+   */
+  getStatistics(): {
+    totalIndices: number;
+    componentsIndexed: number;
+    averageIndicesPerComponent: number;
+    largestComponent: string;
+    indexTypes: Record<string, number>;
+  } {
+    let totalIndices = 0;
+    let largestComponent = '';
+    let maxIndices = 0;
+    const indexTypes: Record<string, number> = {};
+
+    this.indices.forEach((indices, component) => {
+      totalIndices += indices.length;
+      
+      if (indices.length > maxIndices) {
+        maxIndices = indices.length;
+        largestComponent = component;
+      }
+
+      // Count index types
+      for (const index of indices) {
+        indexTypes[index.type] = (indexTypes[index.type] || 0) + 1;
+      }
+    });
+
     return {
-      'Cache-Control': `max-age=${this.CACHE_MAX_AGE}, stale-while-revalidate=${this.STALE_WHILE_REVALIDATE}`,
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*', // Consider restricting in production
-      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY'
+      totalIndices,
+      componentsIndexed: this.indices.size,
+      averageIndicesPerComponent: this.indices.size > 0 ? totalIndices / this.indices.size : 0,
+      largestComponent,
+      indexTypes
     };
   }
 
   /**
-   * Validate range index structure and content
+   * Export indices to JSON
    */
-  static validate(rangeIndex: any): rangeIndex is RangeIndex {
-    // Basic structure validation
-    if (typeof rangeIndex !== 'object' || rangeIndex === null) {
-      return false;
-    }
-
-    // Required fields validation
-    if (!this.validateStreamId(rangeIndex.stream_id)) {
-      return false;
-    }
-
-    if (rangeIndex.unit !== 'program_time') {
-      return false;
-    }
-
-    if (typeof rangeIndex.program !== 'object' || 
-        !this.validateHTTPSUrl(rangeIndex.program.manifest)) {
-      return false;
-    }
-
-    if (!Array.isArray(rangeIndex.ranges) || 
-        rangeIndex.ranges.length > this.MAX_RANGES_PER_INDEX) {
-      return false;
-    }
-
-    if (typeof rangeIndex.version !== 'number' || rangeIndex.version <= 0) {
-      return false;
-    }
-
-    if (!this.validateTimestamp(rangeIndex.generated_at) ||
-        !this.validateTimestamp(rangeIndex.expires_at)) {
-      return false;
-    }
-
-    // Validate each range
-    for (const range of rangeIndex.ranges) {
-      if (typeof range.id !== 'string' || range.id.length === 0) {
-        return false;
-      }
-
-      if (!['ad', 'program', 'program_end_ad'].includes(range.type)) {
-        return false;
-      }
-
-      if (!this.validateTimestamp(range.start) || !this.validateTimestamp(range.end)) {
-        return false;
-      }
-
-      if (new Date(range.start) >= new Date(range.end)) {
-        return false;
-      }
-
-      if (!this.validateSCTE35(range.scte35)) {
-        return false;
-      }
-
-      if (!this.validateHTTPSUrl(range.manifest)) {
-        return false;
-      }
-    }
-
-    return true;
+  exportToJSON(): string {
+    const data = this.getAllIndices();
+    return JSON.stringify(data, null, 2);
   }
 
   /**
-   * Check if range index is expired
+   * Import indices from JSON
    */
-  static isExpired(rangeIndex: RangeIndex): boolean {
-    return new Date() > new Date(rangeIndex.expires_at);
+  static importFromJSON(json: string): RangeIndexGenerator {
+    const data = JSON.parse(json);
+    const generator = new RangeIndexGenerator('');
+    
+    // Clear existing indices
+    generator.indices.clear();
+
+    // Import indices from data
+    for (const [component, indices] of Object.entries(data)) {
+      generator.indices.set(component, indices as RangeIndex[]);
+    }
+
+    return generator;
   }
 
   /**
-   * Get time until expiration in seconds
+   * Validate timestamp format in range indices
    */
-  static getTimeToExpiration(rangeIndex: RangeIndex): number {
-    const now = new Date();
-    const expires = new Date(rangeIndex.expires_at);
-    return Math.max(0, Math.floor((expires.getTime() - now.getTime()) / 1000));
+  static validateTimestamp(timestamp: string): boolean {
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/;
+    return iso8601Regex.test(timestamp);
+  }
+
+  /**
+   * Generate hash for range index content
+   */
+  generateHashForIndex(index: RangeIndex, algorithm: 'sha256' | 'sha384' | 'sha512' = 'sha256'): string {
+    const content = this.extractContent(index);
+    const crypto = require('crypto');
+    return crypto.createHash(algorithm).update(content, 'utf8').digest('hex');
   }
 }
-
-// Example usage and test data
-export const EXAMPLE_RANGE_INDEX: RangeIndex = {
-  stream_id: "live-ny-2025-11-03T15:00Z",
-  unit: "program_time",
-  program: {
-    manifest: "https://manifests.example.com/program/sha256/abc123/active.c2pa"
-  },
-  ranges: [
-    {
-      id: "splice-6FFFFFF0",
-      type: "ad",
-      start: "2025-11-03T15:12:00Z",
-      end: "2025-11-03T15:13:00Z",
-      scte35: "0xFC3025000000000000FFF0140500000000E0006F000000000000A0000000",
-      manifest: "https://manifests.example.com/ads/acme/sha256/def456/active.c2pa"
-    },
-    {
-      id: "splice-6FFFFFF1",
-      type: "ad",
-      start: "2025-11-03T15:24:30Z",
-      end: "2025-11-03T15:25:00Z",
-      scte35: "0xFC3025000000000000FFF0140500000000E0006F000000000000B0000000",
-      manifest: "https://manifests.example.com/ads/acme/sha256/ghi789/active.c2pa"
-    }
-  ],
-  version: 1,
-  generated_at: "2025-11-03T15:00:00Z",
-  expires_at: "2025-11-03T15:05:00Z"
-};

@@ -1,6 +1,6 @@
 /**
- * C2PA Manifest Diff and Audit Types
- * Spec-compliant type definitions for forensic-grade provenance analysis
+ * C2PA Types and Interfaces
+ * Core type definitions for C2PA manifest validation and audit
  */
 
 // ============================================================================
@@ -102,40 +102,23 @@ export interface Certificate {
   revoked: boolean;
 }
 
-// ============================================================================
-// Time Evidence Types (RFC 3161)
-// ============================================================================
-
 export interface TimeStampToken {
-  /** TSA identity information */
-  tsa: {
-    name: string;
-    uri?: string;
-  };
-  /** Generation time */
-  genTime: string;
-  /** Accuracy information */
-  accuracy?: {
-    seconds?: number;
-    millis?: number;
-    micros?: number;
-  };
-  /** Policy OID */
-  policy_oid: string;
-  /** Serial number */
-  serial_number: string;
+  /** RFC 3161 timestamp token */
+  token: string;
+  /** Timestamp generation time */
+  time: string;
+  /** TSA policy OID */
+  policy?: string;
   /** TSA certificate chain */
-  certificate_chain: Certificate[];
-  /** Validation status */
-  validation_status: ValidationStatus;
+  tsa_certificates?: Certificate[];
 }
 
 // ============================================================================
-// Validation Types (Spec-Compliant Codes)
+// Validation Types
 // ============================================================================
 
 export interface ValidationStatus {
-  /** Overall validation result */
+  /** Overall validity */
   valid: boolean;
   /** Array of validation codes from spec */
   codes: ValidationCode[];
@@ -199,81 +182,39 @@ export interface JSONMergePatch {
   [key: string]: unknown;
 }
 
-export interface SemanticDiff {
-  /** Base manifest information */
-  base: ManifestInfo;
-  /** Target manifest information */
-  target: ManifestInfo;
-  /** Signer differences */
-  signer_diff: SignerDiff;
-  /** TSA differences */
-  tsa_diff: TSADiff;
-  /** Assertion changes */
-  assertions_added: AssertionChange[];
-  assertions_removed: AssertionChange[];
-  assertions_modified: AssertionChange[];
-  /** Ingredient changes */
-  ingredient_changes: IngredientChange[];
-  /** Validation codes for both manifests */
-  validation_codes: {
-    base: ValidationCode[];
-    target: ValidationCode[];
-  };
-}
-
-export interface ManifestInfo {
-  /** Manifest hash */
-  manifest_hash: string;
-  /** Signer key ID or thumbprint */
-  signer_key_id: string;
-  /** Claim generator */
-  claim_generator: string;
-  /** Timestamp */
+export interface ManifestDiff {
+  /** Base manifest hash */
+  base_hash: string;
+  /** Target manifest hash */
+  target_hash: string;
+  /** Diff operations */
+  operations: JSONPatchOperation[];
+  /** Merge patch (alternative format) */
+  merge_patch?: JSONMergePatch;
+  /** Security validation of changes */
+  security_validation: SecurityValidation;
+  /** Timestamp of diff generation */
   timestamp: string;
 }
 
-export interface SignerDiff {
-  /** Trust status change */
-  chain_trust: string;
-  /** Algorithm change */
-  algorithm: string;
-  /** Subject change */
-  subject?: string;
-  /** Certificate chain change */
-  certificate_chain?: string;
+export interface SecurityValidation {
+  /** Whether changes are security-compliant */
+  valid: boolean;
+  /** Security validation codes */
+  codes: ValidationCode[];
+  /** Security concerns */
+  concerns: SecurityConcern[];
 }
 
-export interface TSADiff {
-  /** Provider change */
-  provider: string;
-  /** Generation time difference in milliseconds */
-  genTime_diff_ms: number;
-  /** Policy OID change */
-  policy_oid?: string;
-  /** Accuracy change */
-  accuracy?: string;
-}
-
-export interface AssertionChange {
-  /** Assertion label */
-  label: string;
-  /** JSON Pointer path to assertion */
-  path: string;
-  /** Whether change was due to redaction */
-  redacted?: boolean;
-  /** Whether change is allowed per spec */
-  allowed?: boolean;
-  /** Hash URI if available */
-  hashed_uri?: string;
-}
-
-export interface IngredientChange {
-  /** Parent manifest hash */
-  parent: string;
-  /** Change status */
-  status: ValidationCode;
-  /** Relationship type */
-  relationship?: string;
+export interface SecurityConcern {
+  /** Type of concern */
+  type: 'assertion_removal' | 'credential_change' | 'ingredient_modification' | 'redaction_bypass';
+  /** Severity level */
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  /** Description of concern */
+  description: string;
+  /** Location of concern */
+  location: string;
 }
 
 // ============================================================================
@@ -298,14 +239,14 @@ export interface LineageNode {
   label: string;
   /** Signer thumbprint */
   signer_thumbprint: string;
-  /** Timestamp */
-  timestamp: string;
-  /** Node status */
-  status: 'validated' | 'validated_with_warnings' | 'failed';
+  /** Creation timestamp */
+  created_at: string;
+  /** Node type */
+  type: 'original' | 'derived' | 'variant';
   /** Validation codes */
   validation_codes: ValidationCode[];
-  /** Manifest data */
-  manifest: C2PAManifest;
+  /** Asset URL if available */
+  asset_url?: string;
 }
 
 export interface LineageEdge {
@@ -313,287 +254,189 @@ export interface LineageEdge {
   source: string;
   /** Target node ID */
   target: string;
-  /** Relationship type */
-  relationship: 'parentOf' | 'inputTo' | 'componentOf';
-  /** Edge status */
-  status: ValidationStatus;
+  /** Edge type */
+  type: 'parent_of' | 'input_to' | 'component_of';
+  /** Relationship strength */
+  strength: 'strong' | 'weak' | 'unknown';
+  /** Metadata about the relationship */
+  metadata?: Record<string, unknown>;
 }
 
 export interface ValidationSummary {
-  /** Total number of nodes */
-  total_nodes: number;
-  /** Number of validated nodes */
-  validated_nodes: number;
-  /** Number of nodes with warnings */
-  warning_nodes: number;
-  /** Number of failed nodes */
-  failed_nodes: number;
-  /** Overall status */
-  overall_status: 'validated' | 'validated_with_warnings' | 'failed';
+  /** Total number of manifests */
+  total_manifests: number;
+  /** Number of valid manifests */
+  valid_manifests: number;
+  /** Number of invalid manifests */
+  invalid_manifests: number;
+  /** All validation codes across lineage */
+  validation_codes: ValidationCode[];
+  /** Security concerns across lineage */
+  security_concerns: SecurityConcern[];
 }
 
 // ============================================================================
-// API Types
+// Audit Types
 // ============================================================================
 
-export interface DiffRequest {
-  /** Base manifest */
-  base: ManifestReference;
-  /** Target manifest */
-  target: ManifestReference;
-  /** Output formats requested */
-  format: Array<'semantic' | 'json-patch' | 'merge-patch' | 'lineage'>;
-}
-
-export interface ManifestReference {
-  /** Manifest URL */
-  manifest_url?: string;
-  /** Asset URL (for embedded manifests) */
-  asset_url?: string;
-  /** Sidecar URL */
-  sidecar_url?: string;
-  /** Uploaded file (multipart) */
-  file?: File;
-}
-
-export interface DiffResponse {
-  /** Semantic diff */
-  semantic?: SemanticDiff;
-  /** JSON Patch operations */
-  json_patch?: JSONPatchOperation[];
-  /** JSON Merge Patch */
-  merge_patch?: JSONMergePatch;
-  /** Lineage graph */
-  lineage?: LineageGraph;
-  /** Validation results */
-  validation: {
-    base: ValidationCode[];
-    target: ValidationCode[];
-  };
-  /** Error information (optional) */
-  error?: string;
-}
-
-export interface EvidencePack {
-  /** Base manifest raw JSON */
-  base_raw: string;
-  /** Target manifest raw JSON */
-  target_raw: string;
-  /** Semantic diff */
-  semantic_diff: SemanticDiff;
-  /** Lineage graph */
-  lineage_graph: LineageGraph;
-  /** Verification transcript */
-  verification_transcript: VerificationTranscript;
-  /** Export timestamp */
-  exported_at: string;
-}
-
-export interface VerificationTranscript {
-  /** Base manifest verification steps */
-  base_verification: VerificationStep[];
-  /** Target manifest verification steps */
-  target_verification: VerificationStep[];
-  /** Timestamps for each step */
-  timestamps: Record<string, string>;
-}
-
-export interface VerificationStep {
-  /** Step name */
-  step: string;
-  /** Validation code */
-  code: ValidationCode;
-  /** Step result */
-  result: boolean;
-  /** Details */
-  details?: Record<string, unknown>;
-  /** Spec reference */
-  spec_reference: string;
-}
-
-// ============================================================================
-// CLI Types
-// ============================================================================
-
-export interface CLIOptions {
-  /** Base asset/manifest */
-  base: string;
-  /** Target asset/manifest */
-  target: string;
-  /** Output file */
-  out?: string;
-  /** Output format */
-  format?: 'semantic' | 'json-patch' | 'merge-patch' | 'lineage' | 'evidence-pack';
-  /** Verbose output */
-  verbose?: boolean;
-  /** Raw manifest output */
-  raw?: boolean;
-}
-
-export interface LineageOptions {
-  /** Asset to analyze */
-  asset: string;
-  /** Output file */
-  out?: string;
-  /** Maximum depth */
-  maxDepth?: number;
-  /** Include redactions */
-  includeRedactions?: boolean;
-}
-
-export interface OpenRawOptions {
-  /** Asset to analyze */
-  asset: string;
-  /** Output directory */
-  out?: string;
-  /** Include JUMBF map */
-  includeJumbf?: boolean;
-}
-
-// ============================================================================
-// UI Types
-// ============================================================================
-
-export interface DiffTable {
-  /** Table headers */
-  headers: ['Field', 'Before', 'After', 'Why This Matters'];
-  /** Table rows */
-  rows: DiffTableRow[];
-}
-
-export interface DiffTableRow {
-  /** Field name */
-  field: string;
-  /** Before value */
-  before: string;
-  /** After value */
-  after: string;
-  /** Spec reference for why this matters */
-  spec_reference: string;
-  /** Change type */
-  change_type: 'added' | 'removed' | 'modified' | 'unchanged';
-}
-
-export interface UITab {
-  /** Tab ID */
+export interface AuditReport {
+  /** Report ID */
   id: string;
-  /** Tab label */
-  label: string;
-  /** Tab content */
-  content: unknown;
+  /** Audit timestamp */
+  timestamp: string;
+  /** Manifest being audited */
+  manifest: C2PAManifest;
+  /** Validation results */
+  validation: ValidationStatus;
+  /** Lineage analysis */
+  lineage?: LineageGraph;
+  /** Security assessment */
+  security: SecurityAssessment;
+  /** Recommendations */
+  recommendations: Recommendation[];
 }
 
-// ============================================================================
-// Phase 30 Variant Linking Types
-// ============================================================================
-
-export interface VariantLinkingMode {
-  /** Linking mode: rendition or derivative */
-  mode: 'rendition' | 'derivative';
-  /** Whether to embed manifest or use remote discovery */
-  embed: boolean;
-  /** Remote manifest URL */
-  manifest_url: string;
+export interface SecurityAssessment {
+  /** Overall security score (0-100) */
+  score: number;
+  /** Risk level */
+  risk_level: 'low' | 'medium' | 'high' | 'critical';
+  /** Security findings */
+  findings: SecurityFinding[];
+  /** Compliance status */
+  compliance: ComplianceStatus;
 }
 
-export interface DerivativeManifestRequest {
-  /** Parent manifest URL */
-  parent_manifest: string;
-  /** Asset URL for this derivative */
-  asset_url: string;
-  /** Relationship type */
-  relationship: 'parentOf';
-  /** Actions performed */
-  actions: VariantAction[];
+export interface SecurityFinding {
+  /** Finding ID */
+  id: string;
+  /** Finding type */
+  type: 'signature' | 'assertion' | 'ingredient' | 'redaction' | 'timestamp';
+  /** Severity level */
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  /** Description */
+  description: string;
+  /** Location in manifest */
+  location: string;
+  /** Recommendation */
+  recommendation: string;
 }
 
-export interface VariantAction {
-  /** Action type */
-  type: 'c2pa.transcoded' | 'c2pa.cropped' | 'c2pa.edited' | 'c2pa.placed' | 'c2pa.repackaged';
-  /** Action parameters */
-  parameters: Record<string, unknown>;
+export interface ComplianceStatus {
+  /** C2PA specification version */
+  spec_version: string;
+  /** Whether compliant with spec */
+  spec_compliant: boolean;
+  /** Industry standards compliance */
+  industry_standards: Record<string, boolean>;
+  /** Regulatory compliance */
+  regulatory_compliance: Record<string, boolean>;
 }
 
-export interface DerivativeManifestResponse {
-  /** Child manifest URL */
-  child_manifest: string;
-  /** Ingredient reference */
-  ingredient_ref: string;
-  /** Link header for HTTP */
-  link_header: string;
-}
-
-export interface RenditionRegistry {
-  /** Asset ID */
-  asset_id: string;
-  /** Manifest URL */
-  manifest_url: string;
-  /** Variant routes */
-  variant_routes: VariantRoute[];
-  /** Mode */
-  mode: 'rendition';
-}
-
-export interface VariantRoute {
-  /** Route pattern */
-  pattern: string;
-  /** Link header */
-  link_header: string;
-}
-
-export interface VariantPolicy {
-  /** Asset ID + transform key */
-  key: string;
-  /** Linking mode */
-  mode: VariantLinkingMode;
-  /** Actions for derivatives */
-  actions?: VariantAction[];
+export interface Recommendation {
+  /** Recommendation ID */
+  id: string;
+  /** Priority level */
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  /** Category */
+  category: 'security' | 'performance' | 'compliance' | 'usability';
+  /** Description */
+  description: string;
+  /** Implementation steps */
+  steps: string[];
 }
 
 // ============================================================================
 // Error Types
 // ============================================================================
 
-export class C2PAError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public spec_reference?: string
-  ) {
-    super(message);
-    this.name = 'C2PAError';
-  }
+export interface C2PAError {
+  /** Error code */
+  code: string;
+  /** Error message */
+  message: string;
+  /** Error type */
+  type: 'validation' | 'security' | 'parsing' | 'network' | 'system';
+  /** Error details */
+  details?: Record<string, unknown>;
+  /** Stack trace (development only) */
+  stack?: string;
 }
 
-export class ValidationError extends C2PAError {
-  constructor(
-    message: string,
-    public validation_codes: ValidationCode[],
-    spec_reference?: string
-  ) {
-    super(message, 'VALIDATION_ERROR', spec_reference);
-    this.name = 'ValidationError';
-  }
+export interface ValidationError extends C2PAError {
+  type: 'validation';
+  field?: string;
+  value?: unknown;
 }
 
-export class ParsingError extends C2PAError {
-  constructor(
-    message: string,
-    public asset_type: string,
-    spec_reference?: string
-  ) {
-    super(message, 'PARSING_ERROR', spec_reference);
-    this.name = 'ParsingError';
-  }
+export interface SecurityError extends C2PAError {
+  type: 'security';
+  threat_level: 'low' | 'medium' | 'high' | 'critical';
 }
 
-export class VariantLinkingError extends C2PAError {
-  constructor(
-    message: string,
-    public variant_type: string,
-    spec_reference?: string
-  ) {
-    super(message, 'VARIANT_LINKING_ERROR', spec_reference);
-    this.name = 'VariantLinkingError';
-  }
+// ============================================================================
+// Utility Types
+// ============================================================================
+
+export interface JSONCanonicalizer {
+  /** Canonicalize JSON object */
+  canonicalize(obj: unknown): string;
+  /** Hash canonicalized string */
+  hash(data: string, algorithm: 'sha256' | 'sha384' | 'sha512'): string;
+}
+
+export interface RangeIndex {
+  /** Start index */
+  start: number;
+  /** End index */
+  end: number;
+  /** Index type */
+  type: 'byte' | 'character' | 'line';
+  /** Metadata */
+  metadata?: Record<string, unknown>;
+}
+
+export interface VerificationPolicy {
+  /** Policy ID */
+  id: string;
+  /** Policy name */
+  name: string;
+  /** Policy rules */
+  rules: PolicyRule[];
+  /** Policy version */
+  version: string;
+  /** Whether policy is active */
+  active: boolean;
+}
+
+export interface PolicyRule {
+  /** Rule ID */
+  id: string;
+  /** Rule type */
+  type: 'signature' | 'assertion' | 'ingredient' | 'timestamp';
+  /** Rule condition */
+  condition: string;
+  /** Rule action */
+  action: 'allow' | 'deny' | 'warn';
+  /** Rule severity */
+  severity: 'info' | 'warning' | 'error' | 'critical';
+}
+
+export interface VariantAction {
+  /** Action type */
+  type: 'crop' | 'transcode' | 'watermark' | 'composite' | 'metadata';
+  /** Action parameters */
+  parameters: Record<string, unknown>;
+  /** Action timestamp */
+  timestamp: string;
+}
+
+export interface VariantLinkingError extends C2PAError {
+  /** Error context */
+  context: 'parent_linking' | 'child_linking' | 'hash_validation' | 'relationship_validation';
+  /** Manifest hashes involved */
+  manifests: {
+    base?: string;
+    target?: string;
+  };
 }
