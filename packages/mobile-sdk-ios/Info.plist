@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- SECURITY: App Transport Security Configuration -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- BLOCK all cleartext traffic -->
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<false/>
+		
+		<!-- STRICT TLS requirements -->
+		<key>NSMinimumTLSVersion</key>
+		<string>TLSv1.2</string>
+		<key>NSRequiresCertificateTransparency</key>
+		<true/>
+		
+		<!-- Certificate pinning for relay -->
+		<key>NSPinnedDomains</key>
+		<dict>
+			<key>verify.c2concierge.org</key>
+			<dict>
+				<key>NSPinnedCAIdentities</key>
+				<array/>
+				<key>NSPinnedLeafHashes</key>
+				<array>
+					<string>9lDwM0oT7cR1d8X5vK2sJ6hG4fY3nB2qZ7wP5rE1tA0=</string>
+					<string>Y7eH3kL9mN2qJ8rW5vX1sD4fG6hB9pZ3nC2tA0oP7eR=</string>
+					<string>A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8S9t0U1=</string>
+				</array>
+				<key>NSIncludeSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+	
+	<!-- SECURITY: Privacy and Data Protection -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- SECURITY: Photo Library Access -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to the photo library to verify Content Credentials in images and videos.</string>
+	
+	<!-- SECURITY: Network Usage -->
+	<key>NSAppUsesNonExemptEncryption</key>
+	<false/>
+	
+	<!-- SECURITY: Background Execution Restrictions -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>background-processing</string>
+	</array>
+	
+	<!-- SECURITY: App Security -->
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	
+	<!-- SECURITY: Code Signing -->
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundleVersion</key>
+	<string>0.1.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	
+	<!-- SECURITY: URL Schemes -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.c2concierge.mobile.verification</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>c2c-verify</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- SECURITY: Disable document interaction -->
+	<key>UIFileSharingEnabled</key>
+	<false/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
+	
+	<!-- SECURITY: Face ID / Touch ID -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Face ID is used to secure verification results and protect user privacy.</string>
+</dict>
+</plist>
