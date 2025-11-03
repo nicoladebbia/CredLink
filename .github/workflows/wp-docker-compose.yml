@@ -82,11 +82,13 @@ jobs:
         timeout 300 bash -c 'until curl -f http://localhost:8080; do sleep 5; done'
         echo "WordPress is ready!"
 
-    - name: Install WordPress CLI
+    - name: Install WordPress CLI and network tools
       run: |
         curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         chmod +x wp-cli.phar
         sudo mv wp-cli.phar /usr/local/bin/wp
+        # Install netcat for MySQL connection testing
+        sudo apt-get update && sudo apt-get install -y netcat-openbsd
 
     - name: Configure WordPress
       run: |
@@ -97,8 +99,19 @@ jobs:
         # Download WordPress first
         wp --path=/var/www/html core download --allow-root
         
-        # Configure WordPress with localhost MySQL (same container)
-        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=localhost --allow-root
+        # Wait for MySQL service to be ready
+        echo "Waiting for MySQL service to be ready..."
+        for i in {1..30}; do
+          if nc -z mysql 3306 2>/dev/null; then
+            echo "MySQL service is ready!"
+            break
+          fi
+          echo "Attempt $i/30 - MySQL not ready, waiting 5 seconds..."
+          sleep 5
+        done
+        
+        # Configure WordPress with MySQL service
+        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql:3306 --allow-root
         
         # Install WordPress
         wp --path=/var/www/html core install --url=http://localhost:8080 --title="C2 Concierge Test" --admin_user=admin --admin_password=password --admin_email=test@example.com --allow-root

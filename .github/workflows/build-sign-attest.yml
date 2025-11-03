@@ -107,7 +107,6 @@ jobs:
             --metadata-file build.json \
             --build-arg SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }} \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --build-arg BUILDKIT_MULTI_PLATFORM=1 \
             --secret id=github_token,src=/dev/null \
             --tag ${{ env.IMAGE }} \
             --no-cache \
