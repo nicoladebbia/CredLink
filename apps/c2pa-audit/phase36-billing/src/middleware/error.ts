@@ -100,7 +100,7 @@ function formatErrorResponse(error: FastifyError, errorId: string): {
   }
 
   // Handle Stripe errors
-  if (error.type && error.type.startsWith('Stripe')) {
+  if (error.message && error.message.includes('Stripe')) {
     const isDevelopment = process.env['NODE_ENV'] === 'development';
     
     return {
@@ -112,8 +112,6 @@ function formatErrorResponse(error: FastifyError, errorId: string): {
         ...(isDevelopment && {
           details: {
             stripe_error: error.message,
-            type: error.type,
-            code: error.code,
           },
         }),
       },
@@ -121,7 +119,7 @@ function formatErrorResponse(error: FastifyError, errorId: string): {
   }
 
   // Handle trial limit exceeded
-  if (error.code === 'TRIAL_LIMIT_EXCEEDED') {
+  if ((error as any).code === 'TRIAL_LIMIT_EXCEEDED') {
     return {
       statusCode: 429,
       body: {

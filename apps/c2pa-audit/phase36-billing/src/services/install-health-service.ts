@@ -224,8 +224,8 @@ export class InstallHealthService {
       const historyKeys = keys
         .filter(key => !key.endsWith(':latest'))
         .sort((a, b) => {
-          const aTime = a.split(':').pop();
-          const bTime = b.split(':').pop();
+          const aTime = a.split(':').pop() || '';
+          const bTime = b.split(':').pop() || '';
           return bTime.localeCompare(aTime);
         })
         .slice(0, limit);
@@ -329,15 +329,16 @@ export class InstallHealthService {
           check: 'link_header_present',
           passed: false,
           message: 'C2PA manifest Link header not found',
-          details: { link_header },
+          details: { link_header: linkHeader },
         };
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         check: 'link_header_present',
         passed: false,
-        message: `Failed to check Link header: ${error.message}`,
-        details: { error: error.message },
+        message: `Failed to check Link header: ${errorMessage}`,
+        details: { error: errorMessage },
       };
     }
   }
@@ -383,11 +384,12 @@ export class InstallHealthService {
         details: { manifest_url: testManifestUrl, status: response.status },
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         check: 'manifest_accessible',
         passed: false,
-        message: `Failed to check manifest accessibility: ${error.message}`,
-        details: { error: error.message },
+        message: `Failed to check manifest accessibility: ${errorMessage}`,
+        details: { error: errorMessage },
       };
     }
   }
@@ -453,12 +455,13 @@ export class InstallHealthService {
         const result = await this.performTransformationTest(demoAssetUrl, transform);
         results.push(result);
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.push({
           transform_type: transform,
           embed_survived: false,
           remote_survived: false,
           badge_intact: false,
-          error: error.message,
+          error: errorMessage,
         });
       }
     }

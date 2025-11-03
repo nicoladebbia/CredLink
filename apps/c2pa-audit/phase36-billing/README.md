@@ -1,6 +1,6 @@
-# Phase 36 Billing System
+# Phase 36 Billing System with Observability v2
 
-A secure, enterprise-grade self-serve onboarding and billing system for C2PA services with Stripe integration.
+A secure, enterprise-grade self-serve onboarding and billing system for C2PA services with comprehensive observability, SLO monitoring, and OpenTelemetry instrumentation.
 
 ## 🚀 Features
 
@@ -9,6 +9,20 @@ A secure, enterprise-grade self-serve onboarding and billing system for C2PA ser
 - **Usage-Based Billing**: Real-time usage tracking and reporting
 - **Security Hardened**: Zero-tolerance security with comprehensive vulnerability mitigation
 - **Enterprise Ready**: Production-ready with monitoring, logging, and compliance
+- **Observability v2**: Complete OpenTelemetry instrumentation with SLO monitoring
+- **Burn Rate Alerting**: Multi-window burn-rate alerts following Google SRE practices
+- **GameDay Testing**: Automated incident simulation and MTTR validation
+
+## 📈 Observability Features
+
+- **OpenTelemetry**: End-to-end tracing, metrics, and logs with OTLP exporters
+- **SLO Monitoring**: Service Level Objectives with error budget tracking
+- **Burn Rate Alerts**: Multi-window alerting (5m@1h, 30m@6h, 2h@24h, 1d@30d)
+- **Dashboards**: Grafana dashboards for survival, latency, errors, and cost
+- **Distributed Tracing**: Complete request tracing with span correlation
+- **Structured Logging**: JSON logs with OTel schema and tenant correlation
+- **Cost Tracking**: Per-tenant cost accrual and budget monitoring
+- **GameDay Scenarios**: Automated failure injection and recovery testing
 
 ## 🔐 Security Features
 

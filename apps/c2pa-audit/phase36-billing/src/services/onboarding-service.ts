@@ -100,18 +100,19 @@ export class OnboardingService {
           details: { domain, status: response.status },
         });
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         validationResults.push({
-          check: 'domain_resolution',
+          check: 'domain_accessible',
           passed: false,
-          message: `Domain ${domain} is not accessible: ${error}`,
-          details: { domain, error: error.message },
+          message: `Domain ${domain} is not accessible: ${errorMessage}`,
+          details: { domain, error: errorMessage },
         });
       }
     }
 
     const stepData: WizardStepData = {
       completed: validationResults.every(r => r.passed),
-      data: { domains },
+      data: JSON.stringify({ domains }),
       validation_results: validationResults,
       errors: validationResults.filter(r => !r.passed).map(r => r.message),
       completed_at: new Date().toISOString(),
@@ -165,17 +166,18 @@ export class OnboardingService {
         });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       validationResults.push({
         check: 'manifest_host_valid',
         passed: false,
-        message: `Invalid manifest host: ${error.message}`,
-        details: { manifest_host: manifestHost, error: error.message },
+        message: `Invalid manifest host: ${errorMessage}`,
+        details: { manifest_host: manifestHost, error: errorMessage },
       });
     }
 
     const stepData: WizardStepData = {
       completed: validationResults.every(r => r.passed),
-      data: { manifest_host: manifestHost },
+      data: JSON.stringify({ manifest_host: manifestHost }),
       validation_results: validationResults,
       errors: validationResults.filter(r => !r.passed).map(r => r.message),
       completed_at: new Date().toISOString(),
@@ -260,7 +262,7 @@ export class OnboardingService {
       if (linkHeader) {
         // Parse Link header
         const linkMatches = linkHeader.match(/<([^>]+)>;\s*rel="([^"]+)"/g);
-        const c2paManifestLink = linkMatches?.find(match => 
+        const c2paManifestLink = linkMatches?.find((match: string) => 
           match.includes('rel="c2pa-manifest"')
         );
 
@@ -290,11 +292,12 @@ export class OnboardingService {
                 details: { manifest_url: manifestUrl, status: manifestResponse.status },
               });
             } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : 'Unknown error';
               validationResults.push({
                 check: 'manifest_accessible',
                 passed: false,
-                message: `Manifest file not accessible: ${error.message}`,
-                details: { manifest_url: manifestUrl, error: error.message },
+                message: `Manifest file not accessible: ${errorMessage}`,
+                details: { manifest_url: manifestUrl, error: errorMessage },
               });
             }
           }
@@ -303,7 +306,7 @@ export class OnboardingService {
             check: 'link_header_present',
             passed: false,
             message: 'C2PA manifest Link header not found',
-            details: { link_header },
+            details: { link_header: linkHeader },
           });
         }
       } else {
@@ -329,17 +332,18 @@ export class OnboardingService {
       });
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       validationResults.push({
         check: 'page_accessible',
         passed: false,
-        message: `Failed to access test page: ${error.message}`,
-        details: { url: testUrl, error: error.message },
+        message: `Failed to access test page: ${errorMessage}`,
+        details: { url: testUrl, error: errorMessage },
       });
     }
 
     const stepData: WizardStepData = {
       completed: validationResults.every(r => r.passed),
-      data: { test_url: testUrl },
+      data: JSON.stringify({ test_url: testUrl }),
       validation_results: validationResults,
       errors: validationResults.filter(r => !r.passed).map(r => r.message),
       completed_at: new Date().toISOString(),
@@ -417,17 +421,18 @@ export class OnboardingService {
         });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       validationResults.push({
         check: 'cai_verify_accessible',
         passed: false,
-        message: `Failed to verify with CAI Verify: ${error.message}`,
-        details: { url: demoAssetUrl, error: error.message },
+        message: `Failed to verify with CAI Verify: ${errorMessage}`,
+        details: { url: demoAssetUrl, error: errorMessage },
       });
     }
 
     const stepData: WizardStepData = {
       completed: validationResults.every(r => r.passed),
-      data: { demo_asset_url: demoAssetUrl },
+      data: JSON.stringify({ demo_asset_url: demoAssetUrl }),
       validation_results: validationResults,
       errors: validationResults.filter(r => !r.passed).map(r => r.message),
       completed_at: new Date().toISOString(),
@@ -487,22 +492,23 @@ export class OnboardingService {
           check: 'link_header_configured',
           passed: false,
           message: 'C2PA manifest Link header not found or incorrectly configured',
-          details: { link_header },
+          details: { link_header: linkHeader },
         });
       }
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       validationResults.push({
         check: 'test_page_accessible',
         passed: false,
-        message: `Failed to access test page: ${error.message}`,
-        details: { url: testPageUrl, error: error.message },
+        message: `Failed to access test page: ${errorMessage}`,
+        details: { url: testPageUrl, error: errorMessage },
       });
     }
 
     const stepData: WizardStepData = {
       completed: validationResults.every(r => r.passed),
-      data: { test_page_url: testPageUrl },
+      data: JSON.stringify({ test_page_url: testPageUrl }),
       validation_results: validationResults,
       errors: validationResults.filter(r => !r.passed).map(r => r.message),
       completed_at: new Date().toISOString(),
@@ -547,22 +553,23 @@ export class OnboardingService {
             message: result.embed_survived && result.remote_survived && result.badge_intact
               ? `${transform} transformation: All checks passed`
               : `${transform} transformation: Some checks failed`,
-            details: result,
+            details: JSON.stringify(result),
           });
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           smokeTestResults.push({
             transform_type: transform,
             embed_survived: false,
             remote_survived: false,
             badge_intact: false,
-            error: error.message,
+            error: errorMessage,
           });
 
           validationResults.push({
             check: `smoke_test_${transform}`,
             passed: false,
-            message: `${transform} transformation failed: ${error.message}`,
-            details: { transform, error: error.message },
+            message: `${transform} transformation failed: ${errorMessage}`,
+            details: { transform, error: errorMessage },
           });
         }
       }
@@ -586,20 +593,21 @@ export class OnboardingService {
       });
 
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       validationResults.push({
         check: 'smoke_test_execution',
         passed: false,
-        message: `Smoke test execution failed: ${error.message}`,
-        details: { error: error.message },
+        message: `Smoke test execution failed: ${errorMessage}`,
+        details: { error: errorMessage },
       });
     }
 
     const stepData: WizardStepData = {
       completed: validationResults.every(r => r.passed),
-      data: { 
+      data: JSON.stringify({ 
         test_asset_url: testAssetUrl, 
         smoke_test_results: smokeTestResults 
-      },
+      }),
       validation_results: validationResults,
       errors: validationResults.filter(r => !r.passed).map(r => r.message),
       completed_at: new Date().toISOString(),
@@ -679,8 +687,11 @@ export class OnboardingService {
     }
 
     const smokeTestData = wizard.step_data.smoke_test;
-    if (smokeTestData?.data?.smoke_test_results) {
-      healthDetails.smoke_test_results = smokeTestData.data.smoke_test_results;
+    if (smokeTestData?.data) {
+      const smokeData = JSON.parse(smokeTestData.data as string);
+      if (smokeData.smoke_test_results) {
+        healthDetails.smoke_test_results = smokeData.smoke_test_results;
+      }
     }
 
     // Calculate survival rates
@@ -722,6 +733,68 @@ export class OnboardingService {
   // ============================================================================
   // PRIVATE METHODS
   // ============================================================================
+
+  /**
+   * Update wizard progress
+   */
+  async updateWizardProgress(
+    tenantId: string,
+    step: WizardStep,
+    completed: boolean
+  ): Promise<OnboardingWizard> {
+    try {
+      // Get current wizard
+      const wizardKey = `wizard:${tenantId}`;
+      const wizardData = await this.redis.get(wizardKey);
+      
+      if (!wizardData) {
+        throw new Error('Wizard not found for tenant');
+      }
+      
+      const wizard: OnboardingWizard = JSON.parse(wizardData);
+      
+      // Update step progress
+      if (completed && !wizard.completed_steps.includes(step)) {
+        wizard.completed_steps.push(step);
+      }
+      
+      // Update current step if not completed
+      if (!completed) {
+        wizard.current_step = step;
+      } else {
+        // Move to next step
+        const stepOrder: WizardStep[] = [
+          'domain_setup',
+          'manifest_config', 
+          'cms_selection',
+          'plugin_install',
+          'demo_asset_upload',
+          'verify_demo',
+          'publish_test_page',
+          'smoke_test',
+          'install_health_check',
+          'billing_setup'
+        ];
+        
+        const currentIndex = stepOrder.indexOf(step);
+        if (currentIndex < stepOrder.length - 1) {
+          wizard.current_step = stepOrder[currentIndex + 1];
+        } else {
+          wizard.status = 'completed';
+        }
+      }
+      
+      wizard.updated_at = new Date().toISOString();
+      
+      // Store updated wizard
+      await this.storeWizard(wizard);
+      
+      return wizard;
+    } catch (error) {
+      console.error('Failed to update wizard progress:', error);
+      throw new Error('Wizard update failed');
+    }
+  }
 
   private async storeWizard(wizard: OnboardingWizard): Promise<void> {
     await this.redis.setex(

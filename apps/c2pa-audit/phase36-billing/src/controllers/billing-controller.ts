@@ -9,8 +9,8 @@ import {
   UsageEvent,
   APIError,
   ValidationError
-} from '@/types';
-import { StripeService, UsageService } from '@/services';
+} from '../types';
+import { StripeService, UsageService } from '../services';
 
 export interface BillingControllerConfig {
   stripeService: StripeService;
@@ -281,7 +281,7 @@ export class BillingController {
       }
 
       // Get invoices from Stripe
-      const invoices = await this.stripeService.stripe.invoices.list({
+      const invoices = await this.stripeService.getStripeInstance().invoices.list({
         customer: tenant.stripe_customer_id,
         limit: limit || 10,
         starting_after: starting_after,
@@ -319,7 +319,7 @@ export class BillingController {
       }
 
       // Get payment intent to verify ownership
-      const paymentIntent = await this.stripeService.stripe.paymentIntents.retrieve(payment_intent_id);
+      const paymentIntent = await this.stripeService.getStripeInstance().paymentIntents.retrieve(payment_intent_id);
       if (paymentIntent.customer !== tenant.stripe_customer_id) {
         reply.status(403).send({
           code: 'FORBIDDEN',
@@ -423,10 +423,11 @@ export class BillingController {
         },
       };
 
-      const costBreakdown = await this.stripeService.calculateUsageCosts(
-        tenant.plan,
-        currentMonthAggregate
-      );
+      const costBreakdown = this.stripeService.calculateUsageCosts({
+        signEvents: currentMonthAggregate.sign_events,
+        verifyEvents: currentMonthAggregate.verify_events,
+        rfc3161Timestamps: currentMonthAggregate.rfc3161_timestamps,
+      });
 
       reply.status(200).send({
         tenant: {
@@ -449,7 +450,7 @@ export class BillingController {
         },
         billing: {
           next_invoice_date: tenant.billing.next_invoice_date,
-          amount_due: costBreakdown.total,
+          amount_due: costBreakdown.totalCost,
           currency: 'usd',
           cost_breakdown: costBreakdown,
         },
@@ -523,7 +524,7 @@ export class BillingController {
       const error: APIError = {
         code: 'VALIDATION_FAILED',
         message: 'Request validation failed',
-        details: { errors },
+        details: { errorCount: errors.length },
       };
       throw error;
     }
@@ -557,7 +558,7 @@ export class BillingController {
       const error: APIError = {
         code: 'VALIDATION_FAILED',
         message: 'Request validation failed',
-        details: { errors },
+        details: { errorCount: errors.length },
       };
       throw error;
     }
@@ -601,7 +602,7 @@ export class BillingController {
       const error: APIError = {
         code: 'VALIDATION_FAILED',
         message: 'Request validation failed',
-        details: { errors },
+        details: { errorCount: errors.length },
       };
       throw error;
     }

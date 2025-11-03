@@ -4,15 +4,16 @@
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify';
+import { TenantService, UsageService, OnboardingService } from '../services';
 import { 
-  CreateTenantRequest,
-  CreateTenantResponse,
-  WizardStep,
-  WizardStepData,
+  Tenant, 
+  CreateTenantRequest, 
+  UpdateTenantRequest,
   APIError,
-  ValidationError
-} from '@/types';
-import { TenantService, OnboardingService } from '@/services';
+  ValidationError,
+  WizardStep,
+  WizardStepData
+} from '../types';
 
 export interface TenantControllerConfig {
   tenantService: TenantService;
@@ -201,10 +202,9 @@ export class TenantController {
       }
 
       // Update wizard
-      const updatedWizard = await this.onboardingService.updateWizardStep(
+      const updatedWizard = await this.onboardingService.updateWizardProgress(
         tenantId,
         step,
-        stepData,
         result.completed
       );
 
@@ -361,7 +361,7 @@ export class TenantController {
       const error: APIError = {
         code: 'VALIDATION_FAILED',
         message: 'Request validation failed',
-        details: { errors },
+        details: { errorCount: errors.length },
       };
       throw error;
     }

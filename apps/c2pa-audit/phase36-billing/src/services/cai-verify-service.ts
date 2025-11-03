@@ -226,8 +226,8 @@ export class CaiVerifyService {
 
       // Sort keys by timestamp (descending)
       keys.sort((a, b) => {
-        const aTime = a.split(':').pop();
-        const bTime = b.split(':').pop();
+        const aTime = a.split(':').pop() || '';
+        const bTime = b.split(':').pop() || '';
         return bTime.localeCompare(aTime);
       });
 
@@ -338,6 +338,7 @@ export class CaiVerifyService {
         const result = await this.verifyAssetWithRetry(request);
         results.push({ request, result });
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         results.push({ 
           request, 
           result: { 
@@ -345,9 +346,9 @@ export class CaiVerifyService {
             validation_results: [], 
             trace_id: '', 
             verified_at: new Date().toISOString(),
-            error: error.message 
+            error: errorMessage 
           } as VerifyResponse,
-          error: error.message 
+          error: errorMessage 
         });
       }
     }
@@ -489,13 +490,14 @@ export class CaiVerifyService {
 
       return null;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         url: '',
         method: 'link_header',
         accessible: false,
         last_checked: new Date().toISOString(),
         response_time_ms: 0,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -514,7 +516,7 @@ export class CaiVerifyService {
       const matches = Array.from(html.matchAll(metaRegex));
 
       if (matches.length > 0) {
-        const manifestUrl = matches[0][1];
+        const manifestUrl = (matches[0] as any)[1] || '';
         
         // Test manifest accessibility
         const manifestResponse = await axios.head(manifestUrl, {
@@ -534,13 +536,14 @@ export class CaiVerifyService {
 
       return null;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         url: '',
         method: 'html_meta',
         accessible: false,
         last_checked: new Date().toISOString(),
         response_time_ms: 0,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }
@@ -587,13 +590,14 @@ export class CaiVerifyService {
 
       return null;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         url: '',
         method: 'direct',
         accessible: false,
         last_checked: new Date().toISOString(),
         response_time_ms: 0,
-        error: error.message,
+        error: errorMessage,
       };
     }
   }

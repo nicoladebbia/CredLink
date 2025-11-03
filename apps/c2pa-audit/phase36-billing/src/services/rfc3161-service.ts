@@ -66,7 +66,7 @@ export class RFC3161Service {
       await this.validateTimestampRequest(request);
 
       // Calculate hash if not provided
-      const assetHash = request.asset_hash || await this.calculateAssetHash(request.content_url);
+      const assetHash = request.asset_hash || await this.calculateAssetHash(request.content_url || '');
 
       // Create timestamp request
       const tsRequest: TimestampRequest = {
@@ -156,8 +156,8 @@ export class RFC3161Service {
 
       // Sort keys by timestamp (descending)
       keys.sort((a, b) => {
-        const aTime = a.split(':').pop();
-        const bTime = b.split(':').pop();
+        const aTime = a.split(':').pop() || '';
+        const bTime = b.split(':').pop() || '';
         return bTime.localeCompare(aTime);
       });
 
@@ -198,7 +198,8 @@ export class RFC3161Service {
         const response = await this.createTimestamp(request);
         results.push({ request, response });
       } catch (error) {
-        results.push({ request, error: error.message });
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        results.push({ request, error: errorMessage });
       }
     }
 
@@ -338,12 +339,13 @@ export class RFC3161Service {
         errors,
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         valid_format: false,
         valid_structure: false,
         contains_certificate: false,
         contains_timestamp: false,
-        errors: [error.message],
+        errors: [errorMessage],
       };
     }
   }
@@ -518,12 +520,13 @@ export class RFC3161Service {
         certificate_chain: certificateChain,
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return {
         valid: false,
         timestamp_time: '',
         hash_match: false,
         certificate_chain: [],
-        error: error.message,
+        error: errorMessage,
       };
     }
   }

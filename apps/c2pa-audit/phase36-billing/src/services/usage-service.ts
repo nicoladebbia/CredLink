@@ -127,13 +127,13 @@ export class UsageService {
    */
   async getUsageWindows(tenantId: string, limit: number = 100): Promise<UsageWindow[]> {
     try {
-      const pattern = `usage:window:${tenant_id}:*`;
+      const pattern = `usage:window:${tenantId}:*`;
       const keys = await this.redis.keys(pattern);
       
       // Sort keys by timestamp (descending)
-      keys.sort((a, b) => {
-        const aTime = a.split(':').pop();
-        const bTime = b.split(':').pop();
+      keys.sort((a: string, b: string) => {
+        const aTime = a.split(':').pop() || '';
+        const bTime = b.split(':').pop() || '';
         return bTime.localeCompare(aTime);
       });
 
@@ -165,6 +165,10 @@ export class UsageService {
       for (const key of keys) {
         const parts = key.split(':');
         const tenantId = parts[2];
+        
+        if (!tenantId) {
+          continue; // Skip invalid keys
+        }
         
         if (!tenantGroups.has(tenantId)) {
           tenantGroups.set(tenantId, []);
@@ -331,9 +335,9 @@ export class UsageService {
     // Get existing window data and update
     const existingData = await this.redis.hgetall(windowKey);
     if (Object.keys(existingData).length > 0) {
-      windowData.sign_events += parseInt(existingData.sign_events || '0');
-      windowData.verify_events += parseInt(existingData.verify_events || '0');
-      windowData.rfc3161_timestamps += parseInt(existingData.rfc3161_timestamps || '0');
+      windowData['sign_events'] += parseInt(existingData['sign_events'] || '0');
+      windowData['verify_events'] += parseInt(existingData['verify_events'] || '0');
+      windowData['rfc3161_timestamps'] += parseInt(existingData['rfc3161_timestamps'] || '0');
     }
 
     await this.redis.setex(windowKey, 86400 * 30, JSON.stringify(windowData));
@@ -493,25 +497,35 @@ export class UsageService {
 
   private getSignOveragePricing(overageUnits: number): { tiers: Array<{ units: number; rate: number; cost: number }>; total: number } {
     const tiers = [
-      { units: Math.min(overageUnits, 1000), rate: 0.50 }, // $0.50 per sign for first 1k overage
-      { units: Math.min(Math.max(overageUnits - 1000, 0), 5000), rate: 0.40 }, // $0.40 per sign for next 5k
-      { units: Math.max(overageUnits - 6000, 0), rate: 0.30 }, // $0.30 per sign for remaining
+      { units: Math.min(overageUnits, 1000), rate: 0.50, cost: 0 }, // $0.50 per sign for first 1k overage
+      { units: Math.min(Math.max(overageUnits - 1000, 0), 5000), rate: 0.40, cost: 0 }, // $0.40 per sign for next 5k
+      { units: Math.max(overageUnits - 6000, 0), rate: 0.30, cost: 0 }, // $0.30 per sign for remaining
     ].filter(tier => tier.units > 0);
 
-    const total = tiers.reduce((sum, tier) => sum + (tier.units * tier.rate), 0);
+    // Calculate cost for each tier
+    tiers.forEach(tier => {
+      tier.cost = tier.units * tier.rate;
+    });
+
+    const total = tiers.reduce((sum, tier) => sum + tier.cost, 0);
 
     return { tiers, total };
   }
 
   private getVerifyOveragePricing(totalVerifications: number): { tiers: Array<{ units: number; rate: number; cost: number }>; total: number } {
     const tiers = [
-      { units: Math.min(totalVerifications, 10000), rate: 0.01 }, // $0.01 per verify for first 10k
-      { units: Math.min(Math.max(totalVerifications - 10000, 0), 50000), rate: 0.008 }, // $0.008 per verify for next 50k
-      { units: Math.min(Math.max(totalVerifications - 60000, 0), 100000), rate: 0.006 }, // $0.006 per verify for next 100k
-      { units: Math.max(totalVerifications - 160000, 0), rate: 0.004 }, // $0.004 per verify for remaining
+      { units: Math.min(totalVerifications, 10000), rate: 0.01, cost: 0 }, // $0.01 per verify for first 10k
+      { units: Math.min(Math.max(totalVerifications - 10000, 0), 50000), rate: 0.008, cost: 0 }, // $0.008 per verify for next 50k
+      { units: Math.min(Math.max(totalVerifications - 60000, 0), 100000), rate: 0.006, cost: 0 }, // $0.006 per verify for next 100k
+      { units: Math.max(totalVerifications - 160000, 0), rate: 0.004, cost: 0 }, // $0.004 per verify for remaining
     ].filter(tier => tier.units > 0);
 
-    const total = tiers.reduce((sum, tier) => sum + (tier.units * tier.rate), 0);
+    // Calculate cost for each tier
+    tiers.forEach(tier => {
+      tier.cost = tier.units * tier.rate;
+    });
+
+    const total = tiers.reduce((sum, tier) => sum + tier.cost, 0);
 
     return { tiers, total };
   }

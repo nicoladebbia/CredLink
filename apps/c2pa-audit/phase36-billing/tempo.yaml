@@ -1,0 +1,85 @@
+# Tempo Configuration for Distributed Tracing
+server:
+  http_listen_address: 0.0.0.0
+  http_listen_port: 3200
+  grpc_listen_address: 0.0.0.0
+  grpc_listen_port: 9095
+  log_level: info
+  log_format: logfmt
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+    jaeger:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:14250
+        thrift_binary:
+          endpoint: 0.0.0.0:6832
+        thrift_compact:
+          endpoint: 0.0.0.0:6831
+        thrift_http:
+          endpoint: 0.0.0.0:14268
+    zipkin:
+      endpoint: 0.0.0.0:9411
+
+ingester:
+  max_block_duration: 5m
+  lifecycler:
+    ring:
+      kvstore:
+        store: memberlist
+      replication_factor: 1
+
+compactor:
+  compaction:
+    compaction_window: 1h
+    retention_enabled: true
+    retention: 30d
+
+metrics_generator:
+  registry:
+    external_labels:
+      cluster: c2pa-local
+      source: tempo
+  storage:
+    path: /tmp/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+storage:
+  trace:
+    backend: local
+    local:
+      path: /tmp/tempo/blocks
+
+overrides:
+  defaults:
+    per_tenant_override_config: /etc/tempo/overrides.yaml
+    metrics_generator:
+      processors: [service-graphs, span-metrics, local-filter]
+      service_graphs:
+        max_items: 10000
+        dimensions: [service.name, service.namespace, tenant.id]
+      span_metrics:
+        dimensions: [http.method, http.status_code, service.name, tenant.id]
+
+memberlist:
+  join_members:
+    - tempo:7946
+
+querier:
+  frontend_worker:
+    frontend_address: tempo:9095
+
+query_frontend:
+  max_outstanding_per_tenant: 2048
+
+# Security settings for production
+auth_enabled: false

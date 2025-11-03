@@ -221,7 +221,7 @@ export interface OnboardingWizard {
   tenant_id: string;
   current_step: WizardStep;
   completed_steps: WizardStep[];
-  step_data: Record<WizardStep, WizardStepData>;
+  step_data: Partial<Record<WizardStep, WizardStepData>>;
   status: 'in_progress' | 'completed' | 'blocked';
   created_at: string;
   updated_at: string;
@@ -241,7 +241,7 @@ export type WizardStep =
 
 export interface WizardStepData {
   completed: boolean;
-  data: Record<string, string | number | boolean>;
+  data: Record<string, string | number | boolean> | string;
   validation_results?: ValidationResult[];
   errors?: string[];
   completed_at?: string;
@@ -251,7 +251,7 @@ export interface ValidationResult {
   check: string;
   passed: boolean;
   message: string;
-  details?: Record<string, string | number | boolean>;
+  details?: Record<string, string | number | boolean> | string;
 }
 
 // ============================================================================
@@ -266,6 +266,14 @@ export interface CreateTenantRequest {
   domains: string[];
   cms: TenantInstall['cms'];
   manifest_host?: string;
+}
+
+export interface UpdateTenantRequest {
+  company_name?: string;
+  domains?: string[];
+  cms?: TenantInstall['cms'];
+  manifest_host?: string;
+  plan?: TenantPlan;
 }
 
 export interface CreateTenantResponse {

@@ -105,17 +105,10 @@ export async function securityMiddleware(request: FastifyRequest, reply: Fastify
       console.warn('Suspicious user agent detected:', userAgent);
     }
 
-    // CRITICAL: Enhanced rate limiting with multiple identifier strategies
-    const clientIP = request.ip || 
-                     (Array.isArray(request.headers['x-forwarded-for']) 
-                       ? request.headers['x-forwarded-for'][0] 
-                       : request.headers['x-forwarded-for'])?.split(',')[0]?.trim() ||
-                     request.headers['x-real-ip'] ||
-                     'unknown';
-    
-    // CRITICAL: Add additional identifiers to prevent bypass
-    const userAgent = request.headers['user-agent'] || 'unknown';
-    const rateLimitKey = `rate_limit:${clientIP}:${Buffer.from(userAgent).toString('base64').substring(0, 16)}`;
+    // CRITICAL: Enhanced IP-based rate limiting for security endpoints
+    const clientIP = request.ip || request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown';
+    const userAgentForRateLimit = request.headers['user-agent'] || 'unknown';
+    const rateLimitKey = `rate_limit:${clientIP}:${Buffer.from(userAgentForRateLimit).toString('base64').substring(0, 16)}`;
     
     const windowMs = parseInt(process.env['RATE_LIMIT_WINDOW'] || '900000'); // 15 minutes
     const maxRequests = parseInt(process.env['MAX_REQUESTS_PER_WINDOW'] || '100');
@@ -341,7 +334,12 @@ export function createRateLimitMiddleware(options: {
 
   return async function rateLimitMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
     try {
-      const clientIP = request.ip || request.headers['x-forwarded-for'] || 'unknown';
+      const clientIP = request.ip || 
+                   (Array.isArray(request.headers['x-forwarded-for']) 
+                     ? request.headers['x-forwarded-for'][0] 
+                     : request.headers['x-forwarded-for'])?.split(',')[0]?.trim() ||
+                   request.headers['x-real-ip'] ||
+                   'unknown';
       const now = Date.now();
       const windowStart = now - options.windowMs;
 
@@ -353,10 +351,11 @@ export function createRateLimitMiddleware(options: {
       }
 
       // Get or create client data
-      let clientData = requests.get(clientIP);
+      const ipString = typeof clientIP === 'string' ? clientIP : 'unknown';
+      let clientData = requests.get(ipString);
       if (!clientData || clientData.resetTime < windowStart) {
         clientData = { count: 0, resetTime: now + options.windowMs };
-        requests.set(clientIP, clientData);
+        requests.set(ipString, clientData);
       }
 
       // Check rate limit

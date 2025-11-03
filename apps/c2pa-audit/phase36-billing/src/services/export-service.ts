@@ -6,7 +6,7 @@
 import { createWriteStream, createReadStream } from 'fs';
 import { mkdir, readdir, stat, unlink } from 'fs/promises';
 import { join } from 'path';
-import { archiver, ZipOptions } from 'archiver';
+import archiver from 'archiver';
 import tar from 'tar';
 import { Redis } from 'ioredis';
 import Stripe from 'stripe';
@@ -162,8 +162,8 @@ export class ExportService {
       await archive.finalize();
 
       // Wait for archive to complete
-      await new Promise((resolve, reject) => {
-        output.on('close', resolve);
+      await new Promise<void>((resolve, reject) => {
+        output.on('close', () => resolve());
         archive.on('error', reject);
       });
 

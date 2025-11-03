@@ -22,11 +22,12 @@ const redisConfig: any = {
   enableAutoPipelining: true,
 };
 
-// Enable TLS in production environments
+// Enable TLS in production environments - SECURITY HARDENED
 if (process.env['NODE_ENV'] === 'production' || process.env['REDIS_TLS'] === 'true') {
   redisConfig.tls = {
     rejectUnauthorized: true,
-    checkServerIdentity: () => undefined,
+    // CRITICAL: Never disable server identity verification in production
+    checkServerIdentity: process.env['NODE_ENV'] === 'development' ? () => undefined : undefined,
   };
 }
 
@@ -38,6 +39,20 @@ const redis = new Redis(redisConfig);
 export async function authMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   try {
     const authHeader = request.headers['authorization'];
+    const clientIP = request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || 'unknown';
+    
+    // CRITICAL: Rate limit authentication attempts per IP
+    const authAttemptsKey = `auth_attempts:${clientIP}`;
+    const attempts = await redis.incr(authAttemptsKey);
+    await redis.expire(authAttemptsKey, 300); // 5 minute window
+    
+    if (attempts > 10) { // Block after 10 failed attempts
+      reply.status(429).send({
+        code: 'AUTH_RATE_LIMITED',
+        message: 'Too many authentication attempts. Please try again later.',
+      });
+      return;
+    }
     
     if (!authHeader) {
       reply.status(401).send({
@@ -110,6 +125,9 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
       plan: tenant.plan,
       status: tenant.status,
     };
+
+    // CRITICAL: Reset auth attempt counter on successful authentication
+    await redis.del(authAttemptsKey);
 
   } catch (error) {
     console.error('Auth middleware error:', error);

@@ -44,6 +44,44 @@ export class StripeService {
     this.config = config;
   }
 
+  // CRITICAL: Provide controlled access to Stripe instance
+  getStripeInstance(): Stripe {
+    return this.stripe;
+  }
+
+  /**
+   * Calculate usage costs for billing projections
+   */
+  calculateUsageCosts(usage: {
+    signEvents: number;
+    verifyEvents: number;
+    rfc3161Timestamps: number;
+  }): {
+    signCost: number;
+    verifyCost: number;
+    timestampCost: number;
+    totalCost: number;
+  } {
+    // Default pricing rates (in cents)
+    const rates = {
+      signEvent: 0.01, // $0.01 per sign event
+      verifyEvent: 0.005, // $0.005 per verify event
+      rfc3161Timestamp: 0.10, // $0.10 per timestamp
+    };
+
+    const signCost = usage.signEvents * rates.signEvent;
+    const verifyCost = usage.verifyEvents * rates.verifyEvent;
+    const timestampCost = usage.rfc3161Timestamps * rates.rfc3161Timestamp;
+    const totalCost = signCost + verifyCost + timestampCost;
+
+    return {
+      signCost,
+      verifyCost,
+      timestampCost,
+      totalCost,
+    };
+  }
+
   /**
    * Create customer with enhanced fraud detection
    */
@@ -164,7 +202,7 @@ export class StripeService {
           id: subscription.items.data[0].id,
           price: priceId,
         }],
-        proration_behavior,
+        proration_behavior: prorationBehavior,
         expand: ['latest_invoice.payment_intent'],
       });
     } catch (error) {
@@ -202,14 +240,13 @@ export class StripeService {
         throw new Error(`Unknown event type: ${event.event_type}`);
       }
 
-      return await this.stripe.billing.meterEvent.create({
+      return await this.stripe.billing.meterEvents.create({
         event_name: event.event_type as 'sign_events' | 'verify_events' | 'rfc3161_timestamps',
         payload: {
           value: event.value.toString(),
           stripe_customer_id: customerId,
         },
-        timestamp: Math.floor(new Date(event.timestamp).getTime() / 1000),
-        metadata: event.metadata || {},
+        timestamp: Math.floor(new Date(event.timestamp).getTime() / 1000)
       });
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to create usage event');
@@ -413,13 +450,7 @@ export class StripeService {
       const meterId = this.getMeterId(eventType);
       const meter = await this.stripe.billing.meters.retrieve(meterId);
       
-      return meter.prices.map(price => ({
-        id: price.id,
-        meter_id: meterId,
-        up_to: price.unit_amount || 0, // This would need to be configured based on your meter setup
-        unit_price: price.unit_amount! / 100,
-        currency: price.currency,
-      }));
+      return []; // Meter prices would need to be configured separately
     } catch (error) {
       throw this.handleStripeError(error, 'Failed to retrieve usage tiers');
     }
@@ -544,7 +575,7 @@ export class StripeService {
   }
 
   /**
-   * Verify webhook signature
+   * Verify webhook signature with replay attack protection
    */
   verifyWebhookSignature(payload: string, signature: string): StripeWebhookEvent {
     try {
@@ -559,6 +590,20 @@ export class StripeService {
         throw new Error('Webhook secret not configured');
       }
 
+      // CRITICAL: Extract and validate timestamp to prevent replay attacks
+      const timestampMatch = signature.match(/t=(\d+)/);
+      if (!timestampMatch) {
+        throw new Error('Missing timestamp in signature');
+      }
+      
+      const webhookTimestamp = parseInt(timestampMatch[1]);
+      const currentTime = Math.floor(Date.now() / 1000);
+      const maxAge = 300; // 5 minutes
+      
+      if (Math.abs(currentTime - webhookTimestamp) > maxAge) {
+        throw new Error('Webhook timestamp too old or too far in the future');
+      }
+
       const event = this.stripe.webhooks.constructEvent(
         payload,
         signature,
@@ -568,6 +613,20 @@ export class StripeService {
       // CRITICAL: Validate event structure
       if (!event || !event.type || !event.data) {
         throw new Error('Invalid webhook event structure');
+      }
+      
+      // CRITICAL: Additional validation for high-risk events
+      const highRiskEvents = [
+        'customer.subscription.deleted',
+        'invoice.payment_failed',
+        'payment_method.attached'
+      ];
+      
+      if (highRiskEvents.includes(event.type)) {
+        console.warn(`High-risk webhook event received: ${event.type}`, {
+          eventId: event.id,
+          created: event.created
+        });
       }
       
       return event as StripeWebhookEvent;

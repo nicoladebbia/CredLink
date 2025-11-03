@@ -13,25 +13,25 @@ import websocket from '@fastify/websocket';
 import { Redis } from 'ioredis';
 import Stripe from 'stripe';
 
-import { loadEnvironment, getConfigSummary } from '@/config/env';
-import { TenantService } from '@/services/tenant-service';
-import { StripeService } from '@/services/stripe-service';
-import { OnboardingService } from '@/services/onboarding-service';
-import { UsageService } from '@/services/usage-service';
-import { InstallHealthService } from '@/services/install-health-service';
-import { ExportService } from '@/services/export-service';
-import { CaiVerifyService } from '@/services/cai-verify-service';
-import { RFC3161Service } from '@/services/rfc3161-service';
-import { TenantController } from '@/controllers/tenant-controller';
-import { BillingController } from '@/controllers/billing-controller';
-import { authMiddleware } from '@/middleware/auth';
-import { validationMiddleware } from '@/middleware/validation';
-import { securityMiddleware } from '@/middleware/security';
-import { loggingMiddleware } from '@/middleware/logging';
-import { errorMiddleware } from '@/middleware/error';
+import { loadEnvironment, getConfigSummary } from './config/env';
+import { TenantService } from './services/tenant-service';
+import { StripeService } from './services/stripe-service';
+import { OnboardingService } from './services/onboarding-service';
+import { UsageService } from './services/usage-service';
+import { InstallHealthService } from './services/install-health-service';
+import { ExportService } from './services/export-service';
+import { CaiVerifyService } from './services/cai-verify-service';
+import { RFC3161Service } from './services/rfc3161-service';
+import { TenantController } from './controllers/tenant-controller';
+import { BillingController } from './controllers/billing-controller';
+import { authMiddleware } from './middleware/auth';
+import { validationMiddleware } from './middleware/validation';
+import { securityMiddleware } from './middleware/security';
+import { loggingMiddleware } from './middleware/logging';
+import { errorMiddleware } from './middleware/error';
 
 // OpenTelemetry imports
-import { initializeOpenTelemetry, otelConfig } from '@/otel-config';
+import { initializeOpenTelemetry, otelConfig } from './otel-config';
 import { 
   trace, 
   SpanKind,
@@ -278,7 +278,7 @@ async function initializeServices() {
   };
 }
 
-// Register routes
+// Route registration function
 async function registerRoutes(services: any) {
   const { tenantController, billingController, installHealthService, caiVerifyService, rfc3161Service, exportService } = services;
 
@@ -388,7 +388,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'USAGE_RECORDING_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -435,7 +435,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'VERIFICATION_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -450,7 +450,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'DISCOVERY_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -468,7 +468,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'SMOKE_TEST_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -484,7 +484,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'TIMESTAMP_CREATION_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -499,7 +499,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'TIMESTAMP_VERIFICATION_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -514,7 +514,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'TIMESTAMP_HISTORY_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -531,7 +531,7 @@ async function registerRoutes(services: any) {
     } catch (error) {
       reply.status(400).send({
         code: 'EXPORT_CREATION_FAILED',
-        message: error.message,
+        message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   });
@@ -556,10 +556,7 @@ async function registerRoutes(services: any) {
 
   // Stripe webhook - CRITICAL SECURITY
   fastify.post('/webhooks/stripe', {
-    preHandler: [validationMiddleware],
-    config: {
-      rawBody: true,
-    },
+    preHandler: [authMiddleware],
   }, async (request: FastifyRequest, reply) => {
     try {
       const signature = request.headers['stripe-signature'] as string;
@@ -628,6 +625,9 @@ async function registerRoutes(services: any) {
   });
 }
 
+// Global services reference for shutdown handlers
+let globalServices: any;
+
 // Main application startup
 async function start() {
   try {
@@ -636,6 +636,7 @@ async function start() {
 
     // Initialize services
     const services = await initializeServices();
+    globalServices = services; // Store for shutdown access
 
     // CRITICAL: Register middleware in correct order
     fastify.addHook('preHandler', validationMiddleware); // First: validation
@@ -645,7 +646,7 @@ async function start() {
     fastify.setErrorHandler(errorMiddleware);           // Global error handler
 
     // Register routes
-    await registerRoutes(services);
+    registerRoutes(services);
 
     // Start server
     await fastify.listen({
@@ -671,8 +672,8 @@ process.on('SIGTERM', async () => {
     await fastify.close();
     
     // Close Redis connections
-    if (services.redis) {
-      await services.redis.quit();
+    if (globalServices.redis) {
+      await globalServices.redis.quit();
     }
     
     // Shutdown OpenTelemetry
@@ -695,8 +696,8 @@ process.on('SIGINT', async () => {
     await fastify.close();
     
     // Close Redis connections
-    if (services.redis) {
-      await services.redis.quit();
+    if (globalServices.redis) {
+      await globalServices.redis.quit();
     }
     
     // Shutdown OpenTelemetry

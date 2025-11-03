@@ -23,7 +23,7 @@ export async function loggingMiddleware(request: FastifyRequest, reply: FastifyR
   logRequest(request, requestId);
 
   // Hook into response to log when it completes
-  reply.addHook('onSend', async (request, reply, payload) => {
+  (reply as any).addHook('onSend', async (request: any, reply: any, payload: any) => {
     logResponse(request, reply, startTime, requestId);
     return payload;
   });
@@ -206,7 +206,7 @@ function getStatusEmoji(statusCode: number): string {
 export async function performanceMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
   const startTime = process.hrtime.bigint();
   
-  reply.addHook('onSend', async (request, reply, payload) => {
+  (reply as any).addHook('onSend', async (request: any, reply: any, payload: any) => {
     const endTime = process.hrtime.bigint();
     const duration = Number(endTime - startTime) / 1000000; // Convert to milliseconds
     

@@ -3,13 +3,12 @@
  * Tenant provisioning, management, and API key handling
  */
 
-import { randomBytes, createHash, timingSafeEqual } from 'crypto';
+import { randomBytes, createHash } from 'crypto';
 import { Redis } from 'ioredis';
 import Stripe from 'stripe';
 import { 
   Tenant, 
   TenantPlan, 
-  TenantStatus, 
   CreateTenantRequest, 
   CreateTenantResponse,
   OnboardingWizard,
@@ -18,7 +17,8 @@ import {
   TenantInstall,
   TenantUsage,
   TenantBilling,
-  WizardStep
+  WizardStep,
+  WizardStepData
 } from '@/types';
 
 export interface TenantServiceConfig {
@@ -51,14 +51,19 @@ export class TenantService {
     const hashedApiKey = this.hashApiKey(apiKey);
 
     // Create Stripe customer
-    const customer = await this.stripe.customers.create({
+    const customerData: any = {
       email: request.email,
-      name: request.company_name,
       metadata: {
         tenant_id: tenantId,
         created_by: 'self_serve_onboarding',
       },
-    });
+    };
+    
+    if (request.company_name) {
+      customerData.name = request.company_name;
+    }
+    
+    const customer = await this.stripe.customers.create(customerData);
 
     // Create Stripe subscription with trial
     const subscription = await this.stripe.subscriptions.create({
@@ -189,10 +194,11 @@ export class TenantService {
       throw new Error('Wizard not found');
     }
 
+    const completedAt = new Date().toISOString();
     wizard.step_data[step] = {
-      completed,
-      data,
-      completed_at: completed ? new Date().toISOString() : undefined,
+      completed: true,
+      data: data,
+      completed_at: completedAt,
     };
 
     if (completed && !wizard.completed_steps.includes(step)) {
@@ -416,15 +422,30 @@ export class TenantService {
   }
 
   private initializeWizard(tenantId: string): OnboardingWizard {
-    return {
+    const allSteps: WizardStep[] = [
+      'domain_setup', 'manifest_config', 'cms_selection', 'plugin_install',
+      'demo_asset_upload', 'verify_demo', 'publish_test_page', 'smoke_test',
+      'install_health_check', 'billing_setup'
+    ];
+    
+    const emptyStepData: Record<WizardStep, WizardStepData> = {} as Record<WizardStep, WizardStepData>;
+    allSteps.forEach(step => {
+      emptyStepData[step] = {
+        completed: false,
+        data: {},
+      };
+    });
+
+    const wizard: OnboardingWizard = {
       tenant_id: tenantId,
       current_step: 'domain_setup',
       completed_steps: [],
-      step_data: {},
+      step_data: emptyStepData,
       status: 'in_progress',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+    return wizard;
   }
 
   private async storeTenant(tenant: Tenant): Promise<void> {
@@ -471,7 +492,7 @@ export class TenantService {
     }
 
     try {
-      await this.stripe.billing.meterEvent.create({
+      await this.stripe.billing.meterEvents.create({
         event_name: eventType,
         payload: {
           value: value.toString(),

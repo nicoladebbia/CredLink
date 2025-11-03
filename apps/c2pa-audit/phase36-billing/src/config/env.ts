@@ -13,17 +13,32 @@ const EnvSchema = z.object({
   HOST: z.string().min(1).max(253).regex(/^[a-zA-Z0-9.-]+$/).default('0.0.0.0'),
   PORT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 65535, { message: 'Port must be between 1 and 65535' }).default('3002'),
   
-  // Redis configuration
-  REDIS_HOST: z.string().min(1).max(253).default('localhost'),
+  // Redis configuration - SECURITY HARDENED
+  REDIS_HOST: z.string().min(1).max(253).regex(/^[a-zA-Z0-9.-]+$/).default('localhost'),
   REDIS_PORT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 65535, { message: 'Redis port must be between 1 and 65535' }).default('6379'),
   REDIS_DB: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 0 && n <= 15, { message: 'Redis DB must be between 0 and 15' }).default('0'),
-  REDIS_PASSWORD: z.string().optional(),
+  REDIS_PASSWORD: z.string().min(32, 'Redis password must be at least 32 characters in production').refine(pwd => {
+    if (process.env['NODE_ENV'] === 'production') {
+      // Production passwords must have high entropy
+      return /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /\d/.test(pwd) && /[!@#$%^&*]/.test(pwd);
+    }
+    return pwd.length >= 16;
+  }, { message: 'Redis password must contain uppercase, lowercase, numbers, and special characters in production' }),
   REDIS_MAX_RETRIES: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1 && n <= 10, { message: 'Redis max retries must be between 1 and 10' }).default('3'),
   
-  // Stripe configuration (REQUIRED)
-  STRIPE_SECRET_KEY: z.string().min(1, 'Stripe secret key is required'),
-  STRIPE_PUBLISHABLE_KEY: z.string().min(1, 'Stripe publishable key is required'),
-  STRIPE_WEBHOOK_SECRET: z.string().min(1, 'Stripe webhook secret is required'),
+  // Stripe configuration (REQUIRED) - SECURITY HARDENED
+  STRIPE_SECRET_KEY: z.string().min(1, 'Stripe secret key is required').refine(key => {
+    // Validate Stripe secret key format: sk_live_ or sk_test_
+    return /^sk_(live|test)_[A-Za-z0-9]{24,}$/.test(key);
+  }, { message: 'Invalid Stripe secret key format' }),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(1, 'Stripe publishable key is required').refine(key => {
+    // Validate Stripe publishable key format: pk_live_ or pk_test_
+    return /^pk_(live|test)_[A-Za-z0-9]{24,}$/.test(key);
+  }, { message: 'Invalid Stripe publishable key format' }),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1, 'Stripe webhook secret is required').refine(secret => {
+    // Webhook secrets should be at least 24 characters
+    return secret.length >= 24 && /^whsec_[A-Za-z0-9]{24,}$/.test(secret);
+  }, { message: 'Invalid Stripe webhook secret format' }),
   STRIPE_API_VERSION: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).default('2023-10-16'),
   
   // Stripe product IDs
@@ -36,10 +51,21 @@ const EnvSchema = z.object({
   STRIPE_VERIFY_EVENTS_METER_ID: z.string().min(1, 'Verify events meter ID is required'),
   STRIPE_RFC3161_TIMESTAMPS_METER_ID: z.string().min(1, 'RFC3161 timestamps meter ID is required'),
   
-  // RFC-3161 TSA configuration
-  RFC3161_TSA_ENDPOINT: z.string().url('RFC-3161 TSA endpoint must be a valid URL'),
-  RFC3161_TSA_USERNAME: z.string().optional(),
-  RFC3161_TSA_PASSWORD: z.string().optional(),
+  // RFC-3161 TSA configuration - SECURITY HARDENED
+  RFC3161_TSA_ENDPOINT: z.string().url('RFC-3161 TSA endpoint must be a valid URL').refine(url => {
+    // Only allow HTTPS in production
+    if (process.env['NODE_ENV'] === 'production') {
+      return url.startsWith('https://');
+    }
+    return true;
+  }, { message: 'TSA endpoint must use HTTPS in production' }),
+  RFC3161_TSA_USERNAME: z.string().min(1, 'TSA username is required'),
+  RFC3161_TSA_PASSWORD: z.string().min(16, 'TSA password must be at least 16 characters').refine(pwd => {
+    if (process.env['NODE_ENV'] === 'production') {
+      return /[A-Z]/.test(pwd) && /[a-z]/.test(pwd) && /\d/.test(pwd);
+    }
+    return pwd.length >= 8;
+  }, { message: 'TSA password must contain uppercase, lowercase, and numbers in production' }),
   RFC3161_TSA_TIMEOUT: z.string().regex(/^\d+$/).transform(Number).refine(n => n >= 1000 && n <= 30000, { message: 'TSA timeout must be between 1000ms and 30000ms' }).default('10000'),
   
   // OpenTelemetry configuration
@@ -141,7 +167,7 @@ const EnvSchema = z.object({
       const hasUpper = /[A-Z]/.test(secret);
       const hasLower = /[a-z]/.test(secret);
       const hasNumbers = /\d/.test(secret);
-      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(secret);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"|,.<>/?]/.test(secret);
       const notCommonPattern = !/^(password|secret|key|jwt|test|demo)/i.test(secret);
       
       if (process.env['NODE_ENV'] === 'production') {
@@ -156,7 +182,7 @@ const EnvSchema = z.object({
       const hasUpper = /[A-Z]/.test(secret);
       const hasLower = /[a-z]/.test(secret);
       const hasNumbers = /\d/.test(secret);
-      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(secret);
+      const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"|,.<>/?]/.test(secret);
       const notCommonPattern = !/^(api|key|secret|test|demo)/i.test(secret);
       
       if (process.env['NODE_ENV'] === 'production') {
