@@ -23,11 +23,22 @@ jobs:
     timeout-minutes: 120
     env:
       IMAGE: ghcr.io/nickiller04/c2-concierge:${{ github.sha }}
-      SOURCE_DATE_EPOCH: ${{ github.event.head_commit.timestamp || '0' }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for provenance
+      
+      - name: Set build timestamp
+        run: |
+          # Convert ISO timestamp to epoch for reproducible builds
+          TIMESTAMP="${{ github.event.head_commit.timestamp || '0' }}"
+          if [[ "$TIMESTAMP" =~ ^[0-9]{4}- ]]; then
+            SOURCE_DATE_EPOCH=$(date -d "$TIMESTAMP" +%s)
+          else
+            SOURCE_DATE_EPOCH=0
+          fi
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
+          echo "Build timestamp: $SOURCE_DATE_EPOCH"
       
       - uses: docker/setup-buildx-action@v3
         with:

@@ -35,10 +35,10 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost"
+          --health-cmd="mysqladmin ping -h localhost -u root -pwordpress"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
 
       wordpress:
         image: wordpress:6.4-php8.2-apache
@@ -97,35 +97,8 @@ jobs:
         # Download WordPress first
         wp --path=/var/www/html core download --allow-root
         
-        # Debug: Check if MySQL hostname resolves
-        echo "Debug: Testing MySQL hostname resolution..."
-        if nslookup mysql 2>/dev/null; then
-          echo "✅ MySQL hostname resolves"
-        else
-          echo "❌ MySQL hostname does not resolve"
-          echo "Available network interfaces:"
-          ip addr show
-          echo "Testing localhost connectivity..."
-          nc -z localhost 3306 2>/dev/null && echo "✅ localhost:3306 accessible" || echo "❌ localhost:3306 not accessible"
-        fi
-        
-        # Try different approaches to connect to MySQL
-        echo "Testing MySQL connection approaches..."
-        
-        # Try localhost first (since debug showed it works)
-        if nc -z localhost 3306 2>/dev/null; then
-          echo "✅ MySQL accessible via localhost"
-          MYSQL_HOST="localhost"
-        elif nc -z 127.0.0.1 3306 2>/dev/null; then
-          echo "✅ MySQL accessible via 127.0.0.1"
-          MYSQL_HOST="127.0.0.1"
-        else
-          echo "❌ MySQL not accessible via localhost or 127.0.0.1"
-          exit 1
-        fi
-        
-        # Set up WordPress configuration using working host
-        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=$MYSQL_HOST --allow-root
+        # Configure WordPress with localhost MySQL (same container)
+        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=localhost --allow-root
         
         # Install WordPress
         wp --path=/var/www/html core install --url=http://localhost:8080 --title="C2 Concierge Test" --admin_user=admin --admin_password=password --admin_email=test@example.com --allow-root
