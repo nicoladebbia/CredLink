@@ -94,13 +94,20 @@ export async function magickTransform(inputBuffer: Buffer, args: string[]): Prom
       const metadata = await image.metadata();
       
       // Parse crop dimensions (e.g., "50%x50%")
-      const [widthPercent, heightPercent] = crop.split('%').map(p => parseInt(p) / 100);
-      const width = Math.floor((metadata.width || 0) * widthPercent);
-      const height = Math.floor((metadata.height || 0) * heightPercent);
+      const cropParts = crop.split('%');
+      const widthPercent = parseInt(cropParts[0]) / 100;
+      const heightPercent = parseInt(cropParts[1]) / 100;
+      
+      const width = Math.floor((metadata.width || 100) * widthPercent);
+      const height = Math.floor((metadata.height || 100) * heightPercent);
+      
+      // Calculate center crop position
+      const left = Math.floor(((metadata.width || 100) - width) / 2);
+      const top = Math.floor(((metadata.height || 100) - height) / 2);
       
       return await image.extract({
-        left: Math.floor((metadata.width || 0) - width) / 2,
-        top: Math.floor((metadata.height || 0) - height) / 2,
+        left,
+        top,
         width,
         height
       }).toBuffer();
