@@ -1,0 +1,23 @@
+{
+  "headers": {
+    "access-control-allow-credentials": "true",
+    "cache-control": "public, max-age=3600",
+    "connection": "close",
+    "content-length": "7730",
+    "content-type": "image/jpeg",
+    "date": "Mon, 03 Nov 2025 23:54:29 GMT",
+    "etag": "W/\"1e32-rpu3fTjG+C7BFht5o4DAT1w2+lA\"",
+    "link": "</manifests/a67f4310ec170f989422ecdcbbc467d97ba22ce90f3811477816b5bdd36e269b.c2pa>; rel=\"c2pa-manifest\"",
+    "vary": "Origin",
+    "x-c2-policy": "preserve-allowed",
+    "x-manifest-hash": "a67f4310ec170f989422ecdcbbc467d97ba22ce90f3811477816b5bdd36e269b",
+    "x-powered-by": "Express",
+    "x-ratelimit-limit": "1000",
+    "x-ratelimit-remaining": "986",
+    "x-ratelimit-reset": "1762214964"
+  },
+  "link_header_present": true,
+  "x_c2_policy": "preserve-allowed",
+  "content_type": "image/jpeg",
+  "cache_control": "public, max-age=3600"
+}
