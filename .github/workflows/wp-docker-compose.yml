@@ -102,8 +102,15 @@ jobs:
         # Install MySQL client and wait for MySQL to be ready
         sudo apt-get update && sudo apt-get install -y mysql-client
         echo "Waiting for MySQL to be ready..."
-        timeout 60 bash -c 'until mysql -h mysql -u wordpress -pwordpress -e "SELECT 1" 2>/dev/null; do sleep 2; done'
-        echo "MySQL is ready!"
+        # Try connecting to MySQL with longer timeout and better error handling
+        for i in {1..30}; do
+          if mysql -h mysql -u wordpress -pwordpress -e "SELECT 1" 2>/dev/null; then
+            echo "MySQL is ready!"
+            break
+          fi
+          echo "Attempt $i/30 - MySQL not ready, waiting 5 seconds..."
+          sleep 5
+        done
         
         # Set up WordPress configuration
         wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql:3306 --allow-root
