@@ -9,6 +9,9 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 4102;
 const app = express();
 
+// In-memory storage for hash-to-manifest mapping
+const manifestStore = new Map();
+
 // SECURITY: Restrict CORS to localhost only in development
 const isDevelopment = process.env.NODE_ENV !== 'production';
 if (isDevelopment) {
@@ -104,11 +107,39 @@ app.get('/assets/:filename', validateFilename, async (req, res) => {
     })
     .toBuffer();
 
-    // Security: Generate deterministic manifest hash based on filename and content
+    // Create a manifest structure that includes the filename for uniqueness
+    const manifestContent = {
+      '@context': ['https://w3id.org/c2pa/1.0'],
+      claim: {
+        signature: filename, // Use filename for uniqueness
+        assertion_data: {
+          'c2pa.assertions': [
+            {
+              'label': 'c2pa.actions',
+              'data': {
+                'actions': [
+                  {
+                    'action': 'c2pa.created',
+                    'when': '2025-01-01T00:00:00.000Z',
+                    'softwareAgent': 'C2-Concierge-Preserve-Embed'
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    };
+    
+    // Generate hash of this exact structure
     const manifestHash = crypto
       .createHash('sha256')
-      .update(`preserve-embed-${filename}-${imageBuffer.length}`)
+      .update(JSON.stringify(manifestContent))
       .digest('hex');
+    
+    // Store the manifest content for later retrieval
+    manifestStore.set(manifestHash, manifestContent);
+    
     res.set('X-Manifest-Hash', manifestHash);
     res.set('X-C2-Policy', 'preserve-allowed');
     res.set('Cache-Control', 'public, max-age=3600');
@@ -132,29 +163,12 @@ app.get('/manifests/:hash.c2pa', (req, res) => {
       return res.status(400).json({ error: 'Invalid manifest hash format' });
     }
     
-    // Return a manifest that would match embedded claims
-    const manifest = {
-      '@context': ['https://w3id.org/c2pa/1.0'],
-      claim: {
-        signature: crypto.createHash('sha256').update(`preserve-embed-${hash}`).digest('hex'),
-        assertion_data: {
-          'c2pa.assertions': [
-            {
-              'label': 'c2pa.actions',
-              'data': {
-                'actions': [
-                  {
-                    'action': 'c2pa.created',
-                    'when': '2025-10-30T14:00:00Z',
-                    'softwareAgent': 'C2-Concierge-Preserve-Embed'
-                  }
-                ]
-              }
-            }
-          ]
-        }
-      }
-    };
+    // Retrieve the stored manifest content that matches this hash
+    const manifest = manifestStore.get(hash);
+    
+    if (!manifest) {
+      return res.status(404).json({ error: 'Manifest not found' });
+    }
     
     res.set('Content-Type', 'application/c2pa');
     res.set('Cache-Control', 'public, max-age=31536000, immutable');

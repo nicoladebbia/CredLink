@@ -98,19 +98,29 @@ export async function magickTransform(inputBuffer: Buffer, args: string[]): Prom
       const widthPercent = parseInt(cropParts[0]) / 100;
       const heightPercent = parseInt(cropParts[1]) / 100;
       
-      const width = Math.floor((metadata.width || 100) * widthPercent);
-      const height = Math.floor((metadata.height || 100) * heightPercent);
+      // Ensure we have valid metadata
+      const imgWidth = metadata.width || 100;
+      const imgHeight = metadata.height || 100;
+      
+      const width = Math.floor(imgWidth * widthPercent);
+      const height = Math.floor(imgHeight * heightPercent);
       
       // Calculate center crop position
-      const left = Math.floor(((metadata.width || 100) - width) / 2);
-      const top = Math.floor(((metadata.height || 100) - height) / 2);
+      const left = Math.floor((imgWidth - width) / 2);
+      const top = Math.floor((imgHeight - height) / 2);
       
-      return await image.extract({
-        left,
-        top,
-        width,
-        height
-      }).toBuffer();
+      // Validate dimensions
+      if (width > 0 && height > 0 && left >= 0 && top >= 0) {
+        return await image.extract({
+          left,
+          top,
+          width,
+          height
+        }).toBuffer();
+      } else {
+        // Fallback: return original image if invalid crop
+        return await image.jpeg().toBuffer();
+      }
     }
 
     if (args.includes('-interlace') && args.includes('none')) {
@@ -143,6 +153,36 @@ export async function magickTransform(inputBuffer: Buffer, args: string[]): Prom
         const dimension = parseInt(size);
         return await image.resize(dimension).toBuffer();
       }
+    }
+
+    if (args.includes('-gravity') && args.includes('-annotate') && args.includes('WATERMARK')) {
+      // Watermark overlay using Sharp composite
+      const image = sharp(inputBuffer);
+      const metadata = await image.metadata();
+      
+      // Create a simple text watermark as an SVG
+      const watermarkSvg = `
+        <svg width="${metadata.width || 100}" height="${metadata.height || 100}">
+          <text 
+            x="10" 
+            y="${(metadata.height || 100) - 10}" 
+            font-family="Arial" 
+            font-size="24" 
+            fill="white" 
+            stroke="black" 
+            stroke-width="1"
+          >
+            WATERMARK
+          </text>
+        </svg>
+      `;
+      
+      const watermarkBuffer = Buffer.from(watermarkSvg);
+      
+      return await image
+        .composite([{ input: watermarkBuffer, gravity: 'southeast' }])
+        .jpeg()
+        .toBuffer();
     }
 
     // Fallback to ImageMagick for complex operations with security constraints
