@@ -4,6 +4,7 @@
 export interface SignerService {
   sign(data: any): Promise<string>;
   verify(signature: string, data: any): Promise<boolean>;
+  healthCheck(): Promise<boolean>;
 }
 
 export const signerService: SignerService = {
@@ -14,6 +15,11 @@ export const signerService: SignerService = {
   
   async verify(signature: string, data: any): Promise<boolean> {
     // TODO: Implement actual verification logic
+    return true;
+  },
+  
+  async healthCheck(): Promise<boolean> {
+    // TODO: Implement actual health check logic
     return true;
   }
 };

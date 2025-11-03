@@ -6,6 +6,9 @@ export interface StorageService {
   put(key: string, value: any): Promise<void>;
   delete(key: string): Promise<void>;
   list(): Promise<string[]>;
+  ping(): Promise<boolean>;
+  checkBucket(bucket: string): Promise<boolean>;
+  getReplicationLag(): Promise<number>;
 }
 
 export const storageService: StorageService = {
@@ -25,5 +28,20 @@ export const storageService: StorageService = {
   async list(): Promise<string[]> {
     // TODO: Implement actual storage logic
     return [];
+  },
+  
+  async ping(): Promise<boolean> {
+    // TODO: Implement actual ping logic
+    return true;
+  },
+  
+  async checkBucket(bucket: string): Promise<boolean> {
+    // TODO: Implement actual bucket check logic
+    return true;
+  },
+  
+  async getReplicationLag(): Promise<number> {
+    // TODO: Implement actual replication lag logic
+    return 0;
   }
 };

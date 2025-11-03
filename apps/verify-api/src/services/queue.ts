@@ -6,6 +6,8 @@ export interface QueueService {
   dequeue(): Promise<any>;
   peek(): Promise<any>;
   size(): Promise<number>;
+  ping(): Promise<boolean>;
+  getDepth(): Promise<number>;
 }
 
 export const queueService: QueueService = {
@@ -25,6 +27,16 @@ export const queueService: QueueService = {
   
   async size(): Promise<number> {
     // TODO: Implement actual queue logic
+    return 0;
+  },
+  
+  async ping(): Promise<boolean> {
+    // TODO: Implement actual ping logic
+    return true;
+  },
+  
+  async getDepth(): Promise<number> {
+    // TODO: Implement actual queue depth logic
     return 0;
   }
 };

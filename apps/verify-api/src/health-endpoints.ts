@@ -112,16 +112,12 @@ export class HealthEndpoints {
 
     // Detailed health check - for monitoring
     fastify.get('/health', {
-      schema: {
-        tags: ['health']
-      }
+      schema: {}
     }, this.health.bind(this));
 
     // Live status check - for status page
     fastify.get('/status', {
-      schema: {
-        tags: ['health']
-      }
+      schema: {}
     }, this.status.bind(this));
   }
 
