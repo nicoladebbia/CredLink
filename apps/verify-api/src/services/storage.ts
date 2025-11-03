@@ -8,7 +8,7 @@ export interface StorageService {
   list(): Promise<string[]>;
   ping(): Promise<boolean>;
   checkBucket(bucket: string): Promise<boolean>;
-  getReplicationLag(): Promise<number>;
+  getReplicationLag(primaryBucket?: string, standbyBucket?: string): Promise<number>;
 }
 
 export const storageService: StorageService = {
@@ -40,7 +40,7 @@ export const storageService: StorageService = {
     return true;
   },
   
-  async getReplicationLag(): Promise<number> {
+  async getReplicationLag(primaryBucket?: string, standbyBucket?: string): Promise<number> {
     // TODO: Implement actual replication lag logic
     return 0;
   }

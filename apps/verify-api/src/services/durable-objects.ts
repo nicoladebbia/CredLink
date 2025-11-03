@@ -6,8 +6,8 @@ export interface DurableObjectService {
   create(id: string, data: any): Promise<void>;
   update(id: string, data: any): Promise<void>;
   delete(id: string): Promise<void>;
-  ping(): Promise<boolean>;
-  getLeaderStatus(): Promise<string>;
+  ping(name?: string): Promise<boolean>;
+  getLeaderStatus(): Promise<{ is_leader: boolean; lease_expires?: string; last_heartbeat?: string }>;
 }
 
 export const durableObjectService: DurableObjectService = {
@@ -28,13 +28,13 @@ export const durableObjectService: DurableObjectService = {
     // TODO: Implement actual Durable Object logic
   },
   
-  async ping(): Promise<boolean> {
+  async ping(name?: string): Promise<boolean> {
     // TODO: Implement actual ping logic
     return true;
   },
   
-  async getLeaderStatus(): Promise<string> {
+  async getLeaderStatus(): Promise<{ is_leader: boolean; lease_expires?: string; last_heartbeat?: string }> {
     // TODO: Implement actual leader status logic
-    return 'leader';
+    return { is_leader: true };
   }
 };
