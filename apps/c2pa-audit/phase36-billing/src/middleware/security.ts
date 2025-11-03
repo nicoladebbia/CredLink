@@ -25,7 +25,7 @@ const redisConfig: any = {
 if (process.env['NODE_ENV'] === 'production' || process.env['REDIS_TLS'] === 'true') {
   redisConfig.tls = {
     rejectUnauthorized: true,
-    checkServerIdentity: () => undefined, // Allow self-signed certs in development
+    // CRITICAL: Never disable server identity verification
   };
 }
 
@@ -102,7 +102,8 @@ export async function securityMiddleware(request: FastifyRequest, reply: Fastify
 
     if (userAgent && suspiciousPatterns.some(pattern => pattern.test(userAgent))) {
       // Log suspicious requests but don't block them (could be legitimate tools)
-      console.warn('Suspicious user agent detected:', userAgent);
+      const sanitizedUserAgent = userAgent.replace(/[^\w\s\-\.\/]/g, '?');
+      console.warn('Suspicious user agent detected:', sanitizedUserAgent);
     }
 
     // CRITICAL: Enhanced IP-based rate limiting for security endpoints

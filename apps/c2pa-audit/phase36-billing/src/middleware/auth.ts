@@ -26,8 +26,8 @@ const redisConfig: any = {
 if (process.env['NODE_ENV'] === 'production' || process.env['REDIS_TLS'] === 'true') {
   redisConfig.tls = {
     rejectUnauthorized: true,
-    // CRITICAL: Never disable server identity verification in production
-    checkServerIdentity: process.env['NODE_ENV'] === 'development' ? () => undefined : undefined,
+    // CRITICAL: Never disable server identity verification
+    checkServerIdentity: undefined,
   };
 }
 
@@ -106,7 +106,16 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
       return;
     }
 
-    const tenant = JSON.parse(tenantData);
+    let tenant;
+    try {
+      tenant = JSON.parse(tenantData);
+    } catch (error: any) {
+      reply.status(500).send({
+        code: 'DATA_CORRUPTION',
+        message: 'Invalid tenant data format',
+      });
+      return;
+    }
 
     // Check tenant status
     if (tenant.status === 'canceled' || tenant.status === 'suspended') {
@@ -167,7 +176,13 @@ export async function optionalAuthMiddleware(request: FastifyRequest, reply: Fas
       return;
     }
 
-    const tenant = JSON.parse(tenantData);
+    let tenant;
+    try {
+      tenant = JSON.parse(tenantData);
+    } catch (error) {
+      // Optional auth should not fail the request
+      return;
+    }
 
     if (tenant.status === 'canceled' || tenant.status === 'suspended') {
       return;

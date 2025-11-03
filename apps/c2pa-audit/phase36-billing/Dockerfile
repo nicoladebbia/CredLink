@@ -40,9 +40,11 @@ FROM base AS production
 # Copy built application from builder stage
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-# Copy health check script
+# Copy and validate health check script
 COPY --chown=nodejs:nodejs ./scripts/healthcheck.sh /usr/local/bin/healthcheck.sh
-RUN chmod +x /usr/local/bin/healthcheck.sh
+RUN chmod +x /usr/local/bin/healthcheck.sh && \
+    # Validate health check script content
+    grep -q "curl.*health" /usr/local/bin/healthcheck.sh || exit 1
 
 # Security hardening
 RUN chown -R nodejs:nodejs /app && \

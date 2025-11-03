@@ -4,6 +4,7 @@
  */
 
 import Stripe from 'stripe';
+import { observabilityLogging } from './observability-service';
 import { 
   SubscriptionPlan, 
   UsageTier, 
@@ -12,7 +13,7 @@ import {
   UsageEvent,
   Tenant,
   BillingError
-} from '@/types';
+} from '../types';
 
 export interface StripeServiceConfig {
   secretKey: string;
@@ -623,9 +624,11 @@ export class StripeService {
       ];
       
       if (highRiskEvents.includes(event.type)) {
-        console.warn(`High-risk webhook event received: ${event.type}`, {
-          eventId: event.id,
-          created: event.created
+        observabilityLogging.warn(`High-risk webhook event received: ${event.type}`, {
+          event_type: event.type,
+          event_id: event.id,
+          created: event.created,
+          service: 'stripe-webhook'
         });
       }
       
@@ -671,10 +674,17 @@ export class StripeService {
           await this.handleChargeFailed(event);
           break;
         default:
-          console.log(`Unhandled webhook event type: ${event.type}`);
+          observabilityLogging.info(`Unhandled webhook event type: ${event.type}`, {
+            event_type: event.type,
+            service: 'stripe-webhook'
+          });
       }
-    } catch (error) {
-      console.error(`Error handling webhook event ${event.type}:`, error);
+    } catch (error: any) {
+      observabilityLogging.error(`Error handling webhook event ${event.type}`, {
+        event_type: event.type,
+        error_message: error?.message || 'Unknown error',
+        service: 'stripe-webhook'
+      });
       // Don't re-throw webhook errors to prevent webhook delivery failures
       // Log the error and continue processing
     }
@@ -686,49 +696,91 @@ export class StripeService {
 
   private async handlePaymentSucceeded(event: StripeWebhookEvent): Promise<void> {
     const invoice = event.data.object as Stripe.Invoice;
-    console.log(`Payment succeeded for customer ${invoice.customer}: ${invoice.amount_paid / 100} ${invoice.currency}`);
+    observabilityLogging.info(`Payment succeeded for customer`, {
+      customer_id: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || 'unknown',
+      amount: invoice.amount_paid / 100,
+      currency: invoice.currency,
+      invoice_id: invoice.id,
+      service: 'stripe-webhook'
+    });
     // Update tenant status, send confirmation email, etc.
   }
 
   private async handlePaymentFailed(event: StripeWebhookEvent): Promise<void> {
     const invoice = event.data.object as Stripe.Invoice;
-    console.log(`Payment failed for customer ${invoice.customer}`);
+    observabilityLogging.warn(`Payment failed for customer`, {
+      customer_id: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || 'unknown',
+      invoice_id: invoice.id,
+      service: 'stripe-webhook'
+    });
     // Trigger dunning process, update tenant status, send notification
   }
 
   private async handleSubscriptionCreated(event: StripeWebhookEvent): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
-    console.log(`Subscription created: ${subscription.id}`);
+    observabilityLogging.info(`Subscription created`, {
+      subscription_id: subscription.id,
+      customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id || 'unknown',
+      status: subscription.status,
+      service: 'stripe-webhook'
+    });
     // Initialize tenant usage tracking, send welcome email
   }
 
   private async handleSubscriptionUpdated(event: StripeWebhookEvent): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
-    console.log(`Subscription updated: ${subscription.id}`);
+    observabilityLogging.info(`Subscription updated`, {
+      subscription_id: subscription.id,
+      customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id || 'unknown',
+      status: subscription.status,
+      service: 'stripe-webhook'
+    });
     // Handle plan changes, trial ends, etc.
   }
 
   private async handleSubscriptionDeleted(event: StripeWebhookEvent): Promise<void> {
     const subscription = event.data.object as Stripe.Subscription;
-    console.log(`Subscription deleted: ${subscription.id}`);
+    observabilityLogging.info(`Subscription deleted`, {
+      subscription_id: subscription.id,
+      customer_id: typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id || 'unknown',
+      service: 'stripe-webhook'
+    });
     // Handle cancellation, data export, etc.
   }
 
   private async handleInvoiceFinalized(event: StripeWebhookEvent): Promise<void> {
     const invoice = event.data.object as Stripe.Invoice;
-    console.log(`Invoice finalized: ${invoice.id}`);
+    observabilityLogging.info(`Invoice finalized`, {
+      invoice_id: invoice.id,
+      customer_id: typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || 'unknown',
+      amount: invoice.amount_due / 100,
+      currency: invoice.currency,
+      service: 'stripe-webhook'
+    });
     // Send invoice email, update billing records
   }
 
   private async handleChargeSucceeded(event: StripeWebhookEvent): Promise<void> {
     const charge = event.data.object as Stripe.Charge;
-    console.log(`Charge succeeded: ${charge.id}`);
+    observabilityLogging.info(`Charge succeeded`, {
+      charge_id: charge.id,
+      customer_id: typeof charge.customer === 'string' ? charge.customer : charge.customer?.id || 'unknown',
+      amount: charge.amount / 100,
+      currency: charge.currency,
+      service: 'stripe-webhook'
+    });
     // Update payment records, send receipts
   }
 
   private async handleChargeFailed(event: StripeWebhookEvent): Promise<void> {
     const charge = event.data.object as Stripe.Charge;
-    console.log(`Charge failed: ${charge.id}`);
+    observabilityLogging.warn(`Charge failed`, {
+      charge_id: charge.id,
+      customer_id: typeof charge.customer === 'string' ? charge.customer : charge.customer?.id || 'unknown',
+      amount: charge.amount / 100,
+      currency: charge.currency,
+      service: 'stripe-webhook'
+    });
     // Handle charge failures, update customer status
   }
 
@@ -751,11 +803,12 @@ export class StripeService {
 
   private handleStripeError(error: any, context: string): BillingError {
     // Log the full error for debugging
-    console.error(`Stripe error in ${context}:`, {
-      type: error.type,
-      code: error.code,
-      message: error.message,
+    observabilityLogging.error(`Stripe error in ${context}`, {
+      error_type: error.type,
+      error_code: error.code,
+      error_message: error.message,
       decline_code: error.decline_code,
+      service: 'stripe-service'
     });
 
     if (error.type === 'StripeCardError') {

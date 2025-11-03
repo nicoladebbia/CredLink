@@ -39,8 +39,9 @@ export async function validationMiddleware(request: FastifyRequest, reply: Fasti
         'multipart/form-data; charset=utf-8'
       ];
       
+      // CRITICAL: Strict content type validation - exact match only
       const isValidContentType = validContentTypes.some(valid => 
-        contentType.toLowerCase().includes(valid.toLowerCase())
+        contentType.toLowerCase().trim() === valid.toLowerCase().trim()
       );
       
       if (!isValidContentType) {

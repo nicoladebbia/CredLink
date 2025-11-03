@@ -202,6 +202,7 @@ const EnvSchema = z.object({
   // C2PA configuration
   CAI_VERIFY_ENDPOINT: z.string().url().default('https://verify.contentauthenticity.org'),
   MANIFEST_HOST_BASE_URL: z.string().url().default('https://manifests.c2pa.org'),
+  VERIFY_SDK_VERSION: z.string().min(1).max(20).default('2.1.0'),
   
   // File storage configuration
   ASSET_STORAGE_PATH: z.string().min(1).max(255).default('./assets'),
@@ -317,8 +318,8 @@ export function validateEnvironment(): EnvConfig {
       
       // CRITICAL: Sanitize error messages to prevent information disclosure
       const sanitizedErrors = errors.map(e => ({
-        variable: e.variable,
-        message: e.message.replace(/[^\w\s\-:.,()]/g, ''), // Remove special chars
+        variable: e.variable.replace(/[^\w\s\-._]/g, '?'),
+        message: e.message.replace(/[^\w\s\-:.,()]/g, '?'),
       }));
       
       throw new Error(`Environment validation failed:\n${sanitizedErrors.map(e => `  ${e.variable}: ${e.message}`).join('\n')}`);

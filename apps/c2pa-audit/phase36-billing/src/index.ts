@@ -1,6 +1,6 @@
 /**
- * Phase 36 Billing - Main Application
- * Self-Serve Onboarding & Billing System with Observability v2
+ * Phase 39 Billing - Main Application
+ * Disaster Economics & Pricing Engine with Comprehensive Safeguards
  */
 
 import Fastify, { FastifyInstance, FastifyRequest } from 'fastify';
@@ -24,11 +24,21 @@ import { CaiVerifyService } from './services/cai-verify-service';
 import { RFC3161Service } from './services/rfc3161-service';
 import { TenantController } from './controllers/tenant-controller';
 import { BillingController } from './controllers/billing-controller';
+import { PricingController } from './controllers/pricing-controller';
+import { SafeguardController } from './controllers/safeguard-controller';
 import { authMiddleware } from './middleware/auth';
 import { validationMiddleware } from './middleware/validation';
 import { securityMiddleware } from './middleware/security';
 import { loggingMiddleware } from './middleware/logging';
 import { errorMiddleware } from './middleware/error';
+
+// Phase 39 - Economics & Pricing Services
+import { EconomicsService } from './services/economics-service';
+import { SafeguardService } from './services/safeguard-service';
+import { KillSwitchService } from './services/killswitch-service';
+import { PricingDiscountService } from './services/pricing-discount-service';
+import { CoherenceService } from './services/coherence-service';
+import { EconomicsDashboardService } from './services/economics-dashboard-service';
 
 // OpenTelemetry imports
 import { initializeOpenTelemetry, otelConfig } from './otel-config';
@@ -44,9 +54,11 @@ const sdk = initializeOpenTelemetry();
 const env = loadEnvironment();
 const configSummary = getConfigSummary(env);
 
-console.log('🚀 Starting Phase 36 Billing System with Observability v2');
-console.log('📊 Configuration:', JSON.stringify(configSummary, null, 2));
-console.log('📈 OpenTelemetry:', JSON.stringify(otelConfig, null, 2));
+console.log('🚀 Starting Phase 39 Billing System with Disaster Economics & Pricing Engine');
+console.log('📊 Configuration loaded:', Object.keys(configSummary).join(', '));
+console.log('📈 OpenTelemetry initialized');
+console.log('💰 Economics Engine: Unit cost modeling, burst caps, auto-degradation, kill-switches');
+console.log('🛡️ Safeguards: Real-time exposure monitoring, storm detection, graceful degradation');
 
 // Create deployment release span
 const tracer = trace.getTracer('c2pa-billing');
@@ -140,7 +152,7 @@ async function initializeServices() {
     // CRITICAL: Security configurations
     tls: process.env['REDIS_TLS'] === 'true' ? {
       rejectUnauthorized: true,
-      checkServerIdentity: () => undefined, // Add proper cert validation in production
+      servername: env.REDIS_HOST,
     } : undefined,
     // CRITICAL: Connection limits and timeouts
     connectTimeout: 10000,
@@ -167,7 +179,7 @@ async function initializeServices() {
     trialDurationDays: env.TRIAL_DURATION_DAYS,
     trialAssetCap: env.TRIAL_ASSET_CAP,
     manifestHostBaseUrl: env.MANIFEST_HOST_BASE_URL,
-    verifySdkVersion: '2.1.0',
+    verifySdkVersion: env.VERIFY_SDK_VERSION || '2.1.0',
   };
 
   const stripeServiceConfig = {
@@ -253,6 +265,14 @@ async function initializeServices() {
   const caiVerifyService = new CaiVerifyService(caiVerifyServiceConfig);
   const rfc3161Service = new RFC3161Service(rfc3161ServiceConfig);
 
+  // Phase 39 - Initialize Economics & Pricing Services
+  const economicsService = new EconomicsService(redis);
+  const safeguardService = new SafeguardService(redis);
+  const killSwitchService = new KillSwitchService(redis);
+  const pricingDiscountService = new PricingDiscountService(redis);
+  const coherenceService = new CoherenceService(redis);
+  const economicsDashboardService = new EconomicsDashboardService(redis);
+
   // Initialize controllers
   const tenantController = new TenantController({
     tenantService,
@@ -263,6 +283,10 @@ async function initializeServices() {
     stripeService,
     usageService,
   });
+
+  // Phase 39 - Initialize Pricing & Safeguard Controllers
+  const pricingController = new PricingController(redis);
+  const safeguardController = new SafeguardController(redis);
 
   return {
     tenantService,
@@ -275,12 +299,31 @@ async function initializeServices() {
     rfc3161Service,
     tenantController,
     billingController,
+    // Phase 39 - Economics & Pricing Services
+    economicsService,
+    safeguardService,
+    killSwitchService,
+    pricingDiscountService,
+    coherenceService,
+    economicsDashboardService,
+    pricingController,
+    safeguardController,
   };
 }
 
 // Route registration function
 async function registerRoutes(services: any) {
-  const { tenantController, billingController, installHealthService, caiVerifyService, rfc3161Service, exportService } = services;
+  const { 
+    tenantController, 
+    billingController, 
+    installHealthService, 
+    caiVerifyService, 
+    rfc3161Service, 
+    exportService,
+    // Phase 39 - Controllers
+    pricingController,
+    safeguardController
+  } = services;
 
   // Health check
   fastify.get('/health', async (request, reply) => {
@@ -288,10 +331,16 @@ async function registerRoutes(services: any) {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       version: '1.1.0',
+      phase: '39 - Disaster Economics & Pricing Engine',
       services: {
         redis: 'connected',
         stripe: 'connected',
         database: 'connected',
+        economics_service: 'operational',
+        safeguards_service: 'operational',
+        killswitch_service: 'operational',
+        pricing_service: 'operational',
+        coherence_service: 'operational',
       },
     };
   });
@@ -623,6 +672,121 @@ async function registerRoutes(services: any) {
       });
     }
   });
+
+  // Phase 39 - Pricing Calculator Routes
+  fastify.post('/pricing/simulate', {
+    preHandler: [validationMiddleware],
+  }, pricingController.simulatePricing.bind(pricingController));
+
+  fastify.post('/pricing/compare', {
+    preHandler: [validationMiddleware],
+  }, pricingController.comparePlans.bind(pricingController));
+
+  fastify.get('/pricing/model', pricingController.getCostModel.bind(pricingController));
+
+  fastify.post('/pricing/optimizer', {
+    preHandler: [validationMiddleware],
+  }, pricingController.optimizePricing.bind(pricingController));
+
+  // Phase 39 - Safeguard Routes
+  fastify.post('/safeguards/evaluate', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, safeguardController.evaluateSafeguards.bind(safeguardController));
+
+  fastify.post('/safeguards/check-burst-cap', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, safeguardController.checkBurstCap.bind(safeguardController));
+
+  fastify.post('/safeguards/reset-tenant', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, safeguardController.resetTenant.bind(safeguardController));
+
+  fastify.post('/safeguards/handle-storm', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, safeguardController.handleStormConditions.bind(safeguardController));
+
+  fastify.get('/safeguards/tenant/:tenantId/history', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, safeguardController.getSafeguardHistory.bind(safeguardController));
+
+  fastify.get('/safeguards/dashboard', {
+    preHandler: [authMiddleware],
+  }, safeguardController.getSafeguardDashboard.bind(safeguardController));
+
+  // Phase 39 - Economics Dashboard Routes
+  fastify.get('/economics/overview', {
+    preHandler: [authMiddleware],
+  }, async (request, reply) => {
+    try {
+      const periodDays = parseInt((request.query as any).periodDays || '30');
+      const overview = await services.economicsDashboardService.getEconomicsOverview(periodDays);
+      return reply.send({ success: true, data: overview });
+    } catch (error) {
+      reply.status(500).send({ success: false, error: 'Failed to get economics overview' });
+    }
+  });
+
+  fastify.get('/economics/cogs-breakdown', {
+    preHandler: [authMiddleware],
+  }, async (request, reply) => {
+    try {
+      const periodDays = parseInt((request.query as any).periodDays || '30');
+      const breakdown = await services.economicsDashboardService.getCOGSBreakdown(periodDays);
+      return reply.send({ success: true, data: breakdown });
+    } catch (error) {
+      reply.status(500).send({ success: false, error: 'Failed to get COGS breakdown' });
+    }
+  });
+
+  fastify.get('/economics/realtime', {
+    preHandler: [authMiddleware],
+  }, async (request, reply) => {
+    try {
+      const metrics = await services.economicsDashboardService.getRealTimeMetrics();
+      return reply.send({ success: true, data: metrics });
+    } catch (error) {
+      reply.status(500).send({ success: false, error: 'Failed to get real-time metrics' });
+    }
+  });
+
+  // Phase 39 - Coherence Routes
+  fastify.get('/coherence/report/:date', {
+    preHandler: [authMiddleware],
+  }, async (request, reply) => {
+    try {
+      const { date } = request.params as any;
+      const report = await services.coherenceService.getCoherenceReport(date);
+      return reply.send({ success: true, data: report });
+    } catch (error) {
+      reply.status(500).send({ success: false, error: 'Failed to get coherence report' });
+    }
+  });
+
+  fastify.post('/coherence/check/:tenantId/:date', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, async (request, reply) => {
+    try {
+      const { tenantId, date } = request.params as any;
+      const check = await services.coherenceService.triggerManualCheck(tenantId, date);
+      return reply.send({ success: true, data: check });
+    } catch (error) {
+      reply.status(500).send({ success: false, error: 'Failed to trigger coherence check' });
+    }
+  });
+
+  // Phase 39 - Exit Test Routes (Admin Only)
+  fastify.post('/admin/exit-tests', {
+    preHandler: [authMiddleware, validationMiddleware],
+  }, async (request, reply) => {
+    try {
+      const Phase39ExitTests = require('./tests/phase39-exit-tests').default;
+      const exitTests = new Phase39ExitTests(services.economicsService.redis);
+      const results = await exitTests.runAllExitTests();
+      return reply.send({ success: true, data: results });
+    } catch (error) {
+      reply.status(500).send({ success: false, error: 'Failed to run exit tests' });
+    }
+  });
 }
 
 // Global services reference for shutdown handlers
@@ -654,12 +818,16 @@ async function start() {
       host: env.HOST,
     });
 
-    console.log(`✅ Phase 36 Billing System started successfully`);
+    console.log(`✅ Phase 39 Billing System started successfully`);
     console.log(`🌐 Server listening on http://${env.HOST}:${env.PORT}`);
     console.log(`📝 Documentation: http://${env.HOST}:${env.PORT}/docs`);
+    console.log(`💰 Economics Engine: Unit cost modeling, burst caps, auto-degradation, kill-switches`);
+    console.log(`🛡️ Safeguards: Real-time exposure monitoring, storm detection, graceful degradation`);
+    console.log(`📊 Pricing Calculator: Public plan simulation, volume discounts, enterprise minimums`);
+    console.log(`🔍 Coherence Verification: Pricing-invoice alignment within ±2% tolerance`);
     
   } catch (error) {
-    console.error('❌ Failed to start Phase 36 Billing System:', error);
+    console.error('❌ Failed to start Phase 39 Billing System:', error);
     process.exit(1);
   }
 }
