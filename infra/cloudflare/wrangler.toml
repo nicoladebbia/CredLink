@@ -7,12 +7,24 @@ compatibility_flags = ["nodejs_compat"]
 REMOTE_ONLY = "1"
 PRESERVE_PATHS = "/media/preserve/"
 MANIFEST_BASE = "https://manifests.survival.test"
+# Phase 40 experiment configuration
+PHASE40_ENABLED = "true"
+# SECURITY: These should be set via environment variables in production
+# EXPERIMENT_SEED = "42"
+# TENANT_ID = "tenant-001"
+# PRESERVE_CONTROLS = '{"cloudflare_preserve_enabled": true, "wp_image_strip_meta_disabled": false, "fastly_io_default_strips": true}'
 
 # KV namespace for break-glass protocol
 [[kv_namespaces]]
 binding = "BREAK_GLASS_KV"
 id = "break-glass-kv"
 preview_id = "break-glass-kv-preview"
+
+# KV namespace for Phase 40 analytics and metrics
+[[kv_namespaces]]
+binding = "ANALYTICS_KV"
+id = "phase40-analytics-kv"
+preview_id = "phase40-analytics-kv-preview"
 
 # Local development routes
 [[routes]]
@@ -28,7 +40,10 @@ pattern = "http://127.0.0.1:4103/*"
 zone_name = "localhost"
 
 [env.development]
-vars = { REMOTE_ONLY = "0" }
+vars = { REMOTE_ONLY = "0", PHASE40_ENABLED = "false" }
 
 [env.production]
-vars = { REMOTE_ONLY = "1" }
+vars = { REMOTE_ONLY = "1", PHASE40_ENABLED = "true" }
+
+[env.experiment]
+vars = { REMOTE_ONLY = "0", PHASE40_ENABLED = "true", EXPERIMENT_SEED = "12345", TENANT_ID = "experiment-tenant" }

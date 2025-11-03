@@ -11,6 +11,11 @@ import {
   ApiResponse, 
   VerificationError 
 } from './types.js';
+import { evidencePipeline, registerEvidenceRoutes } from './phase40-evidence.js';
+import { costTap, registerCostTapRoutes } from './phase40-cost-tap.js';
+import { adversarialInjector, registerAdversarialRoutes } from './phase40-adversarial.js';
+import { statisticalAnalyzer, registerStatisticalRoutes } from './phase40-statistics.js';
+import { guardrails, registerGuardrailsRoutes } from './phase40-guardrails.js';
 
 /**
  * Generate unique request ID for tracing
@@ -129,7 +134,7 @@ const verificationResponseSchema = {
 };
 
 /**
- * Main verification endpoint
+ * Main verification endpoint with Phase 40 evidence logging
  */
 async function verifyHandler(
   request: FastifyRequest<{ Body: VerificationRequest }>,
@@ -143,6 +148,9 @@ async function verifyHandler(
     asset_url: request.body.asset_url,
     manifest_url: request.body.manifest_url 
   }, 'Verification request received');
+
+  // Extract Phase 40 experiment context from headers
+  const experimentContext = extractExperimentContext(request.headers);
 
   try {
     // Validate request body
@@ -164,6 +172,18 @@ async function verifyHandler(
       totalTime,
       warnings: result.warnings.length 
     }, 'Verification completed');
+
+    // Log Phase 40 evidence if experiment is active
+    if (experimentContext) {
+      try {
+        await evidencePipeline.processVerification(request, reply, result, experimentContext);
+      } catch (evidenceError) {
+        request.log.warn({ 
+          requestId, 
+          error: evidenceError instanceof Error ? evidenceError.message : 'Unknown evidence error'
+        }, 'Failed to log Phase 40 evidence (non-critical)');
+      }
+    }
 
     return {
       success: true,
@@ -190,6 +210,22 @@ async function verifyHandler(
         'NETWORK_ERROR',
         error instanceof Error ? error.message : 'Unknown error'
       );
+    }
+
+    // Still log evidence for failed verifications if experiment is active
+    if (experimentContext) {
+      try {
+        await evidencePipeline.processVerification(request, reply, {
+          valid: false,
+          error: verificationError,
+          warnings: []
+        }, experimentContext);
+      } catch (evidenceError) {
+        request.log.warn({ 
+          requestId, 
+          error: evidenceError instanceof Error ? evidenceError.message : 'Unknown evidence error'
+        }, 'Failed to log Phase 40 evidence for error case (non-critical)');
+      }
     }
 
     return reply.status(500).send({
@@ -241,6 +277,36 @@ async function trustRootsHandler(
     },
     request_id: generateRequestId(),
     timestamp: new Date().toISOString()
+  };
+}
+
+/**
+ * Extract Phase 40 experiment context from request headers
+ */
+function extractExperimentContext(headers: any): {
+  arm: 'A_EMBED' | 'B_REMOTE';
+  tenant_id: string;
+  route_bucket: number;
+  pathname: string;
+} | null {
+  const experimentArm = headers['x-c2-experiment-arm'] as string;
+  const experimentTenant = headers['x-c2-experiment-tenant'] as string;
+  const routeBucket = headers['x-c2-experiment-bucket'] as string;
+
+  if (!experimentArm || !experimentTenant || !routeBucket) {
+    return null;
+  }
+
+  // Validate arm
+  if (experimentArm !== 'A_EMBED' && experimentArm !== 'B_REMOTE') {
+    return null;
+  }
+
+  return {
+    arm: experimentArm,
+    tenant_id: experimentTenant,
+    route_bucket: parseInt(routeBucket, 10),
+    pathname: headers['x-c2-experiment-pathname'] || 'unknown'
   };
 }
 
@@ -364,4 +430,19 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
       timestamp: new Date().toISOString()
     };
   });
+
+  // Register Phase 40 evidence pipeline routes
+  await registerEvidenceRoutes(fastify);
+
+  // Register Phase 40 cost tap routes
+  await registerCostTapRoutes(fastify);
+
+  // Register Phase 40 adversarial injection routes
+  await registerAdversarialRoutes(fastify);
+
+  // Register Phase 40 statistical analysis routes
+  await registerStatisticalRoutes(fastify);
+
+  // Register Phase 40 guardrails routes
+  await registerGuardrailsRoutes(fastify);
 }
