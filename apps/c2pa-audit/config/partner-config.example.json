@@ -1,0 +1,61 @@
+{
+  "partner_id": "pub-42",
+  "allow_origins": [
+    "https://newsroom.example.com",
+    "https://cdn.partner.example.com",
+    "https://partner-blog.example.com"
+  ],
+  "enforce": [
+    "https://paywalled.example.com",
+    "https://premium-content.example.com"
+  ],
+  "webhooks": [
+    {
+      "url": "https://partner.example.com/api/c2pa/events",
+      "secret": "c2VjcmV0LWtleS0zMmJ5dGVzLWxvbmctc2VjcmV0",
+      "filters": [
+        "reuse.detected",
+        "softblock.triggered",
+        "appeal.created"
+      ]
+    }
+  ],
+  "preferences": {
+    "preview_degrade": {
+      "warn": {
+        "scale": 0.4,
+        "blur_px": 6
+      },
+      "block": {
+        "scale": 0.2,
+        "blur_px": 12
+      }
+    },
+    "cta": {
+      "warn": "View license / Provide proof",
+      "block": "License required for this use"
+    },
+    "telemetry": {
+      "events": [
+        "verify.completed",
+        "softblock.triggered",
+        "reuse.detected"
+      ]
+    }
+  },
+  "license_rules": {
+    "permissive_uris": [
+      "https://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-sa/4.0/",
+      "https://creativecommons.org/publicdomain/zero/1.0/"
+    ],
+    "restricted_uris": [
+      "https://creativecommons.org/licenses/by-nc/4.0/",
+      "https://creativecommons.org/licenses/by-nc-nd/4.0/"
+    ],
+    "commercial_allowed": [
+      "https://creativecommons.org/licenses/by/4.0/",
+      "https://creativecommons.org/licenses/by-sa/4.0/"
+    ]
+  }
+}
