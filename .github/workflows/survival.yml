@@ -91,18 +91,31 @@ jobs:
       - name: Run acceptance tests
         run: |
           mkdir -p .artifacts/acceptance
+          echo "🔍 DEBUG: $(date) - Starting acceptance tests"
           echo "🔍 Checking for acceptance binary..."
           ls -la packages/acceptance/bin/ || echo "❌ Bin directory not found"
           ls -la packages/acceptance/dist/ || echo "❌ Dist directory not found"
           
+          # Force rebuild to ensure latest code
+          echo "🔍 Rebuilding acceptance package..."
+          pnpm -r --filter "@c2/acceptance" build
+          
+          # Test sandbox endpoints manually
+          echo "🔍 Testing sandbox endpoints..."
+          for port in 4101 4102 4103; do
+            echo "Testing port $port..."
+            curl -s -I "http://127.0.0.1:$port/assets/test.jpg" | head -3 || echo "❌ Port $port failed"
+          done
+          
           if [ -f "packages/acceptance/bin/acceptance.mjs" ]; then
             echo "✅ Acceptance binary found, running tests..."
-            echo "📋 Test command: pnpm -w test:acceptance"
-            pnpm -w test:acceptance || echo "⚠️ Acceptance tests failed, generating mock results"
+            echo "📋 Test command: pnpm -w test:acceptance --verbose"
+            pnpm -w test:acceptance --verbose || echo "⚠️ Acceptance tests failed, generating mock results"
             
             # Check if results were generated
             if [ -f ".artifacts/acceptance/survival.json" ]; then
               echo "✅ Survival results generated"
+              echo "🔍 DEBUG: Survival results content:"
               cat .artifacts/acceptance/survival.json
             else
               echo "❌ No survival results found, generating mock results"
