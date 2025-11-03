@@ -1,5 +1,7 @@
-import { createServer } from 'http';
 import { spawn } from 'child_process';
+import { existsSync } from 'fs';
+import { dirname, join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
 export interface SandboxConfig {
   name: string;
@@ -14,6 +16,14 @@ export const SANDBOXES: SandboxConfig[] = [
 ];
 
 export class SandboxManager {
+  private readonly sandboxRoot: string = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '..',
+    '..',
+    '..',
+    'sandboxes'
+  );
+
   private processes: Map<string, any> = new Map();
 
   async startAll(): Promise<void> {
@@ -23,7 +33,15 @@ export class SandboxManager {
   }
 
   async startSandbox(config: SandboxConfig): Promise<void> {
-    const scriptPath = `../../sandboxes/${config.type}/server.js`;
+    const scriptPath = join(this.sandboxRoot, config.type, 'server.js');
+
+    if (!existsSync(scriptPath)) {
+      throw new Error(`Sandbox script not found: ${scriptPath}`);
+    }
+
+    if (await this.isSandboxRunning(config.port)) {
+      return;
+    }
     
     return new Promise((resolve, reject) => {
       const proc = spawn('node', [scriptPath], {
@@ -34,6 +52,11 @@ export class SandboxManager {
       this.processes.set(config.name, proc);
 
       proc.on('error', reject);
+      proc.on('exit', code => {
+        if (code !== 0) {
+          reject(new Error(`${config.name} sandbox exited with code ${code}`));
+        }
+      });
       
       // Wait for server to be ready
       setTimeout(() => {
@@ -53,6 +76,15 @@ export class SandboxManager {
     const response = await fetch(`http://127.0.0.1:${port}/health`);
     if (!response.ok) {
       throw new Error(`Sandbox on port ${port} not healthy`);
+    }
+  }
+
+  private async isSandboxRunning(port: number): Promise<boolean> {
+    try {
+      await this.checkHealth(port);
+      return true;
+    } catch {
+      return false;
     }
   }
 
