@@ -1,0 +1,17 @@
+{
+  "remote_survives": true,
+  "embed_survives": false,
+  "failure_code": "DESTROYED_EMBED",
+  "failure_taxonomy": {
+    "code": "DESTROYED_EMBED",
+    "category": "destroyed",
+    "severity": "warning",
+    "description": "Embedded claims completely stripped by transform",
+    "recovery_possible": false
+  },
+  "expected": {
+    "remote_survives": true,
+    "embed_survives": false,
+    "notes": "AVIF conversion strips all metadata"
+  }
+}
