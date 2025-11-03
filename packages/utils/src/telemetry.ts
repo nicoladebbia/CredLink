@@ -474,21 +474,3 @@ export class ExperimentTracer {
  * Global experiment tracer instance
  */
 export const experimentTracer = new ExperimentTracer();
-  ): SpanData {
-    const span = this.tracer.createSpan('preservation_check', {
-      'tenant.id': tenantId,
-      'preserve.cloudflare.enabled': controls.cloudflare_preserve_enabled,
-      'preserve.wp.strip_meta.disabled': controls.wp_image_strip_meta_disabled,
-      'preserve.fastly.default_strips': controls.fastly_io_default_strips,
-      'preserve.capable': preserveCapable
-    });
-
-    this.tracer.endSpan(span);
-    return span;
-  }
-}
-
-/**
- * Global experiment tracer instance
- */
-export const experimentTracer = new ExperimentTracer();

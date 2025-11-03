@@ -92,7 +92,7 @@ export class BackgroundJobService {
   }
 
   private validateJobId(jobId: string): boolean {
-    return jobId && 
+    return !!jobId && 
            jobId.length > 0 && 
            jobId.length <= this.MAX_JOB_ID_LENGTH &&
            /^[a-zA-Z0-9_-]+$/.test(jobId);

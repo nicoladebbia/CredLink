@@ -68,7 +68,7 @@ export class ConsistencyChecker {
   }
 
   private validateHash(hash: string): boolean {
-    return hash && 
+    return !!hash && 
            hash.length <= this.MAX_HASH_LENGTH && 
            /^[a-fA-F0-9]+$/.test(hash);
   }

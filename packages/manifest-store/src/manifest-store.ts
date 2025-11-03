@@ -69,7 +69,7 @@ export class ManifestStore {
   }
 
   private validateTenantId(tenantId: string): boolean {
-    return tenantId && 
+    return !!tenantId && 
            typeof tenantId === 'string' && 
            tenantId.length > 0 && 
            tenantId.length <= this.MAX_TENANT_ID_LENGTH &&
@@ -77,16 +77,22 @@ export class ManifestStore {
   }
 
   private validateAuthor(author: string): boolean {
-    return author && 
+    return !!author && 
            typeof author === 'string' && 
            author.length > 0 && 
            author.length <= this.MAX_AUTHOR_LENGTH &&
-           /^[a-zA-Z0-9_\-\s@.]+$/.test(author);
+           /^[a-zA-Z0-9\s._-]+$/.test(author);
   }
 
   private checkRateLimit(identifier: string): boolean {
     const now = Date.now();
     const key = identifier;
+    
+    if (!this.rateLimitMap.has(key)) {
+      this.rateLimitMap.set(key, { count: 1, resetTime: now + this.RATE_LIMIT_WINDOW });
+      return true;
+    }
+    
     const current = this.rateLimitMap.get(key);
     
     if (!current || now > current.resetTime) {
@@ -750,7 +756,7 @@ export class ManifestStore {
 
   private generateSecureId(): string {
     const timestamp = Date.now();
-    const randomBytes = Buffer.from(randomBytes(16));
+    const randomBytes = Buffer.from(crypto.randomBytes(16));
     return `${timestamp}_${randomBytes.toString('hex')}`;
   }
 

@@ -83,7 +83,7 @@ export class LeaderElectionService implements JobCoordinator {
   }
 
   private validateJobId(jobId: string): boolean {
-    return jobId && jobId.length > 0 && jobId.length <= this.MAX_JOB_ID_LENGTH;
+    return !!jobId && jobId.length > 0 && jobId.length <= this.MAX_JOB_ID_LENGTH;
   }
 
   private async safeFetch(request: Request): Promise<Response> {
