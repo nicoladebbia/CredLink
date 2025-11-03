@@ -139,7 +139,15 @@ export async function magickTransform(inputBuffer: Buffer, args: string[]): Prom
     }
 
     // Fallback to ImageMagick for complex operations with security constraints
-    const { stdout } = await execFileAsync('magick', [
+    // Check which command is available (magick for IM7, convert for IM6)
+    let magickCommand = 'magick';
+    try {
+      await execFileAsync('which', ['magick']);
+    } catch {
+      magickCommand = 'convert';
+    }
+    
+    const { stdout } = await execFileAsync(magickCommand, [
       '-', ...args, '-'
     ], {
       encoding: null,

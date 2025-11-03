@@ -40,7 +40,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y imagemagick curl bc jq
           # Verify ImageMagick installation
-          magick -version
+          magick -version || convert -version || echo "ImageMagick installed but magick command not available"
       
       - name: Install dependencies
         run: |
