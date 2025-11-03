@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "C2 Concierge – Content Credentials",
+  "version": "0.1.0",
+  "description": "Verify C2PA content credentials on images and videos without publisher cooperation",
+  "action": { 
+    "default_title": "Content Credentials",
+    "default_popup": "popup.html"
+  },
+  "permissions": ["storage", "webRequest", "scripting"],
+  "host_permissions": ["https://*/*"],
+  "optional_host_permissions": [],
+  "background": { 
+    "service_worker": "src/bg.js", 
+    "type": "module" 
+  },
+  "content_scripts": [{
+    "matches": ["https://*/*"],
+    "js": ["src/content.js"],
+    "run_at": "document_idle",
+    "all_frames": false,
+    "match_about_blank": false,
+    "match_origin_as_fallback": false
+  }],
+  "web_accessible_resources": [],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://verify.c2concierge.org; frame-src 'none'; worker-src 'none';",
+    "sandbox": "sandbox allow-scripts allow-same-origin; script-src 'self' 'unsafe-inline';",
+    "content_scripts": "script-src 'self';"
+  }
+}

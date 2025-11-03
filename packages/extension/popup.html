@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C2 Concierge - Content Credentials</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <div class="logo">
+        <div class="logo-icon">🔐</div>
+        <h1>Content Credentials</h1>
+      </div>
+      <div class="status-indicator" id="status-indicator">
+        <span class="status-dot"></span>
+        <span class="status-text">Active</span>
+      </div>
+    </header>
+
+    <main class="popup-main">
+      <!-- Site Configuration -->
+      <section class="site-section">
+        <h2>Current Site</h2>
+        <div class="site-info">
+          <div class="site-url" id="site-url">Loading...</div>
+          <div class="site-controls">
+            <label class="toggle">
+              <input type="checkbox" id="enable-site" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Enable verification</span>
+            </label>
+            <label class="toggle">
+              <input type="checkbox" id="show-badges" checked>
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Show badges</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="actions-section">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+          <button class="action-button primary" id="verify-all">
+            <span class="button-icon">🔍</span>
+            Verify All Media
+          </button>
+          <button class="action-button secondary" id="refresh-page">
+            <span class="button-icon">🔄</span>
+            Refresh Page
+          </button>
+        </div>
+      </section>
+
+      <!-- Statistics -->
+      <section class="stats-section">
+        <h2>This Page</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="media-count">0</div>
+            <div class="stat-label">Media Found</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="verified-count">0</div>
+            <div class="stat-label">Verified</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="warning-count">0</div>
+            <div class="stat-label">Warnings</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy Notice -->
+      <section class="privacy-section">
+        <h2>Privacy</h2>
+        <div class="privacy-notice">
+          <p>
+            <strong>Privacy-First:</strong> No browsing data is collected by default. 
+            Verification only occurs when you interact with badges or click verify buttons.
+          </p>
+          <div class="privacy-links">
+            <a href="#" id="privacy-policy">Privacy Policy</a>
+            <a href="#" id="learn-more">Learn More</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="popup-footer">
+      <div class="footer-links">
+        <a href="#" id="settings">Settings</a>
+        <a href="#" id="help">Help</a>
+        <a href="#" id="feedback">Feedback</a>
+      </div>
+      <div class="version">
+        Version 0.1.0
+      </div>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

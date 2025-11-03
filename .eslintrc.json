@@ -1,0 +1,44 @@
+{
+  "root": true,
+  "env": {
+    "node": true,
+    "es2022": true,
+    "browser": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "no-console": "off",
+    "no-unused-vars": "off",
+    "no-prototype-builtins": "error",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "prefer-const": "warn"
+  },
+  "ignorePatterns": [
+    "dist/**/*",
+    "dist/",
+    "node_modules/",
+    ".artifacts/",
+    "sandboxes/",
+    "scripts/",
+    "coverage/",
+    "*.d.ts",
+    "*.js.map",
+    "*.d.ts.map",
+    "c2-concierge/**",
+    "plugins/**",
+    "security/**",
+    "packages/**/*.js",
+    "apps/**/*.js",
+    "**/*.js"
+  ]
+}
