@@ -1,0 +1,17 @@
+{
+  "remote_survives": true,
+  "embed_survives": true,
+  "failure_code": "SURVIVED",
+  "failure_taxonomy": {
+    "code": "SURVIVED",
+    "category": "survived",
+    "severity": "info",
+    "description": "All provenance verification succeeded",
+    "recovery_possible": true
+  },
+  "expected": {
+    "remote_survives": true,
+    "embed_survives": true,
+    "notes": "No transformation preserves both remote and embed"
+  }
+}
