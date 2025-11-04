@@ -50,3 +50,51 @@ variable "cloudflare_account_id" {
   description = "Cloudflare account ID"
   type        = string
 }
+
+variable "queue_name" {
+  description = "Queue name"
+  type        = string
+}
+
+variable "token_scope" {
+  description = "Token scope"
+  type        = list(string)
+  default     = []
+}
+
+variable "allowed_ip_ranges" {
+  description = "IP ranges allowed to access resources"
+  type        = list(string)
+  default     = []
+}
+
+variable "token_ttl_seconds" {
+  description = "API token TTL in seconds"
+  type        = number
+  default     = 3600
+}
+
+variable "use_vault_secrets" {
+  description = "Whether to use HashiCorp Vault for secrets management"
+  type        = bool
+  default     = true
+}
+
+variable "vault_address" {
+  description = "Vault server address"
+  type        = string
+  default     = ""
+}
+
+variable "vault_token" {
+  description = "Vault authentication token"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "vpc_endpoint_id" {
+  description = "VPC endpoint ID for S3 access restriction"
+  type        = string
+  default     = null
+}

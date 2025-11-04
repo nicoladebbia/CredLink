@@ -8,84 +8,8 @@ terraform {
 }
 
 # IAM module
-variable "env" {
-  description = "Environment name"
-  type        = string
-}
-
-variable "project" {
-  description = "Project name"
-  type        = string
-}
-
-variable "storage_bucket_name" {
-  description = "Storage bucket name"
-  type        = string
-}
-
-variable "storage_type" {
-  description = "Storage type (r2 or s3)"
-  type        = string
-}
-
-variable "worker_script_name" {
-  description = "Worker script name"
-  type        = string
-}
-
-variable "queue_names" {
-  description = "Queue names"
-  type        = list(string)
-}
-
-variable "token_scopes" {
-  description = "Token scopes"
-  type        = map(list(string))
-  default     = {}
-}
 
 
-variable "allowed_ip_ranges" {
-  description = "IP ranges allowed to access resources"
-  type        = list(string)
-  default     = []
-}
-
-variable "token_ttl_seconds" {
-  description = "API token TTL in seconds"
-  type        = number
-  default     = 2592000 # 30 days for production
-}
-
-variable "use_vault_secrets" {
-  description = "Whether to use HashiCorp Vault for secrets management"
-  type        = bool
-  default     = true
-}
-
-variable "vault_address" {
-  description = "Vault server address"
-  type        = string
-  default     = ""
-}
-
-variable "vault_token" {
-  description = "Vault authentication token"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
-
-variable "vpc_endpoint_id" {
-  description = "VPC endpoint ID for S3 access restriction"
-  type        = string
-  default     = null
-
-  validation {
-    condition     = var.vpc_endpoint_id == null || can(regex("^vpce-[a-f0-9]{8,17}$", var.vpc_endpoint_id))
-    error_message = "VPC endpoint ID must be valid format (vpce-xxxxxxxx)."
-  }
-}
 
 locals {
   name_prefix = "${var.project}-${var.env}"
