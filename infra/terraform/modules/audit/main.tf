@@ -77,6 +77,18 @@ variable "alert_webhook" {
   default     = ""
 }
 
+variable "vpc_id" {
+  description = "VPC ID for Lambda function deployment"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_subnet_ids" {
+  description = "List of subnet IDs for Lambda function deployment"
+  type        = list(string)
+  default     = []
+}
+
 
 
 locals {
@@ -215,7 +227,24 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
     expiration {
       days = var.retention_days
     }
+
+    # Abort incomplete multipart uploads after 7 days
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
+}
+
+# SNS Topic for CloudTrail notifications
+resource "aws_sns_topic" "cloudtrail_notifications" {
+  count = var.enable_aws_audit ? 1 : 0
+
+  name                        = "${local.name_prefix}-cloudtrail-alerts"
+  kms_master_key_id           = aws_kms_key.audit_logs[0].arn
+  
+  tags = merge(local.common_tags, {
+    purpose = "cloudtrail-notifications"
+  })
 }
 
 # CloudTrail for audit logging
@@ -228,6 +257,16 @@ resource "aws_cloudtrail" "audit_trail" {
   include_global_service_events = true
   is_multi_region_trail         = true
   enable_log_file_validation    = true
+
+  # KMS encryption for CloudTrail logs
+  kms_key_id = aws_kms_key.audit_logs[0].arn
+
+  # SNS topic for notifications
+  sns_topic_name = aws_sns_topic.cloudtrail_notifications[0].name
+
+  # Enable CloudWatch logging for CloudTrail
+  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.audit_logs[0].arn}:*"
+  cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_role[0].arn
 
   event_selector {
     read_write_type           = "All"
@@ -249,6 +288,9 @@ resource "aws_cloudwatch_log_group" "audit_logs" {
   name              = "/aws/${local.name_prefix}/audit"
   retention_in_days = var.retention_days
 
+  # KMS encryption for log data
+  kms_key_id = aws_kms_key.audit_logs[0].arn
+
   tags = local.common_tags
 }
 
@@ -259,6 +301,11 @@ resource "aws_kinesis_firehose_delivery_stream" "audit_stream" {
   name        = "${local.name_prefix}-audit-stream"
   destination = "extended_s3"
 
+  # KMS encryption for the delivery stream
+  kms_encryption_configuration {
+    aws_kms_key_arn = aws_kms_key.audit_logs[0].arn
+  }
+
   extended_s3_configuration {
     bucket_arn = aws_s3_bucket.audit_logs[0].arn
     role_arn   = aws_iam_role.firehose_role[0].arn
@@ -266,6 +313,17 @@ resource "aws_kinesis_firehose_delivery_stream" "audit_stream" {
 
     buffering_size     = 5
     buffering_interval = 300
+
+    # S3 encryption configuration
+    s3_backup_configuration {
+      bucket_arn = aws_s3_bucket.audit_logs[0].arn
+      role_arn   = aws_iam_role.firehose_role[0].arn
+      s3_backup_mode = "AllDocuments"
+      
+      kms_encryption_configuration {
+        aws_kms_key_arn = aws_kms_key.audit_logs[0].arn
+      }
+    }
 
     cloudwatch_logging_options {
       enabled         = true
@@ -343,6 +401,48 @@ resource "aws_iam_role_policy" "firehose_policy" {
   })
 }
 
+# IAM role for CloudTrail CloudWatch logging
+resource "aws_iam_role" "cloudtrail_role" {
+  count = var.enable_aws_audit ? 1 : 0
+
+  name = "${local.name_prefix}-cloudtrail-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    purpose = "cloudtrail-logging"
+  })
+}
+
+resource "aws_iam_role_policy" "cloudtrail_logging_policy" {
+  count = var.enable_aws_audit ? 1 : 0
+  role = aws_iam_role.cloudtrail_role[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.audit_logs[0].arn}:*"
+      }
+    ]
+  })
+}
+
 # Lambda function for real-time security alerts
 resource "aws_lambda_function" "security_alerts" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
@@ -356,12 +456,32 @@ resource "aws_lambda_function" "security_alerts" {
 
   source_code_hash = data.archive_file.security_alerts[0].output_base64sha256
 
+  # Security configurations
+  kms_key_arn = aws_kms_key.audit_logs[0].arn
+  
   environment {
     variables = {
       ALERT_EMAIL   = var.alert_email
       ALERT_WEBHOOK = var.alert_webhook
       LOG_LEVEL     = "INFO"
     }
+    kms_key_arn = aws_kms_key.audit_logs[0].arn
+  }
+
+  # Disable X-Ray tracing to avoid security concerns
+  tracing_config {
+    mode = "PassThrough"
+  }
+
+  # Configure Dead Letter Queue
+  dead_letter_config {
+    target_arn = aws_sqs_queue.dlq[0].arn
+  }
+
+  # VPC configuration for enhanced security
+  vpc_config {
+    security_group_ids = [aws_security_group.lambda_sg[0].id]
+    subnet_ids         = var.lambda_subnet_ids
   }
 
   tags = merge(local.common_tags, {
@@ -473,6 +593,42 @@ resource "aws_lambda_permission" "allow_eventbridge" {
   function_name = aws_lambda_function.security_alerts[0].function_name
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.security_events[0].arn
+}
+
+# Dead Letter Queue for Lambda
+resource "aws_sqs_queue" "dlq" {
+  count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
+
+  name                        = "${local.name_prefix}-lambda-dlq"
+  message_retention_seconds  = 1209600 # 14 days
+  visibility_timeout_seconds = 300
+
+  kms_master_key_id = aws_kms_key.audit_logs[0].arn
+  sqs_managed_sse_enabled = false
+
+  tags = merge(local.common_tags, {
+    purpose = "lambda-dlq"
+  })
+}
+
+# Security Group for Lambda
+resource "aws_security_group" "lambda_sg" {
+  count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
+
+  name_prefix = "${local.name_prefix}-lambda-"
+  description = "Security group for security alerts Lambda"
+  vpc_id      = var.vpc_id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    purpose = "lambda-security"
+  })
 }
 
 # Cloudflare audit logging (if available)
