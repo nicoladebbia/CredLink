@@ -90,6 +90,11 @@ jobs:
           cd infra/terraform
           terraform validate
 
+      - name: Install TFLint
+        if: steps.changes.outputs.changes == 'true'
+        run: |
+          curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash
+
       - name: Run TFLint
         if: steps.changes.outputs.changes == 'true'
         run: |
