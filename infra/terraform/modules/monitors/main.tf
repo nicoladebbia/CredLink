@@ -29,11 +29,6 @@ variable "alert_channels" {
   }))
 }
 
-variable "worker_health_path" {
-  description = "Worker health path"
-  type        = string
-  default     = "/health"
-}
 
 locals {
   name_prefix = "${var.project}-${var.env}"

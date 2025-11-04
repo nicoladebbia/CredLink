@@ -47,7 +47,7 @@ resource "aws_s3_bucket" "bucket" {
   force_destroy = false # Always prevent accidental data loss
 
   lifecycle {
-    prevent_destroy = var.destroy_protect
+    prevent_destroy = true # Always prevent accidental destruction
   }
 }
 
