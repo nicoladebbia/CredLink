@@ -2,7 +2,7 @@ terraform {
   required_version = "~> 1.9"
   required_providers {
     cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.11" }
-    aws        = { source = "hashicorp/aws",          version = "~> 5.76" }
+    aws        = { source = "hashicorp/aws", version = "~> 5.76" }
   }
 }
 
@@ -67,7 +67,7 @@ locals {
 # AWS Cost Explorer configuration
 resource "aws_ce_cost_allocation_tag" "tags" {
   count = var.enable_aws_cost_allocation ? length(local.cost_tags) : 0
-  
+
   tag_key = keys(local.cost_tags)[count.index]
   status  = "Active"
 }
@@ -75,20 +75,20 @@ resource "aws_ce_cost_allocation_tag" "tags" {
 # AWS Budgets for cost monitoring
 resource "aws_budgets_budget" "monthly_budget" {
   count = var.enable_aws_cost_allocation ? 1 : 0
-  
-  name              = "${local.name_prefix}-monthly-budget"
-  budget_type       = "COST"
-  limit_amount      = var.monthly_budget_limit
-  limit_unit        = "USD"
-  time_unit         = "MONTHLY"
-  
+
+  name         = "${local.name_prefix}-monthly-budget"
+  budget_type  = "COST"
+  limit_amount = var.monthly_budget_limit
+  limit_unit   = "USD"
+  time_unit    = "MONTHLY"
+
   cost_filter {
     name = "TagKeyValue"
     values = [
       for k, v in local.cost_tags : "${k}=${v}"
     ]
   }
-  
+
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 80
@@ -96,7 +96,7 @@ resource "aws_budgets_budget" "monthly_budget" {
     notification_type          = "ACTUAL"
     subscriber_email_addresses = var.budget_notification_emails
   }
-  
+
   notification {
     comparison_operator        = "GREATER_THAN"
     threshold                  = 100
@@ -104,45 +104,45 @@ resource "aws_budgets_budget" "monthly_budget" {
     notification_type          = "ACTUAL"
     subscriber_email_addresses = var.budget_notification_emails
   }
-  
+
   tags = local.common_tags
 }
 
 # AWS Cost and Usage Report
 resource "aws_cur_report_definition" "cost_usage_report" {
   count = var.enable_aws_cost_allocation ? 1 : 0
-  
+
   report_name                = "${local.name_prefix}-cost-usage-report"
   time_unit                  = "HOURLY"
   format                     = "Parquet"
   compression                = "GZIP"
   additional_schema_elements = ["RESOURCES"]
-  
+
   s3_bucket {
     bucket = var.cost_report_bucket_name
     prefix = "${local.name_prefix}/cost-reports/"
   }
-  
+
   s3_region = var.aws_region
-  
+
   tags = local.common_tags
 }
 
 # Cloudflare cost tracking via analytics
 resource "cloudflare_r2_bucket_policy" "cost_tracking" {
   count = var.enable_cloudflare_cost_tags ? 1 : 0
-  
+
   bucket_id = var.r2_bucket_name
-  policy    = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "CostTracking"
-        Effect    = "Allow"
+        Sid    = "CostTracking"
+        Effect = "Allow"
         Principal = {
           Service = "analytics"
         }
-        Action    = [
+        Action = [
           "s3:GetObject",
           "s3:ListBucket"
         ]
@@ -158,10 +158,10 @@ resource "cloudflare_r2_bucket_policy" "cost_tracking" {
 # Cost monitoring dashboard
 resource "cloudflare_dashboard" "cost_dashboard" {
   count = var.enable_cloudflare_cost_tags ? 1 : 0
-  
+
   account_id = var.cloudflare_account_id
   name       = "${local.name_prefix}-cost-monitoring"
-  
+
   widgets = [
     {
       title = "Monthly Cost Trend"
@@ -179,26 +179,26 @@ resource "cloudflare_dashboard" "cost_dashboard" {
       query = "cost.by_env"
     }
   ]
-  
+
   tags = local.common_tags
 }
 
 # Cost alert notifications
 resource "cloudflare_notification_policy" "cost_alerts" {
   count = var.enable_cloudflare_cost_tags ? 1 : 0
-  
+
   account_id = var.cloudflare_account_id
   name       = "${local.name_prefix}-cost-alerts"
-  
+
   enabled = true
-  
+
   filters = {
     cost_threshold = var.cost_alert_threshold
   }
-  
+
   alert_channels = [
     {
-      type = "email"
+      type   = "email"
       target = var.cost_alert_email
     }
   ]
@@ -207,12 +207,12 @@ resource "cloudflare_notification_policy" "cost_alerts" {
 # Resource usage tracking
 resource "cloudflare_analytics_engine" "usage_tracking" {
   count = var.enable_cloudflare_cost_tags ? 1 : 0
-  
+
   account_id = var.cloudflare_account_id
   name       = "${local.name_prefix}-usage-tracking"
-  
-  retention_seconds = 7776000  # 90 days
-  
+
+  retention_seconds = 7776000 # 90 days
+
   tags = local.common_tags
 }
 

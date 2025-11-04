@@ -19,9 +19,9 @@ variable "project" {
 variable "queues" {
   description = "Queue definitions"
   type = map(object({
-    message_retention_seconds = optional(number, 345600)
+    message_retention_seconds  = optional(number, 345600)
     visibility_timeout_seconds = optional(number, 30)
-    dead_letter_queue_enabled = optional(bool, false)
+    dead_letter_queue_enabled  = optional(bool, false)
   }))
 }
 
@@ -46,11 +46,11 @@ locals {
 # Cloudflare Queues
 resource "cloudflare_queue" "queues" {
   for_each = var.queues
-  
+
   account_id = var.cloudflare_account_id
   name       = "${local.name_prefix}-${each.key}"
-  
-  message_retention_seconds = each.value.message_retention_seconds
+
+  message_retention_seconds  = each.value.message_retention_seconds
   visibility_timeout_seconds = each.value.visibility_timeout_seconds
 }
 
@@ -60,25 +60,25 @@ resource "cloudflare_queue" "dead_letter_queues" {
     for k, v in var.queues : k => v
     if v.dead_letter_queue_enabled
   }
-  
+
   account_id = var.cloudflare_account_id
   name       = "${local.name_prefix}-${each.key}-dlq"
-  
-  message_retention_seconds = each.value.message_retention_seconds
+
+  message_retention_seconds  = each.value.message_retention_seconds
   visibility_timeout_seconds = each.value.visibility_timeout_seconds
 }
 
 # Worker queue bindings
 resource "cloudflare_worker_queue_binding" "bindings" {
   for_each = var.queues
-  
-  script_name = var.worker_script_name
+
+  script_name  = var.worker_script_name
   binding_name = upper(each.key)
-  
+
   queue = cloudflare_queue.queues[each.key].name
-  
-  batch_size    = 10
-  max_retries   = 3
+
+  batch_size       = 10
+  max_retries      = 3
   max_wait_time_ms = 30000
 }
 
@@ -88,21 +88,21 @@ resource "cloudflare_worker_queue_binding" "dlq_bindings" {
     for k, v in var.queues : k => v
     if v.dead_letter_queue_enabled
   }
-  
-  script_name = var.worker_script_name
+
+  script_name  = var.worker_script_name
   binding_name = "${upper(each.key)}_DLQ"
-  
+
   queue = cloudflare_queue.dead_letter_queues[each.key].name
-  
-  batch_size    = 5
-  max_retries   = 1
+
+  batch_size       = 5
+  max_retries      = 1
   max_wait_time_ms = 15000
 }
 
 # Queue metrics and monitoring
 resource "cloudflare_queue_metrics" "metrics" {
   for_each = var.queues
-  
+
   account_id = var.cloudflare_account_id
   queue_name = cloudflare_queue.queues[each.key].name
 }
@@ -110,20 +110,20 @@ resource "cloudflare_queue_metrics" "metrics" {
 # Queue access policies
 resource "cloudflare_queue_policy" "policies" {
   for_each = var.queues
-  
+
   account_id = var.cloudflare_account_id
   queue_name = cloudflare_queue.queues[each.key].name
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowWorkerAccess"
-        Effect    = "Allow"
+        Sid    = "AllowWorkerAccess"
+        Effect = "Allow"
         Principal = {
           Service = "cloudflare"
         }
-        Action    = [
+        Action = [
           "queue:SendMessage",
           "queue:ReceiveMessage",
           "queue:DeleteMessage"
@@ -142,7 +142,7 @@ output "queue_names" {
 
 output "queue_urls" {
   description = "Queue URLs"
-  value       = {
+  value = {
     for k, q in cloudflare_queue.queues : k => "https://api.cloudflare.com/client/v4/accounts/${var.cloudflare_account_id}/queues/${q.id}"
   }
 }

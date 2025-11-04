@@ -2,8 +2,8 @@ terraform {
   required_version = "~> 1.9"
   required_providers {
     cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.11" }
-    aws        = { source = "hashicorp/aws",          version = "~> 5.76" }
-    google     = { source = "hashicorp/google",       version = "~> 5.39" }
+    aws        = { source = "hashicorp/aws", version = "~> 5.76" }
+    google     = { source = "hashicorp/google", version = "~> 5.39" }
   }
 }
 
@@ -32,7 +32,7 @@ variable "aws_region" {
 variable "retention_days" {
   description = "Log retention period in days"
   type        = number
-  default     = 2555  # 7 years for compliance
+  default     = 2555 # 7 years for compliance
 }
 
 variable "log_bucket_name" {
@@ -74,9 +74,9 @@ variable "alert_severity_threshold" {
   description = "Minimum severity level for alerts"
   type        = string
   default     = "MEDIUM"
-  
+
   validation {
-    condition = contains(["LOW", "MEDIUM", "HIGH", "CRITICAL"], var.alert_severity_threshold)
+    condition     = contains(["LOW", "MEDIUM", "HIGH", "CRITICAL"], var.alert_severity_threshold)
     error_message = "Severity must be one of: LOW, MEDIUM, HIGH, CRITICAL."
   }
 }
@@ -96,7 +96,7 @@ variable "log_aggregation_endpoint" {
 locals {
   name_prefix = "${var.project}-${var.env}"
   common_tags = merge({
-    module = "audit"
+    module     = "audit"
     compliance = "required"
   })
 }
@@ -104,11 +104,11 @@ locals {
 # S3 bucket for audit logs
 resource "aws_s3_bucket" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   bucket = var.log_bucket_name
-  
+
   tags = merge(local.common_tags, {
-    purpose = "audit-logging"
+    purpose        = "audit-logging"
     retention_days = var.retention_days
   })
 }
@@ -116,7 +116,7 @@ resource "aws_s3_bucket" "audit_logs" {
 # S3 bucket versioning for audit logs
 resource "aws_s3_bucket_versioning" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   bucket = aws_s3_bucket.audit_logs[0].id
   versioning_configuration {
     status = "Enabled"
@@ -126,9 +126,9 @@ resource "aws_s3_bucket_versioning" "audit_logs" {
 # S3 bucket encryption for audit logs
 resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   bucket = aws_s3_bucket.audit_logs[0].id
-  
+
   rule {
     apply_server_side_encryption_by_default {
       kms_master_key_id = aws_kms_key.audit_logs[0].arn
@@ -141,11 +141,11 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
 # KMS key for audit log encryption
 resource "aws_kms_key" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   description             = "KMS key for audit log encryption"
   deletion_window_in_days = 30
   enable_key_rotation     = true
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -172,7 +172,7 @@ resource "aws_kms_key" "audit_logs" {
       }
     ]
   })
-  
+
   tags = merge(local.common_tags, {
     purpose = "audit-encryption"
   })
@@ -180,7 +180,7 @@ resource "aws_kms_key" "audit_logs" {
 
 resource "aws_kms_alias" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   name          = "alias/${local.name_prefix}-audit-logs"
   target_key_id = aws_kms_key.audit_logs[0].key_id
 }
@@ -188,9 +188,9 @@ resource "aws_kms_alias" "audit_logs" {
 # S3 bucket public access block for audit logs
 resource "aws_s3_bucket_public_access_block" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   bucket = aws_s3_bucket.audit_logs[0].id
-  
+
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -200,32 +200,32 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
 # S3 bucket lifecycle for audit logs
 resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   bucket = aws_s3_bucket.audit_logs[0].id
-  
+
   rule {
     id     = "audit_log_retention"
     status = "Enabled"
-    
+
     filter {
       prefix = "cloudtrail/"
     }
-    
+
     transition {
       days          = 30
       storage_class = "STANDARD_IA"
     }
-    
+
     transition {
       days          = 90
       storage_class = "GLACIER"
     }
-    
+
     transition {
       days          = 365
       storage_class = "DEEP_ARCHIVE"
     }
-    
+
     expiration {
       days = var.retention_days
     }
@@ -235,68 +235,68 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
 # CloudTrail for audit logging
 resource "aws_cloudtrail" "audit_trail" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   name                          = "${local.name_prefix}-audit-trail"
   s3_bucket_name                = aws_s3_bucket.audit_logs[0].id
   s3_key_prefix                 = "cloudtrail/"
   include_global_service_events = true
   is_multi_region_trail         = true
   enable_log_file_validation    = true
-  
+
   event_selector {
     read_write_type           = "All"
     include_management_events = true
-    
+
     data_resource {
       type   = "AWS::S3::Object"
       values = ["${aws_s3_bucket.audit_logs[0].arn}/"]
     }
   }
-  
+
   tags = local.common_tags
 }
 
 # CloudWatch Log Group for structured logs
 resource "aws_cloudwatch_log_group" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
-  
+
   name              = "/aws/${local.name_prefix}/audit"
   retention_in_days = var.retention_days
-  
+
   tags = local.common_tags
 }
 
 # Kinesis Firehose for real-time log processing
 resource "aws_kinesis_firehose_delivery_stream" "audit_stream" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   name        = "${local.name_prefix}-audit-stream"
   destination = "extended_s3"
-  
+
   extended_s3_configuration {
     bucket_arn = aws_s3_bucket.audit_logs[0].arn
     role_arn   = aws_iam_role.firehose_role[0].arn
     prefix     = "real-time/"
-    
+
     buffering_size     = 5
     buffering_interval = 300
-    
+
     cloudwatch_logging_options {
       enabled         = true
       log_group_name  = aws_cloudwatch_log_group.audit_logs[0].name
       log_stream_name = "firehose-audit-stream"
     }
   }
-  
+
   tags = local.common_tags
 }
 
 # IAM role for Firehose
 resource "aws_iam_role" "firehose_role" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   name = "${local.name_prefix}-firehose-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -309,16 +309,16 @@ resource "aws_iam_role" "firehose_role" {
       }
     ]
   })
-  
+
   tags = local.common_tags
 }
 
 resource "aws_iam_role_policy" "firehose_policy" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   name = "${local.name_prefix}-firehose-policy"
   role = aws_iam_role.firehose_role[0].id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -360,16 +360,16 @@ resource "aws_iam_role_policy" "firehose_policy" {
 # Lambda function for real-time security alerts
 resource "aws_lambda_function" "security_alerts" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
-  filename         = "security_alerts.zip"
-  function_name    = "${local.name_prefix}-security-alerts"
-  role            = aws_iam_role.lambda_role[0].arn
-  handler         = "index.handler"
-  runtime         = "python3.11"
-  timeout         = 60
-  
+
+  filename      = "security_alerts.zip"
+  function_name = "${local.name_prefix}-security-alerts"
+  role          = aws_iam_role.lambda_role[0].arn
+  handler       = "index.handler"
+  runtime       = "python3.11"
+  timeout       = 60
+
   source_code_hash = data.archive_file.security_alerts[0].output_base64sha256
-  
+
   environment {
     variables = {
       ALERT_EMAIL   = var.alert_email
@@ -377,7 +377,7 @@ resource "aws_lambda_function" "security_alerts" {
       LOG_LEVEL     = "INFO"
     }
   }
-  
+
   tags = merge(local.common_tags, {
     purpose = "security-monitoring"
   })
@@ -386,7 +386,7 @@ resource "aws_lambda_function" "security_alerts" {
 # Lambda zip file
 data "archive_file" "security_alerts" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   type        = "zip"
   source_file = "${path.module}/lambda/security_alerts.py"
   output_path = "security_alerts.zip"
@@ -395,9 +395,9 @@ data "archive_file" "security_alerts" {
 # IAM role for Lambda
 resource "aws_iam_role" "lambda_role" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   name = "${local.name_prefix}-lambda-security-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -410,16 +410,16 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
-  
+
   tags = local.common_tags
 }
 
 resource "aws_iam_role_policy" "lambda_policy" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   name = "${local.name_prefix}-lambda-security-policy"
   role = aws_iam_role.lambda_role[0].id
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -446,12 +446,12 @@ resource "aws_iam_role_policy" "lambda_policy" {
 # EventBridge rule for security events
 resource "aws_cloudwatch_event_rule" "security_events" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   name        = "${local.name_prefix}-security-events"
   description = "Capture security-related events"
-  
+
   event_pattern = jsonencode({
-    source = ["aws.cloudtrail"]
+    source      = ["aws.cloudtrail"]
     detail-type = ["AWS API Call via CloudTrail"]
     detail = {
       eventSource = [
@@ -473,7 +473,7 @@ resource "aws_cloudwatch_event_rule" "security_events" {
 
 resource "aws_cloudwatch_event_target" "lambda_target" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   rule      = aws_cloudwatch_event_rule.security_events[0].name
   target_id = "SecurityAlertsLambda"
   arn       = aws_lambda_function.security_alerts[0].arn
@@ -481,7 +481,7 @@ resource "aws_cloudwatch_event_target" "lambda_target" {
 
 resource "aws_lambda_permission" "allow_eventbridge" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
-  
+
   statement_id  = "AllowExecutionFromEventBridge"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.security_alerts[0].function_name
@@ -492,9 +492,9 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 # Cloudflare audit logging (if available)
 resource "cloudflare_audit_log" "audit_logs" {
   count = var.enable_cloudflare_audit ? 1 : 0
-  
+
   account_id = var.cloudflare_account_id
-  
+
   # Cloudflare audit logging configuration
   # Requires Enterprise plan - configure R2 bucket destinations and log retention
   # Example configuration for production:

@@ -1,8 +1,8 @@
 terraform {
   required_version = "~> 1.9"
   required_providers {
-    helm       = { source = "hashicorp/helm",         version = "~> 2.16" }
-    kubernetes = { source = "hashicorp/kubernetes",   version = "~> 2.35" }
+    helm       = { source = "hashicorp/helm", version = "~> 2.16" }
+    kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.35" }
   }
 }
 
@@ -81,18 +81,18 @@ resource "helm_release" "otel_collector" {
   chart      = "opentelemetry-collector"
   namespace  = kubernetes_namespace.otel.metadata[0].name
   version    = "0.79.0"
-  
+
   values = [
     yamlencode({
       mode = "deployment"
-      
+
       replicas = 2
-      
+
       image = {
         repository = "otel/opentelemetry-collector-contrib"
-        tag = "0.99.0"
+        tag        = "0.99.0"
       }
-      
+
       config = merge({
         receivers = [
           {
@@ -124,7 +124,7 @@ resource "helm_release" "otel_collector" {
             }
           }
         ]
-        
+
         processors = [
           {
             batch = {}
@@ -138,22 +138,22 @@ resource "helm_release" "otel_collector" {
             resource = {
               attributes = [
                 {
-                  key = "environment"
+                  key   = "environment"
                   value = var.env
                 },
                 {
-                  key = "project"
+                  key   = "project"
                   value = var.project
                 },
                 {
-                  key = "service.name"
+                  key   = "service.name"
                   value = "${local.name_prefix}-collector"
                 }
               ]
             }
           }
         ]
-        
+
         exporters = var.otlp_endpoint != "" ? [
           {
             otlp = {
@@ -163,69 +163,69 @@ resource "helm_release" "otel_collector" {
               } : {}
             }
           }
-        ] : [
+          ] : [
           {
             logging = {
               loglevel = "info"
             }
           }
         ]
-        
+
         service = {
           pipelines = {
             traces = {
-              receivers = ["otlp"]
+              receivers  = ["otlp"]
               processors = ["memory_limiter", "batch", "resource"]
-              exporters = var.otlp_endpoint != "" ? ["otlp"] : ["logging"]
+              exporters  = var.otlp_endpoint != "" ? ["otlp"] : ["logging"]
             }
             metrics = {
-              receivers = ["otlp", "prometheus"]
+              receivers  = ["otlp", "prometheus"]
               processors = ["memory_limiter", "batch", "resource"]
-              exporters = var.otlp_endpoint != "" ? ["otlp"] : ["logging"]
+              exporters  = var.otlp_endpoint != "" ? ["otlp"] : ["logging"]
             }
             logs = {
-              receivers = ["otlp"]
+              receivers  = ["otlp"]
               processors = ["memory_limiter", "batch", "resource"]
-              exporters = var.otlp_endpoint != "" ? ["otlp"] : ["logging"]
+              exporters  = var.otlp_endpoint != "" ? ["otlp"] : ["logging"]
             }
           }
         }
       }, var.collector_config)
-      
+
       serviceMonitor = {
-        enabled = true
+        enabled   = true
         namespace = var.namespace
       }
-      
+
       podAnnotations = {
         "prometheus.io/scrape" = "true"
-        "prometheus.io/port" = "8888"
-        "prometheus.io/path" = "/metrics"
+        "prometheus.io/port"   = "8888"
+        "prometheus.io/path"   = "/metrics"
       }
-      
+
       resources = {
         limits = {
-          cpu = "500m"
+          cpu    = "500m"
           memory = "512Mi"
         }
         requests = {
-          cpu = "100m"
+          cpu    = "100m"
           memory = "128Mi"
         }
       }
-      
+
       nodeSelector = {
         "kubernetes.io/os" = "linux"
       }
-      
+
       tolerations = [
         {
-          key = "node-role.kubernetes.io/master"
+          key      = "node-role.kubernetes.io/master"
           operator = "Exists"
-          effect = "NoSchedule"
+          effect   = "NoSchedule"
         }
       ]
-      
+
       affinity = {
         podAntiAffinity = {
           preferredDuringSchedulingIgnoredDuringExecution = [
@@ -245,52 +245,52 @@ resource "helm_release" "otel_collector" {
       }
     })
   ]
-  
+
   depends_on = [kubernetes_namespace.otel]
 }
 
 # Service for OpenTelemetry Collector
 resource "kubernetes_service" "otel_collector" {
   metadata {
-    name = "${local.name_prefix}-otel-collector"
+    name      = "${local.name_prefix}-otel-collector"
     namespace = kubernetes_namespace.otel.metadata[0].name
     labels = merge(local.common_tags, {
       app = "otel-collector"
     })
     annotations = {
       "prometheus.io/scrape" = "true"
-      "prometheus.io/port" = "8888"
-      "prometheus.io/path" = "/metrics"
+      "prometheus.io/port"   = "8888"
+      "prometheus.io/path"   = "/metrics"
     }
   }
-  
+
   spec {
     selector = {
-      "app.kubernetes.io/name" = "opentelemetry-collector"
+      "app.kubernetes.io/name"     = "opentelemetry-collector"
       "app.kubernetes.io/instance" = helm_release.otel_collector.name
     }
-    
+
     port = [
       {
-        name = "otlp-grpc"
-        port = 4317
+        name        = "otlp-grpc"
+        port        = 4317
         target_port = 4317
-        protocol = "TCP"
+        protocol    = "TCP"
       },
       {
-        name = "otlp-http"
-        port = 4318
+        name        = "otlp-http"
+        port        = 4318
         target_port = 4318
-        protocol = "TCP"
+        protocol    = "TCP"
       },
       {
-        name = "metrics"
-        port = 8888
+        name        = "metrics"
+        port        = 8888
         target_port = 8888
-        protocol = "TCP"
+        protocol    = "TCP"
       }
     ]
-    
+
     type = "ClusterIP"
   }
 }
@@ -298,20 +298,20 @@ resource "kubernetes_service" "otel_collector" {
 # ServiceAccount for OpenTelemetry Collector
 resource "kubernetes_service_account" "otel_collector" {
   metadata {
-    name = "${local.name_prefix}-otel-collector"
+    name      = "${local.name_prefix}-otel-collector"
     namespace = kubernetes_namespace.otel.metadata[0].name
-    labels = local.common_tags
+    labels    = local.common_tags
   }
 }
 
 # ConfigMap for additional collector configuration
 resource "kubernetes_config_map" "otel_config" {
   metadata {
-    name = "${local.name_prefix}-otel-config"
+    name      = "${local.name_prefix}-otel-config"
     namespace = kubernetes_namespace.otel.metadata[0].name
-    labels = local.common_tags
+    labels    = local.common_tags
   }
-  
+
   data = {
     "collector.yaml" = yamlencode({
       exporters = {

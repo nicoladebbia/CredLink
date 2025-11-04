@@ -100,31 +100,31 @@ variable "worker_static_assets_enabled" {
 # Queue configuration
 variable "queue_definitions" {
   description = "Queue definitions"
-  type        = map(object({
-    message_retention_seconds = optional(number, 1209600) # 14 days
+  type = map(object({
+    message_retention_seconds  = optional(number, 1209600) # 14 days
     visibility_timeout_seconds = optional(number, 30)
-    dead_letter_queue_enabled = optional(bool, true)
+    dead_letter_queue_enabled  = optional(bool, true)
   }))
   default = {
     "verify-queue" = {
-      message_retention_seconds = 1209600
+      message_retention_seconds  = 1209600
       visibility_timeout_seconds = 30
-      dead_letter_queue_enabled = true
+      dead_letter_queue_enabled  = true
     }
     "sign-queue" = {
-      message_retention_seconds = 1209600
+      message_retention_seconds  = 1209600
       visibility_timeout_seconds = 30
-      dead_letter_queue_enabled = true
+      dead_letter_queue_enabled  = true
     }
     "batch-queue" = {
-      message_retention_seconds = 1209600
+      message_retention_seconds  = 1209600
       visibility_timeout_seconds = 30
-      dead_letter_queue_enabled = true
+      dead_letter_queue_enabled  = true
     }
     "audit-queue" = {
-      message_retention_seconds = 1209600
+      message_retention_seconds  = 1209600
       visibility_timeout_seconds = 30
-      dead_letter_queue_enabled = true
+      dead_letter_queue_enabled  = true
     }
   }
 }
@@ -143,7 +143,7 @@ variable "health_check_urls" {
 
 variable "alert_channels" {
   description = "Alert channel configurations"
-  type        = map(object({
+  type = map(object({
     type   = string
     target = string
   }))

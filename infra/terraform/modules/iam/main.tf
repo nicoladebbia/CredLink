@@ -2,8 +2,8 @@ terraform {
   required_version = "~> 1.9"
   required_providers {
     cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.11" }
-    aws        = { source = "hashicorp/aws",          version = "~> 5.76" }
-    vault      = { source = "hashicorp/vault",        version = "~> 3.20" }
+    aws        = { source = "hashicorp/aws", version = "~> 5.76" }
+    vault      = { source = "hashicorp/vault", version = "~> 3.20" }
   }
 }
 
@@ -64,7 +64,7 @@ variable "allowed_ip_ranges" {
 variable "token_ttl_seconds" {
   description = "API token TTL in seconds"
   type        = number
-  default     = 2592000  # 30 days for production
+  default     = 2592000 # 30 days for production
 }
 
 variable "use_vault_secrets" {
@@ -90,7 +90,7 @@ variable "vpc_endpoint_id" {
   description = "VPC endpoint ID for S3 access restriction"
   type        = string
   default     = null
-  
+
   validation {
     condition     = var.vpc_endpoint_id == null || can(regex("^vpce-[a-f0-9]{8,17}$", var.vpc_endpoint_id))
     error_message = "VPC endpoint ID must be valid format (vpce-xxxxxxxx)."
@@ -102,35 +102,35 @@ locals {
   common_tags = merge(var.tags, {
     module = "iam"
   })
-  
+
   # Cloudflare permission group IDs
   # IMPORTANT: Replace these with actual IDs from your Cloudflare account
   # Get actual IDs: curl -H "Authorization: Bearer $TOKEN" https://api.cloudflare.com/client/v4/user/tokens/permission_groups
   permission_group_ids = {
     # Real Cloudflare permission group IDs (examples - VERIFY AND REPLACE)
-    r2_read_write  = "c8fed203ed3043cba015a93ad1616f1f"  # R2:Read, R2:Write
-    worker_edit    = "82e64a83756745bbbb1c9c2701bf816b"  # Workers Scripts:Edit
-    worker_routes  = "e086da7e2179491d91ee5f35b3ca210a"  # Workers Routes:Edit
-    queue_read     = "1a1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e"  # Queues:Read
-    queue_write    = "2b2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f"  # Queues:Write
+    r2_read_write = "c8fed203ed3043cba015a93ad1616f1f" # R2:Read, R2:Write
+    worker_edit   = "82e64a83756745bbbb1c9c2701bf816b" # Workers Scripts:Edit
+    worker_routes = "e086da7e2179491d91ee5f35b3ca210a" # Workers Routes:Edit
+    queue_read    = "1a1e1e1e1e1e1e1e1e1e1e1e1e1e1e1e" # Queues:Read
+    queue_write   = "2b2f2f2f2f2f2f2f2f2f2f2f2f2f2f2f" # Queues:Write
   }
 }
 
 # Cloudflare API tokens - Storage
 resource "cloudflare_api_token" "storage_token" {
   name = "${local.name_prefix}-storage"
-  
+
   policy {
     permission_groups = [
       local.permission_group_ids.r2_read_write
     ]
-    
+
     resources = {
       # Scope to specific R2 bucket only - NO WILDCARDS
       "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.storage_bucket_name}" = "*"
     }
   }
-  
+
   condition = jsonencode({
     request = {
       method = ["GET", "PUT", "DELETE", "POST"]
@@ -140,29 +140,29 @@ resource "cloudflare_api_token" "storage_token" {
     # Add time-based restrictions for enhanced security
     request_after = var.token_ttl_seconds <= 86400 ? "2024-01-01T00:00:00Z" : null
   })
-  
+
   ttl_seconds = var.token_ttl_seconds
-  
+
   tags = local.common_tags
 }
 
 # Cloudflare API tokens - Worker
 resource "cloudflare_api_token" "worker_token" {
   name = "${local.name_prefix}-worker"
-  
+
   policy {
     permission_groups = [
       local.permission_group_ids.worker_edit,
       local.permission_group_ids.worker_routes
     ]
-    
+
     resources = {
       # Scope to specific worker script only - NO WILDCARDS
       "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.script.${var.worker_script_name}" = "*"
-      "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.route.${var.worker_script_name}" = "*"
+      "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.route.${var.worker_script_name}"  = "*"
     }
   }
-  
+
   condition = jsonencode({
     request = {
       method = ["POST", "PUT", "DELETE", "GET"]
@@ -172,29 +172,29 @@ resource "cloudflare_api_token" "worker_token" {
     # Add time-based restrictions for enhanced security
     request_after = var.token_ttl_seconds <= 86400 ? "2024-01-01T00:00:00Z" : null
   })
-  
+
   ttl_seconds = var.token_ttl_seconds
-  
+
   tags = local.common_tags
 }
 
 # Cloudflare API tokens - Queue
 resource "cloudflare_api_token" "queue_token" {
   name = "${local.name_prefix}-queue"
-  
+
   policy {
     permission_groups = [
       local.permission_group_ids.queue_read,
       local.permission_group_ids.queue_write
     ]
-    
+
     resources = {
       # Scope to specific queues only - NO WILDCARDS
       for queue_name in var.queue_names :
       "com.cloudflare.api.account.${var.cloudflare_account_id}.queue.${queue_name}" => "*"
     }
   }
-  
+
   condition = jsonencode({
     request = {
       method = ["POST", "GET", "DELETE", "PUT"]
@@ -204,18 +204,18 @@ resource "cloudflare_api_token" "queue_token" {
     # Add time-based restrictions for enhanced security
     request_after = var.token_ttl_seconds <= 86400 ? "2024-01-01T00:00:00Z" : null
   })
-  
+
   ttl_seconds = var.token_ttl_seconds
-  
+
   tags = local.common_tags
 }
 
 # Custom IAM roles for different service components
 resource "cloudflare_api_token" "service_tokens" {
   for_each = var.token_scopes
-  
+
   name = "${local.name_prefix}-${each.key}"
-  
+
   policy {
     permission_groups = [
       for scope in each.value :
@@ -224,18 +224,18 @@ resource "cloudflare_api_token" "service_tokens" {
       contains(["route:edit"], scope) ? local.permission_group_ids.worker_routes :
       local.permission_group_ids.queue_read
     ]
-    
+
     resources = each.key == "storage" ? {
       # Scope resources based on service type
       "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.storage_bucket_name}" = "*"
-    } : each.key == "worker" ? {
+      } : each.key == "worker" ? {
       "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.script.${var.worker_script_name}" = "*"
-    } : each.key == "queue" ? {
+      } : each.key == "queue" ? {
       for queue_name in var.queue_names :
       "com.cloudflare.api.account.${var.cloudflare_account_id}.queue.${queue_name}" => "*"
     } : {}
   }
-  
+
   condition = jsonencode({
     request = {
       method = ["GET", "POST", "PUT", "DELETE"]
@@ -245,9 +245,9 @@ resource "cloudflare_api_token" "service_tokens" {
     # Add time-based restrictions for enhanced security
     request_after = var.token_ttl_seconds <= 86400 ? "2024-01-01T00:00:00Z" : null
   })
-  
+
   ttl_seconds = var.token_ttl_seconds
-  
+
   tags = merge(local.common_tags, {
     service = each.key
   })
@@ -256,9 +256,9 @@ resource "cloudflare_api_token" "service_tokens" {
 # AWS IAM roles and policies (for S3 alternative)
 resource "aws_iam_role" "storage_role" {
   count = var.storage_type == "s3" ? 1 : 0
-  
+
   name = "${local.name_prefix}-storage-role"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -276,16 +276,16 @@ resource "aws_iam_role" "storage_role" {
       }
     ]
   })
-  
+
   tags = local.common_tags
 }
 
 resource "aws_iam_policy" "storage_policy" {
   count = var.storage_type == "s3" ? 1 : 0
-  
+
   name        = "${local.name_prefix}-storage-policy"
   description = "Policy for S3 bucket access"
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -304,8 +304,8 @@ resource "aws_iam_policy" "storage_policy" {
         }
       },
       {
-        Effect = "Allow"
-        Action = ["s3:ListBucket"]
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
         Resource = "arn:aws:s3:::${var.storage_bucket_name}"
         Condition = {
           StringLike = {
@@ -314,19 +314,19 @@ resource "aws_iam_policy" "storage_policy" {
         }
       },
       {
-        Effect = "Deny"
-        Action = ["s3:DeleteBucket"]
+        Effect   = "Deny"
+        Action   = ["s3:DeleteBucket"]
         Resource = "*"
       }
     ]
   })
-  
+
   tags = local.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "storage_attachment" {
   count = var.storage_type == "s3" ? 1 : 0
-  
+
   role       = aws_iam_role.storage_role[0].name
   policy_arn = aws_iam_policy.storage_policy[0].arn
 }
@@ -334,40 +334,40 @@ resource "aws_iam_role_policy_attachment" "storage_attachment" {
 # Worker service authentication (inject tokens directly, no outputs)
 resource "cloudflare_workers_secrets" "worker_secrets" {
   script_name = var.worker_script_name
-  
+
   secret {
-    name  = "STORAGE_TOKEN"
-    value = cloudflare_api_token.storage_token.value
+    name      = "STORAGE_TOKEN"
+    value     = cloudflare_api_token.storage_token.value
     sensitive = true
   }
-  
+
   secret {
-    name  = "QUEUE_TOKEN"
-    value = cloudflare_api_token.queue_token.value
+    name      = "QUEUE_TOKEN"
+    value     = cloudflare_api_token.queue_token.value
     sensitive = true
   }
-  
+
   secret {
-    name  = "WORKER_TOKEN"
-    value = cloudflare_api_token.worker_token.value
+    name      = "WORKER_TOKEN"
+    value     = cloudflare_api_token.worker_token.value
     sensitive = true
   }
-  
+
   secret {
-    name  = "ENVIRONMENT"
-    value = var.env
+    name      = "ENVIRONMENT"
+    value     = var.env
     sensitive = false
   }
-  
+
   secret {
-    name  = "PROJECT_NAME"
-    value = var.project
+    name      = "PROJECT_NAME"
+    value     = var.project
     sensitive = false
   }
-  
+
   secret {
-    name  = "ACCOUNT_ID"
-    value = var.cloudflare_account_id
+    name      = "ACCOUNT_ID"
+    value     = var.cloudflare_account_id
     sensitive = true
   }
 }
@@ -375,14 +375,14 @@ resource "cloudflare_workers_secrets" "worker_secrets" {
 # R2 service authentication (fixed VPC endpoint condition)
 resource "cloudflare_r2_bucket_policy" "bucket_policy" {
   count = var.storage_type == "r2" ? 1 : 0
-  
+
   bucket_id = var.storage_bucket_name
-  policy    = jsonencode({
+  policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowAuthenticatedAccess"
-        Effect    = "Allow"
+        Sid    = "AllowAuthenticatedAccess"
+        Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity"
         }
@@ -399,12 +399,12 @@ resource "cloudflare_r2_bucket_policy" "bucket_policy" {
         } : null
       },
       {
-        Sid       = "AllowListBucket"
-        Effect    = "Allow"
+        Sid    = "AllowListBucket"
+        Effect = "Allow"
         Principal = {
           AWS = "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity"
         }
-        Action = ["s3:ListBucket"]
+        Action   = ["s3:ListBucket"]
         Resource = "arn:aws:s3:::${var.storage_bucket_name}"
         Condition = {
           StringLike = {
@@ -417,7 +417,7 @@ resource "cloudflare_r2_bucket_policy" "bucket_policy" {
         Sid       = "DenyNonVPCAccess"
         Effect    = "Deny"
         Principal = "*"
-        Action    = [
+        Action = [
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject"
@@ -448,7 +448,7 @@ resource "cloudflare_r2_bucket_policy" "bucket_policy" {
         Effect    = "Deny"
         Principal = "*"
         Action    = ["s3:*"]
-        Resource  = [
+        Resource = [
           "arn:aws:s3:::${var.storage_bucket_name}",
           "arn:aws:s3:::${var.storage_bucket_name}/*"
         ]
@@ -465,10 +465,10 @@ resource "cloudflare_r2_bucket_policy" "bucket_policy" {
 # Queue access policies
 resource "cloudflare_queue_policy" "queue_policies" {
   for_each = toset(var.queue_names)
-  
+
   account_id = var.cloudflare_account_id
   queue_name = each.key
-  
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -490,10 +490,10 @@ resource "cloudflare_queue_policy" "queue_policies" {
         }
       },
       {
-        Effect = "Deny"
+        Effect    = "Deny"
         Principal = "*"
-        Action = ["cloudflare-queue:*"]
-        Resource = "arn:aws:sqs:${each.key}"
+        Action    = ["cloudflare-queue:*"]
+        Resource  = "arn:aws:sqs:${each.key}"
         Condition = {
           StringNotLike = {
             "aws:SourceArn" = "arn:aws:cloudfront::*:distribution/*"
@@ -507,10 +507,10 @@ resource "cloudflare_queue_policy" "queue_policies" {
 # Vault secrets management (optional)
 resource "vault_kv_secret_v2" "cloudflare_tokens" {
   count = var.use_vault_secrets && var.vault_address != "" && var.vault_token != "" ? 1 : 0
-  
+
   mount = "secret"
   name  = "cloudflare/${var.env}/tokens"
-  
+
   data_json = jsonencode({
     storage_token = cloudflare_api_token.storage_token.value
     worker_token  = cloudflare_api_token.worker_token.value
@@ -520,18 +520,18 @@ resource "vault_kv_secret_v2" "cloudflare_tokens" {
     }
     metadata = {
       environment = var.env
-      project = var.project
-      created_at = timestamp()
+      project     = var.project
+      created_at  = timestamp()
       ttl_seconds = var.token_ttl_seconds
-      account_id = var.cloudflare_account_id
+      account_id  = var.cloudflare_account_id
     }
     rotation_schedule = {
-      next_rotation = timeadd(timestamp(), "${var.token_ttl_seconds}s")
+      next_rotation   = timeadd(timestamp(), "${var.token_ttl_seconds}s")
       rotation_window = "7d"
-      auto_rotate = var.token_ttl_seconds <= 86400
+      auto_rotate     = var.token_ttl_seconds <= 86400
     }
   })
-  
+
   # Ensure this runs after tokens are created
   depends_on = [
     cloudflare_api_token.storage_token,
@@ -585,12 +585,12 @@ output "worker_secrets_count" {
 output "security_metadata" {
   description = "Security configuration metadata"
   value = {
-    token_ttl_seconds = var.token_ttl_seconds
-    vpc_endpoint_enabled = var.vpc_endpoint_id != null
+    token_ttl_seconds       = var.token_ttl_seconds
+    vpc_endpoint_enabled    = var.vpc_endpoint_id != null
     ip_restrictions_enabled = length(var.allowed_ip_ranges) > 0
-    vault_enabled = var.use_vault_secrets
-    storage_type = var.storage_type
-    account_id = data.aws_caller_identity.current.account_id
+    vault_enabled           = var.use_vault_secrets
+    storage_type            = var.storage_type
+    account_id              = data.aws_caller_identity.current.account_id
   }
   sensitive = false
 }
@@ -598,12 +598,12 @@ output "security_metadata" {
 output "compliance_status" {
   description = "Compliance and security status"
   value = {
-    least_privilege = true
+    least_privilege     = true
     encryption_required = true
-    audit_logging = var.use_vault_secrets
-    ip_restrictions = length(var.allowed_ip_ranges) > 0
-    token_rotation = var.token_ttl_seconds <= 86400
-    vpc_isolation = var.vpc_endpoint_id != null
+    audit_logging       = var.use_vault_secrets
+    ip_restrictions     = length(var.allowed_ip_ranges) > 0
+    token_rotation      = var.token_ttl_seconds <= 86400
+    vpc_isolation       = var.vpc_endpoint_id != null
   }
   sensitive = false
 }

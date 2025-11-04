@@ -99,18 +99,18 @@ variable "worker_static_assets_enabled" {
 # Queue configuration
 variable "queue_definitions" {
   description = "Queue definitions"
-  type        = map(object({
-    message_retention_seconds = optional(number, 345600) # 4 days
+  type = map(object({
+    message_retention_seconds  = optional(number, 345600) # 4 days
     visibility_timeout_seconds = optional(number, 30)
-    dead_letter_queue_enabled = optional(bool, false)
+    dead_letter_queue_enabled  = optional(bool, false)
   }))
   default = {
     "verify-queue" = {
-      message_retention_seconds = 345600
+      message_retention_seconds  = 345600
       visibility_timeout_seconds = 30
     }
     "sign-queue" = {
-      message_retention_seconds = 345600
+      message_retention_seconds  = 345600
       visibility_timeout_seconds = 30
     }
   }
@@ -128,7 +128,7 @@ variable "health_check_urls" {
 
 variable "alert_channels" {
   description = "Alert channel configurations"
-  type        = map(object({
+  type = map(object({
     type   = string
     target = string
   }))
