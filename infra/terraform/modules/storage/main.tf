@@ -6,6 +6,9 @@ terraform {
   }
 }
 
+# Data source for AWS canonical user ID (required for S3 access logging)
+data "aws_canonical_user_id" "current" {}
+
 # Storage module - supports both R2 and S3
 variable "env" {
   description = "Environment name"
@@ -121,6 +124,58 @@ resource "aws_s3_bucket_object_lock_configuration" "bucket" {
   }
 }
 
+# KMS key for S3 bucket encryption
+resource "aws_kms_key" "s3_bucket" {
+  count = !var.use_r2 ? 1 : 0
+
+  description             = "KMS key for S3 bucket encryption in ${var.env} environment"
+  deletion_window_in_days = 30
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "Enable IAM User Permissions"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "Allow S3 Service"
+        Effect = "Allow"
+        Principal = {
+          Service = "s3.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:Encrypt"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    purpose = "s3-encryption"
+  })
+}
+
+# KMS key alias
+resource "aws_kms_alias" "s3_bucket" {
+  count = !var.use_r2 ? 1 : 0
+
+  name          = "alias/s3-${var.env}-bucket"
+  target_key_id = aws_kms_key.s3_bucket[0].key_id
+}
+
+# Data source for AWS caller identity
+data "aws_caller_identity" "current" {}
+
 # S3 Bucket encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "bucket" {
   count = !var.use_r2 ? 1 : 0
@@ -129,7 +184,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket" {
 
   rule {
     apply_server_side_encryption_by_default {
-      kms_master_key_id = var.s3.kms_key_id != null ? var.s3.kms_key_id : "aws/s3"
+      kms_master_key_id = var.s3.kms_key_id != null ? var.s3.kms_key_id : aws_kms_key.s3_bucket[0].arn
       sse_algorithm     = "aws:kms"
     }
     bucket_key_enabled = true
@@ -146,6 +201,25 @@ resource "aws_s3_bucket_public_access_block" "bucket" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+# S3 Bucket access logging
+resource "aws_s3_bucket_logging" "bucket" {
+  count = !var.use_r2 ? 1 : 0
+
+  bucket = aws_s3_bucket.bucket[0].id
+
+  target_bucket = aws_s3_bucket.bucket[0].id
+  target_prefix = "access-logs/"
+
+  target_grant {
+    grantee {
+      id   = data.aws_canonical_user_id.current.id
+      type = "CanonicalUser"
+    }
+
+    permission = "READ"
+  }
 }
 
 # S3 Bucket lifecycle rules (optional)
@@ -180,6 +254,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket" {
     expiration {
       days = 2555 # 7 years for compliance
     }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
 
   rule {
@@ -202,6 +280,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket" {
 
     expiration {
       days = 365 # 1 year for logs
+    }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
     }
   }
 
@@ -231,7 +313,121 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket" {
     expiration {
       days = 1825 # 5 years for backups
     }
+
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 7
+    }
   }
+}
+
+# S3 Bucket event notifications for security monitoring
+resource "aws_s3_bucket_notification" "bucket" {
+  count = !var.use_r2 ? 1 : 0
+
+  bucket = aws_s3_bucket.bucket[0].id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.s3_events[0].arn
+    events              = ["s3:ObjectCreated:*", "s3:ObjectRemoved:*"]
+    filter_prefix       = ""
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3]
+}
+
+# Lambda function for S3 event processing
+resource "aws_lambda_function" "s3_events" {
+  count = !var.use_r2 ? 1 : 0
+
+  filename      = "s3_events.zip"
+  function_name = "${var.env}-s3-events"
+  role          = aws_iam_role.lambda_s3_events[0].arn
+  handler       = "index.handler"
+  runtime       = "python3.11"
+  timeout       = 60
+
+  source_code_hash = data.archive_file.s3_events[0].output_base64sha256
+
+  environment {
+    variables = {
+      LOG_LEVEL   = "INFO"
+      ENVIRONMENT = var.env
+    }
+  }
+
+  tags = merge(local.common_tags, {
+    purpose = "s3-event-processing"
+  })
+}
+
+# IAM role for S3 events Lambda
+resource "aws_iam_role" "lambda_s3_events" {
+  count = !var.use_r2 ? 1 : 0
+
+  name = "${var.env}-lambda-s3-events"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = local.common_tags
+}
+
+# IAM policy for S3 events Lambda
+resource "aws_iam_role_policy" "lambda_s3_events" {
+  count = !var.use_r2 ? 1 : 0
+
+  name = "${var.env}-lambda-s3-events"
+  role = aws_iam_role.lambda_s3_events[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion"
+        ]
+        Resource = "${aws_s3_bucket.bucket[0].arn}/*"
+      }
+    ]
+  })
+}
+
+# Lambda permission for S3 to invoke the function
+resource "aws_lambda_permission" "allow_s3" {
+  count = !var.use_r2 ? 1 : 0
+
+  statement_id  = "Allow-s3-invoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.s3_events[0].function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.bucket[0].arn
+}
+
+# Archive file for S3 events Lambda
+data "archive_file" "s3_events" {
+  type        = "zip"
+  source_file = "${path.module}/lambda/s3_events.py"
+  output_path = "s3_events.zip"
 }
 
 # R2 CORS configuration (via AWS provider S3-compatible API)
