@@ -57,8 +57,3 @@ variable "tags" {
   default     = {}
 }
 
-variable "destroy_protect" {
-  description = "Enable destroy protection"
-  type        = bool
-  default     = true
-}
