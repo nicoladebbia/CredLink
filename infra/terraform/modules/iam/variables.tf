@@ -51,10 +51,6 @@ variable "cloudflare_account_id" {
   type        = string
 }
 
-variable "queue_name" {
-  description = "Queue name"
-  type        = string
-}
 
 
 variable "allowed_ip_ranges" {
