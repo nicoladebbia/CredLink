@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
-import { ManifestStore } from '../../../../packages/manifest-store/dist/manifest-store.js';
-import type { ManifestStoreConfig } from '../../../../packages/manifest-store/dist/types.js';
+import { ManifestStore } from '@c2/manifest-store';
+import type { ManifestStoreConfig, AuditRecord, ManifestMetadata } from '@c2/manifest-store';
 
 describe('Manifest Store Acceptance Tests', () => {
   let store: ManifestStore;
@@ -182,7 +182,7 @@ describe('Manifest Store Acceptance Tests', () => {
       assert.notStrictEqual(result.actualHash, 'd'.repeat(64));
       assert.strictEqual(result.sizeMatch, false);
       assert.ok(result.errors.length > 0);
-      assert.ok(result.errors.some(error => error.includes('Hash mismatch')));
+      assert.ok(result.errors.some((error: string) => error.includes('Hash mismatch')));
     });
   });
 
@@ -208,7 +208,7 @@ describe('Manifest Store Acceptance Tests', () => {
 
       assert.ok(auditResult.records.length > 0);
       
-      const createRecord = auditResult.records.find(r => r.operation === 'create');
+      const createRecord = auditResult.records.find((r: AuditRecord) => r.operation === 'create');
       assert.ok(createRecord);
       assert.strictEqual(createRecord.objectKey, objectKey);
       assert.strictEqual(createRecord.tenantId, 'test-tenant');
@@ -268,7 +268,7 @@ describe('Manifest Store Acceptance Tests', () => {
         prefix: 'f'.repeat(60) + '00'
       });
       assert.ok(prefixResults.objects.length > 0);
-      assert.ok(prefixResults.objects.every(obj => obj.hash.startsWith('f'.repeat(60) + '00')));
+      assert.ok(prefixResults.objects.every((obj: ManifestMetadata) => obj.hash.startsWith('f'.repeat(60) + '00')));
     });
   });
 
