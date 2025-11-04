@@ -25,14 +25,6 @@ on:
         default: false
         type: boolean
 
-environments:
-  staging:
-    name: Staging
-    url: https://staging.c2concierge.com
-  production:
-    name: Production
-    url: https://c2concierge.com
-
 env:
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
