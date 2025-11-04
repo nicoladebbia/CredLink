@@ -130,6 +130,63 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
   }
 }
 
+# S3 bucket access logging
+resource "aws_s3_bucket_logging" "audit_logs" {
+  count = var.enable_aws_audit ? 1 : 0
+
+  bucket = aws_s3_bucket.audit_logs[0].id
+
+  target_bucket = aws_s3_bucket.audit_logs[0].id
+  target_prefix = "access-logs/"
+
+  target_grant {
+    type         = "Grantee"
+    display_name = "LogDelivery"
+    permission   = "WRITE"
+  }
+
+  depends_on = [aws_s3_bucket_acl.audit_logs]
+}
+
+# S3 bucket ACL for access logging
+resource "aws_s3_bucket_acl" "audit_logs" {
+  count = var.enable_aws_audit ? 1 : 0
+
+  bucket = aws_s3_bucket.audit_logs[0].id
+
+  access_control_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "LogDeliveryWrite"
+        Effect = "Allow"
+        Principal = {
+          Service = "logging.s3.amazonaws.com"
+        }
+        Action = [
+          "s3:PutObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.audit_logs[0].arn}/*"
+        ]
+      },
+      {
+        Sid    = "LogDeliveryACL"
+        Effect = "Allow"
+        Principal = {
+          Service = "logging.s3.amazonaws.com"
+        }
+        Action = [
+          "s3:GetBucketAcl"
+        ]
+        Resource = [
+          aws_s3_bucket.audit_logs[0].arn
+        ]
+      }
+    ]
+  })
+}
+
 # S3 bucket notification for security events
 resource "aws_s3_bucket_notification" "audit_notifications" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
