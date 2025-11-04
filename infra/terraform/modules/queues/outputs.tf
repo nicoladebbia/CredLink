@@ -2,10 +2,10 @@
 
 output "queue_names" {
   description = "List of queue names"
-  value       = [for q in cloudflare_queue.queue : q.name]
+  value       = [for q in cloudflare_queue.queues : q.name]
 }
 
-output "queue_arns" {
-  description = "List of queue ARNs"
-  value       = [for q in cloudflare_queue.queue : q.arn]
+output "queue_ids" {
+  description = "List of queue IDs"
+  value       = [for q in cloudflare_queue.queues : q.id]
 }

@@ -27,6 +27,12 @@ variable "worker_script_name" {
   type        = string
 }
 
+variable "cloudflare_account_id" {
+  description = "Cloudflare account ID"
+  type        = string
+  sensitive   = true
+}
+
 variable "tags" {
   description = "Resource tags"
   type        = map(string)
