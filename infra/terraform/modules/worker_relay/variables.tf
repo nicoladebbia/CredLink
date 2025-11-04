@@ -22,23 +22,8 @@ variable "script_name" {
 
 variable "routes" {
   description = "Worker routes configuration"
-  type = list(object({
-    pattern   = string
-    zone_name = optional(string)
-  }))
-  default = []
-}
-
-variable "static_dir" {
-  description = "Directory for static assets"
-  type        = string
-  default     = ""
-}
-
-variable "static_assets_enabled" {
-  description = "Enable static assets"
-  type        = bool
-  default     = false
+  type        = list(string)
+  default     = []
 }
 
 variable "worker_config" {

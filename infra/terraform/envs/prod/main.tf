@@ -93,10 +93,6 @@ module "worker_relay" {
 
   routes = var.worker_routes
 
-  # Static assets (v5.11+ support)
-  static_dir            = var.worker_static_dir
-  static_assets_enabled = var.worker_static_assets_enabled
-
   # Worker configuration
   worker_config = {
     compatibility_date  = "2024-01-01"
@@ -105,10 +101,6 @@ module "worker_relay" {
       mode = "smart"
     }
   }
-
-  # Storage integration
-  storage_bucket_name = module.storage.bucket_name
-  storage_type        = var.use_r2 ? "r2" : "s3"
 
   tags = local.common_tags
 }
