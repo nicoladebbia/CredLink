@@ -38,9 +38,6 @@ variable "tags" {
 
 locals {
   name_prefix = "${var.project}-${var.env}"
-  common_tags = merge(var.tags, {
-    module = "queues"
-  })
 }
 
 # Cloudflare Queues
