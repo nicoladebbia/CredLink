@@ -17,6 +17,10 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.0"
     }
+    signer = {
+      source  = "hashicorp/signer"
+      version = "~> 1.0"
+    }
   }
 }
 
@@ -109,6 +113,47 @@ resource "aws_s3_bucket" "audit_logs" {
     purpose        = "audit-logging"
     retention_days = var.retention_days
   })
+}
+
+# S3 bucket encryption
+resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
+  count = var.enable_aws_audit ? 1 : 0
+
+  bucket = aws_s3_bucket.audit_logs[0].id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = aws_kms_key.audit_logs[0].arn
+      sse_algorithm     = "aws:kms"
+    }
+    bucket_key_enabled = true
+  }
+}
+
+# S3 bucket notification for security events
+resource "aws_s3_bucket_notification" "audit_notifications" {
+  count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
+
+  bucket = aws_s3_bucket.audit_logs[0].id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.security_alerts[0].arn
+    events              = ["s3:ObjectCreated:*"]
+    filter_prefix       = "cloudtrail/"
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3]
+}
+
+# Permission for S3 to invoke Lambda
+resource "aws_lambda_permission" "allow_s3" {
+  count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
+
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.security_alerts[0].function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.audit_logs[0].arn
 }
 
 # S3 bucket versioning for audit logs
@@ -468,6 +513,12 @@ resource "aws_lambda_function" "security_alerts" {
     kms_key_arn = aws_kms_key.audit_logs[0].arn
   }
 
+  # Code signing configuration for security
+  code_signing_config_arn = aws_lambda_code_signing_config.security_alerts[0].arn
+
+  # Concurrency limits for cost control and reliability
+  reserved_concurrent_executions = 5
+
   # Disable X-Ray tracing to avoid security concerns
   tracing_config {
     mode = "PassThrough"
@@ -487,6 +538,33 @@ resource "aws_lambda_function" "security_alerts" {
   tags = merge(local.common_tags, {
     purpose = "security-monitoring"
   })
+}
+
+# Code signing configuration for Lambda
+resource "aws_lambda_code_signing_config" "security_alerts" {
+  count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
+
+  description = "Code signing configuration for security alerts Lambda"
+
+  allowed_publishers {
+    signing_profile_version_arns = [aws_signer_signing_profile.security_alerts[0].arn]
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+}
+
+# Signer profile for code signing
+resource "aws_signer_signing_profile" "security_alerts" {
+  count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
+
+  platform_id = "AWSLambda-SHA384-ECDSA"
+
+  signature_validity_period {
+    value = 30
+    type  = "DAYS"
+  }
 }
 
 # Lambda zip file
@@ -619,10 +697,28 @@ resource "aws_security_group" "lambda_sg" {
   description = "Security group for security alerts Lambda"
   vpc_id      = var.vpc_id
 
+  # Restrictive egress - only allow HTTPS and specific AWS services
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    description = "Allow HTTPS outbound for external API calls"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow HTTP outbound for package downloads"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow DNS resolution"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
