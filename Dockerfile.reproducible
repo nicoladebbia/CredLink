@@ -38,16 +38,10 @@ ENV SOURCE_DATE_EPOCH=0 \
 
 # Copy package files with checksum verification
 COPY package.json pnpm-lock.yaml ./
-COPY packages/acceptance/package.json ./packages/acceptance/
-COPY packages/policy/package.json ./packages/policy/
-COPY packages/utils/package.json ./packages/utils/
-COPY packages/manifest-store/package.json ./packages/manifest-store/
-COPY apps/edge-worker/package.json ./apps/edge-worker/
-COPY apps/edge-relay/package.json ./apps/edge-relay/
-COPY apps/manifest-store-worker/package.json ./apps/manifest-store-worker/
-COPY sandboxes/strip-happy/package.json ./sandboxes/strip-happy/
-COPY sandboxes/preserve-embed/package.json ./sandboxes/preserve-embed/
-COPY sandboxes/remote-only/package.json ./sandboxes/remote-only/
+# Copy additional package files if they exist
+COPY packages/ ./packages/ || true
+COPY apps/ ./apps/ || true
+COPY sandboxes/ ./sandboxes/ || true
 
 # Install dependencies with comprehensive security and validation
 RUN pnpm install --frozen-lockfile --prefer-frozen-lockfile --strict-peer-deps && \
