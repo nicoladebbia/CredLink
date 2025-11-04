@@ -123,9 +123,8 @@ module "queues" {
   queues = var.queue_definitions
 
   # Worker bindings
-  worker_script_name = module.worker_relay.script_name
-
-  tags = local.common_tags
+  worker_script_name    = module.worker_relay.script_name
+  cloudflare_account_id = var.cloudflare_account_id
 }
 
 # Monitors module

@@ -33,8 +33,3 @@ variable "cloudflare_account_id" {
   sensitive   = true
 }
 
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default     = {}
-}
