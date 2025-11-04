@@ -16,18 +16,6 @@ variable "project" {
   type        = string
 }
 
-variable "health_checks" {
-  description = "Health check URLs"
-  type        = list(string)
-}
-
-variable "alert_channels" {
-  description = "Alert channel configurations"
-  type = map(object({
-    type   = string
-    target = string
-  }))
-}
 
 
 locals {
