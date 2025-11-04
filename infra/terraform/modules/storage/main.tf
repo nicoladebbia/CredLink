@@ -12,10 +12,6 @@ variable "env" {
   type        = string
 }
 
-variable "project" {
-  description = "Project name"
-  type        = string
-}
 
 variable "use_r2" {
   description = "Use Cloudflare R2 instead of S3"
