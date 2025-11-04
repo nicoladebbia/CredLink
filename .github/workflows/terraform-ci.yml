@@ -243,7 +243,7 @@ jobs:
         uses: infracost/infracost-gh-action@master
         with:
           path: infra/terraform/envs/${{ matrix.environment }}
-          usage-file: infra/terraform/infracost-usage.yml
+          usage_file: infra/terraform/infracost-usage.yml
           currency: USD
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
@@ -271,9 +271,7 @@ jobs:
       github.ref == 'refs/heads/develop' && 
       github.event_name == 'push' &&
       needs.validate.outputs.changes == 'true'
-    environment:
-      name: staging
-      url: https://staging.c2concierge.com
+    environment: staging
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -327,9 +325,7 @@ jobs:
       github.ref == 'refs/heads/main' && 
       github.event_name == 'push' &&
       needs.validate.outputs.changes == 'true'
-    environment:
-      name: production
-      url: https://c2concierge.com
+    environment: production
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
