@@ -45,6 +45,10 @@ resource "aws_s3_bucket" "bucket" {
 
   # Force destroy is disabled by default for security and compliance
   force_destroy = false # Always prevent accidental data loss
+
+  lifecycle {
+    prevent_destroy = var.destroy_protect
+  }
 }
 
 # S3 Bucket versioning
