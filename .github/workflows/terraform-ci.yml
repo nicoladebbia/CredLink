@@ -197,6 +197,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate, security]
     if: needs.validate.outputs.changes == 'true'
+    continue-on-error: true  # Allow workflow to continue if AWS credentials not configured
     strategy:
       matrix:
         environment: [demo, staging]
