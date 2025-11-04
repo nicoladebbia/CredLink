@@ -44,16 +44,6 @@ variable "token_scopes" {
   default     = {}
 }
 
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default     = {}
-}
-
-variable "cloudflare_account_id" {
-  description = "Cloudflare account ID"
-  type        = string
-}
 
 variable "allowed_ip_ranges" {
   description = "IP ranges allowed to access resources"
