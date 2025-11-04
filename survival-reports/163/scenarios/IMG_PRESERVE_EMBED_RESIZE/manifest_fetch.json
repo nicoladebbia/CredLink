@@ -1,0 +1,6 @@
+{
+  "manifest_url": "http://127.0.0.1:4102/manifests/a67f4310ec170f989422ecdcbbc467d97ba22ce90f3811477816b5bdd36e269b.c2pa",
+  "manifest_fetch_status": 200,
+  "hash_alignment": true,
+  "html_link_fallback": false
+}
