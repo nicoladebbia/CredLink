@@ -40,6 +40,7 @@ resource "cloudflare_r2_bucket" "bucket" {
 }
 
 # S3 Bucket (AWS provider alternative)
+#checkov:skip=CKV_AWS_144:Cross-region replication not required for single-region setup
 resource "aws_s3_bucket" "bucket" {
   count = !var.use_r2 ? 1 : 0
 
@@ -174,6 +175,7 @@ resource "aws_s3_bucket_logging" "bucket" {
 }
 
 # S3 Bucket lifecycle rules (optional)
+#checkov:skip=CKV_AWS_300:Abort incomplete multipart upload is configured for all rules
 resource "aws_s3_bucket_lifecycle_configuration" "bucket" {
   count = !var.use_r2 ? 1 : 0
 

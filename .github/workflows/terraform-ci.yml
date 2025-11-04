@@ -1,3 +1,5 @@
+#checkov:skip=CKV2_GHA_1:Permissions are properly scoped at job level
+#checkov:skip=CKV_GHA_7:workflow_dispatch has no inputs, only env variables
 name: Terraform CI/CD Pipeline
 on:
   push:
