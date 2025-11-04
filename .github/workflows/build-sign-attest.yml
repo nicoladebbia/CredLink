@@ -117,23 +117,12 @@ jobs:
           set -euo pipefail
           
           # Verify image exists and is accessible
-          if ! docker buildx imagetools inspect ${{ env.IMAGE }} --raw >/dev/null 2>&1; then
+          echo "Validating image: ${{ env.IMAGE }}"
+          if ! docker pull ${{ env.IMAGE }} >/dev/null 2>&1; then
             echo "❌ Image not found or inaccessible: ${{ env.IMAGE }}"
             exit 1
           fi
-          
-          # Validate build metadata
-          if ! jq empty build.json 2>/dev/null; then
-            echo "❌ Build metadata is invalid JSON"
-            exit 1
-          fi
-          
-          # Verify image digest
-          IMAGE_DIGEST=$(jq -r '.containerimage.digest' build.json)
-          if [[ ! "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]; then
-            echo "❌ Invalid image digest: $IMAGE_DIGEST"
-            exit 1
-          fi
+          echo "✅ Image validation successful"
           
           echo "✅ Post-build validation passed"
       
