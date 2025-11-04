@@ -499,9 +499,6 @@ importers:
 
   packages/acceptance:
     dependencies:
-      '@c2/manifest-store':
-        specifier: file:../manifest-store
-        version: file:packages/manifest-store
       '@c2/utils':
         specifier: file:../utils
         version: file:packages/utils
