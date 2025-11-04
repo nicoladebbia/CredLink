@@ -83,12 +83,9 @@ RUN set -euo pipefail && \
     pnpm install --frozen-lockfile && \
     pnpm build && \
     echo "✅ Build completed successfully" && \
-    # Comprehensive cleanup to minimize attack surface
+    # Cleanup to minimize attack surface
     pnpm prune --prod && \
     rm -rf ~/.pnpm-store ~/.npm /tmp/.npm /tmp/* /var/tmp/* && \
-    # Remove development files
-    find . -name "*.ts" -not -path "./node_modules/*" -delete && \
-    find . -name "*.map" -not -path "./node_modules/*" -delete && \
     echo "✅ Attack surface minimized"
 
 # Production stage with maximum security hardening
