@@ -92,7 +92,7 @@ jobs:
 
       - name: Run TFLint
         if: steps.changes.outputs.changes == 'true'
-        uses: terraform-linters/tflint@v1
+        uses: terraform-linters/tflint@master
         with:
           directory: infra/terraform
           args: --recursive
