@@ -1,0 +1,1016 @@
+openapi: 3.2.0
+info:
+  title: C2 Concierge API
+  description: |
+    C2 Concierge provides cryptographic provenance verification and signing services.
+    This API enables asset verification, manifest management, and batch operations with
+    built-in retry mechanisms and comprehensive error handling.
+  version: 1.3.0
+  contact:
+    name: C2 Concierge Team
+    url: https://github.com/Nickiller04/c2-concierge
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.c2concierge.com/v1
+    description: Production server
+  - url: https://staging-api.c2concierge.com/v1
+    description: Staging server
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /verify/asset:
+    post:
+      summary: Verify a single asset
+      description: |
+        Verify cryptographic provenance of a single asset by URL or direct content.
+        Supports conditional requests via ETag and delta encoding for efficiency.
+      operationId: verifyAsset
+      tags:
+        - Verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyAssetRequest'
+            examples:
+              url_verification:
+                summary: Verify asset by URL
+                value:
+                  asset_url: "https://example.com/image.jpg"
+                  policy_id: "default"
+                  timeout: 5000
+                  cached_etag: '"abc123"'
+                  cached_cert_thumbprints: ["sha256:abc123"]
+              buffer_verification:
+                summary: Verify asset by content
+                value:
+                  asset_buffer: "base64-encoded-content"
+                  content_type: "image/jpeg"
+                  policy_id: "default"
+      responses:
+        '200':
+          description: Verification successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyAssetResponse'
+              examples:
+                success:
+                  summary: Asset verified successfully
+                  value:
+                    success: true
+                    data:
+                      verified: true
+                      manifest_url: "https://manifests.c2pa.org/abc123.c2pa"
+                      trust_roots: ["sha256:root1"]
+                      policy_version: "v42"
+                      verification_time: "2025-01-01T00:00:00Z"
+                    request_id: "req_123"
+                    timestamp: "2025-01-01T00:00:00Z"
+        '304':
+          description: Not modified - cached result is still valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyAssetResponse'
+              examples:
+                cached:
+                  summary: Using cached verification result
+                  value:
+                    success: true
+                    data:
+                      verified: true
+                      cached: true
+                      manifest_url: "https://manifests.c2pa.org/abc123.c2pa"
+                    request_id: "req_123"
+                    timestamp: "2025-01-01T00:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+        '502':
+          $ref: '#/components/responses/BadGateway'
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        '504':
+          $ref: '#/components/responses/GatewayTimeout'
+
+  /verify/page:
+    post:
+      summary: Verify all assets on a web page
+      description: |
+        Crawls a web page and verifies all discoverable C2PA-protected assets.
+        Returns a stream of verification results with pagination support.
+      operationId: verifyPage
+      tags:
+        - Verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyPageRequest'
+            examples:
+              page_verification:
+                summary: Verify page assets
+                value:
+                  page_url: "https://example.com/article"
+                  follow_links: true
+                  max_depth: 2
+                  policy_id: "default"
+      responses:
+        '200':
+          description: Page verification results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyPageResponse'
+              examples:
+                success:
+                  summary: Page verification completed
+                  value:
+                    success: true
+                    data:
+                      results:
+                        - url: "https://example.com/image1.jpg"
+                          verified: true
+                          manifest_url: "https://manifests.c2pa.org/abc123.c2pa"
+                        - url: "https://example.com/image2.jpg"
+                          verified: false
+                          error: "MANIFEST_NOT_FOUND"
+                      total_assets: 2
+                      verified_count: 1
+                    request_id: "req_123"
+                    timestamp: "2025-01-01T00:00:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /batch/verify:
+    post:
+      summary: Batch verify multiple assets
+      description: |
+        Verify multiple assets in a single request. Supports both URLs and direct content.
+        Optimized for high-throughput verification workflows.
+      operationId: batchVerify
+      tags:
+        - Batch Operations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchVerifyRequest'
+            examples:
+              batch_urls:
+                summary: Verify multiple URLs
+                value:
+                  assets:
+                    - url: "https://example.com/image1.jpg"
+                    - url: "https://example.com/image2.jpg"
+                  policy_id: "default"
+                  parallel: true
+      responses:
+        '200':
+          description: Batch verification results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchVerifyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /link/inject:
+    post:
+      summary: Inject Link headers into HTML
+      description: |
+        Inject C2PA manifest Link headers into static HTML content.
+        Enables automatic manifest discovery for browsers and tools.
+      operationId: injectLink
+      tags:
+        - Link Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InjectLinkRequest'
+            examples:
+              inject_link:
+                summary: Inject manifest link
+                value:
+                  html: "<html><body><img src='image.jpg'/></body></html>"
+                  manifest_url: "https://manifests.example.com/{sha256}.c2pa"
+                  strategy: "sha256_path"
+      responses:
+        '200':
+          description: Link injection successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InjectLinkResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /sign/folder:
+    post:
+      summary: Retro-sign a folder
+      description: |
+        Sign all C2PA-compatible assets in a folder with RFC-3161 timestamps.
+        Supports idempotent operations for CI/CD workflows.
+      operationId: signFolder
+      tags:
+        - Signing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignFolderRequest'
+            examples:
+              sign_folder:
+                summary: Sign folder with TSA
+                value:
+                  folder_path: "./public/images"
+                  profile_id: "newsroom-default"
+                  tsa: true
+                  recursive: true
+      responses:
+        '202':
+          description: Folder signing initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignFolderResponse'
+          headers:
+            Location:
+              description: URL to check job status
+              schema:
+                type: string
+                format: uri
+            Idempotency-Key:
+              description: Request idempotency key
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /manifests/{hash}:
+    get:
+      summary: Get manifest by hash
+      description: |
+        Retrieve a manifest by its content hash. Supports conditional requests
+        with ETag validation for efficient caching.
+      operationId: getManifest
+      tags:
+        - Manifests
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          description: Content hash of the manifest
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{64}$'
+          example: "abc123def456789abc123def456789abc123def456789abc123def456789"
+      responses:
+        '200':
+          description: Manifest retrieved successfully
+          content:
+            application/c2pa:
+              schema:
+                type: string
+                format: binary
+              example: "Binary C2PA manifest data"
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestResponse'
+          headers:
+            ETag:
+              description: Strong ETag for conditional requests
+              schema:
+                type: string
+                example: '"abc123def456"'
+            Cache-Control:
+              description: Caching directives
+              schema:
+                type: string
+                example: 'max-age=30, must-revalidate'
+        '304':
+          description: Not modified - cached manifest is still valid
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Store or update a manifest
+      description: |
+        Store a manifest by its content hash. Supports idempotent operations
+        and conditional updates.
+      operationId: putManifest
+      tags:
+        - Manifests
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          description: Content hash of the manifest
+          schema:
+            type: string
+            pattern: '^[a-fA-F0-9]{64}$'
+      requestBody:
+        required: true
+        content:
+          application/c2pa:
+            schema:
+              type: string
+              format: binary
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManifestRequest'
+      responses:
+        '200':
+          description: Manifest stored successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestResponse'
+        '201':
+          description: Manifest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManifestResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key for authentication. Include your key in the X-API-Key header.
+        Get your API key from the C2 Concierge dashboard.
+
+  schemas:
+    VerifyAssetRequest:
+      type: object
+      required:
+        - policy_id
+      properties:
+        asset_url:
+          type: string
+          format: uri
+          description: URL of the asset to verify
+          example: "https://example.com/image.jpg"
+        asset_buffer:
+          type: string
+          format: byte
+          description: Base64-encoded asset content for direct verification
+        content_type:
+          type: string
+          description: Content type of the asset (required when using asset_buffer)
+          example: "image/jpeg"
+        policy_id:
+          type: string
+          description: Verification policy to use
+          example: "default"
+        timeout:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 5000
+          description: Request timeout in milliseconds
+        cached_etag:
+          type: string
+          pattern: '^"[^"]*"$'
+          description: Cached ETag for conditional requests
+          example: '"abc123def456"'
+        cached_cert_thumbprints:
+          type: array
+          items:
+            type: string
+            pattern: '^[a-fA-F0-9:]+$'
+          maxItems: 50
+          description: Cached certificate thumbprints for 304 safety
+        enable_delta:
+          type: boolean
+          default: false
+          description: Enable RFC 3229 delta encoding for large manifests
+      oneOf:
+        - required: [asset_url]
+        - required: [asset_buffer, content_type]
+
+    VerifyAssetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: '#/components/schemas/VerificationResult'
+        request_id:
+          type: string
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    VerificationResult:
+      type: object
+      properties:
+        verified:
+          type: boolean
+          example: true
+        manifest_url:
+          type: string
+          format: uri
+          example: "https://manifests.c2pa.org/abc123.c2pa"
+        trust_roots:
+          type: array
+          items:
+            type: string
+          example: ["sha256:root1"]
+        policy_version:
+          type: string
+          example: "v42"
+        verification_time:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        cached:
+          type: boolean
+          description: True if result came from cache
+          example: false
+
+    VerifyPageRequest:
+      type: object
+      required:
+        - page_url
+      properties:
+        page_url:
+          type: string
+          format: uri
+          description: URL of the page to verify
+          example: "https://example.com/article"
+        follow_links:
+          type: boolean
+          default: true
+          description: Whether to follow links to discover more assets
+        max_depth:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 2
+          description: Maximum depth to follow links
+        policy_id:
+          type: string
+          default: "default"
+          description: Verification policy to use
+        timeout:
+          type: integer
+          minimum: 5000
+          maximum: 60000
+          default: 15000
+          description: Total timeout for page verification in milliseconds
+
+    VerifyPageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/AssetVerificationResult'
+            total_assets:
+              type: integer
+              example: 5
+            verified_count:
+              type: integer
+              example: 4
+        request_id:
+          type: string
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    AssetVerificationResult:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          example: "https://example.com/image.jpg"
+        verified:
+          type: boolean
+          example: true
+        manifest_url:
+          type: string
+          format: uri
+          example: "https://manifests.c2pa.org/abc123.c2pa"
+        error:
+          type: string
+          example: "MANIFEST_NOT_FOUND"
+
+    BatchVerifyRequest:
+      type: object
+      required:
+        - assets
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetReference'
+          minItems: 1
+          maxItems: 100
+          description: List of assets to verify
+        policy_id:
+          type: string
+          default: "default"
+          description: Verification policy to use
+        parallel:
+          type: boolean
+          default: true
+          description: Whether to process assets in parallel
+        timeout_per_asset:
+          type: integer
+          minimum: 1000
+          maximum: 30000
+          default: 5000
+          description: Timeout per asset in milliseconds
+
+    AssetReference:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL of the asset to verify
+        id:
+          type: string
+          description: Optional identifier for the asset
+
+    BatchVerifyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/BatchVerificationResult'
+            summary:
+              $ref: '#/components/schemas/BatchSummary'
+        request_id:
+          type: string
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    BatchVerificationResult:
+      type: object
+      properties:
+        asset:
+          $ref: '#/components/schemas/AssetReference'
+        result:
+          $ref: '#/components/schemas/VerificationResult'
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+
+    BatchSummary:
+      type: object
+      properties:
+        total_assets:
+          type: integer
+          example: 10
+        verified_count:
+          type: integer
+          example: 8
+        failed_count:
+          type: integer
+          example: 2
+
+    InjectLinkRequest:
+      type: object
+      required:
+        - html
+        - manifest_url
+      properties:
+        html:
+          type: string
+          description: HTML content to modify
+          example: "<html><body><img src='image.jpg'/></body></html>"
+        manifest_url:
+          type: string
+          format: uri
+          description: Base URL for manifest links
+          example: "https://manifests.example.com/{sha256}.c2pa"
+        strategy:
+          type: string
+          enum: [sha256_path, content_hash, custom]
+          default: "sha256_path"
+          description: Strategy for generating manifest URLs
+        selector:
+          type: string
+          default: "img[src], video[src], audio[src]"
+          description: CSS selector for elements to process
+
+    InjectLinkResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            html:
+              type: string
+              description: Modified HTML with Link headers
+            links_injected:
+              type: integer
+              example: 3
+            assets_processed:
+              type: array
+              items:
+                type: string
+              example: ["image1.jpg", "image2.jpg"]
+        request_id:
+          type: string
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    SignFolderRequest:
+      type: object
+      required:
+        - folder_path
+        - profile_id
+      properties:
+        folder_path:
+          type: string
+          description: Path to folder containing assets to sign
+          example: "./public/images"
+        profile_id:
+          type: string
+          description: Signing profile to use
+          example: "newsroom-default"
+        tsa:
+          type: boolean
+          default: false
+          description: Include RFC-3161 timestamps
+        recursive:
+          type: boolean
+          default: true
+          description: Process subdirectories recursively
+        file_patterns:
+          type: array
+          items:
+            type: string
+          default: ["*.jpg", "*.png", "*.mp4", "*.pdf"]
+          description: File patterns to include
+        idempotency_key:
+          type: string
+          description: Optional idempotency key for request deduplication
+          format: uuid
+
+    SignFolderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            job_id:
+              type: string
+              example: "job_abc123"
+            status_url:
+              type: string
+              format: uri
+              example: "https://api.c2concierge.com/v1/jobs/job_abc123"
+            estimated_duration:
+              type: integer
+              description: Estimated completion time in seconds
+              example: 120
+            files_found:
+              type: integer
+              example: 25
+        request_id:
+          type: string
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    ManifestRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          format: byte
+          description: Manifest content
+        content_type:
+          type: string
+          default: "application/c2pa"
+          description: Content type of the manifest
+        metadata:
+          type: object
+          description: Optional manifest metadata
+
+    ManifestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            hash:
+              type: string
+              example: "abc123def456789abc123def456789abc123def456789abc123def456789"
+            size:
+              type: integer
+              example: 1024
+            content_type:
+              type: string
+              example: "application/c2pa"
+            created_at:
+              type: string
+              format: date-time
+              example: "2025-01-01T00:00:00Z"
+            url:
+              type: string
+              format: uri
+              example: "https://api.c2concierge.com/v1/manifests/abc123def456..."
+        request_id:
+          type: string
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+
+    ErrorDetail:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Invalid request parameters"
+        details:
+          type: object
+          additionalProperties: true
+        hint:
+          type: string
+          example: "Check that all required fields are provided"
+        docs_url:
+          type: string
+          format: uri
+          example: "https://docs.c2concierge.com/api/errors#validation_error"
+
+    ProblemDetails:
+      type: object
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "https://docs.c2concierge.com/api/errors#validation_error"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+          example: "Validation Error"
+        status:
+          type: integer
+          description: The HTTP status code generated by the origin server
+          example: 422
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem
+          example: "The request failed validation"
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence of the problem
+          example: "https://api.c2concierge.com/v1/errors/req_abc123"
+        code:
+          type: string
+          description: Application-specific error code
+          example: "VALIDATION_ERROR"
+        request_id:
+          type: string
+          description: Unique request identifier
+          example: "req_abc123"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-01-01T00:00:00Z"
+        retry_after:
+          type: integer
+          description: Seconds after which the client may retry
+          example: 60
+        hint:
+          type: string
+          description: Actionable hint for resolving the error
+          example: "Check your API key and request parameters"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://docs.c2concierge.com/api/errors#bad_request"
+            title: "Bad Request"
+            status: 400
+            detail: "The request could not be understood by the server"
+            code: "BAD_REQUEST"
+            request_id: "req_abc123"
+            timestamp: "2025-01-01T00:00:00Z"
+            hint: "Check request syntax and parameters"
+
+    Unauthorized:
+      description: Unauthorized - invalid API key
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://docs.c2concierge.com/api/errors#unauthorized"
+            title: "Unauthorized"
+            status: 401
+            detail: "Authentication failed or missing"
+            code: "UNAUTHORIZED"
+            request_id: "req_abc123"
+            timestamp: "2025-01-01T00:00:00Z"
+            hint: "Check your API key in the X-API-Key header"
+
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    Conflict:
+      description: Conflict - idempotency key mismatch or resource conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://docs.c2concierge.com/api/errors#conflict"
+            title: "Conflict"
+            status: 409
+            detail: "Request conflicts with current state"
+            code: "CONFLICT"
+            request_id: "req_abc123"
+            timestamp: "2025-01-01T00:00:00Z"
+            idempotency_key: "uuid-key"
+            hint: "Use a different idempotency key or check resource state"
+
+    ValidationError:
+      description: Validation error - invalid request data
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://docs.c2concierge.com/api/errors#validation_error"
+            title: "Validation Error"
+            status: 422
+            detail: "Request data failed validation"
+            code: "VALIDATION_ERROR"
+            request_id: "req_abc123"
+            timestamp: "2025-01-01T00:00:00Z"
+            hint: "Check required fields and data formats"
+
+    RateLimited:
+      description: Too many requests - rate limit exceeded
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: "https://docs.c2concierge.com/api/errors#rate_limited"
+            title: "Rate Limited"
+            status: 429
+            detail: "Rate limit exceeded"
+            code: "RATE_LIMITED"
+            request_id: "req_abc123"
+            timestamp: "2025-01-01T00:00:00Z"
+            retry_after: 60
+            hint: "Wait before retrying or implement exponential backoff"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    BadGateway:
+      description: Bad gateway - upstream service error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    ServiceUnavailable:
+      description: Service unavailable - temporary outage
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+    GatewayTimeout:
+      description: Gateway timeout - upstream service timeout
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+tags:
+  - name: Verification
+    description: Asset and page verification operations
+  - name: Batch Operations
+    description: Bulk verification operations
+  - name: Link Management
+    description: HTML link injection and management
+  - name: Signing
+    description: Asset and folder signing operations
+  - name: Manifests
+    description: Manifest storage and retrieval
