@@ -134,15 +134,15 @@ resource "cloudflare_api_token" "storage_token" {
   condition = jsonencode({
     request = {
       method = ["GET", "PUT", "DELETE", "POST"]
-    }
+    },
     # Add IP restrictions if specified
-    length(var.allowed_ip_ranges) > 0 ? {
+    ...(length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null,
+    } : {}),
     # Add time-based restrictions for enhanced security
-    var.token_ttl_seconds <= 86400 ? {
+    ...(var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
-    } : null
+    } : {})
   })
   
   ttl_seconds = var.token_ttl_seconds
@@ -172,13 +172,13 @@ resource "cloudflare_api_token" "worker_token" {
       method = ["POST", "PUT", "DELETE", "GET"]
     },
     # Add IP restrictions if specified
-    length(var.allowed_ip_ranges) > 0 ? {
+    ...(length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null,
+    } : {}),
     # Add time-based restrictions for enhanced security
-    var.token_ttl_seconds <= 86400 ? {
+    ...(var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
-    } : null
+    } : {})
   })
   
   ttl_seconds = var.token_ttl_seconds
@@ -208,13 +208,13 @@ resource "cloudflare_api_token" "queue_token" {
       method = ["POST", "GET", "DELETE", "PUT"]
     },
     # Add IP restrictions if specified
-    length(var.allowed_ip_ranges) > 0 ? {
+    ...(length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null,
+    } : {}),
     # Add time-based restrictions for enhanced security
-    var.token_ttl_seconds <= 86400 ? {
+    ...(var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
-    } : null
+    } : {})
   })
   
   ttl_seconds = var.token_ttl_seconds
@@ -255,13 +255,13 @@ resource "cloudflare_api_token" "service_tokens" {
       method = ["GET", "POST", "PUT", "DELETE"]
     },
     # Add IP restrictions if specified
-    length(var.allowed_ip_ranges) > 0 ? {
+    ...(length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null,
+    } : {}),
     # Add time-based restrictions for enhanced security
-    var.token_ttl_seconds <= 86400 ? {
+    ...(var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
-    } : null
+    } : {})
   })
   
   ttl_seconds = var.token_ttl_seconds
