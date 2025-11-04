@@ -4,7 +4,13 @@ terraform {
     cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.11" }
     aws        = { source = "hashicorp/aws", version = "~> 5.76" }
     archive    = { source = "hashicorp/archive", version = "~> 2.0" }
+    signer     = { source = "hashicorp/signer", version = "~> 1.1" }
   }
+}
+
+# Configure Signer provider
+provider "signer" {
+  region = var.s3.region
 }
 
 # Data source for AWS canonical user ID (required for S3 access logging)
@@ -44,6 +50,18 @@ variable "s3" {
     kms_key_id = optional(string)
   })
   default = null
+}
+
+variable "vpc_id" {
+  description = "VPC ID for Lambda security group"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_subnet_ids" {
+  description = "List of subnet IDs for Lambda VPC configuration"
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {
@@ -321,6 +339,116 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket" {
   }
 }
 
+# SQS Queue for Lambda Dead Letter Queue
+resource "aws_sqs_queue" "lambda_dlq" {
+  count = !var.use_r2 ? 1 : 0
+
+  name = "${var.env}-lambda-dlq"
+
+  # Enable server-side encryption
+  kms_master_key_id = aws_kms_key.s3_bucket[0].arn
+
+  # Enable message retention
+  message_retention_seconds = 1209600 # 14 days
+
+  tags = merge(local.common_tags, {
+    purpose = "lambda-dlq"
+  })
+}
+
+# SQS Queue policy for DLQ
+resource "aws_sqs_queue_policy" "lambda_dlq" {
+  count = !var.use_r2 ? 1 : 0
+
+  queue_url = aws_sqs_queue.lambda_dlq[0].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "sns.amazonaws.com"
+        }
+        Action   = "sqs:SendMessage"
+        Resource = aws_sqs_queue.lambda_dlq[0].arn
+      }
+    ]
+  })
+}
+
+# Security Group for Lambda function
+resource "aws_security_group" "lambda_sg" {
+  count = !var.use_r2 && var.vpc_id != "" ? 1 : 0
+
+  name_prefix = "${var.env}-lambda-sg-"
+  description = "Security group for S3 events Lambda"
+  vpc_id      = var.vpc_id
+
+  # Egress rule - HTTPS only with description
+  egress {
+    description = "Allow HTTPS outbound"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Egress rule - HTTP with description
+  egress {
+    description = "Allow HTTP outbound"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Egress rule - DNS with description
+  egress {
+    description = "Allow DNS outbound"
+    from_port   = 53
+    to_port     = 53
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    purpose = "lambda-security"
+  })
+}
+
+# Lambda code signing configuration
+resource "aws_lambda_code_signing_config" "s3_events" {
+  count = !var.use_r2 ? 1 : 0
+
+  description = "Code signing configuration for S3 events Lambda"
+
+  allowed_publishers {
+    signing_profile_version_arn = aws_signer_signing_profile.s3_events[0].arn
+  }
+
+  policies {
+    untrusted_artifact_on_deployment = "Enforce"
+  }
+
+  tags = local.common_tags
+}
+
+# Signer profile for Lambda code signing
+resource "aws_signer_signing_profile" "s3_events" {
+  count = !var.use_r2 ? 1 : 0
+
+  platform_id = "AWSLambda-SHA384-ECDSA"
+
+  signature_validity_period {
+    value = 30
+    type  = "DAYS"
+  }
+
+  tags = merge(local.common_tags, {
+    purpose = "lambda-code-signing"
+  })
+}
+
 # S3 Bucket event notifications for security monitoring
 resource "aws_s3_bucket_notification" "bucket" {
   count = !var.use_r2 ? 1 : 0
@@ -349,12 +477,41 @@ resource "aws_lambda_function" "s3_events" {
 
   source_code_hash = data.archive_file.s3_events[0].output_base64sha256
 
+  # Security configurations
+  kms_key_arn = aws_kms_key.s3_bucket[0].arn
+
   environment {
     variables = {
       LOG_LEVEL   = "INFO"
       ENVIRONMENT = var.env
     }
+    kms_key_arn = aws_kms_key.s3_bucket[0].arn
   }
+
+  # Disable X-Ray tracing to avoid security concerns
+  tracing_config {
+    mode = "PassThrough"
+  }
+
+  # Configure Dead Letter Queue
+  dead_letter_config {
+    target_arn = aws_sqs_queue.lambda_dlq[0].arn
+  }
+
+  # VPC configuration for enhanced security (conditional)
+  dynamic "vpc_config" {
+    for_each = var.vpc_id != "" && length(var.lambda_subnet_ids) > 0 ? [1] : []
+    content {
+      security_group_ids = [aws_security_group.lambda_sg[0].id]
+      subnet_ids         = var.lambda_subnet_ids
+    }
+  }
+
+  # Code signing configuration
+  code_signing_config_arn = aws_lambda_code_signing_config.s3_events[0].arn
+
+  # Reserved concurrent executions
+  reserved_concurrent_executions = 10
 
   tags = merge(local.common_tags, {
     purpose = "s3-event-processing"
