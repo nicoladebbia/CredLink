@@ -31,11 +31,6 @@ variable "routes" {
   type        = list(string)
 }
 
-variable "static_dir" {
-  description = "Directory containing static assets"
-  type        = string
-  default     = ""
-}
 
 variable "static_assets_enabled" {
   description = "Enable static assets upload"
@@ -134,7 +129,6 @@ variable "security_headers" {
 }
 
 locals {
-  name_prefix = "${var.project}-${var.env}"
   common_tags = merge(var.tags, {
     module = "worker_relay"
   })
