@@ -35,12 +35,6 @@ variable "worker_health_path" {
   default     = "/health"
 }
 
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default     = {}
-}
-
 locals {
   name_prefix = "${var.project}-${var.env}"
   common_tags = merge(var.tags, {

@@ -32,10 +32,6 @@ resource "cloudflare_r2_bucket" "bucket" {
   account_id = var.r2.account_id
   name       = var.r2.bucket_name
 
-  lifecycle {
-    prevent_destroy = var.destroy_protect
-  }
-
   tags = local.common_tags
 }
 
@@ -727,45 +723,4 @@ resource "aws_s3_bucket_policy" "bucket" {
   })
 }
 
-# Outputs
-output "bucket_name" {
-  description = "Storage bucket name"
-  value       = var.use_r2 ? cloudflare_r2_bucket.bucket[0].name : aws_s3_bucket.bucket[0].id
-}
 
-output "bucket_arn" {
-  description = "Storage bucket ARN (S3 only)"
-  value       = !var.use_r2 ? aws_s3_bucket.bucket[0].arn : null
-}
-
-output "bucket_endpoint" {
-  description = "Storage bucket endpoint"
-  value       = var.use_r2 ? "https://${cloudflare_r2_bucket.bucket[0].name}.r2.cloudflarestorage.com" : aws_s3_bucket.bucket[0].bucket_domain_name
-}
-
-output "security_configuration" {
-  description = "Security configuration status"
-  value = {
-    encryption_enabled      = true
-    versioning_enabled      = true
-    public_access_blocked   = true
-    vpc_endpoint_restricted = var.vpc_endpoint_id != null
-    force_destroy_disabled  = false
-    cors_configured         = true
-    lifecycle_rules_enabled = true
-  }
-  sensitive = false
-}
-
-output "compliance_features" {
-  description = "Compliance and governance features"
-  value = {
-    object_lock_enabled = !var.use_r2 && var.s3.object_lock.enabled
-    retention_days      = !var.use_r2 && var.s3.object_lock.enabled ? var.s3.object_lock.days : null
-    kms_encryption      = !var.use_r2
-    bucket_key_enabled  = !var.use_r2
-    audit_logging       = true
-    data_classification = "confidential"
-  }
-  sensitive = false
-}
