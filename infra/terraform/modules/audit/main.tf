@@ -1,9 +1,22 @@
 terraform {
-  required_version = "~> 1.9"
+  required_version = ">= 1.0"
   required_providers {
-    cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.11" }
-    aws        = { source = "hashicorp/aws", version = "~> 5.76" }
-    google     = { source = "hashicorp/google", version = "~> 5.39" }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.11"
+    }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.76"
+    }
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.39"
+    }
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.0"
+    }
   }
 }
 
@@ -21,12 +34,6 @@ variable "project" {
 variable "cloudflare_account_id" {
   description = "Cloudflare account ID"
   type        = string
-}
-
-variable "aws_region" {
-  description = "AWS region for audit logs"
-  type        = string
-  default     = "us-east-1"
 }
 
 variable "retention_days" {
@@ -70,28 +77,7 @@ variable "alert_webhook" {
   default     = ""
 }
 
-variable "alert_severity_threshold" {
-  description = "Minimum severity level for alerts"
-  type        = string
-  default     = "MEDIUM"
 
-  validation {
-    condition     = contains(["LOW", "MEDIUM", "HIGH", "CRITICAL"], var.alert_severity_threshold)
-    error_message = "Severity must be one of: LOW, MEDIUM, HIGH, CRITICAL."
-  }
-}
-
-variable "enable_log_aggregation" {
-  description = "Enable log aggregation to external systems"
-  type        = bool
-  default     = false
-}
-
-variable "log_aggregation_endpoint" {
-  description = "External log aggregation endpoint"
-  type        = string
-  default     = ""
-}
 
 locals {
   name_prefix = "${var.project}-${var.env}"
