@@ -1,0 +1,9 @@
+skip-check:
+  # GitHub Actions - Permissions are properly scoped at job level
+  - CKV2_GHA_1
+  # GitHub Actions - workflow_dispatch has no inputs, only env variables
+  - CKV_GHA_7
+  # S3 - Cross-region replication not required for single-region setup
+  - CKV_AWS_144
+  # S3 - Abort incomplete multipart upload is already configured
+  - CKV_AWS_300
