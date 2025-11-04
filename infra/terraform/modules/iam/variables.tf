@@ -56,11 +56,6 @@ variable "queue_name" {
   type        = string
 }
 
-variable "token_scope" {
-  description = "Token scope"
-  type        = list(string)
-  default     = []
-}
 
 variable "allowed_ip_ranges" {
   description = "IP ranges allowed to access resources"
