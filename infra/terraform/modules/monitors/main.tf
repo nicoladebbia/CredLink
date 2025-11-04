@@ -240,29 +240,4 @@ variable "synthetic_transactions" {
   default = {}
 }
 
-# Variable for Cloudflare account ID
-variable "cloudflare_account_id" {
-  description = "Cloudflare account ID"
-  type        = string
-}
 
-# Outputs
-output "monitor_ids" {
-  description = "Monitor IDs"
-  value = concat(
-    [for m in cloudflare_monitor.health_checks : m.id],
-    var.worker_health_path != "" ? [cloudflare_monitor.worker_health[0].id] : [],
-    var.storage_endpoint != "" ? [cloudflare_monitor.storage_tcp[0].id] : [],
-    [for m in cloudflare_monitor.synthetic_transactions : m.id]
-  )
-}
-
-output "dashboard_url" {
-  description = "Monitoring dashboard URL"
-  value       = "https://dash.cloudflare.com/${var.cloudflare_account_id}/analytics/dashboards/${cloudflare_dashboard.monitoring.id}"
-}
-
-output "notification_policy_ids" {
-  description = "Notification policy IDs"
-  value       = [for p in cloudflare_notification_policy.policies : p.id]
-}
