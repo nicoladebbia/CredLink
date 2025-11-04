@@ -257,9 +257,7 @@ jobs:
           # Generate CycloneDX SBOM with enhanced options
           syft ${{ env.IMAGE }} \
             -o cyclonedx-json=sbom.cdx.json \
-            -o cyclonedx-xml=sbom.cdx.xml \
-            --source-date-epoch ${{ env.SOURCE_DATE_EPOCH }} \
-            --catalogers=all
+            -o cyclonedx-xml=sbom.cdx.xml
           
           # Validate CycloneDX format comprehensively
           if ! jq empty sbom.cdx.json 2>/dev/null; then
