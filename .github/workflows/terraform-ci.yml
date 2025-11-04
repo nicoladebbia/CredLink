@@ -92,9 +92,18 @@ jobs:
 
       - name: Run TFLint
         if: steps.changes.outputs.changes == 'true'
-        uses: terraform-linters/tflint@master
-        with:
-          args: --chdir=infra/terraform --recursive
+        run: |
+          cd infra/terraform
+          # Run TFLint on individual module directories
+          for dir in modules/*/; do
+            echo "Running TFLint on $dir"
+            tflint "$dir"
+          done
+          # Run on environment directories
+          for dir in envs/*/; do
+            echo "Running TFLint on $dir"
+            tflint "$dir"
+          done
 
   security:
     name: Security Scan
