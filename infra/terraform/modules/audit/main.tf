@@ -239,9 +239,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
 resource "aws_sns_topic" "cloudtrail_notifications" {
   count = var.enable_aws_audit ? 1 : 0
 
-  name                        = "${local.name_prefix}-cloudtrail-alerts"
-  kms_master_key_id           = aws_kms_key.audit_logs[0].arn
-  
+  name              = "${local.name_prefix}-cloudtrail-alerts"
+  kms_master_key_id = aws_kms_key.audit_logs[0].arn
+
   tags = merge(local.common_tags, {
     purpose = "cloudtrail-notifications"
   })
@@ -316,10 +316,10 @@ resource "aws_kinesis_firehose_delivery_stream" "audit_stream" {
 
     # S3 encryption configuration
     s3_backup_configuration {
-      bucket_arn = aws_s3_bucket.audit_logs[0].arn
-      role_arn   = aws_iam_role.firehose_role[0].arn
+      bucket_arn     = aws_s3_bucket.audit_logs[0].arn
+      role_arn       = aws_iam_role.firehose_role[0].arn
       s3_backup_mode = "AllDocuments"
-      
+
       kms_encryption_configuration {
         aws_kms_key_arn = aws_kms_key.audit_logs[0].arn
       }
@@ -426,7 +426,7 @@ resource "aws_iam_role" "cloudtrail_role" {
 
 resource "aws_iam_role_policy" "cloudtrail_logging_policy" {
   count = var.enable_aws_audit ? 1 : 0
-  role = aws_iam_role.cloudtrail_role[0].id
+  role  = aws_iam_role.cloudtrail_role[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -458,7 +458,7 @@ resource "aws_lambda_function" "security_alerts" {
 
   # Security configurations
   kms_key_arn = aws_kms_key.audit_logs[0].arn
-  
+
   environment {
     variables = {
       ALERT_EMAIL   = var.alert_email
@@ -599,11 +599,11 @@ resource "aws_lambda_permission" "allow_eventbridge" {
 resource "aws_sqs_queue" "dlq" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
 
-  name                        = "${local.name_prefix}-lambda-dlq"
+  name                       = "${local.name_prefix}-lambda-dlq"
   message_retention_seconds  = 1209600 # 14 days
   visibility_timeout_seconds = 300
 
-  kms_master_key_id = aws_kms_key.audit_logs[0].arn
+  kms_master_key_id       = aws_kms_key.audit_logs[0].arn
   sqs_managed_sse_enabled = false
 
   tags = merge(local.common_tags, {
