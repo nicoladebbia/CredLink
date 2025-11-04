@@ -25,6 +25,14 @@ on:
         default: false
         type: boolean
 
+environments:
+  staging:
+    name: Staging
+    url: https://staging.c2concierge.com
+  production:
+    name: Production
+    url: https://c2concierge.com
+
 env:
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   TF_VAR_cloudflare_account_id: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -240,7 +248,7 @@ jobs:
 
       - name: Cost Estimation
         if: matrix.environment == 'staging'
-        uses: infracost/infracost-gh-action@v1
+        uses: infracost/infracost-gh-action@master
         with:
           path: infra/terraform/envs/${{ matrix.environment }}
           usage-file: infra/terraform/infracost-usage.yml
@@ -271,7 +279,9 @@ jobs:
       github.ref == 'refs/heads/develop' && 
       github.event_name == 'push' &&
       needs.validate.outputs.changes == 'true'
-    environment: staging
+    environment:
+      name: staging
+      url: https://staging.c2concierge.com
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -325,7 +335,9 @@ jobs:
       github.ref == 'refs/heads/main' && 
       github.event_name == 'push' &&
       needs.validate.outputs.changes == 'true'
-    environment: production
+    environment:
+      name: production
+      url: https://c2concierge.com
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
