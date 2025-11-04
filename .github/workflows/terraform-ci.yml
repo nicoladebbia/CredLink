@@ -102,12 +102,12 @@ jobs:
           # Run TFLint on individual module directories
           for dir in modules/*/; do
             echo "Running TFLint on $dir"
-            tflint "$dir"
+            tflint --chdir="$dir"
           done
           # Run on environment directories
           for dir in envs/*/; do
             echo "Running TFLint on $dir"
-            tflint "$dir"
+            tflint --chdir="$dir"
           done
 
   security:
