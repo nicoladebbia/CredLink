@@ -30,11 +30,6 @@ variable "worker_script_name" {
   type        = string
 }
 
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default     = {}
-}
 
 locals {
   name_prefix = "${var.project}-${var.env}"
