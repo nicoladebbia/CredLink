@@ -94,8 +94,7 @@ jobs:
         if: steps.changes.outputs.changes == 'true'
         uses: terraform-linters/tflint@master
         with:
-          directory: infra/terraform
-          args: --recursive
+          args: --chdir=infra/terraform --recursive
 
   security:
     name: Security Scan
