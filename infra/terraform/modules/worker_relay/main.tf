@@ -6,7 +6,6 @@ terraform {
 }
 
 locals {
-  name_prefix = "${var.project}-${var.env}"
   common_tags = merge(var.tags, {
     env     = var.env
     project = var.project
