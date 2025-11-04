@@ -189,3 +189,16 @@ variable "otlp_api_key" {
   default     = ""
   sensitive   = true
 }
+
+# VPC configuration for Lambda functions
+variable "vpc_id" {
+  description = "VPC ID for Lambda functions"
+  type        = string
+  default     = ""
+}
+
+variable "lambda_subnet_ids" {
+  description = "List of subnet IDs for Lambda functions"
+  type        = list(string)
+  default     = []
+}

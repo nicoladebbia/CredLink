@@ -70,6 +70,10 @@ module "storage" {
     kms_key_id = var.kms_key_id
   } : null
 
+  # VPC configuration for Lambda functions
+  vpc_id            = var.vpc_id
+  lambda_subnet_ids = var.lambda_subnet_ids
+
   tags            = local.common_tags
   destroy_protect = var.storage_destroy_protect
 }
