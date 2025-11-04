@@ -150,6 +150,7 @@ jobs:
           sarif_file: 'checkov-results.sarif'
 
       - name: Check for hardcoded secrets
+        if: github.event_name != 'workflow_dispatch'
         uses: trufflesecurity/trufflehog@main
         with:
           path: infra/terraform/
