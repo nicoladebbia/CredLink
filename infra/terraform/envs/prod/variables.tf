@@ -85,17 +85,6 @@ variable "worker_routes" {
   ]
 }
 
-variable "worker_static_dir" {
-  description = "Directory containing static assets for Worker"
-  type        = string
-  default     = "../../apps/worker/dist"
-}
-
-variable "worker_static_assets_enabled" {
-  description = "Enable static assets upload with Worker"
-  type        = bool
-  default     = true
-}
 
 # Queue configuration
 variable "queue_definitions" {
