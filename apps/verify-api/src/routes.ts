@@ -16,6 +16,7 @@ import { costTap, registerCostTapRoutes } from './phase40-cost-tap.js';
 import { adversarialInjector, registerAdversarialRoutes } from './phase40-adversarial.js';
 import { statisticalAnalyzer, registerStatisticalRoutes } from './phase40-statistics.js';
 import { guardrails, registerGuardrailsRoutes } from './phase40-guardrails.js';
+import { registerRehydrationRoutes } from './phase42-rehydration-routes.js';
 
 /**
  * Generate unique request ID for tracing
@@ -445,4 +446,7 @@ export async function registerRoutes(fastify: FastifyInstance): Promise<void> {
 
   // Register Phase 40 guardrails routes
   await registerGuardrailsRoutes(fastify);
+
+  // Register Phase 42 rehydration routes
+  await registerRehydrationRoutes(fastify);
 }

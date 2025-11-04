@@ -12,6 +12,13 @@ import {
   TrustRoot 
 } from './types.js';
 import { validateManifestSignature, getCryptoStatus } from './crypto.js';
+import { 
+  fetchManifestConditional,
+  isStrongETag,
+  normalizeETag,
+  isRehydrationSafe,
+  applyDelta
+} from './phase42-rehydration.js';
 
 /**
  * Trust list for signer root validation
@@ -73,12 +80,15 @@ function validateUrl(url: string, allowedSchemes: string[] = ['https', 'http']):
 }
 
 /**
- * Fetch manifest with strict security rules
+ * Fetch manifest with strict security rules and Phase 42 rehydration support
  */
 async function fetchManifest(url: string, timeout: number = 5000): Promise<{
   content: Uint8Array;
   contentType: string;
   fetchTime: number;
+  etag: string;
+  cacheControl: string;
+  servedVia: '304' | '200' | '226';
 }> {
   const startTime = Date.now();
   
@@ -91,60 +101,39 @@ async function fetchManifest(url: string, timeout: number = 5000): Promise<{
   }
 
   try {
-    const controller = new AbortController();
-    // CRITICAL: Add random jitter to prevent timing attacks
-    const jitter = Math.random() * 100; // 0-100ms random delay
-    const actualTimeout = timeout + jitter;
-    const timeoutId = setTimeout(() => controller.abort(), actualTimeout);
-
-    const startTime = Date.now();
+    // Use Phase 42 conditional fetch
+    const fetchResult = await fetchManifestConditional(url, { timeout });
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/c2pa, application/json, application/octet-stream',
-        'User-Agent': 'C2PA-Verify-API/1.0'
-      },
-      signal: controller.signal,
-      redirect: 'manual' // Don't follow redirects automatically
-    });
-    
-    const endTime = Date.now();
-
-    clearTimeout(timeoutId);
-
-    // Handle redirects manually with security checks
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get('location');
-      if (!location || !validateUrl(location)) {
-        throw new VerificationError(
-          'MANIFEST_UNREACHABLE',
-          'Unsafe redirect detected',
-          { url, location }
-        );
-      }
-      
-      // Recursive fetch with strict validation
-      return fetchManifest(location, timeout);
-    }
-
-    if (!response.ok) {
-      throw new VerificationError(
-        'MANIFEST_UNREACHABLE',
-        `HTTP ${response.status}: ${response.statusText}`,
-        { url, status: response.status }
-      );
-    }
-
-    const content = new Uint8Array(await response.arrayBuffer());
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
     const rawFetchTime = Date.now() - startTime;
     
     // CRITICAL: Add timing noise to prevent side-channel attacks
     const noise = Math.random() * 50; // 0-50ms noise
     const fetchTime = Math.round(rawFetchTime + noise);
 
-    return { content, contentType, fetchTime };
+    // For 304 responses, we need to fetch the actual content for verification
+    // In production, this would come from a local cache
+    let content: Uint8Array;
+    if (fetchResult.servedVia === '304' && !fetchResult.content) {
+      // Force full fetch for verification (in production, use cached content)
+      const fullFetch = await fetchManifestConditional(url, { timeout });
+      if (!fullFetch.content) {
+        throw new VerificationError('MANIFEST_UNREACHABLE', 'No content received');
+      }
+      content = fullFetch.content;
+    } else if (fetchResult.content) {
+      content = fetchResult.content;
+    } else {
+      throw new VerificationError('MANIFEST_UNREACHABLE', 'No content received');
+    }
+
+    return {
+      content,
+      contentType: fetchResult.contentType,
+      fetchTime,
+      etag: fetchResult.etag,
+      cacheControl: fetchResult.cacheControl,
+      servedVia: fetchResult.servedVia
+    };
   } catch (error) {
     if (error instanceof VerificationError) {
       throw error;
@@ -169,7 +158,7 @@ async function discoverManifest(assetUrl: string): Promise<string | null> {
     const response = await fetch(assetUrl, {
       method: 'HEAD',
       headers: {
-        'User-Agent': 'C2PA-Verify-API/1.0'
+        'User-Agent': 'C2PA-Verify-API/1.1 (Phase42-Rehydration)'
       },
       signal: controller.signal
     });
@@ -285,12 +274,19 @@ export async function verifyProvenance(
     decisionPath.steps.push(`Fetching manifest from ${manifestUrl}`);
 
     // Fetch manifest
-    const { content: manifestData, fetchTime } = await fetchManifest(
+    const { content: manifestData, fetchTime, etag, cacheControl, servedVia } = await fetchManifest(
       manifestUrl, 
       request.timeout
     );
 
-    decisionPath.steps.push('Manifest fetched successfully');
+    decisionPath.steps.push(`Manifest fetched via ${servedVia} response`);
+    
+    // Log ETag information for rehydration tracking
+    if (etag && isStrongETag(etag)) {
+      decisionPath.steps.push(`Strong ETag received: ${normalizeETag(etag).substring(0, 8)}...`);
+    } else if (etag) {
+      decisionPath.steps.push('Weak ETag received - not suitable for rehydration');
+    }
 
     // Parse manifest
     const manifestText = new TextDecoder().decode(manifestData);
@@ -375,7 +371,10 @@ export async function verifyProvenance(
         total_time_ms: totalTime,
         fetch_time_ms: fetchTime,
         validation_time_ms: validationTime,
-        cached: false // TODO: Implement caching
+        cached: servedVia === '304',
+        etag: etag || '',
+        cache_control: cacheControl || '',
+        served_via: servedVia
       }
     };
 
@@ -401,7 +400,10 @@ export async function verifyProvenance(
           total_time_ms: totalTime,
           fetch_time_ms: 0,
           validation_time_ms: 0,
-          cached: false
+          cached: false,
+          etag: '',
+          cache_control: '',
+          served_via: '200'
         }
       };
     }
@@ -424,7 +426,10 @@ export async function verifyProvenance(
         total_time_ms: totalTime,
         fetch_time_ms: 0,
         validation_time_ms: 0,
-        cached: false
+        cached: false,
+        etag: '',
+        cache_control: '',
+        served_via: '200'
       }
     };
   }

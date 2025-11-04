@@ -60,6 +60,12 @@ export interface VerificationResult {
     validation_time_ms: number;
     /** Whether results were from cache */
     cached: boolean;
+    /** ETag from manifest response (Phase 42) */
+    etag?: string;
+    /** Cache control headers (Phase 42) */
+    cache_control?: string;
+    /** How content was served (Phase 42) */
+    served_via?: '304' | '200' | '226';
   };
 }
 
@@ -79,11 +85,11 @@ export interface TrustRoot {
 }
 
 export class VerificationError extends Error {
-  code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT' | 'INVALID_SIGNATURE';
+  code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT' | 'INVALID_SIGNATURE' | 'INVALID_VALIDATOR' | 'INVALID_DELTA' | 'UNSUPPORTED_DELTA' | 'DELTA_APPLICATION_FAILED';
   details?: Record<string, unknown>;
 
   constructor(
-    code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT' | 'INVALID_SIGNATURE',
+    code: 'MANIFEST_UNREACHABLE' | 'MISMATCHED_HASH' | 'UNKNOWN_TRUST_ROOT' | 'INVALID_FORMAT' | 'NETWORK_ERROR' | 'TIMEOUT' | 'INVALID_SIGNATURE' | 'INVALID_VALIDATOR' | 'INVALID_DELTA' | 'UNSUPPORTED_DELTA' | 'DELTA_APPLICATION_FAILED',
     message: string,
     details?: Record<string, unknown>
   ) {
