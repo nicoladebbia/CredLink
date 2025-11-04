@@ -16,82 +16,14 @@ provider "signer" {
 # Data source for AWS canonical user ID (required for S3 access logging)
 data "aws_canonical_user_id" "current" {}
 
-# Storage module - supports both R2 and S3
-variable "env" {
-  description = "Environment name"
-  type        = string
-}
-
-
-variable "use_r2" {
-  description = "Use Cloudflare R2 instead of S3"
-  type        = bool
-}
-
-variable "r2" {
-  description = "R2 configuration"
-  type = object({
-    bucket_name = string
-    account_id  = string
-  })
-  default = null
-}
-
-variable "s3" {
-  description = "S3 configuration"
-  type = object({
-    bucket_name = string
-    region      = string
-    object_lock = object({
-      enabled = bool
-      mode    = string
-      days    = number
-    })
-    kms_key_id = optional(string)
-  })
-  default = null
-}
-
-variable "vpc_id" {
-  description = "VPC ID for Lambda security group"
-  type        = string
-  default     = ""
-}
-
-variable "lambda_subnet_ids" {
-  description = "List of subnet IDs for Lambda VPC configuration"
-  type        = list(string)
-  default     = []
-}
-
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default     = {}
-}
-
-variable "destroy_protect" {
-  description = "Enable destroy protection"
-  type        = bool
-  default     = true
-}
-
-variable "vpc_endpoint_id" {
-  description = "VPC endpoint ID for S3 access restriction"
-  type        = string
-  default     = null
-
-  validation {
-    condition     = var.vpc_endpoint_id == null || can(regex("^vpce-[a-f0-9]{8,17}$", var.vpc_endpoint_id))
-    error_message = "VPC endpoint ID must be valid format (vpce-xxxxxxxx)."
-  }
-}
-
 locals {
+  name_prefix = "${var.project}-${var.env}"
   common_tags = merge(var.tags, {
-    module = "storage"
+    env     = var.env
+    project = var.project
   })
 }
+
 
 # R2 Bucket (Cloudflare provider)
 resource "cloudflare_r2_bucket" "bucket" {
