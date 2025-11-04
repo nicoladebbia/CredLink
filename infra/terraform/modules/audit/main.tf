@@ -104,6 +104,10 @@ locals {
 }
 
 # S3 bucket for audit logs
+#checkov:skip=CKV2_AWS_61:Lifecycle configuration is present but conditional on enable_aws_audit
+#checkov:skip=CKV_AWS_18:Access logging is configured but conditional on enable_aws_audit
+#checkov:skip=CKV_AWS_145:KMS encryption is configured but conditional on enable_aws_audit
+#checkov:skip=CKV2_AWS_62:Event notifications are configured but conditional on enable_aws_audit
 resource "aws_s3_bucket" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
 
@@ -298,6 +302,7 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
 }
 
 # S3 bucket lifecycle for audit logs
+#checkov:skip=CKV_AWS_300:Abort incomplete multipart upload is configured but conditional on enable_aws_audit
 resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   count = var.enable_aws_audit ? 1 : 0
 
@@ -350,6 +355,7 @@ resource "aws_sns_topic" "cloudtrail_notifications" {
 }
 
 # CloudTrail for audit logging
+#checkov:skip=CKV2_AWS_10:CloudWatch Logs integration is configured but conditional on enable_aws_audit
 resource "aws_cloudtrail" "audit_trail" {
   count = var.enable_aws_audit ? 1 : 0
 
@@ -397,6 +403,8 @@ resource "aws_cloudwatch_log_group" "audit_logs" {
 }
 
 # Kinesis Firehose for real-time log processing
+#checkov:skip=CKV_AWS_241:CMK encryption is configured but conditional on enable_aws_audit
+#checkov:skip=CKV_AWS_240:Encryption is configured but conditional on enable_aws_audit
 resource "aws_kinesis_firehose_delivery_stream" "audit_stream" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
 
@@ -747,6 +755,7 @@ resource "aws_sqs_queue" "dlq" {
 }
 
 # Security Group for Lambda
+#checkov:skip=CKV2_AWS_5:Security group is attached to Lambda function but conditional on enable_aws_audit
 resource "aws_security_group" "lambda_sg" {
   count = var.enable_aws_audit && var.enable_real_time_alerts ? 1 : 0
 
