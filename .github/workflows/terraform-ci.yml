@@ -9,21 +9,6 @@ on:
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC for drift detection
   workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Environment to deploy'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-        - demo
-        - staging
-        - prod
-      drift_detection:
-        description: 'Enable drift detection mode'
-        required: false
-        default: false
-        type: boolean
 
 env:
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -46,7 +31,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-      issues: write
+      issues: read
       security-events: write
       actions: read
       checks: write
