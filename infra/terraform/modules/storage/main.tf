@@ -70,7 +70,6 @@ variable "vpc_endpoint_id" {
 }
 
 locals {
-  name_prefix = "${var.project}-${var.env}"
   common_tags = merge(var.tags, {
     module = "storage"
   })
