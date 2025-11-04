@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
-import { ManifestStore } from '@c2/manifest-store';
-import type { ManifestStoreConfig, AuditRecord, ManifestMetadata } from '@c2/manifest-store';
+import { ManifestStore } from '../../../manifest-store/dist/manifest-store.js';
+import type { ManifestStoreConfig, AuditRecord, ManifestMetadata } from '../../../manifest-store/dist/types.js';
 
 describe('Manifest Store Acceptance Tests', () => {
   let store: ManifestStore;

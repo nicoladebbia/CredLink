@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@c2/utils": "file:../utils",
-    "@c2/manifest-store": "file:../manifest-store",
     "yaml": "^2.3.4",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.2",
