@@ -1,5 +1,3 @@
-#checkov:skip=CKV2_GHA_1:Permissions are properly scoped at job level
-#checkov:skip=CKV_GHA_7:workflow_dispatch has no inputs, only env variables
 name: Terraform CI/CD Pipeline
 on:
   push:
@@ -11,6 +9,9 @@ on:
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC for drift detection
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
   TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
