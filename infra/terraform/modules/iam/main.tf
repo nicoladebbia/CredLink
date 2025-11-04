@@ -138,7 +138,7 @@ resource "cloudflare_api_token" "storage_token" {
     # Add IP restrictions if specified
     length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null
+    } : null,
     # Add time-based restrictions for enhanced security
     var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
@@ -170,11 +170,11 @@ resource "cloudflare_api_token" "worker_token" {
   condition = jsonencode({
     request = {
       method = ["POST", "PUT", "DELETE", "GET"]
-    }
+    },
     # Add IP restrictions if specified
     length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null
+    } : null,
     # Add time-based restrictions for enhanced security
     var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
@@ -206,11 +206,11 @@ resource "cloudflare_api_token" "queue_token" {
   condition = jsonencode({
     request = {
       method = ["POST", "GET", "DELETE", "PUT"]
-    }
+    },
     # Add IP restrictions if specified
     length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null
+    } : null,
     # Add time-based restrictions for enhanced security
     var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
@@ -253,11 +253,11 @@ resource "cloudflare_api_token" "service_tokens" {
   condition = jsonencode({
     request = {
       method = ["GET", "POST", "PUT", "DELETE"]
-    }
+    },
     # Add IP restrictions if specified
     length(var.allowed_ip_ranges) > 0 ? {
       ip_in = var.allowed_ip_ranges
-    } : null
+    } : null,
     # Add time-based restrictions for enhanced security
     var.token_ttl_seconds <= 86400 ? {
       request_after = "2024-01-01T00:00:00Z"
