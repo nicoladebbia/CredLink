@@ -6,15 +6,6 @@ terraform {
 }
 
 # Monitors module
-variable "env" {
-  description = "Environment name"
-  type        = string
-}
-
-variable "project" {
-  description = "Project name"
-  type        = string
-}
 
 
 
