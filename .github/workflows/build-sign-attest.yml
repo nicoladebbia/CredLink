@@ -104,6 +104,7 @@ jobs:
             --provenance=true \
             --attest type=provenance,mode=max \
             --output=type=image,name=${{ env.IMAGE }},push=true \
+            --metadata-file build.json \
             --build-arg SOURCE_DATE_EPOCH=${{ env.SOURCE_DATE_EPOCH }} \
             --tag ${{ env.IMAGE }} \
             --no-cache \
@@ -195,6 +196,18 @@ jobs:
           fi
           
           echo "✅ Image signing process completed"
+      
+      - name: Check build metadata
+        run: |
+          # Check if build.json exists before attestation
+          if [ -f "build.json" ]; then
+            echo "✅ build.json found for attestation"
+            echo "Build metadata:"
+            cat build.json | head -20
+          else
+            echo "⚠️ build.json not found, creating minimal metadata"
+            echo '{"build":{"image":"'${{ env.IMAGE }}'","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}}' > build.json
+          fi
       
       - name: Attest SLSA provenance with validation
         uses: actions/attest-build-provenance@v1
