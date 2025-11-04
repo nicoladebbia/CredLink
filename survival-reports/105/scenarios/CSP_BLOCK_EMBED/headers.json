@@ -1,0 +1,25 @@
+{
+  "headers": {
+    "access-control-allow-credentials": "true",
+    "cache-control": "public, max-age=3600",
+    "connection": "close",
+    "content-length": "420",
+    "content-security-policy": "default-src 'none'; img-src 'self' data:; frame-ancestors 'none'",
+    "content-type": "image/jpeg",
+    "date": "Tue, 04 Nov 2025 00:43:38 GMT",
+    "etag": "W/\"1a4-tIF65CT90YtyyFPnezW4G57Kvpk\"",
+    "link": "</manifests/4d25ea476e49eca06a0f264db92f3c0c9086fff2c1941319aef8e17bb08342ed.c2pa>; rel=\"c2pa-manifest\"",
+    "vary": "Origin",
+    "x-c2-policy": "remote-only",
+    "x-content-type-options": "nosniff",
+    "x-manifest-hash": "4d25ea476e49eca06a0f264db92f3c0c9086fff2c1941319aef8e17bb08342ed",
+    "x-powered-by": "Express",
+    "x-ratelimit-limit": "1000",
+    "x-ratelimit-remaining": "986",
+    "x-ratelimit-reset": "1762217914"
+  },
+  "link_header_present": true,
+  "x_c2_policy": "remote-only",
+  "content_type": "image/jpeg",
+  "cache_control": "public, max-age=3600"
+}
