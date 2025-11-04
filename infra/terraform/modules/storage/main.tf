@@ -120,7 +120,7 @@ resource "aws_kms_key" "s3_bucket" {
 resource "aws_kms_alias" "s3_bucket" {
   count = !var.use_r2 ? 1 : 0
 
-  name          = "alias/s3-${var.env}-bucket"
+  name          = "alias/s3-${local.name_prefix}-bucket"
   target_key_id = aws_kms_key.s3_bucket[0].key_id
 }
 
@@ -275,7 +275,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "bucket" {
 resource "aws_sqs_queue" "lambda_dlq" {
   count = !var.use_r2 ? 1 : 0
 
-  name = "${var.env}-lambda-dlq"
+  name = "${local.name_prefix}-lambda-dlq"
 
   # Enable server-side encryption
   kms_master_key_id = aws_kms_key.s3_bucket[0].arn
@@ -312,7 +312,7 @@ resource "aws_sqs_queue_policy" "lambda_dlq" {
 resource "aws_security_group" "lambda_sg" {
   count = !var.use_r2 && var.vpc_id != "" ? 1 : 0
 
-  name_prefix = "${var.env}-lambda-sg-"
+  name_prefix = "${local.name_prefix}-lambda-sg-"
   description = "Security group for S3 events Lambda"
   vpc_id      = var.vpc_id
 
@@ -401,7 +401,7 @@ resource "aws_lambda_function" "s3_events" {
   count = !var.use_r2 ? 1 : 0
 
   filename      = "s3_events.zip"
-  function_name = "${var.env}-s3-events"
+  function_name = "${local.name_prefix}-s3-events"
   role          = aws_iam_role.lambda_s3_events[0].arn
   handler       = "index.handler"
   runtime       = "python3.11"
@@ -454,7 +454,7 @@ resource "aws_lambda_function" "s3_events" {
 resource "aws_iam_role" "lambda_s3_events" {
   count = !var.use_r2 ? 1 : 0
 
-  name = "${var.env}-lambda-s3-events"
+  name = "${local.name_prefix}-lambda-s3-events"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -475,7 +475,7 @@ resource "aws_iam_role" "lambda_s3_events" {
 resource "aws_iam_role_policy" "lambda_s3_events" {
   count = !var.use_r2 ? 1 : 0
 
-  name = "${var.env}-lambda-s3-events"
+  name = "${local.name_prefix}-lambda-s3-events"
   role = aws_iam_role.lambda_s3_events[0].id
 
   policy = jsonencode({
