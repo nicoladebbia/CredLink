@@ -55,8 +55,6 @@ jobs:
           --health-interval=30s
           --health-timeout=10s
           --health-retries=3
-        volumes:
-          - wp_data:/var/www/html
 
     steps:
     - name: Checkout code
@@ -82,22 +80,13 @@ jobs:
         timeout 300 bash -c 'until curl -f http://localhost:8080; do sleep 5; done'
         echo "WordPress is ready!"
 
-    - name: Install WordPress CLI and network tools
+    - name: Configure WordPress
       run: |
+        # Install WordPress CLI and network tools
         curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
         chmod +x wp-cli.phar
         sudo mv wp-cli.phar /usr/local/bin/wp
-        # Install netcat for MySQL connection testing
-        sudo apt-get update && sudo apt-get install -y netcat-openbsd
-
-    - name: Configure WordPress
-      run: |
-        # Make directory writable for current user
-        sudo chown -R $(whoami):$(whoami) /var/www/html
-        sudo chmod -R 755 /var/www/html
-        
-        # Download WordPress first
-        wp --path=/var/www/html core download --allow-root
+        sudo apt-get update && sudo apt-get install -y netcat-openbsd mysql-client
         
         # Wait for MySQL service to be ready
         echo "Waiting for MySQL service to be ready..."
@@ -110,14 +99,19 @@ jobs:
           sleep 5
         done
         
-        # Configure WordPress with MySQL service
-        wp --path=/var/www/html core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql:3306 --allow-root
+        # Test MySQL connection
+        if ! mysql -h mysql -u wordpress -pwordpress -e "SELECT 1" 2>/dev/null; then
+          echo "❌ MySQL connection failed"
+          exit 1
+        fi
         
-        # Install WordPress
-        wp --path=/var/www/html core install --url=http://localhost:8080 --title="C2 Concierge Test" --admin_user=admin --admin_password=password --admin_email=test@example.com --allow-root
-        
-        # Install test plugins
-        wp --path=/var/www/html plugin install --activate hello-dolly --allow-root
+        # Configure WordPress using the WordPress container directly
+        docker exec wordpress bash -c "
+          cd /var/www/html &&
+          wp core config --dbname=wordpress_test --dbuser=wordpress --dbpass=wordpress --dbhost=mysql:3306 --allow-root &&
+          wp core install --url=http://localhost:8080 --title='C2 Concierge Test' --admin_user=admin --admin_password=password --admin_email=test@example.com --allow-root &&
+          wp plugin install --activate hello-dolly --allow-root
+        "
 
     - name: Build WordPress plugin
       run: |

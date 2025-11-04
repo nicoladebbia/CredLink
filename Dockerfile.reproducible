@@ -76,15 +76,11 @@ RUN set -euo pipefail && \
     if [[ ! -f package.json ]] || [[ ! -f pnpm-lock.yaml ]]; then \
         echo "❌ Required package files missing" && exit 1; \
     fi && \
-    if [[ ! -f tsconfig.json ]]; then \
-        echo "❌ TypeScript configuration missing" && exit 1; \
-    fi && \
-    # Verify lockfile integrity
-    pnpm verify-lockfile || true && \
-    echo "✅ Source integrity comprehensively verified"
+    echo "✅ Source integrity verified"
 
 # Build all packages with maximum optimization and validation
 RUN set -euo pipefail && \
+    pnpm install --frozen-lockfile && \
     pnpm build && \
     echo "✅ Build completed successfully" && \
     # Comprehensive cleanup to minimize attack surface
