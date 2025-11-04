@@ -1,0 +1,300 @@
+# Infracost usage configuration
+# Phase 45 - Terraform & Infra Blueprints (v1.2)
+
+version: "0.1"
+
+# Resource usage estimates for cost calculation
+resource_usage:
+  aws_s3_bucket:
+    monthly_storage_gb: 1000
+    monthly_requests_tier1: 1000000
+    monthly_requests_tier2: 100000
+    monthly_data_transfer_gb: 500
+
+  cloudflare_r2_bucket:
+    monthly_storage_gb: 1000
+    monthly_class_a_operations: 1000000
+    monthly_class_b_operations: 10000000
+    monthly_data_transfer_gb: 1000
+
+  cloudflare_worker_script:
+    monthly_requests: 10000000
+    average_cpu_time_ms: 50
+    monthly_memory_gb_ms: 1000000
+
+  cloudflare_queue:
+    monthly_messages: 1000000
+    average_message_size_kb: 10
+
+  aws_sqs_queue:
+    monthly_requests: 1000000
+
+  cloudflare_monitor:
+    monthly_checks: 43200  # Every 2 minutes for 30 days
+
+  aws_budgets_budget:
+    monthly_budgets: 10
+
+  aws_iam_role:
+    monthly_roles: 10
+
+  aws_iam_policy:
+    monthly_policies: 20
+
+  aws_s3_bucket_versioning:
+    monthly_object_versions: 100000
+
+  aws_s3_bucket_object_lock_configuration:
+    monthly_locked_objects: 10000
+
+  aws_s3_bucket_server_side_encryption_configuration:
+    monthly_encryption_operations: 1000000
+
+  aws_s3_bucket_lifecycle_configuration:
+    monthly_transitions: 10000
+
+  aws_s3_bucket_public_access_block:
+    monthly_access_checks: 1000000
+
+  cloudflare_r2_bucket_policy:
+    monthly_policy_evaluations: 1000000
+
+  cloudflare_worker_secret:
+    monthly_secrets: 10
+
+  cloudflare_workers_kv_namespace:
+    monthly_reads: 1000000
+    monthly_writes: 100000
+    monthly_storage_gb: 10
+
+  cloudflare_worker_queue_binding:
+    monthly_bindings: 10
+
+  cloudflare_queue_policy:
+    monthly_policy_evaluations: 1000000
+
+  cloudflare_api_token:
+    monthly_tokens: 10
+
+  helm_release:
+    monthly_releases: 2
+
+  kubernetes_namespace:
+    monthly_namespaces: 5
+
+  kubernetes_service:
+    monthly_services: 10
+
+  kubernetes_service_account:
+    monthly_service_accounts: 10
+
+  kubernetes_config_map:
+    monthly_config_maps: 20
+
+# Environment-specific usage profiles
+usage_profiles:
+  demo:
+    aws_s3_bucket:
+      monthly_storage_gb: 100
+      monthly_requests_tier1: 100000
+      monthly_requests_tier2: 10000
+      monthly_data_transfer_gb: 50
+
+    cloudflare_r2_bucket:
+      monthly_storage_gb: 100
+      monthly_class_a_operations: 100000
+      monthly_class_b_operations: 1000000
+      monthly_data_transfer_gb: 100
+
+    cloudflare_worker_script:
+      monthly_requests: 1000000
+      average_cpu_time_ms: 25
+      monthly_memory_gb_ms: 500000
+
+    cloudflare_queue:
+      monthly_messages: 100000
+
+    cloudflare_monitor:
+      monthly_checks: 21600  # Every 4 minutes
+
+  staging:
+    aws_s3_bucket:
+      monthly_storage_gb: 500
+      monthly_requests_tier1: 500000
+      monthly_requests_tier2: 50000
+      monthly_data_transfer_gb: 250
+
+    cloudflare_r2_bucket:
+      monthly_storage_gb: 500
+      monthly_class_a_operations: 500000
+      monthly_class_b_operations: 5000000
+      monthly_data_transfer_gb: 500
+
+    cloudflare_worker_script:
+      monthly_requests: 5000000
+      average_cpu_time_ms: 40
+      monthly_memory_gb_ms: 2000000
+
+    cloudflare_queue:
+      monthly_messages: 500000
+
+    cloudflare_monitor:
+      monthly_checks: 43200  # Every 2 minutes
+
+  prod:
+    aws_s3_bucket:
+      monthly_storage_gb: 2000
+      monthly_requests_tier1: 2000000
+      monthly_requests_tier2: 200000
+      monthly_data_transfer_gb: 1000
+
+    cloudflare_r2_bucket:
+      monthly_storage_gb: 2000
+      monthly_class_a_operations: 2000000
+      monthly_class_b_operations: 20000000
+      monthly_data_transfer_gb: 2000
+
+    cloudflare_worker_script:
+      monthly_requests: 20000000
+      average_cpu_time_ms: 60
+      monthly_memory_gb_ms: 4000000
+
+    cloudflare_queue:
+      monthly_messages: 2000000
+
+    cloudflare_monitor:
+      monthly_checks: 43200  # Every 2 minutes
+
+# Custom resource costs for services not in Infracost database
+custom_resource_costs:
+  cloudflare_r2_bucket:
+    storage:
+      price: 0.015  # $0.015 per GB-month
+      unit: GB-months
+    
+    class_a_operations:
+      price: 0.0045  # $0.0045 per 1,000 operations
+      unit: 1,000 operations
+    
+    class_b_operations:
+      price: 0.0005  # $0.0005 per 10,000 operations
+      unit: 10,000 operations
+    
+    data_transfer:
+      price: 0.09  # $0.09 per GB (egress)
+      unit: GB
+
+  cloudflare_worker_script:
+    requests:
+      price: 0.50  # $0.50 per million requests
+      unit: 1,000,000 requests
+    
+    cpu_time:
+      price: 12.50  # $12.50 per million CPU-ms
+      unit: 1,000,000 CPU-ms
+    
+    memory:
+      price: 2.50  # $2.50 per million GB-ms
+      unit: 1,000,000 GB-ms
+
+  cloudflare_queue:
+    messages:
+      price: 0.40  # $0.40 per million messages
+      unit: 1,000,000 messages
+
+  cloudflare_monitor:
+    checks:
+      price: 0.10  # $0.10 per 1,000 checks
+      unit: 1,000 checks
+
+  cloudflare_workers_kv_namespace:
+    storage:
+      price: 0.50  # $0.50 per GB-month
+      unit: GB-months
+    
+    reads:
+      price: 0.50  # $0.50 per million reads
+      unit: 1,000,000 reads
+    
+    writes:
+      price: 5.00  # $5.00 per million writes
+      unit: 1,000,000 writes
+
+# Cost breakdown by category
+cost_categories:
+  storage:
+    - aws_s3_bucket
+    - cloudflare_r2_bucket
+    - aws_s3_bucket_versioning
+    - aws_s3_bucket_object_lock_configuration
+
+  compute:
+    - cloudflare_worker_script
+    - cloudflare_queue
+    - aws_sqs_queue
+
+  monitoring:
+    - cloudflare_monitor
+    - cloudflare_queue_policy
+    - cloudflare_r2_bucket_policy
+
+  security:
+    - aws_iam_role
+    - aws_iam_policy
+    - cloudflare_api_token
+    - cloudflare_worker_secret
+    - aws_s3_bucket_server_side_encryption_configuration
+    - aws_s3_bucket_public_access_block
+
+  networking:
+    - cloudflare_worker_route
+    - kubernetes_service
+
+  data_management:
+    - aws_s3_bucket_lifecycle_configuration
+    - cloudflare_workers_kv_namespace
+    - kubernetes_config_map
+
+  orchestration:
+    - helm_release
+    - kubernetes_namespace
+    - kubernetes_service_account
+
+# Budget thresholds by environment
+budget_thresholds:
+  demo:
+    monthly_budget: 100
+    alert_threshold: 80
+    currency: USD
+
+  staging:
+    monthly_budget: 500
+    alert_threshold: 85
+    currency: USD
+
+  prod:
+    monthly_budget: 2000
+    alert_threshold: 90
+    currency: USD
+
+# Cost optimization recommendations
+optimization_recommendations:
+  - resource: cloudflare_r2_bucket
+    recommendation: "Enable lifecycle policies to transition old data to cheaper storage tiers"
+    potential_savings: "20-30%"
+
+  - resource: cloudflare_worker_script
+    recommendation: "Optimize code to reduce CPU time and memory usage"
+    potential_savings: "15-25%"
+
+  - resource: cloudflare_queue
+    recommendation: "Adjust message retention periods based on actual usage patterns"
+    potential_savings: "10-15%"
+
+  - resource: cloudflare_monitor
+    recommendation: "Review monitoring frequency and adjust based on criticality"
+    potential_savings: "5-10%"
+
+  - resource: aws_s3_bucket
+    recommendation: "Use S3 Intelligent-Tiering for infrequently accessed data"
+    potential_savings: "25-40%"
