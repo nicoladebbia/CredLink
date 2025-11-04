@@ -1,0 +1,865 @@
+{
+  "run_id": "run-1762277964161",
+  "timestamp": "2025-11-04T17:39:24.161Z",
+  "matrix_version": 1,
+  "total_scenarios": 19,
+  "remote_survival_rate": 1,
+  "embed_survival_rate_preserve_only": 1,
+  "scenarios_failed": 0,
+  "failure_breakdown": {
+    "SURVIVED": 2,
+    "BROKEN_MANIFEST": 0,
+    "BROKEN_LINK": 0,
+    "BROKEN_HEADERS": 0,
+    "DESTROYED_EMBED": 17,
+    "DESTROYED_CONTENT": 0,
+    "INACCESSIBLE": 0,
+    "INACCESSIBLE_404": 0,
+    "INACCESSIBLE_TIMEOUT": 0
+  },
+  "results": [
+    {
+      "scenario_id": "IMG_JPEG_Q75_STRIP",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/d8df2ba999f86e2b65c0d07d397b34730d81b4faa7656d359b033c46ee298cb1.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "d8df2ba999f86e2b65c0d07d397b34730d81b4faa7656d359b033c46ee298cb1",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "995",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/d8df2ba999f86e2b65c0d07d397b34730d81b4faa7656d359b033c46ee298cb1.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 14,
+        "manifest_fetch": 12
+      }
+    },
+    {
+      "scenario_id": "IMG_RESIZE_1024",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/4c38ebc39f2cbc9f2da16b70560b15cee843fd5402c6e6a0213c2ba35e2f479b.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "4c38ebc39f2cbc9f2da16b70560b15cee843fd5402c6e6a0213c2ba35e2f479b",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "984",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/4c38ebc39f2cbc9f2da16b70560b15cee843fd5402c6e6a0213c2ba35e2f479b.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 65,
+        "manifest_fetch": 6
+      }
+    },
+    {
+      "scenario_id": "IMG_CONVERT_WEBP",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/5f26f49a34673f9cfef594830f63d0b5f5eacc9ec78f65c11120bfd718c511f4.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "5f26f49a34673f9cfef594830f63d0b5f5eacc9ec78f65c11120bfd718c511f4",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "976",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/5f26f49a34673f9cfef594830f63d0b5f5eacc9ec78f65c11120bfd718c511f4.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 7,
+        "manifest_fetch": 6
+      }
+    },
+    {
+      "scenario_id": "IMG_CONVERT_AVIF",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/8830161a33d5c06dba2d323b52043d2c0d2b7c9fd1ca3421a1ce8b0d21d297a7.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "8830161a33d5c06dba2d323b52043d2c0d2b7c9fd1ca3421a1ce8b0d21d297a7",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "968",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/8830161a33d5c06dba2d323b52043d2c0d2b7c9fd1ca3421a1ce8b0d21d297a7.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 13,
+        "manifest_fetch": 7
+      }
+    },
+    {
+      "scenario_id": "IMG_CROP_CENTER",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/d60e5bb37a3fdd9243dee0e7aac1ef225ac0d5367345224965d59b8a54ac56bd.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "d60e5bb37a3fdd9243dee0e7aac1ef225ac0d5367345224965d59b8a54ac56bd",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "960",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/d60e5bb37a3fdd9243dee0e7aac1ef225ac0d5367345224965d59b8a54ac56bd.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 7,
+        "manifest_fetch": 8
+      }
+    },
+    {
+      "scenario_id": "IMG_PROGRESSIVE_BASELINE",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/876cd6ff0e429a9c089d6892fc1965b7b1f1235435d4e7d06a896d0002e329ed.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "876cd6ff0e429a9c089d6892fc1965b7b1f1235435d4e7d06a896d0002e329ed",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "953",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/876cd6ff0e429a9c089d6892fc1965b7b1f1235435d4e7d06a896d0002e329ed.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 8,
+        "manifest_fetch": 5
+      }
+    },
+    {
+      "scenario_id": "IMG_METADATA_REWRITE",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/2e464057f841152266ae8bbe328c81b0b48b768faa4b41a59c788c8fca5de12e.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "2e464057f841152266ae8bbe328c81b0b48b768faa4b41a59c788c8fca5de12e",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "945",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/2e464057f841152266ae8bbe328c81b0b48b768faa4b41a59c788c8fca5de12e.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 7,
+        "manifest_fetch": 6
+      }
+    },
+    {
+      "scenario_id": "IMG_ROTATE_90",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/ef8b47976341077fc1d6b253d71e490602d32e799d49eed4dbb78eb2297b0525.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "ef8b47976341077fc1d6b253d71e490602d32e799d49eed4dbb78eb2297b0525",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "937",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/ef8b47976341077fc1d6b253d71e490602d32e799d49eed4dbb78eb2297b0525.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 7,
+        "manifest_fetch": 5
+      }
+    },
+    {
+      "scenario_id": "IMG_WATERMARK_OVERLAY",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/124520473d8523d1333d2c8fe75b69687ff8792b4b77fab3bb463a52f5465c25.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "124520473d8523d1333d2c8fe75b69687ff8792b4b77fab3bb463a52f5465c25",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "931",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/124520473d8523d1333d2c8fe75b69687ff8792b4b77fab3bb463a52f5465c25.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 53,
+        "manifest_fetch": 7
+      }
+    },
+    {
+      "scenario_id": "IMG_THUMBNAIL_150X150",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/c4a00fb7d2b4d347571c6662e0cb0e301b1116beca30e39d3d8ad5a5354d0cc3.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "c4a00fb7d2b4d347571c6662e0cb0e301b1116beca30e39d3d8ad5a5354d0cc3",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "923",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/c4a00fb7d2b4d347571c6662e0cb0e301b1116beca30e39d3d8ad5a5354d0cc3.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 13,
+        "manifest_fetch": 8
+      }
+    },
+    {
+      "scenario_id": "CDN_RECOMPRESS_Q80",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/0cfa1e8dfc9d51c80f1a951b23c1f7fd46323369843dc339e0445b87e63c1ab3.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "0cfa1e8dfc9d51c80f1a951b23c1f7fd46323369843dc339e0445b87e63c1ab3",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "915",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/0cfa1e8dfc9d51c80f1a951b23c1f7fd46323369843dc339e0445b87e63c1ab3.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 7,
+        "manifest_fetch": 8
+      }
+    },
+    {
+      "scenario_id": "CDN_REWRITES_ETAG",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/5b2f59cffe267cd79ab573cfc9a9e6f7bb15ec36e4f9627c1e761a2af4ca6050.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "5b2f59cffe267cd79ab573cfc9a9e6f7bb15ec36e4f9627c1e761a2af4ca6050",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "906",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/5b2f59cffe267cd79ab573cfc9a9e6f7bb15ec36e4f9627c1e761a2af4ca6050.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 5,
+        "manifest_fetch": 6
+      }
+    },
+    {
+      "scenario_id": "LINK_HEADER_DROPPED",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:23 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/5993b5b70018da1ea96569b89426f239343f05208a1ae99e509cbddf9c395c33.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "5993b5b70018da1ea96569b89426f239343f05208a1ae99e509cbddf9c395c33",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "898",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/5993b5b70018da1ea96569b89426f239343f05208a1ae99e509cbddf9c395c33.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 6,
+        "manifest_fetch": 7
+      }
+    },
+    {
+      "scenario_id": "CACHE_POISON_ATTEMPT",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:24 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/421de8fee7be4ebe7155e77810cc3b5aceb853c6d8b4617c6c3ab49352044b48.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "421de8fee7be4ebe7155e77810cc3b5aceb853c6d8b4617c6c3ab49352044b48",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "890",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/421de8fee7be4ebe7155e77810cc3b5aceb853c6d8b4617c6c3ab49352044b48.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 5,
+        "manifest_fetch": 9
+      }
+    },
+    {
+      "scenario_id": "FILENAME_CHANGE",
+      "sandbox": "strip-happy",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-origin": "*",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "343",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:24 GMT",
+        "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+        "link": "</manifests/1efa313e265e95115777ee1af87bc6269d0876e59585d24c0c3d8ce478deec8a.c2pa>; rel=\"c2pa-manifest\"",
+        "permissions-policy": "camera=(), microphone=(), geolocation=()",
+        "referrer-policy": "strict-origin-when-cross-origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "DENY",
+        "x-manifest-hash": "1efa313e265e95115777ee1af87bc6269d0876e59585d24c0c3d8ce478deec8a",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "882",
+        "x-ratelimit-reset": "1762278858",
+        "x-xss-protection": "1; mode=block"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4101/manifests/1efa313e265e95115777ee1af87bc6269d0876e59585d24c0c3d8ce478deec8a.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 10,
+        "manifest_fetch": 7
+      }
+    },
+    {
+      "scenario_id": "IMG_PRESERVE_EMBED_NOP",
+      "sandbox": "preserve-embed",
+      "remote_survives": true,
+      "embed_survives": true,
+      "failure_code": "SURVIVED",
+      "failure_taxonomy": {
+        "code": "SURVIVED",
+        "category": "survived",
+        "severity": "info",
+        "description": "All provenance verification succeeded",
+        "recovery_possible": true
+      },
+      "headers_snapshot": {
+        "access-control-allow-credentials": "true",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "7730",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:24 GMT",
+        "etag": "W/\"1e32-rpu3fTjG+C7BFht5o4DAT1w2+lA\"",
+        "link": "</manifests/92216be9229cdcad85e83b43fe791f28d167aeda3c6b42e684166e11f4091e0f.c2pa>; rel=\"c2pa-manifest\"",
+        "vary": "Origin",
+        "x-c2-policy": "preserve-allowed",
+        "x-manifest-hash": "92216be9229cdcad85e83b43fe791f28d167aeda3c6b42e684166e11f4091e0f",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "994",
+        "x-ratelimit-reset": "1762278858"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4102/manifests/92216be9229cdcad85e83b43fe791f28d167aeda3c6b42e684166e11f4091e0f.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 11,
+        "manifest_fetch": 12
+      }
+    },
+    {
+      "scenario_id": "IMG_PRESERVE_EMBED_RESIZE",
+      "sandbox": "preserve-embed",
+      "remote_survives": true,
+      "embed_survives": true,
+      "failure_code": "SURVIVED",
+      "failure_taxonomy": {
+        "code": "SURVIVED",
+        "category": "survived",
+        "severity": "info",
+        "description": "All provenance verification succeeded",
+        "recovery_possible": true
+      },
+      "headers_snapshot": {
+        "access-control-allow-credentials": "true",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "7730",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:24 GMT",
+        "etag": "W/\"1e32-rpu3fTjG+C7BFht5o4DAT1w2+lA\"",
+        "link": "</manifests/a67f4310ec170f989422ecdcbbc467d97ba22ce90f3811477816b5bdd36e269b.c2pa>; rel=\"c2pa-manifest\"",
+        "vary": "Origin",
+        "x-c2-policy": "preserve-allowed",
+        "x-manifest-hash": "a67f4310ec170f989422ecdcbbc467d97ba22ce90f3811477816b5bdd36e269b",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "986",
+        "x-ratelimit-reset": "1762278858"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4102/manifests/a67f4310ec170f989422ecdcbbc467d97ba22ce90f3811477816b5bdd36e269b.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 18,
+        "manifest_fetch": 12
+      }
+    },
+    {
+      "scenario_id": "REMOTE_ONLY_BASELINE",
+      "sandbox": "remote-only",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-credentials": "true",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "420",
+        "content-security-policy": "default-src 'none'; img-src 'self' data:; frame-ancestors 'none'",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:24 GMT",
+        "etag": "W/\"1a4-tIF65CT90YtyyFPnezW4G57Kvpk\"",
+        "link": "</manifests/34223444953c80a61ee7911df482320335ee64ef89d8681bcd7184f331803a0e.c2pa>; rel=\"c2pa-manifest\"",
+        "vary": "Origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-manifest-hash": "34223444953c80a61ee7911df482320335ee64ef89d8681bcd7184f331803a0e",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "994",
+        "x-ratelimit-reset": "1762278860"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4103/manifests/34223444953c80a61ee7911df482320335ee64ef89d8681bcd7184f331803a0e.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 4,
+        "manifest_fetch": 6
+      }
+    },
+    {
+      "scenario_id": "CSP_BLOCK_EMBED",
+      "sandbox": "remote-only",
+      "remote_survives": true,
+      "embed_survives": false,
+      "failure_code": "DESTROYED_EMBED",
+      "failure_taxonomy": {
+        "code": "DESTROYED_EMBED",
+        "category": "destroyed",
+        "severity": "warning",
+        "description": "Embedded claims completely stripped by transform",
+        "recovery_possible": false
+      },
+      "headers_snapshot": {
+        "access-control-allow-credentials": "true",
+        "cache-control": "public, max-age=3600",
+        "connection": "close",
+        "content-length": "420",
+        "content-security-policy": "default-src 'none'; img-src 'self' data:; frame-ancestors 'none'",
+        "content-type": "image/jpeg",
+        "date": "Tue, 04 Nov 2025 17:39:24 GMT",
+        "etag": "W/\"1a4-tIF65CT90YtyyFPnezW4G57Kvpk\"",
+        "link": "</manifests/4d25ea476e49eca06a0f264db92f3c0c9086fff2c1941319aef8e17bb08342ed.c2pa>; rel=\"c2pa-manifest\"",
+        "vary": "Origin",
+        "x-c2-policy": "remote-only",
+        "x-content-type-options": "nosniff",
+        "x-manifest-hash": "4d25ea476e49eca06a0f264db92f3c0c9086fff2c1941319aef8e17bb08342ed",
+        "x-powered-by": "Express",
+        "x-ratelimit-limit": "1000",
+        "x-ratelimit-remaining": "986",
+        "x-ratelimit-reset": "1762278860"
+      },
+      "manifest_fetch": {
+        "status": 200,
+        "hash_alignment": true,
+        "url": "http://127.0.0.1:4103/manifests/4d25ea476e49eca06a0f264db92f3c0c9086fff2c1941319aef8e17bb08342ed.c2pa"
+      },
+      "timings_ms": {
+        "edge_worker": 2,
+        "origin": 6,
+        "manifest_fetch": 7
+      }
+    }
+  ]
+}
