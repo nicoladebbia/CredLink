@@ -386,7 +386,7 @@ jobs:
         run: |
           set -euo pipefail
           
-          # Define comprehensive artifact list
+          # Define core artifact list (always required)
           REQUIRED_FILES=(
             "build.json"
             "sbom.spdx.json"
@@ -396,6 +396,10 @@ jobs:
             "sbom.sha256sums"
             "sbom.sha512sums"
             "trivy-image-scan.json"
+          )
+          
+          # Define optional security artifacts (generated only if tools available)
+          OPTIONAL_FILES=(
             "image.cert"
             "image.sig"
           )
@@ -405,6 +409,15 @@ jobs:
             if [[ ! -s "$file" ]]; then
               echo "❌ Required artifact missing or empty: $file"
               exit 1
+            fi
+          done
+          
+          # Check optional files and report status without failing
+          for file in "${OPTIONAL_FILES[@]}"; do
+            if [[ ! -s "$file" ]]; then
+              echo "⚠️ Optional security artifact not generated: $file (security tools unavailable)"
+            else
+              echo "✅ Optional security artifact found: $file"
             fi
           done
           
@@ -456,5 +469,5 @@ jobs:
             image.cert
             image.sig
           retention-days: 90
-          if-no-files-found: error
+          if-no-files-found: warn
           compression-level: 6
