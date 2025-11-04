@@ -225,17 +225,15 @@ resource "cloudflare_api_token" "service_tokens" {
       local.permission_group_ids.queue_read
     ]
     
-    resources = {
+    resources = each.key == "storage" ? {
       # Scope resources based on service type
-      each.key == "storage" ? {
-        "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.storage_bucket_name}" = "*"
-      } : each.key == "worker" ? {
-        "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.script.${var.worker_script_name}" = "*"
-      } : each.key == "queue" ? {
-        for queue_name in var.queue_names :
-        "com.cloudflare.api.account.${var.cloudflare_account_id}.queue.${queue_name}" => "*"
-      } : {}
-    }
+      "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.storage_bucket_name}" = "*"
+    } : each.key == "worker" ? {
+      "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.script.${var.worker_script_name}" = "*"
+    } : each.key == "queue" ? {
+      for queue_name in var.queue_names :
+      "com.cloudflare.api.account.${var.cloudflare_account_id}.queue.${queue_name}" => "*"
+    } : {}
   }
   
   condition = jsonencode({
