@@ -396,7 +396,6 @@ jobs:
             "sbom.sha256sums"
             "sbom.sha512sums"
             "trivy-image-scan.json"
-            "trivy-sbom-scan.json"
             "image.cert"
             "image.sig"
           )
@@ -410,7 +409,7 @@ jobs:
           done
           
           # Validate all JSON files comprehensively
-          JSON_FILES=("build.json" "sbom.spdx.json" "sbom.cdx.json" "trivy-image-scan.json" "trivy-sbom-scan.json")
+          JSON_FILES=("build.json" "sbom.spdx.json" "sbom.cdx.json" "trivy-image-scan.json")
           for json_file in "${JSON_FILES[@]}"; do
             if ! jq empty "$json_file" 2>/dev/null; then
               echo "❌ Invalid JSON in artifact: $json_file"
@@ -454,7 +453,6 @@ jobs:
             sbom.sha256sums
             sbom.sha512sums
             trivy-image-scan.json
-            trivy-sbom-scan.json
             image.cert
             image.sig
           retention-days: 90
