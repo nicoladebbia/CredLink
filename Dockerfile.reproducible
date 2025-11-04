@@ -39,9 +39,9 @@ ENV SOURCE_DATE_EPOCH=0 \
 # Copy package files with checksum verification
 COPY package.json pnpm-lock.yaml ./
 # Copy additional package files if they exist
-COPY packages/ ./packages/ || true
-COPY apps/ ./apps/ || true
-COPY sandboxes/ ./sandboxes/ || true
+COPY packages/ ./packages/ 
+COPY apps/ ./apps/ 
+COPY sandboxes/ ./sandboxes/
 
 # Install dependencies with comprehensive security and validation
 RUN pnpm install --frozen-lockfile --prefer-frozen-lockfile --strict-peer-deps && \
