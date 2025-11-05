@@ -63,11 +63,6 @@ variable "use_r2" {
   default     = true
 }
 
-variable "storage_destroy_protect" {
-  description = "Enable destroy protection for storage"
-  type        = bool
-  default     = true
-}
 
 # Worker configuration
 variable "worker_routes" {
