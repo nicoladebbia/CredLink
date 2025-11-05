@@ -20,11 +20,6 @@ variable "namespace" {
   type        = string
 }
 
-variable "enable_otel_collector" {
-  description = "Enable OpenTelemetry collector"
-  type        = bool
-  default     = true
-}
 
 variable "otlp_endpoint" {
   description = "OTLP endpoint for telemetry export"
