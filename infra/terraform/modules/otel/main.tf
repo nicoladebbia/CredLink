@@ -283,13 +283,6 @@ resource "kubernetes_config_map" "otel_config" {
   }
 }
 
-# Variable for OTLP API key
-variable "otlp_api_key" {
-  description = "OTLP API key for authentication"
-  type        = string
-  default     = ""
-  sensitive   = true
-}
 
 # Outputs
 output "collector_endpoint" {
