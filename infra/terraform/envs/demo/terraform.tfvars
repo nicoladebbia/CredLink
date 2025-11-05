@@ -10,7 +10,6 @@ cost_center = "demo-001"
 # Cloudflare configuration (required)
 cloudflare_api_token  = "" # Set via TF_VAR or GitHub secrets
 cloudflare_account_id = "" # Set via TF_VAR or GitHub secrets
-cloudflare_zone_id    = "" # Set via TF_VAR or GitHub secrets
 
 # AWS configuration
 aws_region = "us-east-1"

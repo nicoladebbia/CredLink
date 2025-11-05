@@ -82,10 +82,8 @@ module "storage" {
 module "worker_relay" {
   source = "../../modules/worker_relay"
 
-  env     = var.env
-  project = var.project
-
-  zone_id     = var.cloudflare_zone_id
+  env         = var.env
+  project     = var.project
   script_name = "${local.name_prefix}-relay"
 
   routes = var.worker_routes
