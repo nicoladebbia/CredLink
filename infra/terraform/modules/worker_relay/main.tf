@@ -27,9 +27,9 @@ resource "cloudflare_worker_script" "worker" {
   tags = local.common_tags
 }
 
-# Worker routes
+# Worker routes (only created when zone_id is provided for custom domains)
 resource "cloudflare_worker_route" "routes" {
-  for_each = var.routes
+  for_each = var.zone_id != null ? toset(var.routes) : []
 
   zone_id = var.zone_id
   pattern = each.value

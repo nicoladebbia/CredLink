@@ -250,7 +250,6 @@ jobs:
         with:
           path: infra/terraform/envs/${{ matrix.environment }}
           usage_file: infra/terraform/infracost-usage.yml
-          currency: USD
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
 

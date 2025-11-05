@@ -14,8 +14,7 @@ cost_center = "staging-001"
 aws_region = "us-east-1"
 
 # Storage configuration
-use_r2                  = false # Use S3 for now since we have AWS credentials
-storage_destroy_protect = false # Allow destruction in staging
+use_r2 = false # Use S3 for now since we have AWS credentials
 
 # Cost configuration
 enable_cost_tags = true

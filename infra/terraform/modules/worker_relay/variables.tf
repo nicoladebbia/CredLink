@@ -11,8 +11,9 @@ variable "project" {
 }
 
 variable "zone_id" {
-  description = "Cloudflare zone ID"
+  description = "Cloudflare zone ID (optional - only needed for custom domain routes)"
   type        = string
+  default     = null
 }
 
 variable "script_name" {
