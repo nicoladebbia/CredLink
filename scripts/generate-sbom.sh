@@ -25,7 +25,7 @@ validate_input() {
     fi
     
     # Enhanced output directory validation (prevent all path traversal)
-    if [[ "$output_dir" =~ \.\.|\$|`|\||\&|\;|\(|\)|\{|\}|\[|\]|\*|\?|\>|\<|\!|\"|\' ]]; then
+    if [[ "$output_dir" =~ \.\.|\$|\\\||\&|\;|\(|\)|\{|\}|\[|\]|\*|\?|\>|\<|\!|\"|\\\' ]]; then
         echo "❌ Invalid output directory: $output_dir"
         echo "   Directory contains forbidden characters"
         exit 1
@@ -55,27 +55,13 @@ install_tools_securely() {
     if ! command -v syft &> /dev/null; then
         echo "Installing Syft securely with integrity verification..."
         
-        # Download with verification
-        if ! curl -fsSL --max-time "$TIMEOUT_SECONDS" \
-            --output /tmp/install-syft.sh \
-            https://raw.githubusercontent.com/anchore/syft/v0.100.0/install.sh; then
-            echo "❌ Failed to download Syft installer"
-            exit 1
-        fi
-        
-        # Verify script integrity
-        if ! grep -q "syft" /tmp/install-syft.sh; then
-            echo "❌ Syft installer integrity verification failed"
-            rm -f /tmp/install-syft.sh
-            exit 1
-        fi
-        
-        # Execute with security restrictions
-        if ! bash /tmp/install-syft.sh -b /usr/local/bin v0.100.0; then
-            echo "❌ Failed to install Syft"
-            rm -f /tmp/install-syft.sh
-            exit 1
-        fi
+        # SECURITY: Never execute downloaded scripts without cryptographic verification
+        echo "❌ ERROR: Direct script execution from internet is disabled for security"
+        echo "Please install syft via package manager:"
+        echo "  - Ubuntu/Debian: apt-get install syft"
+        echo "  - Or download and verify GPG signature before execution"
+        rm -f /tmp/install-syft.sh
+        exit 1
         
         # Verify installation
         if ! command -v syft &> /dev/null; then

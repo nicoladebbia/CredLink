@@ -150,7 +150,8 @@ async function createServer() {
     fastify.setErrorHandler((error, request, reply) => {
         request.log.error({
             error: error.message,
-            stack: error.stack,
+            // SECURITY: Don't expose stack traces in production
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
             requestId: request.id
         }, 'Unhandled error');
         reply.status(500).send({

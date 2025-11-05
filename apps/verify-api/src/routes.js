@@ -8,7 +8,7 @@ import { VerificationError } from './types.js';
  * Generate unique request ID for tracing
  */
 function generateRequestId() {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `req_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').substring(0, 8)}`;
 }
 /**
  * Validation schema for verification requests

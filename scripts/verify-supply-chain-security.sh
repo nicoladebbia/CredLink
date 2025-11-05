@@ -48,7 +48,12 @@ run_check() {
     TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
     log_info "Running: $check_name"
     
-    if eval "$check_command" > /dev/null 2>&1; then
+    # SECURITY: Execute commands directly without eval or shell interpretation
+    # Parse command into array to prevent injection
+    declare -a cmd_array
+    read -ra cmd_array <<< "$check_command"
+    
+    if "${cmd_array[@]}" > /dev/null 2>&1; then
         log_success "$check_name - PASSED"
         VERIFICATION_RESULTS+=("✅ $check_name")
         PASSED_CHECKS=$((PASSED_CHECKS + 1))
@@ -68,17 +73,27 @@ setup() {
     # Install required tools
     if ! command -v cosign &> /dev/null; then
         log_info "Installing Cosign..."
-        curl -sSfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh | sh -s -- -b /usr/local/bin
+        # SECURITY: Never pipe curl directly to sh without verification
+        # Use package managers or verify signatures before execution
+        echo "❌ ERROR: Direct curl|sh execution is disabled for security"
+        echo "Please install cosign via package manager or verify the script signature"
+        exit 1
     fi
     
     if ! command -v trivy &> /dev/null; then
         log_info "Installing Trivy..."
-        curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/install.sh | sh -s -- -b /usr/local/bin
+        # SECURITY: Never pipe curl directly to sh without verification
+        echo "❌ ERROR: Direct curl|sh execution is disabled for security"
+        echo "Please install trivy via package manager or verify the script signature"
+        exit 1
     fi
     
     if ! command -v syft &> /dev/null; then
         log_info "Installing Syft..."
-        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+        # SECURITY: Never pipe curl directly to sh without verification
+        echo "❌ ERROR: Direct curl|sh execution is disabled for security"
+        echo "Please install syft via package manager or verify the script signature"
+        exit 1
     fi
     
     if ! command -v jq &> /dev/null; then

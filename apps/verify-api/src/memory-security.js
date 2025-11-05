@@ -46,7 +46,7 @@ class MemorySecurityManager {
         if (size < 0) {
             throw new Error(`INVALID_BUFFER_SIZE: ${source} negative size ${size}`);
         }
-        return Buffer.allocUnsafeSlow(size);
+        return Buffer.alloc(size); // SECURITY: Use safe allocation instead of allocUnsafeSlow
     }
     /**
      * CRITICAL: Prevent array-based attacks

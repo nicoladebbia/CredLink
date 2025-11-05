@@ -34,10 +34,10 @@ fi
 # Install tools if not present
 if ! command -v cosign &> /dev/null; then
     echo "Installing Cosign..."
-    if ! curl -sSfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh | sh -s -- -b /usr/local/bin; then
-        echo "Error: Failed to install Cosign"
-        exit 1
-    fi
+    # SECURITY: Never pipe curl directly to sh without verification
+    echo "❌ ERROR: Direct curl|sh execution is disabled for security"
+    echo "Please install cosign via package manager or verify the script signature"
+    exit 1
 fi
 
 if ! command -v jq &> /dev/null; then

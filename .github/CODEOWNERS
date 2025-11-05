@@ -1,0 +1,53 @@
+# C2 Concierge CODEOWNERS
+# Phase 46: Branch protection with required reviews
+# 
+# These owners will be requested for review when someone opens a pull request.
+# Required for protected branches (main, release/*)
+
+# Global owners (required for all changes)
+* @c2-concierge/core-team
+
+# Critical infrastructure - requires security team review
+/.github/workflows/ @c2-concierge/core-team @c2-concierge/security-team
+/infra/ @c2-concierge/core-team @c2-concierge/infra-team
+/security/ @c2-concierge/security-team
+/scripts/survival_harness.sh @c2-concierge/core-team @c2-concierge/qa-team
+
+# Database migrations - requires DB team review
+/infra/db/ @c2-concierge/core-team @c2-concierge/db-team
+
+# API Gateway and core services
+/apps/api-gw/ @c2-concierge/core-team @c2-concierge/backend-team
+/apps/audit/ @c2-concierge/core-team @c2-concierge/backend-team
+
+# SDK changes require core team approval
+/sdk/ @c2-concierge/core-team @c2-concierge/sdk-team
+
+# C2PA audit and verification
+/apps/c2pa-audit/ @c2-concierge/core-team @c2-concierge/c2pa-team
+
+# Documentation
+/docs/ @c2-concierge/core-team
+/README.md @c2-concierge/core-team
+/SECURITY.md @c2-concierge/security-team
+
+# Enterprise architecture
+/enterprise-architecture/ @c2-concierge/core-team @c2-concierge/architecture-team
+
+# Disaster recovery and runbooks
+/runbooks/ @c2-concierge/core-team @c2-concierge/sre-team
+/docs/runbooks/ @c2-concierge/core-team @c2-concierge/sre-team
+
+# Build and deployment configuration
+/Dockerfile @c2-concierge/core-team @c2-concierge/infra-team
+/docker-compose.yml @c2-concierge/core-team @c2-concierge/infra-team
+/Makefile @c2-concierge/core-team
+
+# Package manager configuration
+/package.json @c2-concierge/core-team
+/pnpm-workspace.yaml @c2-concierge/core-team
+/turbo.json @c2-concierge/core-team
+
+# Security and compliance
+/SECURITY_AUDIT_REPORT.md @c2-concierge/security-team
+/.trivyignore @c2-concierge/security-team
