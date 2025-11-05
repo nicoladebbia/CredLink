@@ -1,7 +1,7 @@
 {
   "name": "c2-edge-worker",
   "main": "infra/cloudflare/src/index.ts",
-  "compatibility_date": "2025-10-01",
+  "compatibility_date": "2025-10-02",
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "REMOTE_ONLY": "1",
@@ -20,5 +20,25 @@
       "id": "phase40-analytics-kv",
       "preview_id": "phase40-analytics-kv-preview"
     }
-  ]
+  ],
+  "env": {
+    "staging": {
+      "name": "c2-edge-worker-staging",
+      "vars": {
+        "REMOTE_ONLY": "1",
+        "PRESERVE_PATHS": "/media/preserve/",
+        "MANIFEST_BASE": "https://staging.manifests.survival.test",
+        "PHASE40_ENABLED": "false"
+      }
+    },
+    "production": {
+      "name": "c2-edge-worker-production",
+      "vars": {
+        "REMOTE_ONLY": "1",
+        "PRESERVE_PATHS": "/media/preserve/",
+        "MANIFEST_BASE": "https://manifests.survival.test",
+        "PHASE40_ENABLED": "true"
+      }
+    }
+  }
 }

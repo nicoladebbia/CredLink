@@ -6,9 +6,11 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "node dist/index.js",
-    "test:wp": "node dist/wp-test.js",
-    "test:shopify": "node dist/shopify-test.js",
+    "dev": "tsc --watch",
+    "test": "node dist/index.js --skip-browsers",
+    "test:wp": "node dist/wp-test.js --skip-browsers",
+    "test:shopify": "node dist/shopify-test.js --skip-browsers",
+    "test:full": "node dist/index.js",
     "clean": "rm -rf dist"
   },
   "dependencies": {

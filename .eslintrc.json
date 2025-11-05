@@ -42,6 +42,10 @@
     "apps/**/*.js",
     "**/*.js",
     "apps/c2pa-audit/phase33-reverse-lab/**",
-    "apps/c2pa-audit/phase36-billing/**"
+    "apps/c2pa-audit/phase36-billing/**",
+    "apps/c2pa-audit/phase34-spec-watch/**",
+    "apps/c2pa-audit/phase40-*/**",
+    "apps/c2pa-audit/phase41-*/**",
+    "apps/c2pa-audit/phase42-*/**"
   ]
 }
