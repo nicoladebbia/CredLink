@@ -1,0 +1,24 @@
+{
+  "name": "c2-edge-worker",
+  "main": "infra/cloudflare/src/index.ts",
+  "compatibility_date": "2025-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": {
+    "REMOTE_ONLY": "1",
+    "PRESERVE_PATHS": "/media/preserve/",
+    "MANIFEST_BASE": "https://manifests.survival.test",
+    "PHASE40_ENABLED": "true"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "BREAK_GLASS_KV",
+      "id": "break-glass-kv",
+      "preview_id": "break-glass-kv-preview"
+    },
+    {
+      "binding": "ANALYTICS_KV",
+      "id": "phase40-analytics-kv",
+      "preview_id": "phase40-analytics-kv-preview"
+    }
+  ]
+}

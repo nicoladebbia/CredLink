@@ -12,7 +12,8 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2022,
-    "sourceType": "module"
+    "sourceType": "module",
+    "project": "./tsconfig.json"
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
@@ -39,6 +40,8 @@
     "security/**",
     "packages/**/*.js",
     "apps/**/*.js",
-    "**/*.js"
+    "**/*.js",
+    "apps/c2pa-audit/phase33-reverse-lab/**",
+    "apps/c2pa-audit/phase36-billing/**"
   ]
 }

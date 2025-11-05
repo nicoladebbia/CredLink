@@ -3,13 +3,26 @@
  * Node.js native test runner for the verification service
  */
 
-import { test, describe } from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert';
 import { createServer } from './index.js';
 import { verifyProvenance } from './verification.js';
 
 describe('Verify API Service', () => {
   let server: Awaited<ReturnType<typeof createServer>>;
+  
+  before(async () => {
+    // Set required environment variables for testing
+    process.env.NODE_ENV = 'test';
+    process.env.LOG_LEVEL = 'error';
+    process.env.PORT = '0'; // Use random available port
+  });
+  
+  after(async () => {
+    if (server) {
+      await server.close();
+    }
+  });
   
   test('should create server successfully', async () => {
     server = await createServer();
@@ -18,6 +31,10 @@ describe('Verify API Service', () => {
   });
   
   test('should handle health check endpoint', async () => {
+    if (!server) {
+      server = await createServer();
+    }
+    
     const response = await server.inject({
       method: 'GET',
       url: '/health'
