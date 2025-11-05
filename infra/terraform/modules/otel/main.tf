@@ -27,12 +27,6 @@ resource "kubernetes_namespace" "otel" {
   }
 }
 
-# Helm provider for OpenTelemetry Collector
-provider "helm" {
-  kubernetes {
-    config_path = var.kubeconfig_path
-  }
-}
 
 # OpenTelemetry Collector Helm release
 resource "helm_release" "otel_collector" {
