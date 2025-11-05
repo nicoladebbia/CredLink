@@ -228,7 +228,7 @@ jobs:
       - name: Terraform Plan
         run: |
           cd infra/terraform/envs/${{ matrix.environment }}
-          terraform plan -detailed-exitcode -var-file=terraform.tfvars.example -out=tfplan
+          terraform plan -detailed-exitcode -out=tfplan
         continue-on-error: true
 
       - name: Save Plan File
