@@ -1,49 +1,5 @@
-terraform {
-  required_version = "~> 1.9"
-  required_providers {
-    helm       = { source = "hashicorp/helm", version = "~> 2.16" }
-    kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.35" }
-  }
-}
-
 # OpenTelemetry Collector module
-variable "env" {
-  description = "Environment name"
-  type        = string
-}
 
-variable "project" {
-  description = "Project name"
-  type        = string
-}
-
-variable "kubeconfig_path" {
-  description = "Path to kubeconfig file"
-  type        = string
-}
-
-variable "namespace" {
-  description = "Kubernetes namespace"
-  type        = string
-}
-
-variable "collector_config" {
-  description = "OpenTelemetry Collector configuration"
-  type        = any
-  default     = {}
-}
-
-variable "otlp_endpoint" {
-  description = "OTLP endpoint for telemetry export"
-  type        = string
-  default     = ""
-}
-
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default     = {}
-}
 
 locals {
   name_prefix = "${var.project}-${var.env}"
@@ -52,10 +8,6 @@ locals {
   })
 }
 
-# Kubernetes provider configuration
-provider "kubernetes" {
-  config_path = var.kubeconfig_path
-}
 
 # Create namespace
 resource "kubernetes_namespace" "otel" {
