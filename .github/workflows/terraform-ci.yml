@@ -239,12 +239,14 @@ jobs:
           retention-days: 7
 
       - name: Generate Plan Text
+        continue-on-error: true  # Plan file may not exist if Cloudflare credentials are missing
         run: |
           cd infra/terraform/envs/${{ matrix.environment }}
           terraform show -no-color tfplan > tfplan.txt
 
       - name: Cost Estimation
         if: matrix.environment == 'staging'
+        continue-on-error: true  # May fail if plan file doesn't exist
         uses: infracost/infracost-gh-action@master
         with:
           path: infra/terraform/envs/${{ matrix.environment }}
@@ -255,6 +257,7 @@ jobs:
 
       - name: Post Plan Comment
         if: github.event_name == 'pull_request'
+        continue-on-error: true  # May fail if plan file doesn't exist
         uses: actions/github-script@v7
         with:
           script: |
