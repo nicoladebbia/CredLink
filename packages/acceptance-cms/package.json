@@ -7,10 +7,10 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "test": "node dist/index.js --skip-browsers",
-    "test:wp": "node dist/wp-test.js --skip-browsers",
-    "test:shopify": "node dist/shopify-test.js --skip-browsers",
-    "test:full": "node dist/index.js",
+    "test": "npm run build && node dist/index.js --skip-browsers",
+    "test:wp": "npm run build && node dist/wp-test.js --skip-browsers",
+    "test:shopify": "npm run build && node dist/shopify-test.js --skip-browsers",
+    "test:full": "npm run build && node dist/index.js",
     "clean": "rm -rf dist"
   },
   "dependencies": {
