@@ -125,15 +125,6 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
-      - name: Install tfsec
-        run: |
-          curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash
-          
-      - name: Run tfsec security scanner
-        run: |
-          cd infra/terraform
-          tfsec --soft-fail=false --exclude-downloaded-modules
-
       - name: Run Checkov security scanner
         uses: bridgecrewio/checkov-action@v12
         with:
