@@ -10,10 +10,6 @@ variable "project" {
   type        = string
 }
 
-variable "kubeconfig_path" {
-  description = "Path to kubeconfig file"
-  type        = string
-}
 
 variable "namespace" {
   description = "Kubernetes namespace"
