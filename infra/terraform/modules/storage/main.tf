@@ -4,13 +4,7 @@ terraform {
     cloudflare = { source = "cloudflare/cloudflare", version = "~> 5.11" }
     aws        = { source = "hashicorp/aws", version = "~> 5.76" }
     archive    = { source = "hashicorp/archive", version = "~> 2.0" }
-    signer     = { source = "hashicorp/signer", version = "~> 1.1" }
   }
-}
-
-# Configure Signer provider
-provider "signer" {
-  region = var.s3.region
 }
 
 # Data source for AWS canonical user ID (required for S3 access logging)
