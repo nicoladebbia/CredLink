@@ -7,9 +7,8 @@ project     = "credlink"
 owner       = "nicola"
 cost_center = "demo-001"
 
-# Cloudflare configuration (required)
-cloudflare_api_token  = "" # Set via TF_VAR or GitHub secrets
-cloudflare_account_id = "" # Set via TF_VAR or GitHub secrets
+# Cloudflare configuration (set via TF_VAR environment variables)
+# cloudflare_api_token and cloudflare_account_id are set via GitHub secrets
 
 # AWS configuration
 aws_region = "us-east-1"
