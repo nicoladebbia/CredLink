@@ -74,8 +74,7 @@ module "storage" {
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
-  tags            = local.common_tags
-  destroy_protect = var.storage_destroy_protect
+  tags = local.common_tags
 }
 
 # Worker relay module
