@@ -10,13 +10,7 @@
 
 ### `/exhibits/`
 - **Security-Exhibit.md** - Key custody, WORM, pen-test cadence
-- **Data-Residency.md** - Region selection and transfer mechanisms
 - **Sub-processor-Disclosure.md** - Public sub-processor list
-
-### `/templates/`
-- **MSA-Template-v1.0.md** - Standard master agreement template
-- **DPA-Template-v1.0.md** - Standard DPA with SCCs/IDTA
-- **Order-Form-Template-v1.0.md** - Editable order form template
 
 ### `/clauses/`
 - **SLA-Credits.md** - Service credit clause snippets
@@ -28,8 +22,9 @@
 
 ### `/playbooks/`
 - **Sub-Processor-Changes.md** - Change management playbook
-- **Notice-Windows.md** - Notice period procedures
-- **Objection-Handling.md** - Customer objection procedures
+- **SLO-SLA-Mapping.md** - Operable SLO↔SLA mapping
+- **CRM-Integration.md** - CRM field mapping and integration
+- **E-Sign-Configuration.md** - E-signature workflow setup
 
 ### `/buyer-facing/`
 - **Security-One-Pager.md** - Security controls and pen-test info
@@ -37,7 +32,6 @@
 - **WORM-Explainer.md** - Evidence retention and legal hold
 
 ### `/versions/`
-- **v1.0-README.md** - Version 1.0 release notes
 - **Change-Log.md** - Template versioning and changes
 
 ## Compliance References

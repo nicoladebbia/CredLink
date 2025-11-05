@@ -308,8 +308,7 @@ The Parties agree this Agreement may be executed electronically and shall have f
 - **Exhibit A**: Service Level Agreement
 - **Exhibit B**: Security Exhibit
 - **Exhibit C**: Data Processing Addendum
-- **Exhibit D**: Data Residency and Transfer Mechanisms
-- **Exhibit E**: Order Form
+- **Exhibit D**: Order Form
 
 ---
 
