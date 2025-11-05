@@ -1,0 +1,405 @@
+{
+  "pricing_version": "1.0.0",
+  "effective_date": "2025-11-05",
+  "currency": "usd",
+  "billing_interval": "month",
+  "usage_metering": {
+    "meters": {
+      "verify_operations": {
+        "display_name": "Verify Operations",
+        "unit": "verify",
+        "aggregation": "sum",
+        "reset_period": "monthly"
+      },
+      "sign_operations": {
+        "display_name": "Sign Operations", 
+        "unit": "sign",
+        "aggregation": "sum",
+        "reset_period": "monthly"
+      },
+      "storage_gb": {
+        "display_name": "Storage (GB)",
+        "unit": "gb",
+        "aggregation": "max",
+        "reset_period": "monthly"
+      },
+      "sites": {
+        "display_name": "Active Sites",
+        "unit": "site",
+        "aggregation": "count",
+        "reset_period": "monthly"
+      }
+    }
+  },
+  "products": {
+    "starter": {
+      "name": "Starter Plan",
+      "description": "Perfect for small WordPress/Shopify sites",
+      "base_price": 19900,
+      "currency": "usd",
+      "interval": "month",
+      "annual_discount": 0.15,
+      "included_usage": {
+        "verify_operations": 2000,
+        "sign_operations": 200,
+        "storage_gb": 10,
+        "sites": 2
+      },
+      "cap_configuration": {
+        "verify_operations": {
+          "type": "hard",
+          "action": "stop_service"
+        },
+        "sign_operations": {
+          "type": "hard", 
+          "action": "stop_service"
+        },
+        "storage_gb": {
+          "type": "soft",
+          "thresholds": [0.8, 0.95]
+        },
+        "sites": {
+          "type": "hard",
+          "action": "block_new_sites"
+        }
+      },
+      "overage_pricing": {
+        "verify_operations": {
+          "unit_amount": 4,
+          "billing_scheme": "per_unit"
+        },
+        "sign_operations": {
+          "unit_amount": 15,
+          "billing_scheme": "per_unit"
+        },
+        "storage_gb": {
+          "unit_amount": 200,
+          "billing_scheme": "per_unit"
+        },
+        "sites": {
+          "unit_amount": 5000,
+          "billing_scheme": "per_unit"
+        }
+      },
+      "features": [
+        "Basic C2PA manifests",
+        "Remote manifest survival",
+        "Evidence custody",
+        "Standard support (Email, 24h)"
+      ],
+      "excluded_features": [
+        "SSO",
+        "Advanced API access"
+      ]
+    },
+    "growth": {
+      "name": "Growth Plan",
+      "description": "Ideal for newsrooms and brands",
+      "base_price": 69900,
+      "currency": "usd", 
+      "interval": "month",
+      "annual_discount": 0.20,
+      "included_usage": {
+        "verify_operations": 15000,
+        "sign_operations": 1000,
+        "storage_gb": 50,
+        "sites": 5
+      },
+      "cap_configuration": {
+        "verify_operations": {
+          "type": "soft",
+          "thresholds": [0.8, 0.95],
+          "action": "alert_and_bill"
+        },
+        "sign_operations": {
+          "type": "soft",
+          "thresholds": [0.8, 0.95],
+          "action": "alert_and_bill"
+        },
+        "storage_gb": {
+          "type": "soft",
+          "thresholds": [0.8, 0.95]
+        },
+        "sites": {
+          "type": "soft",
+          "thresholds": [0.8, 0.95]
+        }
+      },
+      "overage_pricing": {
+        "verify_operations": {
+          "unit_amount": 3,
+          "billing_scheme": "per_unit",
+          "tiered_pricing": [
+            {
+              "up_to": 25000,
+              "unit_amount": 3
+            },
+            {
+              "up_to": null,
+              "unit_amount": 2.5
+            }
+          ]
+        },
+        "sign_operations": {
+          "unit_amount": 12,
+          "billing_scheme": "per_unit"
+        },
+        "storage_gb": {
+          "unit_amount": 150,
+          "billing_scheme": "per_unit"
+        },
+        "sites": {
+          "unit_amount": 4000,
+          "billing_scheme": "per_unit"
+        }
+      },
+      "features": [
+        "Advanced C2PA manifests",
+        "Priority verification",
+        "SSO",
+        "Full API access",
+        "Analytics dashboard",
+        "Compliance reporting",
+        "Premium support (Email + Chat, 4h)"
+      ]
+    },
+    "scale": {
+      "name": "Scale Plan",
+      "description": "For marketplaces and enterprise teams",
+      "base_price": 200000,
+      "currency": "usd",
+      "interval": "month",
+      "annual_discount": 0.25,
+      "included_usage": {
+        "verify_operations": 60000,
+        "sign_operations": 5000,
+        "storage_gb": 200,
+        "sites": 10
+      },
+      "cap_configuration": {
+        "verify_operations": {
+          "type": "pooled",
+          "action": "bill_overage"
+        },
+        "sign_operations": {
+          "type": "pooled",
+          "action": "bill_overage"
+        },
+        "storage_gb": {
+          "type": "pooled",
+          "action": "bill_overage"
+        },
+        "sites": {
+          "type": "pooled",
+          "action": "bill_overage"
+        }
+      },
+      "overage_pricing": {
+        "verify_operations": {
+          "unit_amount": 2,
+          "billing_scheme": "per_unit",
+          "tiered_pricing": [
+            {
+              "up_to": 100000,
+              "unit_amount": 2
+            },
+            {
+              "up_to": null,
+              "unit_amount": 1.5
+            }
+          ]
+        },
+        "sign_operations": {
+          "unit_amount": 10,
+          "billing_scheme": "per_unit"
+        },
+        "storage_gb": {
+          "unit_amount": 125,
+          "billing_scheme": "per_unit"
+        },
+        "sites": {
+          "unit_amount": 3500,
+          "billing_scheme": "per_unit"
+        }
+      },
+      "features": [
+        "Enterprise C2PA suite",
+        "Dedicated infrastructure",
+        "Custom integrations",
+        "SLA guarantees",
+        "Priority support (24/7 phone + CSM)",
+        "Custom contracts"
+      ]
+    }
+  },
+  "add_ons": {
+    "retro_sign_pack": {
+      "name": "Retro-Sign Pack",
+      "description": "One-time bulk signing for existing content",
+      "type": "one_time",
+      "tiers": [
+        {
+          "name": "Bronze",
+          "unit_amount": 833300,
+          "max_assets": 10000,
+          "description": "10,000 assets"
+        },
+        {
+          "name": "Silver", 
+          "unit_amount": 2833330,
+          "max_assets": 50000,
+          "description": "50,000 assets"
+        },
+        {
+          "name": "Gold",
+          "unit_amount": 11666670,
+          "max_assets": 250000,
+          "description": "250,000 assets"
+        }
+      ],
+      "billing_behavior": "per_use",
+      "tsa_passthrough": true
+    },
+    "analytics_viewer": {
+      "name": "Analytics-Only Viewer",
+      "description": "Analytics dashboard for pipeline monitoring",
+      "type": "recurring",
+      "base_price": 13400,
+      "currency": "usd",
+      "interval": "month",
+      "annual_discount": 0.10,
+      "features": [
+        "Dashboard Access",
+        "Survival Leaderboard",
+        "Compliance Reports",
+        "Read-only API"
+      ],
+      "excluded_features": [
+        "Signing API",
+        "Verify API"
+      ]
+    }
+  },
+  "billing_configuration": {
+    "proration_behavior": "create_prorations",
+    "collection_method": "charge_automatically",
+    "payment_method_types": ["card", "ach_debit"],
+    "invoice_settings": {
+      "footer": "Questions? Email billing@c2concierge.com",
+      "days_until_due": 30,
+      "automatic_tax": {
+        "enabled": true
+      }
+    },
+    "subscription_settings": {
+      "billing_cycle_anchor": "subscription_start",
+      "payment_behavior": "default_incomplete",
+      "expand": ["latest_invoice.payment_intent"]
+    }
+  },
+  "mid_term_changes": {
+    "upgrades": {
+      "behavior": "immediate_proration",
+      "proration_behavior": "create_prorations",
+      "effective_date": "immediate"
+    },
+    "downgrades": {
+      "behavior": "scheduled_next_cycle",
+      "proration_behavior": "none",
+      "effective_date": "next_billing_cycle"
+    },
+    "add_ons": {
+      "behavior": "immediate_billing",
+      "proration_behavior": "create_prorations"
+    },
+    "cancellations": {
+      "behavior": "cancel_at_period_end",
+      "refund_policy": "none"
+    }
+  },
+  "alert_configuration": {
+    "usage_thresholds": {
+      "warning": 0.8,
+      "critical": 0.95,
+      "exceeded": 1.0
+    },
+    "notification_channels": {
+      "email": {
+        "enabled": true,
+        "templates": {
+          "warning": "usage_warning_80",
+          "critical": "usage_critical_95", 
+          "exceeded": "usage_exceeded"
+        }
+      },
+      "webhook": {
+        "enabled": true,
+        "url": "https://api.c2concierge.com/webhooks/usage-alerts",
+        "events": ["usage.warning", "usage.critical", "usage.exceeded"]
+      },
+      "in_app": {
+        "enabled": true,
+        "display_duration": "until_dismissed"
+      }
+    }
+  },
+  "experiment_configuration": {
+    "cohort_allocation": {
+      "control": 0.20,
+      "caps_experiment": 0.20,
+      "bundle_experiment": 0.20,
+      "overage_experiment": 0.20,
+      "annual_experiment": 0.20
+    },
+    "variant_pricing": {
+      "caps_experiment": {
+        "starter": {
+          "cap_configuration": {
+            "verify_operations": {
+              "type": "soft",
+              "thresholds": [0.8, 0.95],
+              "action": "alert_and_bill"
+            },
+            "sign_operations": {
+              "type": "soft",
+              "thresholds": [0.8, 0.95],
+              "action": "alert_and_bill"
+            }
+          }
+        }
+      },
+      "bundle_experiment": {
+        "starter": {
+          "included_usage": {
+            "verify_operations": 5000
+          }
+        }
+      },
+      "overage_experiment": {
+        "growth": {
+          "overage_pricing": {
+            "verify_operations": {
+              "tiered_pricing": [
+                {
+                  "up_to": 25000,
+                  "unit_amount": 3
+                },
+                {
+                  "up_to": null,
+                  "unit_amount": 2.5
+                }
+              ]
+            }
+          }
+        }
+      },
+      "annual_experiment": {
+        "annual_discount": 0.20,
+        "satisfaction_guarantee": {
+          "duration_days": 30,
+          "full_refund": true
+        }
+      }
+    }
+  }
+}
