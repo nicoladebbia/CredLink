@@ -1,0 +1,768 @@
+openapi: 3.0.3
+info:
+  title: C2 Concierge Compliance v2 API
+  description: |
+    REST API for generating unified compliance packs across EU AI Act, DSA, UK Online Safety Act, US FTC guidelines, and Brazil LGPD.
+    
+    Features:
+    - Unified compliance pack generation with regional appendices
+    - Strictest-wins retention policy calculation
+    - Multi-jurisdiction assertion templates
+    - PDF and JSON output formats
+    - Real-time compliance monitoring
+  version: 1.0.0
+  contact:
+    name: C2 Concierge Support
+    email: support@c2concierge.com
+    url: https://docs.c2concierge.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.c2concierge.com/v1
+    description: Production server
+  - url: https://staging-api.c2concierge.com/v1
+    description: Staging server
+  - url: http://localhost:3000
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the API service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                timestamp: "2025-11-05T12:00:00.000Z"
+                version: "1.0.0"
+                uptime: 86400
+
+  /compliance/pack:
+    post:
+      tags:
+        - Compliance Pack
+      summary: Generate compliance pack
+      description: |
+        Generates a unified compliance pack with regional appendices for the specified tenant and period.
+        The pack includes PDF and JSON formats with all required regulatory documentation.
+      operationId: generateCompliancePack
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompliancePackRequest'
+            example:
+              tenant_id: "acme-news"
+              period: "2025-10"
+              regions: ["EU", "UK", "US", "BR"]
+              include_samples: 25
+              format: "both"
+              dry_run: false
+      responses:
+        '200':
+          description: Compliance pack generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompliancePackResponse'
+              example:
+                status: "ok"
+                pack_url_pdf: "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf"
+                pack_url_json: "https://storage.c2concierge.com/packs/acme-news/2025-10.json"
+                template_versions:
+                  eu_ai: "1.1.0"
+                  dsa26: "1.2.0"
+                  uk_osa: "1.0.2"
+                  us_ftc: "1.0.1"
+                  br_lgpd: "1.0.0"
+                generated_at: "2025-11-05T12:00:00.000Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /compliance/retention:
+    post:
+      tags:
+        - Retention Policy
+      summary: Calculate retention policy
+      description: |
+        Calculates the strictest-wins retention policy for the specified regions.
+        Applies the longest retention period among all selected jurisdictions.
+      operationId: calculateRetentionPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RetentionPolicyRequest'
+            example:
+              tenant_id: "acme-news"
+              regions: ["EU", "BR"]
+              existing_legal_hold: false
+      responses:
+        '200':
+          description: Retention policy calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RetentionPolicy'
+              example:
+                tenant_id: "acme-news"
+                regions: ["EU", "BR"]
+                retention_days: 730
+                legal_hold: true
+                purge_scheduled: "2027-11-05T12:00:00.000Z"
+                worm_storage_enabled: true
+                dsr_hooks_enabled: true
+                last_updated: "2025-11-05T12:00:00.000Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /compliance/status/{tenant_id}:
+    get:
+      tags:
+        - Compliance Status
+      summary: Get compliance status
+      description: Retrieves the current compliance status and configuration for a tenant
+      operationId: getComplianceStatus
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 100
+          description: Unique tenant identifier
+          example: "acme-news"
+        - name: regions
+          in: query
+          schema:
+            type: string
+            pattern: '^(EU|UK|US|BR)(,(EU|UK|US|BR))*$'
+          description: Comma-separated list of regions to filter by
+          example: "EU,UK"
+      responses:
+        '200':
+          description: Compliance status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ComplianceStatus'
+              example:
+                tenant_id: "acme-news"
+                regions: ["EU", "UK", "US", "BR"]
+                status: "active"
+                last_pack_generated: "2025-10-01T00:00:00Z"
+                next_pack_scheduled: "2025-11-01T00:00:00Z"
+                retention_policy:
+                  tenant_id: "acme-news"
+                  regions: ["EU", "UK", "US", "BR"]
+                  retention_days: 730
+                  legal_hold: true
+                  purge_scheduled: "2027-11-05T12:00:00.000Z"
+                  worm_storage_enabled: true
+                  dsr_hooks_enabled: true
+                  last_updated: "2025-11-05T12:00:00.000Z"
+                template_versions:
+                  eu_ai: "1.1.0"
+                  dsa26: "1.2.0"
+                  uk_osa: "1.0.2"
+                  us_ftc: "1.0.1"
+                  br_lgpd: "1.0.0"
+                compliance_score: 98.5
+                alerts:
+                  - type: "info"
+                    message: "Monthly compliance pack scheduled for November 1"
+                    timestamp: "2025-11-05T12:00:00.000Z"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /compliance/templates:
+    get:
+      tags:
+        - Templates
+      summary: Get available templates
+      description: Retrieves available compliance assertion templates, optionally filtered by region
+      operationId: getTemplates
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          description: Filter templates by region
+          example: "EU"
+      responses:
+        '200':
+          description: Templates retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplatesResponse'
+              example:
+                templates:
+                  cai.disclosure:
+                    label: "cai.disclosure"
+                    regions: ["EU"]
+                    regulation: "AI Act 2024/1689 Art. 50"
+                    version: "1.1.0"
+                  ads.transparency:
+                    label: "ads.transparency"
+                    regions: ["EU"]
+                    regulation: "DSA 2022/2065 Arts. 26/27/39"
+                    version: "1.2.0"
+                total_count: 2
+                region: "EU"
+
+  /compliance/validate:
+    post:
+      tags:
+        - Validation
+      summary: Validate compliance data
+      description: Validates compliance data against regional requirements before pack generation
+      operationId: validateComplianceData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+              example:
+                valid: false
+                violations:
+                  - type: "missing_assertion"
+                    message: "Missing required assertion 'cai.disclosure' for region 'EU'"
+                  - type: "missing_tsa"
+                    message: "TSA receipts are missing for signed manifests"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+        - uptime
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "unhealthy"]
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-05T12:00:00.000Z"
+        version:
+          type: string
+          example: "1.0.0"
+        uptime:
+          type: number
+          description: Server uptime in seconds
+          example: 86400
+
+    CompliancePackRequest:
+      type: object
+      required:
+        - tenant_id
+        - period
+        - regions
+        - format
+      properties:
+        tenant_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique tenant identifier
+          example: "acme-news"
+        period:
+          type: string
+          pattern: '^\d{4}-\d{2}$'
+          description: Reporting period in YYYY-MM format
+          example: "2025-10"
+        regions:
+          type: array
+          items:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          description: Array of regions for compliance reporting
+          example: ["EU", "UK", "US", "BR"]
+        include_samples:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 25
+          description: Number of sample assets to include in the pack
+          example: 25
+        format:
+          type: string
+          enum: ["pdf", "json", "both"]
+          default: "both"
+          description: Output format for the compliance pack
+          example: "both"
+        dry_run:
+          type: boolean
+          default: false
+          description: Generate pack without persisting to storage
+          example: false
+
+    CompliancePackResponse:
+      type: object
+      required:
+        - status
+        - template_versions
+        - generated_at
+      properties:
+        status:
+          type: string
+          enum: ["ok", "error"]
+          example: "ok"
+        pack_url_pdf:
+          type: string
+          format: uri
+          description: URL to download PDF pack (if requested)
+          example: "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf"
+        pack_url_json:
+          type: string
+          format: uri
+          description: URL to download JSON pack (if requested)
+          example: "https://storage.c2concierge.com/packs/acme-news/2025-10.json"
+        template_versions:
+          type: object
+          description: Template versions used in pack generation
+          additionalProperties:
+            type: string
+          example:
+            eu_ai: "1.1.0"
+            dsa26: "1.2.0"
+            uk_osa: "1.0.2"
+            us_ftc: "1.0.1"
+            br_lgpd: "1.0.0"
+        generated_at:
+          type: string
+          format: date-time
+          description: Timestamp when pack was generated
+          example: "2025-11-05T12:00:00.000Z"
+        error:
+          type: string
+          description: Error message if status is "error"
+          example: "Failed to generate PDF"
+
+    RetentionPolicyRequest:
+      type: object
+      required:
+        - tenant_id
+        - regions
+      properties:
+        tenant_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique tenant identifier
+          example: "acme-news"
+        regions:
+          type: array
+          items:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          minItems: 1
+          maxItems: 4
+          uniqueItems: true
+          description: Array of regions for retention calculation
+          example: ["EU", "BR"]
+        existing_legal_hold:
+          type: boolean
+          default: false
+          description: Whether legal hold is already active
+          example: false
+
+    RetentionPolicy:
+      type: object
+      required:
+        - tenant_id
+        - regions
+        - retention_days
+        - legal_hold
+        - purge_scheduled
+        - worm_storage_enabled
+        - dsr_hooks_enabled
+        - last_updated
+      properties:
+        tenant_id:
+          type: string
+          example: "acme-news"
+        regions:
+          type: array
+          items:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          example: ["EU", "BR"]
+        retention_days:
+          type: integer
+          description: Number of days to retain data (strictest-wins result)
+          example: 730
+        legal_hold:
+          type: boolean
+          description: Whether legal hold is active
+          example: true
+        purge_scheduled:
+          type: string
+          format: date-time
+          description: When purge is scheduled (if no legal hold)
+          example: "2027-11-05T12:00:00.000Z"
+        worm_storage_enabled:
+          type: boolean
+          description: Whether WORM storage is recommended
+          example: true
+        dsr_hooks_enabled:
+          type: boolean
+          description: Whether DSR hooks are enabled
+          example: true
+        last_updated:
+          type: string
+          format: date-time
+          description: When policy was last updated
+          example: "2025-11-05T12:00:00.000Z"
+
+    ComplianceStatus:
+      type: object
+      required:
+        - tenant_id
+        - regions
+        - status
+        - retention_policy
+        - template_versions
+        - compliance_score
+        - alerts
+      properties:
+        tenant_id:
+          type: string
+          example: "acme-news"
+        regions:
+          type: array
+          items:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          example: ["EU", "UK", "US", "BR"]
+        status:
+          type: string
+          enum: ["active", "inactive", "pending"]
+          description: Current compliance status
+          example: "active"
+        last_pack_generated:
+          type: string
+          format: date-time
+          description: When last compliance pack was generated
+          example: "2025-10-01T00:00:00Z"
+        next_pack_scheduled:
+          type: string
+          format: date-time
+          description: When next pack is scheduled
+          example: "2025-11-01T00:00:00Z"
+        retention_policy:
+          $ref: '#/components/schemas/RetentionPolicy'
+        template_versions:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            eu_ai: "1.1.0"
+            dsa26: "1.2.0"
+            uk_osa: "1.0.2"
+            us_ftc: "1.0.1"
+            br_lgpd: "1.0.0"
+        compliance_score:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Overall compliance score (0-100)
+          example: 98.5
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+
+    Alert:
+      type: object
+      required:
+        - type
+        - message
+        - timestamp
+      properties:
+        type:
+          type: string
+          enum: ["warning", "error", "info"]
+          example: "info"
+        message:
+          type: string
+          example: "Monthly compliance pack scheduled for November 1"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-05T12:00:00.000Z"
+
+    TemplatesResponse:
+      type: object
+      required:
+        - templates
+        - total_count
+        - region
+      properties:
+        templates:
+          type: object
+          description: Assertion templates keyed by label
+          additionalProperties:
+            $ref: '#/components/schemas/Template'
+        total_count:
+          type: integer
+          description: Total number of templates returned
+          example: 6
+        region:
+          type: string
+          description: Region filter applied (or "all")
+          example: "EU"
+
+    Template:
+      type: object
+      required:
+        - label
+        - regions
+        - regulation
+        - version
+      properties:
+        label:
+          type: string
+          description: Template label/identifier
+          example: "cai.disclosure"
+        regions:
+          type: array
+          items:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          description: Regions where this template applies
+          example: ["EU"]
+        regulation:
+          type: string
+          description: Legal regulation this template addresses
+          example: "AI Act 2024/1689 Art. 50"
+        version:
+          type: string
+          description: Template version
+          example: "1.1.0"
+
+    ValidationRequest:
+      type: object
+      required:
+        - data
+        - regions
+      properties:
+        data:
+          type: object
+          description: Compliance data to validate
+          properties:
+            manifests:
+              type: array
+              items:
+                type: object
+            verify_outcomes:
+              type: array
+              items:
+                type: object
+            badge_logs:
+              type: array
+              items:
+                type: object
+            ad_metadata:
+              type: array
+              items:
+                type: object
+            tsa_receipts:
+              type: array
+              items:
+                type: object
+        regions:
+          type: array
+          items:
+            type: string
+            enum: ["EU", "UK", "US", "BR"]
+          minItems: 1
+          maxItems: 4
+          description: Regions to validate against
+
+    ValidationResponse:
+      type: object
+      required:
+        - valid
+        - violations
+      properties:
+        valid:
+          type: boolean
+          description: Whether data passed validation
+          example: false
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Violation'
+          description: List of validation violations
+
+    Violation:
+      type: object
+      required:
+        - type
+        - message
+      properties:
+        type:
+          type: string
+          description: Type of violation
+          example: "missing_assertion"
+        message:
+          type: string
+          description: Human-readable violation description
+          example: "Missing required assertion 'cai.disclosure' for region 'EU'"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Validation Error"
+        message:
+          type: string
+          description: Error description
+          example: "Request validation failed"
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              code:
+                type: string
+        request_id:
+          type: string
+          description: Request identifier for debugging
+          example: "req_123456"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Validation Error"
+            message: "Request validation failed"
+            details:
+              - field: "period"
+                message: "Period must be in YYYY-MM format"
+                code: "INVALID_FORMAT"
+
+    Unauthorized:
+      description: Authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Unauthorized"
+            message: "Valid authentication required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Not Found"
+            message: "Tenant not found"
+
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Rate Limited"
+            message: "Too many requests - please try again later"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Internal Server Error"
+            message: "An unexpected error occurred"
+            request_id: "req_123456"
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Compliance Pack
+    description: Compliance pack generation
+  - name: Retention Policy
+    description: Retention policy calculation
+  - name: Compliance Status
+    description: Compliance status monitoring
+  - name: Templates
+    description: Assertion template management
+  - name: Validation
+    description: Data validation
