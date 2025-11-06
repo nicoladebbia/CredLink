@@ -246,16 +246,23 @@ export class ComplianceReportingHarmonizer {
   private async generateRegionalAppendices(
     regions: Array<"EU" | "UK" | "US" | "BR">,
     dataSource: ComplianceDataSource
-  ): Promise<ComplianceAppendices> {
-    const appendices: ComplianceAppendices = {
-      EU: this.generateEUAppendix(dataSource),
-      UK: this.generateUKAppendix(dataSource),
-      US: this.generateUSAppendix(dataSource),
-      BR: this.generateBRAppendix(dataSource)
-    };
-
-    // Return all appendices but filter when needed
-    return regions.reduce((acc, region) => ({ ...acc, [region]: appendices[region] }), {});
+  ): Promise<Partial<ComplianceAppendices>> {
+    const appendices: Partial<ComplianceAppendices> = {};
+    
+    if (regions.includes("EU")) {
+      appendices.EU = this.generateEUAppendix(dataSource);
+    }
+    if (regions.includes("UK")) {
+      appendices.UK = this.generateUKAppendix(dataSource);
+    }
+    if (regions.includes("US")) {
+      appendices.US = this.generateUSAppendix(dataSource);
+    }
+    if (regions.includes("BR")) {
+      appendices.BR = this.generateBRAppendix(dataSource);
+    }
+    
+    return appendices;
   }
 
   /**
@@ -285,8 +292,8 @@ export class ComplianceReportingHarmonizer {
     return {
       ai_act_compliance: {
         total_assessed: euManifests.length,
-        ai_generated,
-        ai_altered,
+        ai_generated: aiGenerated,
+        ai_altered: aiAltered,
         compliance_rate: euManifests.length > 0 ? (aiGenerated + aiAltered) / euManifests.length * 100 : 0
       },
       dsa_compliance: {

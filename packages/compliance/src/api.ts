@@ -203,7 +203,7 @@ export class ComplianceAPIServer {
           tenantId: request.body.tenant_id,
           period: request.body.period,
           regions: request.body.regions,
-          includeEvidence: request.body.include_samples || 25,
+          includeEvidence: (request.body.include_samples || 25) > 0,
           format: request.body.format,
           dryRun: request.body.dry_run || false
         };
