@@ -85,8 +85,10 @@ USER nodejs
 # Add security labels
 LABEL maintainer="C2 Concierge, Inc." \
       version="1.2.0" \
-      description="C2The Partner Marketplace - Production hardened container" \
-      security.scan="enabled"
+      description="C2PA Partner Marketplace - Production hardened container" \
+      security.scan="enabled" \
+      security.policy="zero-trust" \
+      compliance="soc2,gdpr"
 
 # Expose port
 EXPOSE 3001
@@ -99,4 +101,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 ENTRYPOINT ["/sbin/tini", "--"]
 
 # Start application with security considerations
-CMD ["node", "--max-old-space-size=1024", "--security-revert=CVE-2021-44832", "dist/server.js"]
+CMD ["node", "--max-old-space-size=1024", "--security-revert=CVE-2021-44832", "--enable-source-maps", "dist/server.js"]

@@ -487,32 +487,46 @@ CREATE INDEX idx_webhook_events_type ON webhook_events(event_type);
 CREATE INDEX idx_webhook_events_status ON webhook_events(delivery_status);
 CREATE INDEX idx_webhook_events_retry ON webhook_events(next_retry_at);
 
--- Audit log table
+-- Audit log table with enhanced security
 CREATE TABLE audit_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     partner_id UUID REFERENCES partners(id) ON DELETE SET NULL,
     
-    -- Action details
-    action VARCHAR(100) NOT NULL,
-    entity_type VARCHAR(50) NOT NULL,
+    -- Action details with validation
+    action VARCHAR(100) NOT NULL CHECK (length(action) >= 1),
+    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('partner', 'certification', 'deal', 'commission', 'payout', 'badge')),
     entity_id UUID,
     
-    -- Changes
+    -- Changes with compression
     old_values JSONB,
     new_values JSONB,
     
-    -- User context
-    performed_by VARCHAR(255),
-    ip_address VARCHAR(45),
-    user_agent TEXT,
+    -- User context with validation
+    performed_by VARCHAR(255) CHECK (performed_by ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$' OR performed_by IS NULL),
+    ip_address VARCHAR(45) CHECK (ip_address ~* '^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$' OR ip_address IS NULL),
+    user_agent TEXT CHECK (length(user_agent) <= 500),
+    session_id UUID,
     
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- Security context
+    request_id UUID NOT NULL DEFAULT uuid_generate_v4(),
+    correlation_id UUID,
+    authentication_method VARCHAR(50) CHECK (authentication_method IN ('jwt', 'oauth', 'api_key', 'session')),
+    
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT valid_entity CHECK (
+        (entity_type = 'partner' AND entity_id IS NOT NULL) OR
+        (entity_type IN ('certification', 'deal', 'commission', 'payout', 'badge') AND entity_id IS NOT NULL) OR
+        (entity_type NOT IN ('partner', 'certification', 'deal', 'commission', 'payout', 'badge') AND entity_id IS NULL)
+    )
 );
 
-CREATE INDEX idx_audit_log_partner ON audit_log(partner_id);
-CREATE INDEX idx_audit_log_action ON audit_log(action);
-CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id);
-CREATE INDEX idx_audit_log_timestamp ON audit_log(created_at);
+CREATE INDEX idx_audit_log_partner ON audit_log(partner_id) WHERE created_at > NOW() - INTERVAL '2 years';
+CREATE INDEX idx_audit_log_action ON audit_log(action) WHERE created_at > NOW() - INTERVAL '2 years';
+CREATE INDEX idx_audit_log_entity ON audit_log(entity_type, entity_id) WHERE created_at > NOW() - INTERVAL '2 years';
+CREATE INDEX idx_audit_log_timestamp ON audit_log(created_at DESC);
+CREATE INDEX idx_audit_log_request_id ON audit_log(request_id);
+CREATE INDEX idx_audit_log_session ON audit_log(session_id) WHERE session_id IS NOT NULL;
 
 -- Update timestamps trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -523,7 +537,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Apply update triggers to all tables
+-- Apply update triggers to all tables with security
 CREATE TRIGGER update_partners_updated_at BEFORE UPDATE ON partners FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_partner_metrics_updated_at BEFORE UPDATE ON partner_metrics FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_certifications_updated_at BEFORE UPDATE ON certifications FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -534,3 +548,81 @@ CREATE TRIGGER update_commissions_updated_at BEFORE UPDATE ON commissions FOR EA
 CREATE TRIGGER update_payouts_updated_at BEFORE UPDATE ON payouts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_nps_surveys_updated_at BEFORE UPDATE ON nps_surveys FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_installations_updated_at BEFORE UPDATE ON installations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Create audit trigger function
+CREATE OR REPLACE FUNCTION audit_trigger_function()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO audit_log (
+        partner_id,
+        action,
+        entity_type,
+        entity_id,
+        old_values,
+        new_values,
+        performed_by,
+        ip_address,
+        user_agent,
+        session_id,
+        request_id,
+        correlation_id,
+        authentication_method
+    ) VALUES (
+        COALESCE(NEW.partner_id, OLD.partner_id),
+        TG_OP,
+        TG_TABLE_NAME,
+        COALESCE(NEW.id, OLD.id),
+        CASE WHEN TG_OP = 'DELETE' THEN row_to_json(OLD) ELSE NULL END,
+        CASE WHEN TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN row_to_json(NEW) ELSE NULL END,
+        current_setting('app.current_user', true),
+        current_setting('app.current_ip', true),
+        current_setting('app.current_user_agent', true),
+        current_setting('app.current_session_id', true)::uuid,
+        uuid_generate_v4(),
+        current_setting('app.correlation_id', true)::uuid,
+        current_setting('app.auth_method', true)
+    );
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Apply audit triggers to critical tables
+CREATE TRIGGER audit_partners AFTER INSERT OR UPDATE OR DELETE ON partners FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+CREATE TRIGGER audit_certifications AFTER INSERT OR UPDATE OR DELETE ON certifications FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+CREATE TRIGGER audit_deal_registrations AFTER INSERT OR UPDATE OR DELETE ON deal_registrations FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+CREATE TRIGGER audit_commissions AFTER INSERT OR UPDATE OR DELETE ON commissions FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+CREATE TRIGGER audit_payouts AFTER INSERT OR UPDATE OR DELETE ON payouts FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+CREATE TRIGGER audit_performance_badges AFTER INSERT OR UPDATE OR DELETE ON performance_badges FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+
+-- Create data retention function
+CREATE OR REPLACE FUNCTION cleanup_old_audit_logs()
+RETURNS void AS $$
+BEGIN
+    DELETE FROM audit_log WHERE created_at < NOW() - INTERVAL '2 years';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule cleanup job (requires pg_cron extension)
+-- SELECT cron.schedule('cleanup-audit-logs', '0 2 * * *', 'SELECT cleanup_old_audit_logs();');
+
+-- Final security constraints
+ALTER TABLE partners ADD CONSTRAINT valid_certification_dates CHECK (
+    (certified_at IS NULL AND certification_expires_at IS NULL) OR
+    (certified_at IS NOT NULL AND certification_expires_at IS NOT NULL AND certification_expires_at > certified_at)
+);
+
+ALTER TABLE certifications ADD CONSTRAINT valid_expiry_dates CHECK (
+    (issued_at IS NULL AND expires_at IS NULL) OR
+    (issued_at IS NOT NULL AND expires_at IS NOT NULL AND expires_at > issued_at)
+);
+
+-- Grant permissions to application role
+CREATE ROLE marketplace_app;
+GRANT CONNECT ON DATABASE c2pa_marketplace TO marketplace_app;
+GRANT USAGE ON SCHEMA public TO marketplace_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO marketplace_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO marketplace_app;
+
+-- Set default privileges for future objects
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO marketplace_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO marketplace_app;

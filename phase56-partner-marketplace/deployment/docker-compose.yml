@@ -200,53 +200,85 @@ services:
     image: nginx:alpine
     container_name: c2pa-marketplace-nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "127.0.0.1:80:80"
+      - "127.0.0.1:443:443"
     volumes:
       - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ../nginx/ssl:/etc/nginx/ssl:ro
       - ../static:/usr/share/nginx/html:ro
     depends_on:
-      - marketplace-api
-      - partner-console
+      marketplace-api:
+        condition: service_healthy
+      partner-console:
+        condition: service_started
     networks:
       - marketplace-network
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:noexec,nosuid,size=50m
+      - /var/run:noexec,nosuid,size=10m
+    user: "101:101"
 
   # Prometheus Monitoring
   prometheus:
     image: prom/prometheus:latest
     container_name: c2pa-prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ../monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
     networks:
       - marketplace-network
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "65534:65534"
 
   # Grafana Dashboards
   grafana:
     image: grafana/grafana:latest
     container_name: c2pa-grafana
     ports:
-      - "3002:3000"
+      - "127.0.0.1:3002:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_COOKIE_SAMESITE=strict
+      - GF_SECURITY_CONTENT_TYPE_PROTECTION=true
+      - GF_SECURITY_X_CONTENT_TYPE_OPTIONS=nosniff
+      - GF_SECURITY_X_XSS_PROTECTION=true
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_SERVER_DOMAIN=${GRAFANA_DOMAIN}
+      - GF_SERVER_ROOT_URL=https://${GRAFANA_DOMAIN}/
       - GF_INSTALL_PLUGINS=grafana-clock-panel
     volumes:
       - grafana-data:/var/lib/grafana
       - ../monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
       - ../monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
     depends_on:
-      - prometheus
+      prometheus:
+        condition: service_started
     networks:
       - marketplace-network
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    user: "472:472"
+    read_only: false
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
 
 networks:
   marketplace-network:
