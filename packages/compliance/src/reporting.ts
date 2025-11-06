@@ -250,7 +250,7 @@ export interface PackGenerationRequest {
   tenantId: string;
   period: string;
   regions: Array<"EU" | "UK" | "US" | "BR">;
-  format?: "json" | "pdf";
+  format?: "json" | "pdf" | "both";
   includeEvidence?: boolean;
 }
 
@@ -260,7 +260,13 @@ export interface PackGenerationResponse {
   format: string;
   size: number;
   generatedAt: string;
+  generated_at: string;
   expiresAt: string;
+  template_versions: Record<string, string>;
+  pack_url_json?: string;
+  pack_url_pdf?: string;
+  status?: string;
+  error?: string;
 }
 
 // Reporting Harmonizer Class
