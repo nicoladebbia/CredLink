@@ -6,8 +6,9 @@
 ```typescript
 import * as sharp from 'sharp';
 import { WatermarkPayload, WatermarkDetectionResult } from '../core/watermark-config';
-import { DCTWatermarkEmbedder, DCTWatermarkDetector } from '../watermarking/dct-watermark-embedder';
-import { defaultPayloadGenerator } from '../core/payload-generator';
+import { DCTWatermarkEmbedder } from '../watermarking/dct-watermark-embedder';
+import { DCTWatermarkDetector } from '../detectors/dct-watermark-detector';
+import { PayloadGeneratorFactory } from '../core/payload-generator';
 
 export interface TransformTest {
   name: string;
@@ -79,7 +80,7 @@ export interface VisualQualityMetrics {
 export class RobustnessEvaluator {
   private readonly embedder: DCTWatermarkEmbedder;
   private readonly detector: DCTWatermarkDetector;
-  private readonly payloadGenerator: typeof defaultPayloadGenerator;
+  private readonly payloadGenerator: ReturnType<typeof PayloadGeneratorFactory.createStandard>;
 
   constructor() {
     this.embedder = new DCTWatermarkEmbedder({
@@ -93,6 +94,8 @@ export class RobustnessEvaluator {
       spatialSpread: true
     });
     
+    this.payloadGenerator = PayloadGeneratorFactory.createStandard();
+    
     this.detector = new DCTWatermarkDetector(
       {
         type: 'dct_ecc',
@@ -104,11 +107,9 @@ export class RobustnessEvaluator {
         frequencyBands: [1, 2, 3, 4, 5, 6],
         spatialSpread: true
       },
-      defaultPayloadGenerator,
-      new (await import('../core/payload-generator')).PayloadBinding(defaultPayloadGenerator)
+      this.payloadGenerator,
+      new (await import('../core/payload-generator')).PayloadBinding(this.payloadGenerator)
     );
-    
-    this.payloadGenerator = defaultPayloadGenerator;
   }
 
   /**
@@ -477,24 +478,39 @@ export class RobustnessEvaluator {
    * Apply specific transform to image
    */
   private async applyTransform(image: ArrayBuffer, transform: TransformTest): Promise<ArrayBuffer> {
+    // SECURITY: Added parameter validation to prevent DoS attacks
+    this.validateTransformParameters(transform.parameters);
+    
     let pipeline = sharp(image);
     const params = transform.parameters;
     
     // Compression transforms
     if (params.jpegQuality !== undefined) {
+      if (params.jpegQuality < 1 || params.jpegQuality > 100) {
+        throw new Error(`Invalid JPEG quality: ${params.jpegQuality}. Must be 1-100.`);
+      }
       pipeline = pipeline.jpeg({ quality: params.jpegQuality });
     }
     
     if (params.webpQuality !== undefined) {
+      if (params.webpQuality < 1 || params.webpQuality > 100) {
+        throw new Error(`Invalid WebP quality: ${params.webpQuality}. Must be 1-100.`);
+      }
       pipeline = pipeline.webp({ quality: params.webpQuality });
     }
     
     if (params.pngCompression !== undefined) {
+      if (params.pngCompression < 0 || params.pngCompression > 9) {
+        throw new Error(`Invalid PNG compression: ${params.pngCompression}. Must be 0-9.`);
+      }
       pipeline = pipeline.png({ compressionLevel: params.pngCompression });
     }
     
     // Resize transforms
     if (params.scaleFactor !== undefined) {
+      if (params.scaleFactor < 0.1 || params.scaleFactor > 10) {
+        throw new Error(`Invalid scale factor: ${params.scaleFactor}. Must be 0.1-10.`);
+      }
       const metadata = await sharp(image).metadata();
       if (metadata.width && metadata.height) {
         pipeline = pipeline.resize(
@@ -505,6 +521,11 @@ export class RobustnessEvaluator {
     }
     
     if (params.targetWidth !== undefined && params.targetHeight !== undefined) {
+      // SECURITY: Added parameter validation
+      if (params.targetWidth < 1 || params.targetWidth > 8192 || 
+          params.targetHeight < 1 || params.targetHeight > 8192) {
+        throw new Error(`Invalid target dimensions: ${params.targetWidth}x${params.targetHeight}. Must be 1-8192.`);
+      }
       pipeline = pipeline.resize(params.targetWidth, params.targetHeight);
     }
     
@@ -515,6 +536,11 @@ export class RobustnessEvaluator {
         const cropSize = Math.min(metadata.width, metadata.height) * (params.cropPercent / 100);
         const left = Math.round((metadata.width - cropSize) / 2);
         const top = Math.round((metadata.height - cropSize) / 2);
+        
+        // SECURITY: Validate crop dimensions
+        if (cropSize < 1 || cropSize > Math.min(metadata.width, metadata.height)) {
+          throw new Error(`Invalid crop size: ${cropSize}. Must be within image bounds.`);
+        }
         
         pipeline = pipeline.extract({
           left: Math.round(left),
@@ -527,6 +553,11 @@ export class RobustnessEvaluator {
     
     if (params.cropX !== undefined && params.cropY !== undefined && 
         params.cropWidth !== undefined && params.cropHeight !== undefined) {
+      // SECURITY: Validate explicit crop parameters
+      if (params.cropX < 0 || params.cropY < 0 || 
+          params.cropWidth < 1 || params.cropHeight < 1) {
+        throw new Error('Invalid crop coordinates or dimensions');
+      }
       pipeline = pipeline.extract({
         left: params.cropX,
         top: params.cropY,
@@ -537,16 +568,19 @@ export class RobustnessEvaluator {
     
     // Rotation transforms
     if (params.rotationDegrees !== undefined) {
+      // SECURITY: Rotation validation already handled in validateTransformParameters
       pipeline = pipeline.rotate(params.rotationDegrees, { background: { r: 255, g: 255, b: 255 } });
     }
     
     // Blur transforms
     if (params.blurSigma !== undefined) {
+      // SECURITY: Blur validation already handled in validateTransformParameters
       pipeline = pipeline.blur(params.blurSigma);
     }
     
     // Color transforms
     if (params.brightness !== undefined) {
+      // SECURITY: Brightness validation already handled in validateTransformParameters
       pipeline = pipeline.modulate({ brightness: 1 + (params.brightness / 100) });
     }
     
@@ -975,6 +1009,91 @@ export class RobustnessReporter {
     }
     
     return report;
+  }
+  
+  /**
+   * SECURITY: Validate transform parameters to prevent DoS attacks
+   */
+  private validateTransformParameters(params: TransformParameters): void {
+    // Validate rotation parameters
+    if (params.rotationDegrees !== undefined) {
+      if (params.rotationDegrees < -360 || params.rotationDegrees > 360) {
+        throw new Error(`Invalid rotation: ${params.rotationDegrees}. Must be -360 to 360 degrees.`);
+      }
+    }
+    
+    // Validate blur parameters
+    if (params.blurSigma !== undefined) {
+      if (params.blurSigma < 0.1 || params.blurSigma > 10) {
+        throw new Error(`Invalid blur sigma: ${params.blurSigma}. Must be 0.1-10.`);
+      }
+    }
+    
+    // Validate crop parameters
+    if (params.cropPercent !== undefined) {
+      if (params.cropPercent < 1 || params.cropPercent > 50) {
+        throw new Error(`Invalid crop percentage: ${params.cropPercent}. Must be 1-50%.`);
+      }
+    }
+    
+    // Validate noise parameters
+    if (params.noiseLevel !== undefined) {
+      if (params.noiseLevel < 0 || params.noiseLevel > 100) {
+        throw new Error(`Invalid noise level: ${params.noiseLevel}. Must be 0-100.`);
+      }
+    }
+    
+    // Validate brightness/contrast
+    if (params.brightness !== undefined) {
+      if (params.brightness < -100 || params.brightness > 100) {
+        throw new Error(`Invalid brightness: ${params.brightness}. Must be -100 to 100.`);
+      }
+    }
+    
+    if (params.contrast !== undefined) {
+      if (params.contrast < -100 || params.contrast > 100) {
+        throw new Error(`Invalid contrast: ${params.contrast}. Must be -100 to 100.`);
+      }
+    }
+    
+    // SECURITY: Added validation for additional transform parameters
+    if (params.saturation !== undefined) {
+      if (params.saturation < -100 || params.saturation > 100) {
+        throw new Error(`Invalid saturation: ${params.saturation}. Must be -100 to 100.`);
+      }
+    }
+    
+    if (params.cropX !== undefined || params.cropY !== undefined || 
+        params.cropWidth !== undefined || params.cropHeight !== undefined) {
+      if (params.cropX !== undefined && (params.cropX < 0 || params.cropX > 10000)) {
+        throw new Error(`Invalid crop X: ${params.cropX}. Must be 0-10000.`);
+      }
+      if (params.cropY !== undefined && (params.cropY < 0 || params.cropY > 10000)) {
+        throw new Error(`Invalid crop Y: ${params.cropY}. Must be 0-10000.`);
+      }
+      if (params.cropWidth !== undefined && (params.cropWidth < 1 || params.cropWidth > 8192)) {
+        throw new Error(`Invalid crop width: ${params.cropWidth}. Must be 1-8192.`);
+      }
+      if (params.cropHeight !== undefined && (params.cropHeight < 1 || params.cropHeight > 8192)) {
+        throw new Error(`Invalid crop height: ${params.cropHeight}. Must be 1-8192.`);
+      }
+    }
+    
+    if (params.targetWidth !== undefined || params.targetHeight !== undefined) {
+      if (params.targetWidth !== undefined && (params.targetWidth < 1 || params.targetWidth > 8192)) {
+        throw new Error(`Invalid target width: ${params.targetWidth}. Must be 1-8192.`);
+      }
+      if (params.targetHeight !== undefined && (params.targetHeight < 1 || params.targetHeight > 8192)) {
+        throw new Error(`Invalid target height: ${params.targetHeight}. Must be 1-8192.`);
+      }
+    }
+    
+    // Validate composite parameters
+    if (params.collageItems !== undefined) {
+      if (params.collageItems < 2 || params.collageItems > 100) {
+        throw new Error(`Invalid collage items: ${params.collageItems}. Must be 2-100.`);
+      }
+    }
   }
 }
 ```

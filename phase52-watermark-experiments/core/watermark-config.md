@@ -93,6 +93,16 @@ export interface TenantWatermarkConfig {
   suppressAssetClasses: string[]; // Asset classes to ignore
   lastUpdated: Date;          // Configuration timestamp
   updatedBy: string;          // Who updated the config
+  // SECURITY: Added validation constraints to prevent configuration abuse
+  maxRequestsPerMinute?: number; // Rate limiting per tenant
+  allowedAssetTypes?: string[];  // Restrict to specific asset types
+  auditRetentionDays?: number;   // Custom audit retention (max 365)
+  ui?: {
+    showHintBadge: boolean;    // Show WM hint chip in UI
+    requireC2PA: boolean;      // Only show hints with C2PA present
+    allowDisable: boolean;     // Allow users to hide hints
+    maxConfidenceThreshold?: number; // Maximum allowed confidence
+  };
 }
 
 export interface WatermarkSignRequest {
@@ -150,7 +160,7 @@ export interface WatermarkAuditEntry {
   processingTimeMs: number;
   timestamp: Date;
   userId: string;
-  ipAddress: string;
+  // Removed: ipAddress - privacy violation, not needed for audit
 }
 ```
 

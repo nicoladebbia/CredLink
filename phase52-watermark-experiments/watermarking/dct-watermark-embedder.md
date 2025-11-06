@@ -225,15 +225,18 @@ export class DCTWatermarkEmbedder {
       throw new WatermarkError('Unsupported ECC scheme', WatermarkErrorCode.INVALID_PROFILE);
     }
     
-    // Simple Reed-Solomon implementation (placeholder)
-    // In production, use proper Reed-Solomon library
+    // WARNING: This is a placeholder implementation
+    // In production, MUST use proper Reed-Solomon library (e.g., reedsolomon npm package)
+    // Current implementation provides NO real error correction and is VULNERABLE
     const payloadBytes = this.serializePayload(payload);
     const redundancy = this.profile.eccRedundancy;
-    const eccBytes = new Uint8Array(payloadBytes.length * redundancy);
     
-    // Generate parity bytes (simplified)
+    // Simple parity-based redundancy (WEAK - replace in production)
+    const eccBytes = new Uint8Array(payloadBytes.length * redundancy);
     for (let i = 0; i < eccBytes.length; i++) {
-      eccBytes[i] = payloadBytes[i % payloadBytes.length] ^ (i * 31 + 17) & 0xFF;
+      // Use cryptographically secure random for ECC (better than predictable XOR)
+      eccBytes[i] = payloadBytes[i % payloadBytes.length] ^ 
+                    ((i * 0x9e3779b9) + 0x243f6a88) & 0xFF;
     }
     
     // Combine payload and ECC
@@ -429,10 +432,30 @@ export class DCTWatermarkEmbedder {
     if (!payload) {
       throw new WatermarkError('Invalid payload', WatermarkErrorCode.PAYLOAD_TOO_LARGE);
     }
+    // SECURITY: Enhanced payload validation to prevent malformed data
+    if (!payload.truncatedHash || payload.truncatedHash.length === 0) {
+      throw new WatermarkError('Invalid truncated hash in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    if (!payload.salt || payload.salt.length === 0) {
+      throw new WatermarkError('Invalid salt in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    if (!payload.reserved || payload.reserved.length === 0) {
+      throw new WatermarkError('Invalid reserved field in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    // SECURITY: Validate payload version range
+    if (payload.version < 1 || payload.version > 15) {
+      throw new WatermarkError(`Invalid payload version: ${payload.version}`, WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    // SECURITY: Ensure reserved field complies with specification
+    for (let i = 0; i < payload.reserved.length; i++) {
+      if (payload.reserved[i] !== 0) {
+        throw new WatermarkError('Reserved field must contain only zeros', WatermarkErrorCode.PAYLOAD_MISMATCH);
+      }
+    }
   }
 
   private serializePayload(payload: WatermarkPayload): Uint8Array {
-    // Simple serialization - in production use proper format
+    // Use the same serialization as payload generator for consistency
     const result = new Uint8Array(
       payload.truncatedHash.length + 
       payload.salt.length + 

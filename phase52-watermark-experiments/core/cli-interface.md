@@ -505,35 +505,106 @@ async function validateProfile(profile: string): Promise<void> {
 }
 
 async function copyFile(src: string, dst: string): Promise<void> {
+  // SECURITY: Added path validation to prevent traversal attacks
+  if (!src || !dst || typeof src !== 'string' || typeof dst !== 'string') {
+    throw new Error('Invalid file paths');
+  }
+  
+  // Normalize and validate source path
+  const normalizedSrc = path.normalize(src);
+  const normalizedDst = path.normalize(dst);
+  
+  // Prevent path traversal in source
+  if (normalizedSrc !== src || src.includes('..') || src.includes('~')) {
+    throw new Error('Path traversal detected in source path');
+  }
+  
+  // Prevent path traversal in destination
+  if (normalizedDst !== dst || dst.includes('..') || dst.includes('~')) {
+    throw new Error('Path traversal detected in destination path');
+  }
+  
+  // Ensure destination directory exists
   await fs.mkdir(path.dirname(dst), { recursive: true });
+  
+  // Validate source file exists and is accessible
+  const srcStats = await fs.stat(src);
+  if (!srcStats.isFile()) {
+    throw new Error('Source is not a file');
+  }
+  
+  // Copy file with size limits to prevent DoS
   const data = await fs.readFile(src);
+  if (data.length > 100 * 1024 * 1024) { // 100MB limit
+    throw new Error('File too large for copying');
+  }
+  
   await fs.writeFile(dst, data);
 }
 
 async function findFiles(dir: string, pattern: string): Promise<string[]> {
-  // Simplified glob implementation
+  // SECURITY: Fixed path traversal and regex injection vulnerabilities
+  // Validate and sanitize inputs
+  if (!dir || typeof dir !== 'string') {
+    throw new Error('Invalid directory path');
+  }
+  if (!pattern || typeof pattern !== 'string') {
+    throw new Error('Invalid pattern');
+  }
+  
+  // Prevent path traversal attacks
+  const normalizedDir = path.normalize(dir);
+  if (normalizedDir !== dir || dir.includes('..') || dir.includes('~')) {
+    throw new Error('Path traversal detected in directory path');
+  }
+  
+  // Simplified glob implementation with security fixes
   const files: string[] = [];
   const entries = await fs.readdir(dir, { withFileTypes: true });
   
+  // SECURITY: Sanitize pattern to prevent regex injection
+  const sanitizedPattern = pattern
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape regex metacharacters
+    .replace(/\\\*/g, '.*') // Restore safe wildcard
+    .replace(/\\\{([^}]+)\\\}/g, '($1)'); // Restore safe groups
+  
   for (const entry of entries) {
+    // SECURITY: Prevent path traversal in entry names
+    if (entry.name.includes('..') || entry.name.includes('/') || entry.name.includes('\\')) {
+      continue; // Skip suspicious entries
+    }
+    
     const fullPath = path.join(dir, entry.name);
     
+    // SECURITY: Ensure resolved path stays within base directory
+    const resolvedPath = path.resolve(fullPath);
+    const baseDir = path.resolve(dir);
+    if (!resolvedPath.startsWith(baseDir)) {
+      continue; // Skip paths outside base directory
+    }
+    
     if (entry.isDirectory()) {
+      // SECURITY: Limit recursion depth to prevent directory traversal attacks
+      const relativePath = path.relative(dir, fullPath);
+      if (relativePath.split(path.sep).length > 5) {
+        continue; // Skip deep directories
+      }
+      
       const subFiles = await findFiles(fullPath, pattern);
       files.push(...subFiles);
     } else if (entry.isFile()) {
-      // Simple pattern matching
+      // SECURITY: Use safe pattern matching
       if (pattern.includes('*') || pattern.includes('{')) {
-        // Convert glob to regex (simplified)
-        const regex = new RegExp(
-          pattern
-            .replace(/\./g, '\\.')
-            .replace(/\*/g, '.*')
-            .replace(/\{([^}]+)\}/g, '($1)')
-        );
-        
-        if (regex.test(entry.name)) {
-          files.push(fullPath);
+        try {
+          // Use sanitized pattern with proper escaping
+          const regex = new RegExp(`^${sanitizedPattern}$`);
+          
+          if (regex.test(entry.name)) {
+            files.push(fullPath);
+          }
+        } catch (regexError) {
+          // Skip invalid regex patterns
+          continue;
         }
       } else if (entry.name === pattern) {
         files.push(fullPath);

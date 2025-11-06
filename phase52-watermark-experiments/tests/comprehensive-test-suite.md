@@ -12,10 +12,12 @@ import {
   WatermarkPayload, 
   TenantWatermarkConfig,
   WatermarkError,
-  WatermarkErrorCode 
+  WatermarkErrorCode,
+  DEFAULT_WATERMARK_CONFIG
 } from '../core/watermark-config';
-import { PayloadGenerator, PayloadBinding } from '../core/payload-generator';
-import { DCTWatermarkEmbedder, DCTWatermarkDetector } from '../watermarking/dct-watermark-embedder';
+import { PayloadGenerator, PayloadBinding, PayloadGeneratorFactory } from '../core/payload-generator';
+import { DCTWatermarkEmbedder, DCTWatermarkFactory } from '../watermarking/dct-watermark-embedder';
+import { DCTWatermarkDetectorFactory } from '../detectors/dct-watermark-detector';
 import { RobustnessEvaluator, RobustnessReporter } from '../evaluation/robustness-evaluation';
 
 export interface TestEnvironment {
@@ -40,6 +42,19 @@ export interface TestEnvironment {
   outputDir: string;
 }
 
+export interface TestResults {
+  suite: string;
+  tests: Array<{
+    name: string;
+    passed: boolean;
+    duration: number;
+    error?: string;
+  }>;
+  passed: number;
+  failed: number;
+  errors: string[];
+}
+
 export class WatermarkTestSuite {
   private environment: TestEnvironment;
   private payloadGenerator: PayloadGenerator;
@@ -58,8 +73,26 @@ export class WatermarkTestSuite {
   async setup(): Promise<void> {
     console.log('🔧 Setting up watermark test environment...');
     
+    // SECURITY: Added path validation for output directory
+    const baseOutputDir = './test-output';
+    const testId = `watermark-tests-${Date.now()}`;
+    const outputDir = path.join(baseOutputDir, testId);
+    
+    // Validate and normalize path
+    const normalizedOutputDir = path.normalize(outputDir);
+    if (normalizedOutputDir !== outputDir || outputDir.includes('..') || outputDir.includes('~')) {
+      throw new Error('Path traversal detected in output directory');
+    }
+    
+    // Ensure we're within the expected base directory
+    const resolvedOutputDir = path.resolve(outputDir);
+    const resolvedBaseDir = path.resolve(baseOutputDir);
+    if (!resolvedOutputDir.startsWith(resolvedBaseDir)) {
+      throw new Error('Output directory must be within test-output folder');
+    }
+    
     // Create output directory
-    this.environment.outputDir = path.join('./test-output', `watermark-tests-${Date.now()}`);
+    this.environment.outputDir = outputDir;
     await fs.mkdir(this.environment.outputDir, { recursive: true });
     
     // Load test images

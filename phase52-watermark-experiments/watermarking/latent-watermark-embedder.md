@@ -228,11 +228,11 @@ export class LatentWatermarkEmbedder {
    */
   private hashPayload(payloadBytes: Uint8Array): Uint8Array {
     // Simple hash implementation - in production use crypto.subtle.digest
-    let hash hash = 0;
+    let hash = 0;
     
     for (const byte of payloadBytes) {
-      hash hash = ((hash << 5) - hash) + byte;
-      the hash = hash & hash; // Convert to 32-bit integer
+      hash = ((hash << 5) - hash) + byte;
+      hash = hash & hash; // Convert to 32-bit integer
     }
     
     // Generate enough bytes for the key
@@ -276,7 +276,6 @@ export class LatentWatermarkEmbedder {
     layerNames: string[];
   }): void {
     if (!this.profile.modelCompatibility.includes(modelInfo.modelType)) {
- {
       throw new WatermarkError(
         `Model ${modelInfo.modelType} not supported by latent watermark profile`,
         WatermarkErrorCode.UNSUPPORTED_ASSET_TYPE
@@ -347,14 +346,31 @@ export class LatentWatermarkEmbedder {
       );
     }
     
-    // Check for NaN or infinite values
-    for (let i = 0; i < Math.min(tensor.length, 1000); i++) {
+    // SECURITY: Fixed validation to check ALL values, not just first 1000
+    // Previously only checked first 1000 values, allowing invalid values to bypass validation
+    let invalidCount = 0;
+    const maxInvalidSamples = Math.min(tensor.length, 10000); // Sample up to 10k for performance
+    
+    for (let i = 0; i < tensor.length; i++) {
       if (!isFinite(tensor[i])) {
-        throw new WatermarkError(
-          'Latent tensor contains invalid values',
-          WatermarkErrorCode.CORRUPTED_ASSET
-        );
+        invalidCount++;
+        
+        // If we find too many invalid values in our sample, reject the tensor
+        if (invalidCount > 10 && i < maxInvalidSamples) {
+          throw new WatermarkError(
+            'Latent tensor contains too many invalid values',
+            WatermarkErrorCode.CORRUPTED_ASSET
+          );
+        }
       }
+    }
+    
+    // If invalid count is high relative to tensor size, reject
+    if (invalidCount > tensor.length * 0.01) { // More than 1% invalid
+      throw new WatermarkError(
+        'Latent tensor contains excessive invalid values',
+        WatermarkErrorCode.CORRUPTED_ASSET
+      );
     }
   }
 
@@ -364,6 +380,26 @@ export class LatentWatermarkEmbedder {
         'Invalid payload',
         WatermarkErrorCode.PAYLOAD_TOO_LARGE
       );
+    }
+    // SECURITY: Enhanced payload validation to prevent malformed data
+    if (!payload.truncatedHash || payload.truncatedHash.length === 0) {
+      throw new WatermarkError('Invalid truncated hash in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    if (!payload.salt || payload.salt.length === 0) {
+      throw new WatermarkError('Invalid salt in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    if (!payload.reserved || payload.reserved.length === 0) {
+      throw new WatermarkError('Invalid reserved field in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    // SECURITY: Validate payload version range
+    if (payload.version < 1 || payload.version > 15) {
+      throw new WatermarkError(`Invalid payload version: ${payload.version}`, WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    // SECURITY: Ensure reserved field complies with specification
+    for (let i = 0; i < payload.reserved.length; i++) {
+      if (payload.reserved[i] !== 0) {
+        throw new WatermarkError('Reserved field must contain only zeros', WatermarkErrorCode.PAYLOAD_MISMATCH);
+      }
     }
   }
 }

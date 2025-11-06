@@ -128,7 +128,7 @@ export const WatermarkHintChip: React.FC<WatermarkHintChipProps> = ({
             </div>
             <div className="text-gray-300">
               <div>Profile: {hint!.profile}</div>
-              <div>Version: {hint!.payloadVersion}</div>
+              <div>Detected: {hint!.detectedAt.toLocaleTimeString()}</div>
               <div>Binding: {hint!.payloadBindOk ? '✓ Valid' : '✗ Invalid'}</div>
             </div>
             <div className="absolute bottom-0 left-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
@@ -257,7 +257,7 @@ export const WatermarkHintDetails: React.FC<WatermarkHintDetailsProps> = ({
               <div className="bg-gray-50 rounded p-2">
                 {hint.transformHistory.map((transform, index) => (
                   <div key={index} className="text-xs text-gray-600 py-1">
-                    • {transform}
+                    • {transform.replace(/[<>]/g, '')} {/* SECURITY: XSS prevention - sanitize transform names */}
                   </div>
                 ))}
               </div>
@@ -314,7 +314,15 @@ export const WatermarkSettings: React.FC<WatermarkSettingsProps> = ({
   }, [localConfig, onConfigChange]);
 
   const handleSensitivityChange = useCallback((sensitivity: number) => {
-    const newConfig = { ...localConfig, sensitivity };
+    // SECURITY: Added input validation to prevent invalid sensitivity values
+    if (typeof sensitivity !== 'number' || isNaN(sensitivity)) {
+      return; // Invalid input, ignore
+    }
+    
+    // Clamp sensitivity to valid range [0, 1]
+    const clampedSensitivity = Math.max(0, Math.min(1, sensitivity));
+    
+    const newConfig = { ...localConfig, sensitivity: clampedSensitivity };
     setLocalConfig(newConfig);
     onConfigChange(newConfig);
   }, [localConfig, onConfigChange]);

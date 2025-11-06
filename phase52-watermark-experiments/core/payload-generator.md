@@ -194,6 +194,16 @@ export class PayloadGenerator {
     if (!payload.salt || payload.salt.length === 0) {
       throw new WatermarkError('Invalid salt in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
     }
+    // SECURITY: Added validation for reserved field to prevent data injection
+    if (!payload.reserved || payload.reserved.length === 0) {
+      throw new WatermarkError('Invalid reserved field in payload', WatermarkErrorCode.PAYLOAD_MISMATCH);
+    }
+    // SECURITY: Ensure reserved field contains only zeros as per specification
+    for (let i = 0; i < payload.reserved.length; i++) {
+      if (payload.reserved[i] !== 0) {
+        throw new WatermarkError('Reserved field must contain only zeros', WatermarkErrorCode.PAYLOAD_MISMATCH);
+      }
+    }
   }
 
   private truncateSHA256(manifestHash: string): Uint8Array {
@@ -266,19 +276,19 @@ export class PayloadGenerator {
   }
 
   private writeBits(target: Uint8Array, source: Uint8Array, bits: number, offset: number): void {
-    let sourceBit = 0;
+    let sourceBitIndex = 0;
     
     for (let i = 0; i < bits; i++) {
       const targetByte = Math.floor((offset + i) / 8);
       const targetBit = 7 - ((offset + i) % 8);
-      const sourceByte = Math.floor(sourceBit / 8);
-      const sourceBit = 7 - (sourceBit % 8);
+      const sourceByte = Math.floor(sourceBitIndex / 8);
+      const sourceBitPos = 7 - (sourceBitIndex % 8);
       
-      if (source[sourceByte] & (1 << sourceBit)) {
+      if (source[sourceByte] & (1 << sourceBitPos)) {
         target[targetByte] |= (1 << targetBit);
       }
       
-      sourceBit++;
+      sourceBitIndex++;
     }
   }
 
@@ -426,7 +436,7 @@ export class PayloadSecurityValidator {
     };
   }
 
-  private containsPIIPatterns(payload: WatermarkArray): boolean {
+  private containsPIIPatterns(payload: WatermarkPayload): boolean {
     // Check for ASCII patterns that might indicate PII
     const allBytes = new Uint8Array([
       ...payload.truncatedHash,

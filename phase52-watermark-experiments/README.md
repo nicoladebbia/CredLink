@@ -297,12 +297,16 @@ import { WatermarkHintChip, InvestigatorWatermarkIntegration } from './ui/invest
 
 ### Development Setup
 ```bash
-# Clone repository
+# SECURITY: Always verify repository integrity before installation
 git clone https://github.com/Nickiller04/c2-concierge.git
 cd phase52-watermark-experiments
 
-# Install dependencies
+# SECURITY: Use npm audit to check for vulnerabilities
 npm install
+npm audit fix
+
+# SECURITY: Run security tests before proceeding
+npm run test:security
 
 # Run tests
 npm test
@@ -328,6 +332,9 @@ npm run test:security
 
 # Generate test coverage
 npm run test:coverage
+
+# SECURITY: Run comprehensive security validation
+npm run test:security -- --verbose
 ```
 
 ### Code Quality
@@ -340,12 +347,10 @@ npm run format
 
 # Type checking
 npm run type-check
+
+# SECURITY: Run additional security checks
+npm run security:scan
 ```
-
-## License
-
-Phase 52 Watermark Experiments are part of the C2 Concierge project and are subject to the project's license terms. This experimental code is provided for research and evaluation purposes only.
-
 ## Support
 
 ### Documentation
