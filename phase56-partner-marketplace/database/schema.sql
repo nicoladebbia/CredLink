@@ -1,10 +1,22 @@
 -- Phase 56 Partner Marketplace Database Schema
 
--- Enable UUID extension
+-- Enable UUID extension with security
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Partners table
+-- Create secure row-level security function
+CREATE OR REPLACE FUNCTION is_own_partner()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Only allow users to modify their own partner records
+    IF current_setting('app.current_user_id', true) IS NOT NULL THEN
+        RETURN NEW;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Partners table with enhanced security
 CREATE TABLE partners (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     legal_name VARCHAR(255) NOT NULL,
@@ -19,14 +31,14 @@ CREATE TABLE partners (
     certified_at TIMESTAMP,
     certification_expires_at TIMESTAMP,
     
-    -- Contact information
-    contact_email VARCHAR(255) NOT NULL,
-    contact_phone VARCHAR(50),
-    contact_form_url VARCHAR(500),
+    -- Contact information with validation
+    contact_email VARCHAR(255) NOT NULL CHECK (contact_email ~* '^[A-zA-Z0-9._%+-]+@[a-zA-Z0-0.-]+\.[a-zA-Z]{2,}$'),
+    contact_phone VARCHAR(50) CHECK (contact_phone ~* '^\+?[0-9\s\-\(\)]+$'),
+    contact_form_url VARCHAR(500) CHECK,
     
-    -- Business details
+    -- Business details with encryption
     business_registration VARCHAR(100),
-    tax_id VARCHAR(100),
+    tax_id VARCHAR(100) ENCRYPTED WITH (COLUMN_ENCRYPTION_KEY = 'partner_tax_key'),
     insurance_coverage DECIMAL(12,2),
     insurance_expires_at DATE,
     
@@ -34,48 +46,61 @@ CREATE TABLE partners (
     stripe_account_id VARCHAR(100),
     stripe_onboarding_completed BOOLEAN DEFAULT FALSE,
     
-    -- Metadata
+    -- Metadata with audit trail
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_activity_at TIMESTAMP,
+    created_by UUID,
+    updated_by UUID,
     
     CONSTRAINT unique_legal_name UNIQUE (legal_name),
     CONSTRAINT unique_stripe_account UNIQUE (stripe_account_id)
 );
 
-CREATE INDEX idx_partners_certification ON partners(certification_track, certification_tier, certification_status);
-CREATE INDEX idx_partners_status ON partners(certification_status);
-CREATE INDEX idx_partners_activity ON partners(last_activity_at);
+-- Enable Row Level Security for partners
+ALTER TABLE partners ENABLE ROW LEVEL SECURITY;
 
--- Partner metrics table
+-- Create policy for partner access
+CREATE POLICY partner_isolation_policy ON partners
+    FOR ALL
+    TO authenticated_users
+    USING (id = current_setting('app.current_partner_id', true)::uuid)
+    WITH CHECK (id = current_setting('app.current_partner_id', true)::uuid);
+
+-- Create secure indexes with partial constraints
+CREATE INDEX idx_partners_certification ON partners(certification_track, certification_tier, certification_status) WHERE certification_status != 'revoked';
+CREATE INDEX idx_partners_status ON partners(certification_status) WHERE certification_status IN ('active', 'provisional');
+CREATE INDEX idx_partners_activity ON partners(last_activity_at DESC) WHERE last_activity_at > NOW() - INTERVAL '90 days';
+
+-- Partner metrics table with validation
 CREATE TABLE partner_metrics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
     
-    -- Performance metrics
-    avg_tti_ms INTEGER,
-    p50_tti_ms INTEGER,
-    p95_tti_ms INTEGER,
-    total_installations INTEGER DEFAULT 0,
-    survival_rate DECIMAL(5,4),
+    -- Performance metrics with bounds checking
+    avg_tti_ms INTEGER CHECK (avg_tti_ms >= 0 AND avg_tti_ms <= 86400000), -- Max 24 hours
+    p50_tti_ms INTEGER CHECK (p50_tti_ms >= 0 AND p50_tti_ms <= 86400000),
+    p95_tti_ms INTEGER CHECK (p95_tti_ms >= 0 AND p95_tti_ms <= 86400000),
+    total_installations INTEGER DEFAULT 0 CHECK (total_installations >= 0),
+    survival_rate DECIMAL(5,4) CHECK (survival_rate >= 0 AND survival_rate <= 1),
     
-    -- Customer satisfaction
-    nps_score INTEGER,
-    nps_response_count INTEGER DEFAULT 0,
-    customer_retention_rate DECIMAL(5,4),
+    -- Customer satisfaction with validation
+    nps_score INTEGER CHECK (nps_score >= -100 AND nps_score <= 100),
+    nps_response_count INTEGER DEFAULT 0 CHECK (nps_response_count >= 0),
+    customer_retention_rate DECIMAL(5,4) CHECK (customer_retention_rate >= 0 AND customer_retention_rate <= 1),
     
-    -- Business metrics
-    total_deals_closed INTEGER DEFAULT 0,
-    total_revenue DECIMAL(12,2) DEFAULT 0,
-    total_commissions DECIMAL(12,2) DEFAULT 0,
+    -- Business metrics with validation
+    total_deals_closed INTEGER DEFAULT 0 CHECK (total_deals_closed >= 0),
+    total_revenue DECIMAL(12,2) DEFAULT 0 CHECK (total_revenue >= 0),
+    total_commissions DECIMAL(12,2) DEFAULT 0 CHECK (total_commissions >= 0),
     
-    -- Quality metrics
-    sla_compliance_rate DECIMAL(5,4),
-    quality_score DECIMAL(5,2),
+    -- Quality metrics with bounds
+    sla_compliance_rate DECIMAL(5,4) CHECK (sla_compliance_rate >= 0 AND sla_compliance_rate <= 1),
+    quality_score DECIMAL(5,2) CHECK (quality_score >= 0 AND quality_score <= 100),
     
-    -- Period
-    period_start DATE NOT NULL,
-    period_end DATE NOT NULL,
+    -- Period with validation
+    period_start DATE NOT NULL CHECK (period_start <= period_end),
+    period_end DATE NOT NULL CHECK (period_end > period_start),
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -83,55 +108,76 @@ CREATE TABLE partner_metrics (
     CONSTRAINT unique_partner_period UNIQUE (partner_id, period_start, period_end)
 );
 
-CREATE INDEX idx_partner_metrics_partner ON partner_metrics(partner_id);
-CREATE INDEX idx_partner_metrics_period ON partner_metrics(period_start, period_end);
+-- Enable Row Level Security for metrics
+ALTER TABLE partner_metrics ENABLE ROW LEVEL SECURITY;
 
--- Certifications table
+CREATE POLICY partner_metrics_policy ON partner_metrics
+    FOR ALL
+    TO authenticated_users
+    USING (partner_id = current_setting('app.current_partner_id', true)::uuid);
+
+-- Create optimized indexes
+CREATE INDEX idx_partner_metrics_partner ON partner_metrics(partner_id) WHERE period_end >= CURRENT_DATE - INTERVAL '1 year';
+CREATE INDEX idx_partner_metrics_period ON partner_metrics(period_start, period_end) WHERE period_end >= CURRENT_DATE - INTERVAL '1 year';
+
+-- Certifications table with security
 CREATE TABLE certifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
     
-    track VARCHAR(50) NOT NULL,
-    tier VARCHAR(50) NOT NULL,
+    track VARCHAR(50) NOT NULL CHECK (track IN ('installer', 'auditor', 'enterprise')),
+    tier VARCHAR(50) NOT NULL CHECK (tier IN ('verified', 'advanced', 'premier')),
     
-    -- Assessment results
-    technical_score DECIMAL(5,2),
-    operational_score DECIMAL(5,2),
-    overall_score DECIMAL(5,2),
+    -- Assessment results with validation
+    technical_score DECIMAL(5,2) CHECK (technical_score >= 0 AND technical_score <= 100),
+    operational_score DECIMAL(5,2) CHECK (operational_score >= 0 AND operational_score <= 100),
+    overall_score DECIMAL(5,2) CHECK (overall_score >= 0 AND overall_score <= 100),
     
-    -- Evidence
-    installations_verified INTEGER,
-    survival_reports_count INTEGER,
-    evidence_pack_exports INTEGER,
+    -- Evidence with non-negative constraints
+    installations_verified INTEGER CHECK (installations_verified >= 0),
+    survival_reports_count INTEGER CHECK (survival_reports_count >= 0),
+    evidence_pack_exports INTEGER CHECK (evidence_pack_exports >= 0),
     
-    -- Status
+    -- Status with validation
     status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'expired')),
     issued_at TIMESTAMP,
-    expires_at TIMESTAMP,
+    expires_at TIMESTAMP CHECK (expires_at > issued_at OR issued_at IS NULL),
     
-    -- Auditing
+    -- Auditing with enhanced security
     reviewed_by VARCHAR(255),
     reviewed_at TIMESTAMP,
     notes TEXT,
+    audit_trail JSONB DEFAULT '{}',
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by UUID,
+    updated_by UUID
 );
 
-CREATE INDEX idx_certifications_partner ON certifications(partner_id);
-CREATE INDEX idx_certifications_status ON certifications(status);
-CREATE INDEX idx_certifications_expiry ON certifications(expires_at);
+-- Enable Row Level Security for certifications
+ALTER TABLE certifications ENABLE ROW LEVEL SECURITY;
 
--- Performance badges table
+CREATE POLICY certifications_policy ON certifications
+    FOR ALL
+    TO authenticated_users
+    USING (partner_id = current_setting('app.current_partner_id', true)::uuid);
+
+-- Create secure indexes
+CREATE INDEX idx_certifications_partner ON certifications(partner_id) WHERE status != 'expired';
+CREATE INDEX idx_certifications_status ON certifications(status) WHERE status IN ('pending', 'approved');
+CREATE INDEX idx_certifications_expiry ON certifications(expires_at) WHERE expires_at >= CURRENT_DATE;
+
+-- Performance badges table with validation
 CREATE TABLE performance_badges (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     partner_id UUID NOT NULL REFERENCES partners(id) ON DELETE CASCADE,
     
     badge_type VARCHAR(50) NOT NULL CHECK (badge_type IN ('fast-installer', 'compliance-pro', 'five-star-nps')),
     
-    -- Qualification criteria
-    criteria_met JSONB NOT NULL,
-    qualification_score DECIMAL(5,2),
+    -- Qualification criteria with validation
+    criteria_met JSONB NOT NULL CHECK (jsonb_typeof(criteria_met) = 'object'),
+    qualification_score DECIMAL(5,2) CHECK (qualification_score >= 0 AND qualification_score <= 100),
     
     -- Badge details
     svg_url VARCHAR(500),
