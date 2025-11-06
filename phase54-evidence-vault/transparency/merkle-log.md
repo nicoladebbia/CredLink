@@ -453,6 +453,9 @@ export class TransparencyLog extends EventEmitter {
    * Get latest checkpoint
    */
   async getLatestCheckpoint(): Promise<Checkpoint | null> {
+    // Security: Validate checkpoint size to prevent DoS
+    const MAX_CHECKPOINT_SIZE = 1024 * 1024; // 1MB limit
+    
     // List checkpoints and get latest
     const { ListObjectsV2Command } = await import('@aws-sdk/client-s3');
     
@@ -467,43 +470,136 @@ export class TransparencyLog extends EventEmitter {
     }
 
     const latestKey = result.Contents[result.Contents.length - 1].Key!;
+    
+    // Security: Validate key format
+    if (!latestKey.match(/^log\/[a-zA-Z0-9_-]+\/checkpoints\/\d+\.json$/)) {
+      throw new Error(`Invalid checkpoint key format: ${latestKey}`);
+    }
+    
     const checkpoint = await this.s3.send(new GetObjectCommand({
       Bucket: this.bucketName,
       Key: latestKey
     }));
 
     const chunks: Buffer[] = [];
+    let totalSize = 0;
+    
+    // Security: Stream with size limit
     for await (const chunk of checkpoint.Body as any) {
+      totalSize += chunk.length;
+      if (totalSize > MAX_CHECKPOINT_SIZE) {
+        throw new Error(`Checkpoint too large: ${totalSize} bytes`);
+      }
       chunks.push(chunk);
     }
     
     const data = Buffer.concat(chunks).toString('utf8');
-    return JSON.parse(data);
+    
+    // Security: Validate JSON before parsing
+    let parsed;
+    try {
+      parsed = JSON.parse(data);
+    } catch (error) {
+      throw new Error(`Invalid checkpoint JSON: ${error}`);
+    }
+    
+    // Security: Validate checkpoint structure
+    if (!this.isValidCheckpoint(parsed)) {
+      throw new Error('Invalid checkpoint structure');
+    }
+    
+    return parsed;
   }
 
   /**
    * Serialize log entry
    */
   private serializeEntry(entry: LogEntry): Buffer {
-    return Buffer.from(JSON.stringify({
+    // Security: Validate entry size
+    const serialized = JSON.stringify({
       type: entry.type,
       timestamp: entry.timestamp,
       tenantId: entry.tenantId,
       data: entry.data
-    }));
+    });
+    
+    if (serialized.length > 64 * 1024) { // 64KB limit
+      throw new Error(`Log entry too large: ${serialized.length} bytes`);
+    }
+    
+    return Buffer.from(serialized);
   }
 
   /**
-   * Sign checkpoint
+   * Validate checkpoint structure
+   */
+  private isValidCheckpoint(checkpoint: any): boolean {
+    if (!checkpoint || typeof checkpoint !== 'object') {
+      return false;
+    }
+    
+    // Required fields
+    const required = ['origin', 'treeSize', 'rootHash', 'timestamp', 'signature'];
+    for (const field of required) {
+      if (!(field in checkpoint)) {
+        return false;
+      }
+    }
+    
+    // Type validation
+    if (typeof checkpoint.origin !== 'string' || 
+        typeof checkpoint.treeSize !== 'number' ||
+        typeof checkpoint.rootHash !== 'string' ||
+        typeof checkpoint.timestamp !== 'number' ||
+        typeof checkpoint.signature !== 'string') {
+      return false;
+    }
+    
+    // Value validation
+    if (!checkpoint.origin.match(/^[a-zA-Z0-9_-]+$/) ||
+        checkpoint.treeSize < 0 ||
+        !checkpoint.rootHash.match(/^[a-f0-9]{64}$/i) ||
+        checkpoint.timestamp <= 0 ||
+        checkpoint.signature.length === 0) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
+   * Sign checkpoint securely
    */
   private async signCheckpoint(checkpoint: Checkpoint): Promise<string> {
     const { createSign } = await import('crypto');
+    
+    // Security: Use KMS or secure key management in production
+    const keyPath = process.env.LOG_SIGNING_KEY_PATH;
+    if (!keyPath) {
+      throw new Error('LOG_SIGNING_KEY_PATH environment variable not set');
+    }
+    
+    // Security: Validate key path
+    if (keyPath.includes('..') || keyPath.includes('\0')) {
+      throw new Error('Invalid key path');
+    }
+    
     const { readFileSync } = await import('fs');
+    let privateKey;
     
-    // Load signing key (in production, use KMS)
-    const privateKey = readFileSync(process.env.LOG_SIGNING_KEY_PATH!, 'utf8');
+    try {
+      privateKey = readFileSync(keyPath, 'utf8');
+    } catch (error) {
+      throw new Error(`Failed to read signing key: ${error}`);
+    }
     
-    // Create signature
+    // Security: Validate key format
+    if (!privateKey.includes('-----BEGIN PRIVATE KEY-----') ||
+        !privateKey.includes('-----END PRIVATE KEY-----')) {
+      throw new Error('Invalid private key format');
+    }
+    
+    // Create canonical signature data
     const data = JSON.stringify({
       origin: checkpoint.origin,
       treeSize: checkpoint.treeSize,

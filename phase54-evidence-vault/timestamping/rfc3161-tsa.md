@@ -288,6 +288,14 @@ export class TSAClient extends EventEmitter {
    * Send HTTP request to TSA
    */
   private async sendRequest(request: Buffer): Promise<Buffer> {
+    // Security: Validate request size to prevent DoS
+    const MAX_REQUEST_SIZE = 64 * 1024; // 64KB limit
+    const MAX_RESPONSE_SIZE = 10 * 1024 * 1024; // 10MB limit
+    
+    if (request.length > MAX_REQUEST_SIZE) {
+      throw new Error(`TSA request too large: ${request.length} bytes`);
+    }
+    
     return new Promise((resolve, reject) => {
       const url = new URL(this.rfc3161Client['tsaUrl']);
       
@@ -298,23 +306,51 @@ export class TSAClient extends EventEmitter {
         method: 'POST',
         headers: {
           'Content-Type': 'application/timestamp-query',
-          'Content-Length': request.length
+          'Content-Length': request.length,
+          'User-Agent': 'EvidenceVault/1.0',
+          'Accept': 'application/timestamp-reply'
         },
         timeout: this.rfc3161Client['timeout']
       };
 
       const req = httpsRequest(options, (res) => {
         const chunks: Buffer[] = [];
+        let totalSize = 0;
 
-        res.on('data', (chunk) => chunks.push(chunk));
+        res.on('data', (chunk) => {
+          totalSize += chunk.length;
+          
+          // Security: Check response size to prevent DoS
+          if (totalSize > MAX_RESPONSE_SIZE) {
+            req.destroy();
+            reject(new Error(`TSA response too large: ${totalSize} bytes`));
+            return;
+          }
+          
+          chunks.push(chunk);
+        });
         
         res.on('end', () => {
           if (res.statusCode !== 200) {
-            reject(new Error(`TSA returned status ${res.statusCode}`));
+            reject(new Error(`TSA returned status ${res.statusCode}: ${res.statusMessage}`));
+            return;
+          }
+
+          // Security: Validate content type
+          const contentType = res.headers['content-type'];
+          if (!contentType || !contentType.includes('application/timestamp-reply')) {
+            reject(new Error(`Invalid TSA response content type: ${contentType}`));
             return;
           }
 
           const response = Buffer.concat(chunks);
+          
+          // Security: Final size check
+          if (response.length === 0) {
+            reject(new Error('Empty TSA response'));
+            return;
+          }
+          
           resolve(response);
         });
       });
@@ -323,6 +359,12 @@ export class TSAClient extends EventEmitter {
       req.on('timeout', () => {
         req.destroy();
         reject(new Error('TSA request timeout'));
+      });
+
+      // Security: Set socket timeout for additional protection
+      req.setTimeout(this.rfc3161Client['timeout'], () => {
+        req.destroy();
+        reject(new Error('TSA socket timeout'));
       });
 
       req.write(request);

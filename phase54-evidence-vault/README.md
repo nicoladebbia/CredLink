@@ -56,38 +56,38 @@ Deliver durable, exportable evidence packs for disputes, takedowns, and audits. 
 ```typescript
 interface EvidenceRecord {
   // Identifiers
-  evidence_id: string;           // UUID v7 (time-ordered)
-  tenant_id: string;
-  asset_id: string;
+  evidenceId: string;              // UUID v7 (time-ordered)
+  tenantId: string;
+  assetId: string;
   
   // Manifest data
-  manifest_hash: string;         // SHA-256 hex
-  manifest_url: string;
+  manifestHash: string;            // SHA-256 hex
+  manifestUrl: string;
   
   // HTTP context
-  http_headers_snapshot: HttpHeadersSnapshot;
+  httpHeadersSnapshot: HttpHeadersSnapshot;
   
   // Verification
-  verify_result_json: VerifyResult;
+  verifyResultJson: VerifyResult;
   
   // Time-stamping
-  tsa_token: Buffer;             // RFC 3161 DER format
+  tsaToken: Buffer;                // RFC 3161 DER format
   
   // Operator actions
-  operator_action: OperatorAction;
+  operatorAction: OperatorAction;
   
   // Transparency log
-  log_merkle_leaf: MerkleLeafData;
+  logMerkleLeaf: MerkleLeafData;
   
   // Storage
-  s3_object_version_id: string;
+  s3ObjectVersionId: string;
   
   // Lifecycle
-  created_at: number;            // Unix timestamp ms
-  retention_until: number;       // Unix timestamp ms
+  createdAt: number;               // Unix timestamp ms
+  retentionUntil: number;          // Unix timestamp ms
   
   // Legal hold
-  legal_hold: LegalHold | null;
+  legalHold: LegalHold | null;
 }
 
 interface HttpHeadersSnapshot {
@@ -283,8 +283,23 @@ evidence-verify --report report.json evidence_acme_asset123_20250106.zip
 
 ## API Endpoints
 
+### Security Controls
+- **Authentication:** AWS IAM with SigV4 signing required
+- **Authorization:** Least privilege IAM roles per operation
+- **Rate Limiting:** 100 requests/second per tenant, burst to 500
+- **Input Validation:** All inputs validated with strict schemas
+- **Audit Logging:** All API calls logged to CloudTrail
+- **TLS:** HTTPS required, TLS 1.2+ enforced
+- **CORS:** Restricted to approved origins only
+
 ### POST /vault/evidence
 Ingest a case (asset set + metadata)
+
+**Security:**
+- Requires `evidencevault:PutEvidence` permission
+- Max payload size: 100MB
+- Max 1000 assets per request
+- Tenant isolation enforced
 
 **Request:**
 ```typescript
@@ -312,12 +327,27 @@ interface IngestEvidenceResponse {
 ### POST /vault/holds
 Place legal hold
 
+**Security:**
+- Requires `evidencevault:PutLegalHold` permission
+- Mandatory expiry date (max 365 days)
+- Counsel approval required for >90 days
+- All holds logged to transparency log
+- Rate limit: 10 holds/second per tenant
+
 **Request:** See PlaceHoldRequest above
 
 **Response:** See PlaceHoldResponse above
 
 ### POST /vault/export
 Build & stream export pack
+
+**Security:**
+- Requires `evidencevault:CreateExport` permission
+- Max export size: 10GB per request
+- Rate limit: 5 exports/minute per tenant
+- Signed URLs expire in 1 hour
+- All exports logged to transparency log
+- Data access audit trail maintained
 
 **Request:**
 ```typescript

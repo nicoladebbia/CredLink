@@ -64,6 +64,21 @@ export class S3EvidenceVault {
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Sid": "DenyInsecureTransport",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::evidence-vault-prod",
+        "arn:aws:s3:::evidence-vault-prod/*"
+      ],
+      "Condition": {
+        "Bool": {
+          "aws:SecureTransport": "false"
+        }
+      }
+    },
+    {
       "Sid": "DenyDeleteObject",
       "Effect": "Deny",
       "Principal": "*",
@@ -89,6 +104,20 @@ export class S3EvidenceVault {
       }
     },
     {
+      "Sid": "DenyUnencryptedObjectUpload",
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": [
+        "s3:PutObject"
+      ],
+      "Resource": "arn:aws:s3:::evidence-vault-prod/*",
+      "Condition": {
+        "StringNotEquals": {
+          "s3:x-amz-server-side-encryption": "aws:kms"
+        }
+      }
+    },
+    {
       "Sid": "AllowEvidenceWrite",
       "Effect": "Allow",
       "Principal": {
@@ -98,7 +127,12 @@ export class S3EvidenceVault {
         "s3:PutObject",
         "s3:PutObjectLegalHold"
       ],
-      "Resource": "arn:aws:s3:::evidence-vault-prod/*"
+      "Resource": "arn:aws:s3:::evidence-vault-prod/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:x-amz-server-side-encryption": "aws:kms"
+        }
+      }
     },
     {
       "Sid": "AllowEvidenceRead",
@@ -145,22 +179,37 @@ export class EvidenceStorage {
    * Store evidence record with WORM protection
    */
   async storeEvidence(request: StoreEvidenceRequest): Promise<StoreEvidenceResponse> {
-    const key = this.buildObjectKey(request.tenantId, request.assetId, request.evidenceId);
+    // Security: Validate request size
+    const MAX_EVIDENCE_SIZE = 100 * 1024 * 1024; // 100MB limit
     const data = JSON.stringify(request.data);
+    
+    if (data.length > MAX_EVIDENCE_SIZE) {
+      throw new Error(`Evidence record too large: ${data.length} bytes`);
+    }
+    
+    // Security: Validate evidence structure
+    if (!this.isValidEvidenceRecord(request.data)) {
+      throw new Error('Invalid evidence record structure');
+    }
+    
+    const key = this.buildObjectKey(request.tenantId, request.assetId, request.evidenceId);
     const sha256 = createHash('sha256').update(data).digest('hex');
 
-    // Store object with Object Lock
+    // Store object with Object Lock and encryption
     const putResult = await this.s3.send(new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
       Body: data,
       ContentType: 'application/json',
+      ServerSideEncryption: 'aws:kms',
+      SSEKMSKeyId: process.env.EVIDENCE_KMS_KEY_ARN,
       Metadata: {
         'evidence-id': request.evidenceId,
         'tenant-id': request.tenantId,
         'asset-id': request.assetId,
         'sha256': sha256,
-        'created-at': Date.now().toString()
+        'created-at': Date.now().toString(),
+        'content-size': data.length.toString()
       },
       // Object Lock retention (uses bucket default)
       ObjectLockMode: 'COMPLIANCE',
@@ -189,6 +238,37 @@ export class EvidenceStorage {
   }
 
   /**
+   * Validate evidence record structure
+   */
+  private isValidEvidenceRecord(record: any): boolean {
+    if (!record || typeof record !== 'object') {
+      return false;
+    }
+    
+    // Required fields
+    const required = ['evidenceId', 'tenantId', 'assetId', 'createdAt'];
+    for (const field of required) {
+      if (!(field in record)) {
+        return false;
+      }
+    }
+    
+    // Validate ID formats
+    if (!this.isValidId(record.evidenceId) ||
+        !this.isValidId(record.tenantId) ||
+        !this.isValidId(record.assetId)) {
+      return false;
+    }
+    
+    // Validate timestamp
+    if (typeof record.createdAt !== 'number' || record.createdAt <= 0) {
+      return false;
+    }
+    
+    return true;
+  }
+
+  /**
    * Build S3 object key with hierarchical structure
    */
   private buildObjectKey(tenantId: string, assetId: string, evidenceId: string): string {
@@ -202,10 +282,35 @@ export class EvidenceStorage {
   }
 
   /**
-   * Validate ID format (alphanumeric, hyphens, underscores only)
+   * Validate ID format (strict alphanumeric with limited symbols)
+   * Prevents path traversal, injection, and malformed keys
    */
   private isValidId(id: string): boolean {
-    return /^[a-zA-Z0-9_-]+$/.test(id);
+    // Must be 1-128 characters, alphanumeric with hyphens and underscores
+    // Cannot start or end with hyphen/underscore
+    // No consecutive hyphens/underscores
+    const idPattern = /^[a-zA-Z0-9](?:[a-zA-Z0-9_-]{0,126}[a-zA-Z0-9])$/;
+    
+    if (!idPattern.test(id)) {
+      return false;
+    }
+    
+    // Additional checks for security
+    if (id.includes('--') || id.includes('__')) {
+      return false;
+    }
+    
+    // Check for common path traversal patterns
+    if (id.includes('../') || id.includes('..\\') || id.includes('%2e%2e')) {
+      return false;
+    }
+    
+    // No null bytes or control characters
+    if (id.includes('\0') || /[\x00-\x1F\x7F]/.test(id)) {
+      return false;
+    }
+    
+    return true;
   }
 
   /**
