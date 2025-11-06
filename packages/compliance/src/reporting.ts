@@ -47,6 +47,7 @@ export interface PackGenerationRequest {
   regions: Array<"EU" | "UK" | "US" | "BR">;
   format?: "json" | "pdf" | "both";
   includeEvidence?: boolean;
+  dryRun?: boolean;
 }
 
 export interface PackGenerationResponse {
