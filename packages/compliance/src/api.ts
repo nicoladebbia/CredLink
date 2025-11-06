@@ -504,7 +504,6 @@ export class ComplianceAPIServer {
     // For now, return mock data
     return {
       manifests: [],
-      verify_outcomes: [],
       badge_logs: [],
       ad_metadata: [],
       tsa_receipts: []

@@ -223,6 +223,7 @@ export interface ComplianceDataSource {
   manifests: ComplianceManifest[];
   tsa_receipts: Array<{
     provider: string;
+    manifest_url: string;
     receipt_url: string;
     timestamp: string;
   }>;
@@ -239,16 +240,27 @@ export interface ComplianceDataSource {
     campaign_id: string;
     timestamp: string;
   }>;
-  tsa_receipts: Array<{
-    provider: string;
-    manifest_url: string;
-    receipt_url: string;
-    timestamp: string;
-  }>;
 }
 
 interface ComplianceReportingConfig {
   [key: string]: unknown;
+}
+
+export interface PackGenerationRequest {
+  tenantId: string;
+  period: string;
+  regions: Array<"EU" | "UK" | "US" | "BR">;
+  format?: "json" | "pdf";
+  includeEvidence?: boolean;
+}
+
+export interface PackGenerationResponse {
+  packId: string;
+  downloadUrl: string;
+  format: string;
+  size: number;
+  generatedAt: string;
+  expiresAt: string;
 }
 
 // Reporting Harmonizer Class
@@ -340,43 +352,6 @@ export class ComplianceReportingHarmonizer {
           m.assertions["ads.transparency"].vlop_eligible
         ).length
       }
-    };
-  }
-}
-
-interface ComplianceAppendices {
-  EU: EUAppendix;
-  UK: UKAppendix;
-  US: USAppendix;
-  BR: BRAppendix;
-}
-
-export class ComplianceReportingHarmonizer {
-  private config: ComplianceReportingConfig;
-
-  constructor(config: ComplianceReportingConfig) {
-    this.config = config;
-  }
-
-  async generateCompliancePack(
-    tenantId: string,
-    period: string,
-    regions: Array<"EU" | "UK" | "US" | "BR">,
-    dataSource: ComplianceDataSource
-  ): Promise<CompliancePack> {
-    const coreMetrics = this.calculateCoreMetrics(dataSource);
-    const appendices = await this.generateRegionalAppendices(regions, dataSource);
-    const retentionPolicy = this.calculateRetentionPolicy(regions);
-    return {
-      tenant_id: tenantId,
-      period,
-      regions,
-      generated_at: new Date().toISOString(),
-      template_versions: TEMPLATE_VERSIONS,
-      ...coreMetrics,
-      evidence: this.compileEvidence(dataSource),
-      appendices,
-      retention_policy: retentionPolicy
     };
   }
 }
