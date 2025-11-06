@@ -200,12 +200,12 @@ export class ComplianceAPIServer {
     }, async (request, reply) => {
       try {
         const packRequest: GenPackGenerationRequest = {
-          tenant_id: request.body.tenant_id,
+          tenantId: request.body.tenant_id,
           period: request.body.period,
           regions: request.body.regions,
-          include_samples: request.body.include_samples || 25,
+          includeEvidence: request.body.include_samples || 25,
           format: request.body.format,
-          dry_run: request.body.dry_run || false
+          dryRun: request.body.dry_run || false
         };
 
         // Validate period format
@@ -249,11 +249,17 @@ export class ComplianceAPIServer {
 
         // SECURITY: Sanitize response to prevent sensitive data exposure
         const sanitizedResponse: PackGenerationResponse = {
-          status: "ok",
-          pack_url_pdf: response.pack_url_pdf,
+          packId: response.packId || "pack-" + Date.now(),
+          downloadUrl: response.pack_url_json || response.pack_url_pdf || "",
+          format: response.format || "json",
+          size: response.size || 0,
+          generatedAt: response.generated_at || new Date().toISOString(),
+          generated_at: response.generated_at,
+          expiresAt: response.expiresAt || new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          template_versions: response.template_versions || {},
           pack_url_json: response.pack_url_json,
-          template_versions: response.template_versions,
-          generated_at: response.generated_at
+          pack_url_pdf: response.pack_url_pdf,
+          status: "ok"
         };
 
         // SECURITY: Log successful generation without sensitive data

@@ -28,19 +28,34 @@ export class CompliancePackGenerator {
    */
   async generatePack(request: PackGenerationRequest, dataSource: ComplianceDataSource): Promise<PackGenerationResponse> {
     try {
-      const pack = await this.harmonizer.generateCompliancePack(request.tenant_id, request.period, request.regions, dataSource);
+      const pack = await this.harmonizer.generateCompliancePack(request.tenantId, request.period, request.regions, dataSource);
       const artifacts = await this.generateArtifacts(pack, request);
+      const packId = `pack-${pack.tenant_id}-${pack.period}-${Date.now()}`;
+      
       return {
-        status: "ok",
-        ...artifacts,
+        packId,
+        downloadUrl: artifacts.pack_url_json || artifacts.pack_url_pdf || "",
+        format: request.format || "json",
+        size: JSON.stringify(pack).length, // Approximate size
+        generatedAt: new Date().toISOString(),
+        generated_at: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         template_versions: TEMPLATE_VERSIONS,
-        generated_at: new Date().toISOString()
+        pack_url_json: artifacts.pack_url_json,
+        pack_url_pdf: artifacts.pack_url_pdf,
+        status: "ok"
       };
     } catch (error) {
       return {
-        status: "error",
-        template_versions: TEMPLATE_VERSIONS,
+        packId: "error-" + Date.now(),
+        downloadUrl: "",
+        format: request.format || "json",
+        size: 0,
+        generatedAt: new Date().toISOString(),
         generated_at: new Date().toISOString(),
+        expiresAt: new Date().toISOString(),
+        template_versions: TEMPLATE_VERSIONS,
+        status: "error",
         error: error instanceof Error ? error.message : "Unknown error"
       };
     }
