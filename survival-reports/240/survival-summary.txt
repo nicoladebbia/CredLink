@@ -1,0 +1,17 @@
+C2 Concierge Survival Report - run-1762472914452
+Generated: 2025-11-06T23:48:34.452Z
+Matrix Version: 1
+
+=== SUMMARY METRICS ===
+Total Scenarios: 19
+Remote Survival Rate: 100.00%
+Embed Survival Rate (Preserve Only): 100.0%
+Failed Scenarios: 0
+
+=== FAILURE BREAKDOWN ===
+SURVIVED: 2
+DESTROYED_EMBED: 17
+
+=== DETERMINISTIC ARTIFACTS ===
+Report Hash: 735abd890372d497
+Verification: SHA256(run-1762472914452)
