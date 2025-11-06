@@ -1,0 +1,150 @@
+{
+  "supportedLocales": [
+    {
+      "code": "en",
+      "name": "English",
+      "nativeName": "English",
+      "direction": "ltr",
+      "dateFormat": "MM/DD/YYYY",
+      "numberFormat": "en-US",
+      "fontSubset": "latin",
+      "region": "US"
+    },
+    {
+      "code": "es",
+      "name": "Spanish",
+      "nativeName": "Español",
+      "direction": "ltr",
+      "dateFormat": "DD/MM/YYYY",
+      "numberFormat": "es-ES",
+      "fontSubset": "latin-ext",
+      "region": "ES"
+    },
+    {
+      "code": "pt-BR",
+      "name": "Portuguese (Brazil)",
+      "nativeName": "Português (Brasil)",
+      "direction": "ltr",
+      "dateFormat": "DD/MM/YYYY",
+      "numberFormat": "pt-BR",
+      "fontSubset": "latin-ext",
+      "region": "BR"
+    },
+    {
+      "code": "fr",
+      "name": "French",
+      "nativeName": "Français",
+      "direction": "ltr",
+      "dateFormat": "DD/MM/YYYY",
+      "numberFormat": "fr-FR",
+      "fontSubset": "latin-ext",
+      "region": "FR"
+    },
+    {
+      "code": "de",
+      "name": "German",
+      "nativeName": "Deutsch",
+      "direction": "ltr",
+      "dateFormat": "DD.MM.YYYY",
+      "numberFormat": "de-DE",
+      "fontSubset": "latin-ext",
+      "region": "DE"
+    },
+    {
+      "code": "it",
+      "name": "Italian",
+      "nativeName": "Italiano",
+      "direction": "ltr",
+      "dateFormat": "DD/MM/YYYY",
+      "numberFormat": "it-IT",
+      "fontSubset": "latin-ext",
+      "region": "IT"
+    },
+    {
+      "code": "ja",
+      "name": "Japanese",
+      "nativeName": "日本語",
+      "direction": "ltr",
+      "dateFormat": "YYYY/MM/DD",
+      "numberFormat": "ja-JP",
+      "fontSubset": "japanese",
+      "region": "JP"
+    },
+    {
+      "code": "zh-CN",
+      "name": "Chinese (Simplified)",
+      "nativeName": "简体中文",
+      "direction": "ltr",
+      "dateFormat": "YYYY-MM-DD",
+      "numberFormat": "zh-CN",
+      "fontSubset": "chinese-simplified",
+      "region": "CN"
+    },
+    {
+      "code": "ar",
+      "name": "Arabic",
+      "nativeName": "العربية",
+      "direction": "rtl",
+      "dateFormat": "DD/MM/YYYY",
+      "numberFormat": "ar-SA",
+      "fontSubset": "arabic",
+      "region": "SA"
+    }
+  ],
+  "defaultLocale": "en",
+  "fallbackChain": {
+    "zh-CN": ["zh", "en"],
+    "pt-BR": ["pt", "en"],
+    "ar": ["en"]
+  },
+  "rtlLocales": ["ar"],
+  "coverageThreshold": 0.9,
+  "translationMemory": {
+    "enabled": true,
+    "provider": "lokalise",
+    "autoSync": true,
+    "professionalReviewRequired": ["legal", "compliance", "terms"]
+  },
+  "fonts": {
+    "primary": "Noto Sans",
+    "fallback": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    "subsets": {
+      "latin": "noto-sans-latin.woff2",
+      "latin-ext": "noto-sans-latin-ext.woff2",
+      "japanese": "noto-sans-jp.woff2",
+      "chinese-simplified": "noto-sans-sc.woff2",
+      "arabic": "noto-sans-arabic.woff2"
+    },
+    "display": "swap",
+    "preload": true
+  },
+  "qa": {
+    "pseudoLocalization": {
+      "enabled": true,
+      "expansion": 1.3,
+      "prefix": "[!!",
+      "suffix": "!!]",
+      "accentChars": true,
+      "bidiStress": true
+    },
+    "visualDiff": {
+      "enabled": true,
+      "rtlLocales": ["ar"],
+      "viewports": ["mobile", "tablet", "desktop"],
+      "threshold": 0.01
+    },
+    "accessibilityChecks": {
+      "langAttribute": true,
+      "langOfParts": true,
+      "wcag21Level": "AA"
+    }
+  },
+  "seo": {
+    "hreflang": {
+      "enabled": true,
+      "xDefault": "en",
+      "includeInSitemap": true
+    },
+    "canonicalPerLocale": true
+  }
+}
