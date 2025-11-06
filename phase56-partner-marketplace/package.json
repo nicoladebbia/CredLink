@@ -1,0 +1,163 @@
+{
+  "name": "phase56-partner-marketplace",
+  "version": "1.2.0",
+  "description": "C2PA Partner Marketplace - Scale delivery through vetted installers, auditors, and enterprise integrators",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:certification": "jest --testPathPattern=tests/certification",
+    "test:directory": "jest --testPathPattern=tests/directory",
+    "test:commissions": "jest --testPathPattern=tests/commissions",
+    "test:quality": "jest --testPathPattern=tests/quality",
+    "test:exit": "jest --testPathPattern=tests/exit-tests",
+    "lint": "eslint src/ tests/",
+    "lint:fix": "eslint src/ tests/ --fix",
+    "build": "webpack --mode production",
+    "deploy": "npm run build && npm run deploy:marketplace",
+    "deploy:marketplace": "serverless deploy",
+    "migrate": "knex migrate:latest",
+    "seed": "knex seed:run",
+    "docs": "jsdoc -c jsdoc.conf.json",
+    "security:audit": "npm audit",
+    "security:scan": "snyk test",
+    "performance:test": "artillery run tests/performance/load-test.yml",
+    "validate": "npm run lint && npm run test && npm run security:audit"
+  },
+  "keywords": [
+    "c2pa",
+    "provenance",
+    "partner-marketplace",
+    "certification",
+    "compliance",
+    "content-authenticity"
+  ],
+  "author": "C2 Concierge, Inc.",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.3.1",
+    "knex": "^3.0.1",
+    "pg": "^8.11.3",
+    "redis": "^4.6.10",
+    "stripe": "^14.9.0",
+    "aws-sdk": "^2.1492.0",
+    "nodemailer": "^6.9.7",
+    "joi": "^17.11.0",
+    "lodash": "^4.17.21",
+    "moment": "^2.29.4",
+    "uuid": "^9.0.1",
+    "crypto": "^1.0.1",
+    "axios": "^1.6.2",
+    "puppeteer": "^21.5.2",
+    "sharp": "^0.32.6",
+    "pdf-lib": "^1.17.1",
+    "svg2png": "^4.1.1",
+    "chart.js": "^4.4.0",
+    "analytics-node": "^6.2.0",
+    "google-analytics-data": "^3.2.0",
+    "winston": "^3.11.0",
+    "prometheus-client": "^14.2.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "nodemon": "^3.0.2",
+    "eslint": "^8.55.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "prettier": "^3.1.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4",
+    "serverless": "^3.38.0",
+    "serverless-webpack": "^5.13.0",
+    "artillery": "^2.0.0",
+    "snyk": "^1.1291.0",
+    "jsdoc": "^4.0.2",
+    "@types/node": "^20.10.4"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "directory": "phase56-partner-marketplace"
+  },
+  "bugs": {
+    "url": "https://github.com/Nickiller04/c2-concierge/issues"
+  },
+  "homepage": "https://github.com/Nickiller04/c2-concierge/tree/main/phase56-partner-marketplace",
+  "config": {
+    "port": 3001,
+    "database": {
+      "client": "postgresql",
+      "connection": {
+        "host": process.env.DB_HOST || "localhost",
+        "port": process.env.DB_PORT || 5432,
+        "database": process.env.DB_NAME || "c2pa_marketplace",
+        "user": process.env.DB_USER || "postgres",
+        "password": process.env.DB_PASSWORD || ""
+      }
+    },
+    "redis": {
+      "host": process.env.REDIS_HOST || "localhost",
+      "port": process.env.REDIS_PORT || 6379,
+      "password": process.env.REDIS_PASSWORD || ""
+    },
+    "stripe": {
+      "secretKey": process.env.STRIPE_SECRET_KEY,
+      "publishableKey": process.env.STRIPE_PUBLISHABLE_KEY,
+      "webhookSecret": process.env.STRIPE_WEBHOOK_SECRET
+    },
+    "analytics": {
+      "ga4": {
+        "measurementId": process.env.GA4_MEASUREMENT_ID,
+        "apiSecret": process.env.GA4_API_SECRET
+      }
+    }
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ]
+  },
+  "eslintConfig": {
+    "extends": [
+      "airbnb-base"
+    ],
+    "rules": {
+      "no-console": "warn",
+      "max-len": [
+        "error",
+        {
+          "code": 120
+        }
+      ]
+    }
+  }
+}
