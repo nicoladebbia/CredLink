@@ -24,14 +24,45 @@ interface TimeStampRequest {
 
 export class RFC3161Client {
   private readonly tsaUrl: string;
-  private readonly timeout: number = 30000;
+  private readonly timeout: number;
+  private readonly maxRetries: number = 3;
 
-  constructor(tsaUrl: string) {
+  constructor(tsaUrl: string, timeout: number = 30000) {
     // Validate TSA URL
+    if (!tsaUrl || typeof tsaUrl !== 'string') {
+      throw new Error('TSA URL is required and must be a string');
+    }
+    
     if (!tsaUrl.startsWith('https://')) {
       throw new Error('TSA URL must use HTTPS');
     }
+    
+    try {
+      const url = new URL(tsaUrl);
+      if (!url.hostname || url.hostname.length > 253) {
+        throw new Error('Invalid TSA hostname');
+      }
+      
+      // Prevent localhost and private IPs in production
+      if (process.env.NODE_ENV === 'production') {
+        if (url.hostname === 'localhost' || 
+            url.hostname.startsWith('127.') ||
+            url.hostname.startsWith('10.') ||
+            url.hostname.startsWith('192.168.') ||
+            url.hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)) {
+          throw new Error('TSA URL cannot use localhost or private IPs in production');
+        }
+      }
+    } catch (error) {
+      throw new Error(`Invalid TSA URL: ${error}`);
+    }
+    
+    if (timeout < 1000 || timeout > 300000) {
+      throw new Error('Timeout must be between 1 second and 5 minutes');
+    }
+    
     this.tsaUrl = tsaUrl;
+    this.timeout = timeout;
   }
 
   /**

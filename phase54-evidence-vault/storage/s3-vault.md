@@ -32,27 +32,48 @@ export class S3EvidenceVault {
    * Must be called during bucket creation
    */
   async initializeVault(): Promise<void> {
-    // Enable versioning (required for Object Lock)
-    await this.s3.send(new PutBucketVersioningCommand({
-      Bucket: this.config.bucketName,
-      VersioningConfiguration: {
-        Status: 'Enabled'
-      }
-    }));
-
-    // Configure Object Lock in Compliance mode
-    await this.s3.send(new PutObjectLockConfigurationCommand({
-      Bucket: this.config.bucketName,
-      ObjectLockConfiguration: {
-        ObjectLockEnabled: 'Enabled',
-        Rule: {
-          DefaultRetention: {
-            Mode: 'COMPLIANCE',  // Cannot be overridden by any user
-            Days: this.config.defaultRetentionDays
+    // Validate configuration
+    if (!this.config.bucketName || !this.config.region) {
+      throw new Error('Bucket name and region are required');
+    }
+    
+    if (!this.config.bucketName.match(/^[a-z0-9.-]{3,63}$/)) {
+      throw new Error('Invalid bucket name format');
+    }
+    
+    if (this.config.defaultRetentionDays < 1 || this.config.defaultRetentionDays > 3650) {
+      throw new Error('Retention days must be between 1 and 3650');
+    }
+    
+    try {
+      // Enable versioning (required for Object Lock)
+      await this.s3.send(new PutBucketVersioningCommand({
+        Bucket: this.config.bucketName,
+        VersioningConfiguration: {
+          Status: 'Enabled'
+        }
+      }));
+    } catch (error) {
+      throw new Error(`Failed to enable versioning: ${error}`);
+    }
+    
+    try {
+      // Configure Object Lock in Compliance mode
+      await this.s3.send(new PutObjectLockConfigurationCommand({
+        Bucket: this.config.bucketName,
+        ObjectLockConfiguration: {
+          ObjectLockEnabled: 'Enabled',
+          Rule: {
+            DefaultRetention: {
+              Mode: 'COMPLIANCE',  // Cannot be overridden by any user
+              Days: this.config.defaultRetentionDays
+            }
           }
         }
-      }
-    }));
+      }));
+    } catch (error) {
+      throw new Error(`Failed to configure Object Lock: ${error}`);
+    }
   }
 }
 ```
@@ -179,6 +200,11 @@ export class EvidenceStorage {
    * Store evidence record with WORM protection
    */
   async storeEvidence(request: StoreEvidenceRequest): Promise<StoreEvidenceResponse> {
+    // Security: Validate request
+    if (!request || !request.data || !request.evidenceId || !request.tenantId || !request.assetId) {
+      throw new Error('Invalid request: missing required fields');
+    }
+    
     // Security: Validate request size
     const MAX_EVIDENCE_SIZE = 100 * 1024 * 1024; // 100MB limit
     const data = JSON.stringify(request.data);
@@ -192,49 +218,67 @@ export class EvidenceStorage {
       throw new Error('Invalid evidence record structure');
     }
     
+    // Security: Validate KMS key
+    const kmsKeyArn = process.env.EVIDENCE_KMS_KEY_ARN;
+    if (!kmsKeyArn) {
+      throw new Error('EVIDENCE_KMS_KEY_ARN environment variable not set');
+    }
+    
+    if (!kmsKeyArn.startsWith('arn:aws:kms:')) {
+      throw new Error('Invalid KMS key ARN format');
+    }
+    
     const key = this.buildObjectKey(request.tenantId, request.assetId, request.evidenceId);
     const sha256 = createHash('sha256').update(data).digest('hex');
 
-    // Store object with Object Lock and encryption
-    const putResult = await this.s3.send(new PutObjectCommand({
-      Bucket: this.bucketName,
-      Key: key,
-      Body: data,
-      ContentType: 'application/json',
-      ServerSideEncryption: 'aws:kms',
-      SSEKMSKeyId: process.env.EVIDENCE_KMS_KEY_ARN,
-      Metadata: {
-        'evidence-id': request.evidenceId,
-        'tenant-id': request.tenantId,
-        'asset-id': request.assetId,
-        'sha256': sha256,
-        'created-at': Date.now().toString(),
-        'content-size': data.length.toString()
-      },
-      // Object Lock retention (uses bucket default)
-      ObjectLockMode: 'COMPLIANCE',
-      ObjectLockRetainUntilDate: this.calculateRetentionDate()
-    }));
-
-    // Apply legal hold if requested
-    if (request.legalHold) {
-      await this.s3.send(new PutObjectLegalHoldCommand({
+    try {
+      // Store object with Object Lock and encryption
+      const putResult = await this.s3.send(new PutObjectCommand({
         Bucket: this.bucketName,
         Key: key,
-        VersionId: putResult.VersionId,
-        LegalHold: {
-          Status: 'ON'
-        }
+        Body: data,
+        ContentType: 'application/json',
+        ServerSideEncryption: 'aws:kms',
+        SSEKMSKeyId: kmsKeyArn,
+        Metadata: {
+          'evidence-id': request.evidenceId,
+          'tenant-id': request.tenantId,
+          'asset-id': request.assetId,
+          'sha256': sha256,
+          'created-at': Date.now().toString(),
+          'content-size': data.length.toString()
+        },
+        // Object Lock retention (uses bucket default)
+        ObjectLockMode: 'COMPLIANCE',
+        ObjectLockRetainUntilDate: this.calculateRetentionDate()
       }));
-    }
 
-    return {
-      objectKey: key,
-      versionId: putResult.VersionId!,
-      sha256,
-      retentionUntil: this.calculateRetentionDate().getTime(),
-      legalHold: request.legalHold || false
-    };
+      // Apply legal hold if requested
+      if (request.legalHold) {
+        if (!putResult.VersionId) {
+          throw new Error('Failed to get version ID from S3');
+        }
+        
+        await this.s3.send(new PutObjectLegalHoldCommand({
+          Bucket: this.bucketName,
+          Key: key,
+          VersionId: putResult.VersionId,
+          LegalHold: {
+            Status: 'ON'
+          }
+        }));
+      }
+
+      return {
+        objectKey: key,
+        versionId: putResult.VersionId!,
+        sha256,
+        retentionUntil: this.calculateRetentionDate().getTime(),
+        legalHold: request.legalHold || false
+      };
+    } catch (error) {
+      throw new Error(`Failed to store evidence: ${error}`);
+    }
   }
 
   /**

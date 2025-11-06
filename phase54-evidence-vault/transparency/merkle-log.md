@@ -12,11 +12,30 @@ import { createHash } from 'crypto';
 export class MerkleTree {
   private leaves: Buffer[] = [];
   private nodes: Map<string, Buffer> = new Map();
+  private readonly maxLeaves: number = 1000000; // 1M leaves limit
+  private readonly maxLeafSize: number = 1024 * 1024; // 1MB per leaf
 
   /**
    * Add leaf to tree
    */
   addLeaf(data: Buffer): number {
+    // Security: Validate input
+    if (!Buffer.isBuffer(data)) {
+      throw new Error('Leaf data must be a Buffer');
+    }
+    
+    if (data.length === 0) {
+      throw new Error('Leaf data cannot be empty');
+    }
+    
+    if (data.length > this.maxLeafSize) {
+      throw new Error(`Leaf data too large: ${data.length} bytes`);
+    }
+    
+    if (this.leaves.length >= this.maxLeaves) {
+      throw new Error('Maximum tree size reached');
+    }
+    
     const leafHash = this.hashLeaf(data);
     const leafIndex = this.leaves.length;
     this.leaves.push(leafHash);
@@ -32,7 +51,7 @@ export class MerkleTree {
    */
   getRoot(): Buffer {
     if (this.leaves.length === 0) {
-      return Buffer.alloc(32);  // Empty tree
+      return Buffer.alloc(32);  // Empty tree hash
     }
     
     return this.getNodeHash(0, this.leaves.length);
@@ -49,6 +68,11 @@ export class MerkleTree {
    * Generate inclusion proof for leaf
    */
   generateInclusionProof(leafIndex: number): InclusionProof {
+    // Security: Validate input
+    if (!Number.isInteger(leafIndex) || leafIndex < 0) {
+      throw new Error('Leaf index must be a non-negative integer');
+    }
+    
     if (leafIndex >= this.leaves.length) {
       throw new Error('Leaf index out of bounds');
     }

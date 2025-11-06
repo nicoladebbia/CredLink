@@ -54,6 +54,15 @@ Deliver durable, exportable evidence packs for disputes, takedowns, and audits. 
 ### Evidence Record Schema
 
 ```typescript
+import { Buffer } from 'buffer';
+
+interface VerifyResult {
+  valid: boolean;
+  errors?: string[];
+  warnings?: string[];
+  verifiedAt: number;
+}
+
 interface EvidenceRecord {
   // Identifiers
   evidenceId: string;              // UUID v7 (time-ordered)
@@ -303,6 +312,20 @@ Ingest a case (asset set + metadata)
 
 **Request:**
 ```typescript
+interface ManifestData {
+  hash: string;
+  url: string;
+  size: number;
+  contentType: string;
+}
+
+interface HttpSnapshot {
+  url: string;
+  statusCode: number;
+  headers: Record<string, string>;
+  timestamp: number;
+}
+
 interface IngestEvidenceRequest {
   tenantId: string;
   assetIds: string[];
