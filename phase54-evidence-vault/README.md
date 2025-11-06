@@ -92,11 +92,11 @@ interface EvidenceRecord {
 
 interface HttpHeadersSnapshot {
   etag: string;
-  cache_control: string;
+  cacheControl: string;
   date: string;
-  content_type: string;
-  content_length: number;
-  raw_headers: Record<string, string>;
+  contentType: string;
+  contentLength: number;
+  rawHeaders: Record<string, string>;
 }
 
 interface OperatorAction {
@@ -108,17 +108,17 @@ interface OperatorAction {
 
 interface LegalHold {
   active: boolean;
-  placed_by: string;             // Operator ID
+  placedBy: string;               // Operator ID
   reason: string;
-  placed_at: number;             // Unix timestamp ms
-  expires_at: number;            // Unix timestamp ms (mandatory)
+  placedAt: number;               // Unix timestamp ms
+  expiresAt: number;              // Unix timestamp ms (mandatory)
 }
 
 interface MerkleLeafData {
-  leaf_index: number;
-  leaf_hash: string;             // SHA-256 hex
-  tree_size: number;
-  checkpoint_hash: string;
+  leafIndex: number;
+  leafHash: string;               // SHA-256 hex
+  treeSize: number;
+  checkpointHash: string;
 }
 ```
 
@@ -135,26 +135,26 @@ interface MerkleLeafData {
 **Request:**
 ```typescript
 interface PlaceHoldRequest {
-  tenant_id?: string;
-  asset_id?: string;
-  manifest_hash?: string;
+  tenantId?: string;
+  assetId?: string;
+  manifestHash?: string;
   timespan?: {
     start: number;
     end: number;
   };
   reason: string;
-  placed_by: string;
-  expires_at: number;            // Mandatory expiry
+  placedBy: string;
+  expiresAt: number;              // Mandatory expiry
 }
 ```
 
 **Response:**
 ```typescript
 interface PlaceHoldResponse {
-  hold_id: string;
-  objects_affected: number;
-  escrow_mirror_started: boolean;
-  transparency_log_entry: string;
+  holdId: string;
+  objectsAffected: number;
+  escrowMirrorStarted: boolean;
+  transparencyLogEntry: string;
 }
 ```
 
@@ -208,8 +208,8 @@ evidence_acme_asset123_20250106.zip
 ```typescript
 interface ExportIndex {
   version: "1.0";
-  created_at: number;
-  tenant_id: string;
+  createdAt: number;
+  tenantId: string;
   scope: "asset" | "case" | "tenant";
   files: FileEntry[];
   metadata: ExportMetadata;
@@ -223,10 +223,10 @@ interface FileEntry {
 }
 
 interface ExportMetadata {
-  total_files: number;
-  total_size: number;
-  evidence_count: number;
-  date_range: {
+  totalFiles: number;
+  totalSize: number;
+  evidenceCount: number;
+  dateRange: {
     start: number;
     end: number;
   };
@@ -289,23 +289,23 @@ Ingest a case (asset set + metadata)
 **Request:**
 ```typescript
 interface IngestEvidenceRequest {
-  tenant_id: string;
-  asset_ids: string[];
-  case_id?: string;
-  manifest_data: ManifestData[];
-  http_snapshots: HttpSnapshot[];
-  verify_results: VerifyResult[];
-  operator_action: OperatorAction;
+  tenantId: string;
+  assetIds: string[];
+  caseId?: string;
+  manifestData: ManifestData[];
+  httpSnapshots: HttpSnapshot[];
+  verifyResults: VerifyResult[];
+  operatorAction: OperatorAction;
 }
 ```
 
 **Response:**
 ```typescript
 interface IngestEvidenceResponse {
-  evidence_ids: string[];
-  s3_object_versions: string[];
-  transparency_log_entries: string[];
-  tsa_tokens_requested: number;
+  evidenceIds: string[];
+  s3ObjectVersions: string[];
+  transparencyLogEntries: string[];
+  tsaTokensRequested: number;
 }
 ```
 
@@ -323,10 +323,10 @@ Build & stream export pack
 ```typescript
 interface ExportRequest {
   scope: "asset" | "case" | "tenant";
-  tenant_id: string;
-  asset_id?: string;
-  case_id?: string;
-  include_samples?: number;      // Number of sample assets
+  tenantId: string;
+  assetId?: string;
+  caseId?: string;
+  includeSamples?: number;       // Number of sample assets
   format?: "zip";                // Future: tar.gz, etc.
 }
 ```
@@ -334,12 +334,12 @@ interface ExportRequest {
 **Response:**
 ```typescript
 interface ExportResponse {
-  export_id: string;
+  exportId: string;
   status: "building" | "ready" | "failed";
-  download_url?: string;         // Time-boxed signed URL
-  expires_at?: number;
-  size_bytes?: number;
-  file_count?: number;
+  downloadUrl?: string;          // Time-boxed signed URL
+  expiresAt?: number;
+  sizeBytes?: number;
+  fileCount?: number;
 }
 ```
 
@@ -349,11 +349,11 @@ Check export status
 **Response:**
 ```typescript
 interface ExportStatusResponse {
-  export_id: string;
+  exportId: string;
   status: "building" | "ready" | "failed";
-  progress?: number;             // 0-100
-  download_url?: string;
-  expires_at?: number;
+  progress?: number;              // 0-100
+  downloadUrl?: string;
+  expiresAt?: number;
   error?: string;
 }
 ```

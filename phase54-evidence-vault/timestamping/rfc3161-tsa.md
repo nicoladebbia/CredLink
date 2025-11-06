@@ -74,8 +74,7 @@ export class RFC3161Client {
   private buildTimeStampReq(request: TimeStampRequest): Buffer {
     // Use asn1.js or similar library for proper ASN.1 encoding
     // This is a simplified representation
-    const asn1 = require('@peculiar/asn1-schema');
-    const { AsnParser, AsnSerializer } = require('@peculiar/asn1-schema');
+    const { AsnSerializer } = require('@peculiar/asn1-schema');
     
     // Build TimeStampReq structure per RFC 3161
     const tsReq = {
@@ -127,7 +126,9 @@ export class TimeStampResponseParser {
     const { AsnParser } = require('@peculiar/asn1-schema');
     
     // Parse DER-encoded response
-    const tsResp = AsnParser.parse(responseData, TimeStampResp);
+    // Note: TimeStampResp, SignedData, and TSTInfo would be defined in ASN.1 schema
+    // This is a simplified representation for documentation
+    const tsResp = AsnParser.parse(responseData, 'TimeStampResp');
 
     // Check status
     if (tsResp.status.status !== 0) {  // 0 = granted
@@ -166,10 +167,10 @@ export class TimeStampResponseParser {
     const { AsnParser } = require('@peculiar/asn1-schema');
     
     // Parse SignedData
-    const signedData = AsnParser.parse(token, SignedData);
+    const signedData = AsnParser.parse(token, 'SignedData');
     
     // Extract TSTInfo from encapContentInfo
-    const tstInfo = AsnParser.parse(signedData.encapContentInfo.eContent, TSTInfo);
+    const tstInfo = AsnParser.parse(signedData.encapContentInfo.eContent, 'TSTInfo');
     
     // Return genTime
     return new Date(tstInfo.genTime);
@@ -184,7 +185,7 @@ export class TimeStampResponseParser {
 
     // Parse token
     const { AsnParser } = require('@peculiar/asn1-schema');
-    const signedData = AsnParser.parse(token, SignedData);
+    const signedData = AsnParser.parse(token, 'SignedData');
 
     // Extract signer certificate
     const signerCert = signedData.certificates[0];
