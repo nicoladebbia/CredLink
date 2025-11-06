@@ -7,6 +7,15 @@ dist/
 build/
 *.tsbuildinfo
 
+# Compiled JavaScript and TypeScript declarations
+*.js
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# Source maps
+*.map
+
 # Artifacts and logs
 .artifacts/
 logs/
