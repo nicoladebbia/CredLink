@@ -16,10 +16,12 @@
     "detect": "node detection/anomaly-detector.js",
     "allocate": "node allocation/allocator.js",
     "dashboard": "node dashboards/server.js",
-    "lint": "eslint src/**/*.js ingestion/**/*.js allocation/**/*.js detection/**/*.js policy/**/*.js",
+    "lint": "eslint src/**/*.js ingestion/**/*.js allocation/**/*.js detection/**/*.js policy/**/*.js --no-ignore",
     "lint:fix": "eslint src/**/*.js --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
-    "validate:all": "npm run lint && npm run test && npm run test:exit"
+    "security:audit": "npm audit",
+    "security:check": "npm audit --audit-level moderate",
+    "validate:all": "npm run security:check && npm run lint && npm run test && npm run test:exit"
   },
   "keywords": [
     "finops",
@@ -39,8 +41,9 @@
     "@aws-sdk/client-athena": "^3.490.0",
     "@aws-sdk/client-sns": "^3.490.0",
     "@aws-sdk/client-cost-explorer": "^3.490.0",
-    "duckdb": "^0.9.2",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
     "pg": "^8.11.3",
     "node-cron": "^3.0.3",
     "winston": "^3.11.0",

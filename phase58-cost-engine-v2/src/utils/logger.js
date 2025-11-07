@@ -20,7 +20,17 @@ if (!fs.existsSync(logsDir)) {
 const logLevel = process.env.LOG_LEVEL || 'info';
 const logFormat = process.env.LOG_FORMAT || 'json';
 const logFileEnabled = process.env.LOG_FILE_ENABLED === 'true';
-const logFilePath = process.env.LOG_FILE_PATH || path.join(logsDir, 'cost-engine.log');
+
+// Security: Validate and sanitize log file path
+let logFilePath = process.env.LOG_FILE_PATH || path.join(logsDir, 'cost-engine.log');
+if (logFileEnabled) {
+  // Prevent path traversal attacks
+  logFilePath = path.resolve(logsDir, path.basename(logFilePath));
+  // Ensure path is within logs directory
+  if (!logFilePath.startsWith(path.resolve(logsDir))) {
+    throw new Error('Invalid log file path: path traversal detected');
+  }
+}
 
 /**
  * Create custom format for logs
@@ -32,9 +42,9 @@ const customFormat = winston.format.combine(
   logFormat === 'json'
     ? winston.format.json()
     : winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
-        return `${timestamp} [${level.toUpperCase()}]: ${message} ${metaStr}`;
-      })
+      const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
+      return `${timestamp} [${level.toUpperCase()}]: ${message} ${metaStr}`;
+    })
 );
 
 /**
@@ -43,10 +53,7 @@ const customFormat = winston.format.combine(
 export function createLogger(module = 'CostEngine') {
   const transports = [
     new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        customFormat
-      )
+      format: winston.format.combine(winston.format.colorize(), customFormat)
     })
   ];
 

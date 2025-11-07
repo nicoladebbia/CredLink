@@ -1,9 +1,9 @@
 /**
  * Cost Allocator
  * Implements FinOps allocation best practices with tag-based and heuristic allocation
- * 
+ *
  * Reference: https://www.finops.org/framework/capabilities/cost-allocation/
- * 
+ *
  * Allocation methods:
  * 1. Tag-based (tenant_id, environment, product)
  * 2. Heuristic (path/domain patterns)
@@ -18,18 +18,54 @@ const { Pool } = pg;
 
 export class CostAllocator {
   constructor() {
+    // Security: Validate database configuration
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbPort = parseInt(process.env.DB_PORT) || 5432;
+    const dbName = process.env.DB_NAME || 'cost_engine';
+    const dbUser = process.env.DB_USER || 'postgres';
+    const dbPassword = process.env.DB_PASSWORD;
+
+    // Security: Validate hostname to prevent injection
+    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) {
+      throw new Error('Invalid database hostname');
+    }
+
+    // Security: Validate port range
+    if (dbPort < 1 || dbPort > 65535) {
+      throw new Error('Invalid database port');
+    }
+
+    // Security: Validate database name format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error('Invalid database name format');
+    }
+
+    // Security: Validate username format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbUser)) {
+      throw new Error('Invalid database username format');
+    }
+
+    if (!dbPassword) {
+      throw new Error('DB_PASSWORD environment variable is required');
+    }
+
     this.pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'cost_engine',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
+      host: dbHost,
+      port: dbPort,
+      database: dbName,
+      user: dbUser,
+      password: dbPassword,
       ssl: process.env.DB_SSL === 'true',
-      max: 10
+      max: 10,
+      // Security: Additional connection security
+      connectionTimeoutMillis: 5000,
+      query_timeout: 30000
     });
 
     // FinOps allocation configuration
-    this.tagKeys = (process.env.ALLOCATION_TAG_KEYS || 'tenant_id,environment,product,team').split(',');
+    this.tagKeys = (process.env.ALLOCATION_TAG_KEYS || 'tenant_id,environment,product,team').split(
+      ','
+    );
     this.minConfidence = parseFloat(process.env.ALLOCATION_CONFIDENCE_MINIMUM) || 0.7;
     this.untaggedFallback = process.env.ALLOCATION_UNTAGGED_FALLBACK || 'shared';
   }
@@ -90,7 +126,7 @@ export class CostAllocator {
     try {
       // Get unallocated cost records from staging
       const records = await this.getUnallocatedRecords();
-      
+
       if (records.length === 0) {
         logger.info('No unallocated records found');
         return {
@@ -314,17 +350,22 @@ export class CostAllocator {
       JSON.stringify(a.metadata)
     ]);
 
-    const placeholders = values.map((_, i) => {
-      const offset = i * 12;
-      return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12})`;
-    }).join(',');
+    const placeholders = values
+      .map((_, i) => {
+        const offset = i * 12;
+        return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12})`;
+      })
+      .join(',');
 
-    await this.pool.query(`
+    await this.pool.query(
+      `
       INSERT INTO cost_allocations (
         cost_id, source, tenant_id, environment, product, team,
         cost_usd, usage_amount, usage_unit, allocation_method, confidence, metadata
       ) VALUES ${placeholders}
-    `, values.flat());
+    `,
+      values.flat()
+    );
 
     logger.info('Allocations saved', { count: allocations.length });
   }
@@ -333,7 +374,8 @@ export class CostAllocator {
    * Get allocation statistics
    */
   async getAllocationStats() {
-    const result = await this.pool.query(`
+    const result = await this.pool.query(
+      `
       SELECT
         COUNT(*) as total_lines,
         COUNT(*) FILTER (WHERE confidence >= $1) as allocated_lines,
@@ -344,7 +386,9 @@ export class CostAllocator {
       FROM cost_allocations
       WHERE allocated_at >= NOW() - INTERVAL '24 hours'
       GROUP BY allocation_method
-    `, [this.minConfidence]);
+    `,
+      [this.minConfidence]
+    );
 
     return result.rows;
   }

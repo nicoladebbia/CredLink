@@ -2,7 +2,7 @@
 /**
  * Phase 58 - Cost Engine v2 - Exit Tests
  * Binary validation of ship-ready criteria
- * 
+ *
  * Exit Tests (must ALL pass):
  * 1. Two real anomalies caught pre-invoice with fixes applied
  * 2. Tenant alerts include actionable steps (>70% resolved without tickets)
@@ -18,14 +18,48 @@ const { Pool } = pg;
 
 class ExitTestValidator {
   constructor() {
+    // Security: Validate database configuration
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbPort = parseInt(process.env.DB_PORT) || 5432;
+    const dbName = process.env.DB_NAME || 'cost_engine';
+    const dbUser = process.env.DB_USER || 'postgres';
+    const dbPassword = process.env.DB_PASSWORD;
+
+    // Security: Validate hostname to prevent injection
+    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) {
+      throw new Error('Invalid database hostname');
+    }
+
+    // Security: Validate port range
+    if (dbPort < 1 || dbPort > 65535) {
+      throw new Error('Invalid database port');
+    }
+
+    // Security: Validate database name format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error('Invalid database name format');
+    }
+
+    // Security: Validate username format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbUser)) {
+      throw new Error('Invalid database username format');
+    }
+
+    if (!dbPassword) {
+      throw new Error('DB_PASSWORD environment variable is required');
+    }
+
     this.pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'cost_engine',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
+      host: dbHost,
+      port: dbPort,
+      database: dbName,
+      user: dbUser,
+      password: dbPassword,
       ssl: process.env.DB_SSL === 'true',
-      max: 10
+      max: 10,
+      // Security: Additional connection security
+      connectionTimeoutMillis: 5000,
+      query_timeout: 30000
     });
 
     this.results = {
@@ -67,17 +101,17 @@ class ExitTestValidator {
       const anomalies = anomaliesResult.rows;
 
       // Validate: At least 2 high-confidence anomalies detected
-      assert(anomalies.length >= 2,
-        `Expected at least 2 anomalies, found ${anomalies.length}`);
+      assert(anomalies.length >= 2, `Expected at least 2 anomalies, found ${anomalies.length}`);
 
       // Validate: Anomalies have fixes applied (auto or manual)
-      const anomaliesWithFixes = anomalies.filter(a =>
-        parseInt(a.actions_applied) > 0 ||
-        a.status === 'resolved'
+      const anomaliesWithFixes = anomalies.filter(
+        a => parseInt(a.actions_applied) > 0 || a.status === 'resolved'
       );
 
-      assert(anomaliesWithFixes.length >= 2,
-        `Expected at least 2 anomalies with fixes, found ${anomaliesWithFixes.length}`);
+      assert(
+        anomaliesWithFixes.length >= 2,
+        `Expected at least 2 anomalies with fixes, found ${anomaliesWithFixes.length}`
+      );
 
       // Calculate modeled savings
       const totalSavingsResult = await this.pool.query(`
@@ -90,7 +124,8 @@ class ExitTestValidator {
           AND a.confidence >= 0.8
       `);
 
-      const projectedSavings = parseFloat(totalSavingsResult.rows[0]?.projected_monthly_savings) || 0;
+      const projectedSavings =
+        parseFloat(totalSavingsResult.rows[0]?.projected_monthly_savings) || 0;
 
       this.results.test1 = {
         passed: true,
@@ -141,17 +176,17 @@ class ExitTestValidator {
       const escalatedActions = parseInt(stats.escalated_actions) || 0;
 
       // Validate: At least some actions generated
-      assert(totalActions > 0,
-        'No actions found in last 30 days');
+      assert(totalActions > 0, 'No actions found in last 30 days');
 
       // Calculate resolution rate (resolved without escalation)
-      const resolutionRate = totalActions > 0
-        ? ((resolvedActions - escalatedActions) / totalActions) * 100
-        : 0;
+      const resolutionRate =
+        totalActions > 0 ? ((resolvedActions - escalatedActions) / totalActions) * 100 : 0;
 
       // Validate: >70% resolution rate
-      assert(resolutionRate >= 70,
-        `Resolution rate ${resolutionRate.toFixed(1)}% is below 70% threshold`);
+      assert(
+        resolutionRate >= 70,
+        `Resolution rate ${resolutionRate.toFixed(1)}% is below 70% threshold`
+      );
 
       // Verify alerts include proposed actions
       const alertsWithProposalsResult = await this.pool.query(`
@@ -214,8 +249,10 @@ class ExitTestValidator {
       const pnlRecords = pnlResult.rows;
 
       // Validate: Daily P&L data available
-      assert(pnlRecords.length >= 7,
-        `Expected at least 7 days of P&L data, found ${pnlRecords.length}`);
+      assert(
+        pnlRecords.length >= 7,
+        `Expected at least 7 days of P&L data, found ${pnlRecords.length}`
+      );
 
       // Validate: Cost allocations have confidence scores
       const confidenceResult = await this.pool.query(`
@@ -229,11 +266,15 @@ class ExitTestValidator {
 
       const confidenceStats = confidenceResult.rows[0];
       const avgConfidence = parseFloat(confidenceStats.avg_confidence) || 0;
-      const confidencePct = (parseInt(confidenceStats.high_confidence_count) / parseInt(confidenceStats.total_count)) * 100;
+      const confidencePct =
+        (parseInt(confidenceStats.high_confidence_count) / parseInt(confidenceStats.total_count)) *
+        100;
 
       // Validate: >80% allocation confidence
-      assert(confidencePct >= 80,
-        `Allocation confidence ${confidencePct.toFixed(1)}% is below 80% threshold`);
+      assert(
+        confidencePct >= 80,
+        `Allocation confidence ${confidencePct.toFixed(1)}% is below 80% threshold`
+      );
 
       // Validate: Margin trend data correlates with deployments
       const marginTrendResult = await this.pool.query(`
@@ -249,7 +290,8 @@ class ExitTestValidator {
       `);
 
       const marginTrend = marginTrendResult.rows;
-      const avgMargin = marginTrend.reduce((sum, d) => sum + parseFloat(d.gross_margin), 0) / marginTrend.length;
+      const avgMargin =
+        marginTrend.reduce((sum, d) => sum + parseFloat(d.gross_margin), 0) / marginTrend.length;
 
       this.results.test3 = {
         passed: true,
@@ -293,7 +335,9 @@ class ExitTestValidator {
     console.log('='.repeat(80));
     console.log(`Test 1 (Anomaly Detection): ${this.results.test1.passed ? '✅ PASS' : '❌ FAIL'}`);
     console.log(`  ${this.results.test1.details}`);
-    console.log(`\nTest 2 (Actionable Alerts): ${this.results.test2.passed ? '✅ PASS' : '❌ FAIL'}`);
+    console.log(
+      `\nTest 2 (Actionable Alerts): ${this.results.test2.passed ? '✅ PASS' : '❌ FAIL'}`
+    );
     console.log(`  ${this.results.test2.details}`);
     console.log(`\nTest 3 (Dashboard Live): ${this.results.test3.passed ? '✅ PASS' : '❌ FAIL'}`);
     console.log(`  ${this.results.test3.details}`);
@@ -340,4 +384,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { ExitTestValidator };
+export default ExitTestValidator;

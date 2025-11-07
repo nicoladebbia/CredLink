@@ -1,7 +1,7 @@
 /**
  * Policy Engine
  * Recommends or auto-applies remediation actions with approval workflows
- * 
+ *
  * Action types:
  * - force_remote_only: Stop embed-chasing costs
  * - move_manifest_origin: Migrate to R2 for zero egress
@@ -19,14 +19,48 @@ const { Pool } = pg;
 
 export class PolicyEngine {
   constructor() {
+    // Security: Validate database configuration
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbPort = parseInt(process.env.DB_PORT) || 5432;
+    const dbName = process.env.DB_NAME || 'cost_engine';
+    const dbUser = process.env.DB_USER || 'postgres';
+    const dbPassword = process.env.DB_PASSWORD;
+
+    // Security: Validate hostname to prevent injection
+    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) {
+      throw new Error('Invalid database hostname');
+    }
+
+    // Security: Validate port range
+    if (dbPort < 1 || dbPort > 65535) {
+      throw new Error('Invalid database port');
+    }
+
+    // Security: Validate database name format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error('Invalid database name format');
+    }
+
+    // Security: Validate username format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbUser)) {
+      throw new Error('Invalid database username format');
+    }
+
+    if (!dbPassword) {
+      throw new Error('DB_PASSWORD environment variable is required');
+    }
+
     this.pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'cost_engine',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
+      host: dbHost,
+      port: dbPort,
+      database: dbName,
+      user: dbUser,
+      password: dbPassword,
       ssl: process.env.DB_SSL === 'true',
-      max: 10
+      max: 10,
+      // Security: Additional connection security
+      connectionTimeoutMillis: 5000,
+      query_timeout: 30000
     });
 
     // Policy configuration
@@ -36,10 +70,30 @@ export class PolicyEngine {
     this.approvalRequired = process.env.APPROVAL_REQUIRED !== 'false';
     this.cooldownHours = parseInt(process.env.COOLDOWN_HOURS) || 24;
     this.eventModeTenants = (process.env.EVENT_MODE_TENANTS || '').split(',').filter(t => t);
-    
+
     // Alert configuration
     this.webhookUrl = process.env.ALERT_WEBHOOK_URL;
     this.snsTopicArn = process.env.ALERT_SNS_TOPIC_ARN;
+
+    // Security: Validate webhook URL if provided
+    if (this.webhookUrl) {
+      try {
+        new URL(this.webhookUrl);
+        // Security: Only allow HTTPS for webhooks
+        if (!this.webhookUrl.startsWith('https://')) {
+          throw new Error('Webhook URL must use HTTPS');
+        }
+      } catch (e) {
+        throw new Error('Invalid webhook URL format');
+      }
+    }
+
+    // Security: Validate SNS topic ARN if provided
+    if (this.snsTopicArn) {
+      if (!/^arn:aws:sns:.*$/.test(this.snsTopicArn)) {
+        throw new Error('Invalid SNS topic ARN format');
+      }
+    }
   }
 
   /**
@@ -134,17 +188,17 @@ export class PolicyEngine {
           action.status = 'applied';
           action.applied_at = new Date();
           await this.applyAction(action);
-          
+
           logger.info('Action auto-applied', {
             action: action.action_type,
             tenant: action.tenant_id
           });
         } else if (this.approvalRequired) {
           action.status = 'pending_approval';
-          
+
           // Send alert for approval
           await this.sendAlert(action);
-          
+
           logger.info('Action pending approval', {
             action: action.action_type,
             tenant: action.tenant_id
@@ -179,15 +233,25 @@ export class PolicyEngine {
    */
   async isInCooldown(tenantId, kind) {
     try {
-      const result = await this.pool.query(`
+      // Security: Validate and escape cooldownHours to prevent SQL injection
+      const hours = parseInt(this.cooldownHours);
+      if (isNaN(hours) || hours < 0 || hours > 8760) {
+        // Max 1 year
+        throw new Error('Invalid cooldown hours value');
+      }
+
+      const result = await this.pool.query(
+        `
         SELECT COUNT(*) as count
         FROM actions a
         JOIN anomalies an ON a.anomaly_id = an.id
         WHERE a.tenant_id = $1
           AND an.kind = $2
           AND a.status = 'applied'
-          AND a.applied_at >= NOW() - INTERVAL '${this.cooldownHours} hours'
-      `, [tenantId, kind]);
+          AND a.applied_at >= NOW() - INTERVAL '${hours} hours'
+      `,
+        [tenantId, kind]
+      );
 
       return parseInt(result.rows[0].count) > 0;
     } catch (error) {
@@ -215,31 +279,31 @@ export class PolicyEngine {
           route: action.route
         });
         break;
-      
+
       case 'move_manifest_origin':
         logger.info('Would migrate manifest origin to R2', {
           destination: action.details.to
         });
         break;
-      
+
       case 'add_cache_ttl':
         logger.info('Would add cache TTL header', {
           route: action.route
         });
         break;
-      
+
       case 'batch_timestamps':
         logger.info('Would enable timestamp batching', {
           tenant: action.tenant_id
         });
         break;
-      
+
       case 'reduce_frequency':
         logger.info('Would reduce timestamp frequency', {
           tenant: action.tenant_id
         });
         break;
-      
+
       default:
         logger.warn('Unknown action type', {
           type: action.action_type
@@ -254,20 +318,23 @@ export class PolicyEngine {
     logger.info('Rolling back action', { id: actionId });
 
     try {
-      const result = await this.pool.query(`
+      const result = await this.pool.query(
+        `
         UPDATE actions
         SET status = 'rolled_back',
             rolled_back_at = NOW()
         WHERE id = $1
         RETURNING *
-      `, [actionId]);
+      `,
+        [actionId]
+      );
 
       if (result.rows.length === 0) {
         throw new Error('Action not found');
       }
 
       const action = result.rows[0];
-      
+
       // Perform rollback (mock)
       logger.info('Action rolled back successfully', {
         id: actionId,
@@ -296,10 +363,12 @@ export class PolicyEngine {
       impact_usd_day: action.impact_usd_day,
       confidence: action.confidence,
       evidence: action.details.anomaly.evidence,
-      proposed: [{
-        action: action.action_type,
-        why: action.details.why
-      }]
+      proposed: [
+        {
+          action: action.action_type,
+          why: action.details.why
+        }
+      ]
     };
 
     // Send to webhook
@@ -332,22 +401,25 @@ export class PolicyEngine {
    */
   async saveActions(actions) {
     for (const action of actions) {
-      await this.pool.query(`
+      await this.pool.query(
+        `
         INSERT INTO actions (
           anomaly_id, action_type, tenant_id, route,
           status, confidence, impact_usd_day, details, applied_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      `, [
-        action.anomaly_id,
-        action.action_type,
-        action.tenant_id,
-        action.route,
-        action.status,
-        action.confidence,
-        action.impact_usd_day,
-        JSON.stringify(action.details),
-        action.applied_at || null
-      ]);
+      `,
+        [
+          action.anomaly_id,
+          action.action_type,
+          action.tenant_id,
+          action.route,
+          action.status,
+          action.confidence,
+          action.impact_usd_day,
+          JSON.stringify(action.details),
+          action.applied_at || null
+        ]
+      );
     }
 
     logger.info('Actions saved', { count: actions.length });

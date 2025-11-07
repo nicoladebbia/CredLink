@@ -1,9 +1,9 @@
 /**
  * TSA (Time Stamping Authority) Metrics Tracker
  * Tracks RFC 3161 timestamp token usage and costs
- * 
+ *
  * Reference: https://www.ietf.org/rfc/rfc3161.txt
- * 
+ *
  * Monitors:
  * - Tokens issued per asset
  * - Cost per token (vendor SKU dependent)
@@ -18,15 +18,49 @@ const { Pool } = pg;
 
 export class TSAMetrics {
   constructor() {
+    // Security: Validate database configuration
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbPort = parseInt(process.env.DB_PORT) || 5432;
+    const dbName = process.env.DB_NAME || 'cost_engine';
+    const dbUser = process.env.DB_USER || 'postgres';
+    const dbPassword = process.env.DB_PASSWORD;
+
+    // Security: Validate hostname to prevent injection
+    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) {
+      throw new Error('Invalid database hostname');
+    }
+
+    // Security: Validate port range
+    if (dbPort < 1 || dbPort > 65535) {
+      throw new Error('Invalid database port');
+    }
+
+    // Security: Validate database name format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error('Invalid database name format');
+    }
+
+    // Security: Validate username format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbUser)) {
+      throw new Error('Invalid database username format');
+    }
+
+    if (!dbPassword) {
+      throw new Error('DB_PASSWORD environment variable is required');
+    }
+
     this.pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'cost_engine',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
+      host: dbHost,
+      port: dbPort,
+      database: dbName,
+      user: dbUser,
+      password: dbPassword,
       ssl: process.env.DB_SSL === 'true',
       max: 10,
-      idleTimeoutMillis: 30000
+      idleTimeoutMillis: 30000,
+      // Security: Additional connection security
+      connectionTimeoutMillis: 5000,
+      query_timeout: 30000
     });
 
     // Pricing per token (vendor dependent)
@@ -101,9 +135,7 @@ export class TSAMetrics {
           tokensIssued,
           assetsTimestamped,
           avgTokensPerAsset,
-          tokensPer1kAssets: assetsTimestamped > 0 
-            ? (tokensIssued / assetsTimestamped) * 1000
-            : 0
+          tokensPer1kAssets: assetsTimestamped > 0 ? (tokensIssued / assetsTimestamped) * 1000 : 0
         };
 
         totalTokens += tokensIssued;
@@ -135,17 +167,16 @@ export class TSAMetrics {
    */
   calculateCosts(metrics) {
     const totalCost = metrics.tokensIssued * this.tokenPrice;
-    const costPerAsset = metrics.assetsTimestamped > 0
-      ? totalCost / metrics.assetsTimestamped
-      : 0;
+    const costPerAsset = metrics.assetsTimestamped > 0 ? totalCost / metrics.assetsTimestamped : 0;
 
     const byTenant = {};
     for (const [tenantId, tenantMetrics] of Object.entries(metrics.byTenant)) {
       byTenant[tenantId] = {
         total: tenantMetrics.tokensIssued * this.tokenPrice,
-        perAsset: tenantMetrics.assetsTimestamped > 0
-          ? (tenantMetrics.tokensIssued * this.tokenPrice) / tenantMetrics.assetsTimestamped
-          : 0
+        perAsset:
+          tenantMetrics.assetsTimestamped > 0
+            ? (tenantMetrics.tokensIssued * this.tokenPrice) / tenantMetrics.assetsTimestamped
+            : 0
       };
     }
 
@@ -163,7 +194,7 @@ export class TSAMetrics {
   detectTokenExplosion(currentMetrics, historicalAvg, threshold = 0.5) {
     const current = currentMetrics.avgTokensPerAsset;
     const baseline = historicalAvg;
-    
+
     if (baseline === 0) {
       return null;
     }
@@ -175,7 +206,7 @@ export class TSAMetrics {
         current,
         baseline,
         deltaPercent,
-        impactUsdDay: (current - baseline) * metrics.assetsTimestamped * this.tokenPrice,
+        impactUsdDay: (current - baseline) * currentMetrics.assetsTimestamped * this.tokenPrice,
         severity: deltaPercent / 100
       };
     }

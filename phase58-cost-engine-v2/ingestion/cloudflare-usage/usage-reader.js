@@ -1,10 +1,10 @@
 /**
  * Cloudflare Usage Reader
  * Reads Workers and R2 usage data via Cloudflare Analytics API
- * 
+ *
  * Workers Pricing: https://developers.cloudflare.com/workers/platform/pricing/
  * R2 Pricing: https://developers.cloudflare.com/r2/pricing/
- * 
+ *
  * R2 Zero Egress: No charges for egress when serving from R2
  */
 
@@ -18,17 +18,25 @@ export class UsageReader {
     this.apiToken = process.env.CLOUDFLARE_API_TOKEN;
     this.accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
     this.zoneIds = (process.env.CLOUDFLARE_ZONE_IDS || '').split(',').filter(z => z);
-    
+
     // Security: Validate configuration
     if (!this.apiToken) {
       throw new Error('CLOUDFLARE_API_TOKEN environment variable is required');
     }
+    // Security: Validate API token format (Cloudflare tokens are 40 char hex strings)
+    if (!/^[a-f0-9]{40}$/i.test(this.apiToken)) {
+      throw new Error('Invalid Cloudflare API token format');
+    }
     if (!this.accountId) {
       throw new Error('CLOUDFLARE_ACCOUNT_ID environment variable is required');
     }
+    // Security: Validate account ID format
+    if (!/^[a-f0-9]{32}$/i.test(this.accountId)) {
+      throw new Error('Invalid Cloudflare account ID format');
+    }
 
     this.baseUrl = 'https://api.cloudflare.com/client/v4';
-    
+
     // Pricing (USD, from env or defaults)
     this.pricing = {
       workersRequestPrice: parseFloat(process.env.WORKERS_PRICE_PER_REQUEST) || 0.00000015,
@@ -84,31 +92,32 @@ export class UsageReader {
       const since = new Date(Date.now() - 86400000).toISOString();
       const until = new Date().toISOString();
 
+      // Security: Properly escape SQL parameters to prevent injection
+      const query = `
+        SELECT
+          SUM(requests) as total_requests,
+          SUM(cpuTime) as total_cpu_ms,
+          AVG(cpuTime / requests) as avg_cpu_ms_per_request
+        FROM
+          WorkersInvocationsAdaptive
+        WHERE
+          datetime >= '${since.replace(/'/g, "''")}'
+          AND datetime <= '${until.replace(/'/g, "''")}'
+      `;
+
       const response = await axios.get(
         `${this.baseUrl}/accounts/${this.accountId}/analytics_engine/sql`,
         {
           headers: {
-            'Authorization': `Bearer ${this.apiToken}`,
+            Authorization: `Bearer ${this.apiToken}`,
             'Content-Type': 'application/json'
           },
-          params: {
-            query: `
-              SELECT
-                SUM(requests) as total_requests,
-                SUM(cpuTime) as total_cpu_ms,
-                AVG(cpuTime / requests) as avg_cpu_ms_per_request
-              FROM
-                WorkersInvocationsAdaptive
-              WHERE
-                datetime >= '${since}'
-                AND datetime <= '${until}'
-            `
-          }
+          params: { query }
         }
       );
 
       const data = response.data?.data?.[0] || {};
-      
+
       return {
         requests: parseInt(data.total_requests) || 0,
         cpuMs: parseInt(data.total_cpu_ms) || 0,
@@ -136,19 +145,19 @@ export class UsageReader {
         {},
         {
           headers: {
-            'Authorization': `Bearer ${this.apiToken}`,
+            Authorization: `Bearer ${this.apiToken}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
       const data = response.data?.result || {};
-      
+
       return {
-        storageGb: parseFloat(data.storage?.bytes || 0) / (1024 ** 3),
+        storageGb: parseFloat(data.storage?.bytes || 0) / 1024 ** 3,
         classAOps: parseInt(data.operations?.class_a || 0),
         classBOps: parseInt(data.operations?.class_b || 0),
-        egressGb: parseFloat(data.egress?.bytes || 0) / (1024 ** 3) // Should be 0!
+        egressGb: parseFloat(data.egress?.bytes || 0) / 1024 ** 3 // Should be 0!
       };
     } catch (error) {
       logger.error('Failed to get R2 usage', {
@@ -199,7 +208,7 @@ export class UsageReader {
   detectCpuDrift(currentUsage, historicalAvg, threshold = 0.3) {
     const current = currentUsage.avgCpuMsPerRequest;
     const baseline = historicalAvg;
-    
+
     if (baseline === 0) {
       return null;
     }

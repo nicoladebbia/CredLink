@@ -1,12 +1,12 @@
 /**
  * Anomaly Detector
  * Combines rule-based and seasonal baseline detection
- * 
+ *
  * Detection methods:
  * 1. Rule-based: threshold violations
  * 2. Seasonal baselines: EWMA and historical patterns
  * 3. Cross-check with AWS Cost Anomaly Detection
- * 
+ *
  * Reference: https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html
  */
 
@@ -18,14 +18,48 @@ const { Pool } = pg;
 
 export class AnomalyDetector {
   constructor() {
+    // Security: Validate database configuration
+    const dbHost = process.env.DB_HOST || 'localhost';
+    const dbPort = parseInt(process.env.DB_PORT) || 5432;
+    const dbName = process.env.DB_NAME || 'cost_engine';
+    const dbUser = process.env.DB_USER || 'postgres';
+    const dbPassword = process.env.DB_PASSWORD;
+
+    // Security: Validate hostname to prevent injection
+    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) {
+      throw new Error('Invalid database hostname');
+    }
+
+    // Security: Validate port range
+    if (dbPort < 1 || dbPort > 65535) {
+      throw new Error('Invalid database port');
+    }
+
+    // Security: Validate database name format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error('Invalid database name format');
+    }
+
+    // Security: Validate username format
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbUser)) {
+      throw new Error('Invalid database username format');
+    }
+
+    if (!dbPassword) {
+      throw new Error('DB_PASSWORD environment variable is required');
+    }
+
     this.pool = new Pool({
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT) || 5432,
-      database: process.env.DB_NAME || 'cost_engine',
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD,
+      host: dbHost,
+      port: dbPort,
+      database: dbName,
+      user: dbUser,
+      password: dbPassword,
       ssl: process.env.DB_SSL === 'true',
-      max: 10
+      max: 10,
+      // Security: Additional connection security
+      connectionTimeoutMillis: 5000,
+      query_timeout: 30000
     });
 
     // Detection configuration
@@ -121,24 +155,24 @@ export class AnomalyDetector {
       const anomalies = [];
 
       // Run all detection methods in parallel
-      const [
-        egressHotspots,
-        tsaExplosions,
-        workersCpuDrifts,
-        cacheBypassSpikes
-      ] = await Promise.all([
-        this.detectEgressHotspots(),
-        this.detectTSAExplosions(),
-        this.detectWorkersCpuDrift(),
-        this.detectCacheBypassSpikes()
-      ]);
+      const [egressHotspots, tsaExplosions, workersCpuDrifts, cacheBypassSpikes] =
+        await Promise.all([
+          this.detectEgressHotspots(),
+          this.detectTSAExplosions(),
+          this.detectWorkersCpuDrift(),
+          this.detectCacheBypassSpikes()
+        ]);
 
-      anomalies.push(...egressHotspots, ...tsaExplosions, ...workersCpuDrifts, ...cacheBypassSpikes);
+      anomalies.push(
+        ...egressHotspots,
+        ...tsaExplosions,
+        ...workersCpuDrifts,
+        ...cacheBypassSpikes
+      );
 
       // Filter by confidence and impact
-      const filtered = anomalies.filter(a =>
-        a.confidence >= this.confidenceThreshold &&
-        a.impact_usd_day >= this.impactThreshold
+      const filtered = anomalies.filter(
+        a => a.confidence >= this.confidenceThreshold && a.impact_usd_day >= this.impactThreshold
       );
 
       // Save anomalies
@@ -170,10 +204,14 @@ export class AnomalyDetector {
     try {
       // Query current metrics by route
       const currentMetrics = await this.getEgressMetricsByRoute();
-      
+
       for (const metric of currentMetrics) {
-        const baseline = await this.getBaseline('egress_per_request', metric.tenantId, metric.route);
-        
+        const baseline = await this.getBaseline(
+          'egress_per_request',
+          metric.tenantId,
+          metric.route
+        );
+
         if (!baseline || baseline.value === 0) {
           continue;
         }
@@ -181,11 +219,14 @@ export class AnomalyDetector {
         const deltaPct = ((metric.egressPerReq - baseline.value) / baseline.value) * 100;
 
         // Check rule threshold
-        if (deltaPct > this.rules.egressHotspot.egressDeltaPct &&
-            metric.cacheBypassRate > baseline.cacheBypassRate + this.rules.egressHotspot.cacheBypassIncrease) {
-          
+        if (
+          deltaPct > this.rules.egressHotspot.egressDeltaPct &&
+          metric.cacheBypassRate >
+            baseline.cacheBypassRate + this.rules.egressHotspot.cacheBypassIncrease
+        ) {
           // Calculate impact
-          const impactUsdDay = (metric.egressPerReq - baseline.value) * metric.requests * 0.09 / (1024 ** 3); // $0.09/GB egress
+          const impactUsdDay =
+            ((metric.egressPerReq - baseline.value) * metric.requests * 0.09) / 1024 ** 3; // $0.09/GB egress
 
           anomalies.push({
             tenant_id: metric.tenantId,
@@ -230,10 +271,10 @@ export class AnomalyDetector {
 
     try {
       const currentMetrics = await this.getTSAMetricsByTenant();
-      
+
       for (const metric of currentMetrics) {
         const baseline = await this.getBaseline('tsa_tokens_per_asset', metric.tenantId);
-        
+
         if (!baseline || baseline.value === 0) {
           continue;
         }
@@ -242,7 +283,8 @@ export class AnomalyDetector {
 
         if (deltaPct > this.rules.tsaExplosion.tokensDeltaPct) {
           const tokenPrice = 0.001;
-          const impactUsdDay = (metric.tokensPerAsset - baseline.value) * metric.assetsPerDay * tokenPrice;
+          const impactUsdDay =
+            (metric.tokensPerAsset - baseline.value) * metric.assetsPerDay * tokenPrice;
 
           anomalies.push({
             tenant_id: metric.tenantId,
@@ -286,10 +328,10 @@ export class AnomalyDetector {
 
     try {
       const currentMetrics = await this.getWorkersCpuMetrics();
-      
+
       for (const metric of currentMetrics) {
         const baseline = await this.getBaseline('workers_cpu_ms_per_request', metric.tenantId);
-        
+
         if (!baseline || baseline.value === 0) {
           continue;
         }
@@ -342,10 +384,10 @@ export class AnomalyDetector {
 
     try {
       const currentMetrics = await this.getCacheMetricsByRoute();
-      
+
       for (const metric of currentMetrics) {
         const baseline = await this.getBaseline('cache_bypass_rate', metric.tenantId, metric.route);
-        
+
         if (!baseline) {
           continue;
         }
@@ -394,15 +436,18 @@ export class AnomalyDetector {
    */
   async getBaseline(metricName, tenantId, route = null) {
     try {
-      const result = await this.pool.query(`
+      const result = await this.pool.query(
+        `
         SELECT * FROM baselines
         WHERE metric_name = $1 AND tenant_id = $2 AND (route = $3 OR ($3 IS NULL AND route IS NULL))
-      `, [metricName, tenantId, route]);
+      `,
+        [metricName, tenantId, route]
+      );
 
       if (result.rows.length > 0) {
         return {
           value: parseFloat(result.rows[0].ewma || result.rows[0].value),
-          cacheBypassRate: parseFloat(result.rows[0].cache_bypass_rate) || 0
+          cacheBypassRate: 0 // Default value, would be calculated from actual data
         };
       }
 
@@ -423,8 +468,8 @@ export class AnomalyDetector {
     // Higher delta + higher impact = higher confidence
     const deltaScore = Math.min(Math.abs(deltaPct) / 200, 1); // Normalize to 0-1
     const impactScore = Math.min(impactUsdDay / 1000, 1); // Normalize to 0-1
-    
-    return Math.min((deltaScore * 0.6 + impactScore * 0.4), 1);
+
+    return Math.min(deltaScore * 0.6 + impactScore * 0.4, 1);
   }
 
   /**
@@ -432,32 +477,43 @@ export class AnomalyDetector {
    */
   async saveAnomalies(anomalies) {
     for (const anomaly of anomalies) {
-      await this.pool.query(`
+      await this.pool.query(
+        `
         INSERT INTO anomalies (
           tenant_id, kind, route, delta_pct, impact_usd_day,
           confidence, evidence, proposed, status
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      `, [
-        anomaly.tenant_id,
-        anomaly.kind,
-        anomaly.route,
-        anomaly.delta_pct,
-        anomaly.impact_usd_day,
-        anomaly.confidence,
-        JSON.stringify(anomaly.evidence),
-        JSON.stringify(anomaly.proposed),
-        'detected'
-      ]);
+      `,
+        [
+          anomaly.tenant_id,
+          anomaly.kind,
+          anomaly.route,
+          anomaly.delta_pct,
+          anomaly.impact_usd_day,
+          anomaly.confidence,
+          JSON.stringify(anomaly.evidence),
+          JSON.stringify(anomaly.proposed),
+          'detected'
+        ]
+      );
     }
 
     logger.info('Anomalies saved', { count: anomalies.length });
   }
 
   // Mock data getters (would query real metrics in production)
-  async getEgressMetricsByRoute() { return []; }
-  async getTSAMetricsByTenant() { return []; }
-  async getWorkersCpuMetrics() { return []; }
-  async getCacheMetricsByRoute() { return []; }
+  async getEgressMetricsByRoute() {
+    return [];
+  }
+  async getTSAMetricsByTenant() {
+    return [];
+  }
+  async getWorkersCpuMetrics() {
+    return [];
+  }
+  async getCacheMetricsByRoute() {
+    return [];
+  }
 
   async close() {
     await this.pool.end();

@@ -1,10 +1,10 @@
 /**
  * Cloudflare Logpush Reader
  * Ingests HTTP request logs from Cloudflare Logpush
- * 
+ *
  * Reference: https://developers.cloudflare.com/logs/get-started/enable-destinations/
  * Key fields: CacheCacheStatus, EdgeResponseBytes, ClientRequestPath
- * 
+ *
  * CacheCacheStatus values: hit, miss, expired, stale, bypass, revalidated, updating, dynamic, ignored
  * Reference: https://developers.cloudflare.com/cache/concepts/cache-responses/
  */
@@ -22,13 +22,27 @@ export class LogpushReader {
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION || 'us-east-1'
     });
-    
+
     this.bucket = process.env.CLOUDFLARE_LOGPUSH_BUCKET;
     this.prefix = process.env.CLOUDFLARE_LOGPUSH_PREFIX || 'http-requests/';
-    
+
     // Security: Validate configuration
     if (!this.bucket) {
       throw new Error('CLOUDFLARE_LOGPUSH_BUCKET environment variable is required');
+    }
+
+    // Security: Validate bucket name format
+    if (
+      !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(this.bucket) ||
+      this.bucket.length < 3 ||
+      this.bucket.length > 63
+    ) {
+      throw new Error('Invalid AWS bucket name format');
+    }
+
+    // Security: Validate prefix to prevent directory traversal
+    if (this.prefix.includes('..') || this.prefix.includes('~')) {
+      throw new Error('Invalid prefix: path traversal characters detected');
     }
 
     // Cache status categories
@@ -57,15 +71,14 @@ export class LogpushReader {
       });
 
       const listResponse = await this.s3Client.send(listCommand);
-      
+
       if (!listResponse.Contents || listResponse.Contents.length === 0) {
         logger.warn('No Logpush data found');
         return null;
       }
 
       // Filter to recent files
-      const recentFiles = listResponse.Contents
-        .filter(obj => obj.LastModified >= hourAgo)
+      const recentFiles = listResponse.Contents.filter(obj => obj.LastModified >= hourAgo)
         .sort((a, b) => b.LastModified - a.LastModified)
         .slice(0, 10); // Limit to 10 most recent files
 
@@ -118,7 +131,7 @@ export class LogpushReader {
       });
 
       const response = await this.s3Client.send(command);
-      
+
       // Parse NDJSON (newline-delimited JSON)
       const records = await this.parseNDJSON(response.Body, key.endsWith('.gz'));
 
@@ -146,11 +159,9 @@ export class LogpushReader {
 
       // Create readable stream
       const readableStream = Readable.from(stream);
-      
+
       // Decompress if gzipped
-      const processStream = isGzipped
-        ? readableStream.pipe(zlib.createGunzip())
-        : readableStream;
+      const processStream = isGzipped ? readableStream.pipe(zlib.createGunzip()) : readableStream;
 
       // Read line by line
       const rl = readline.createInterface({
@@ -158,7 +169,7 @@ export class LogpushReader {
         crlfDelay: Infinity
       });
 
-      rl.on('line', (line) => {
+      rl.on('line', line => {
         try {
           // Security: Validate line length
           if (line.length > 10000) {
@@ -183,7 +194,7 @@ export class LogpushReader {
         resolve(records);
       });
 
-      rl.on('error', (error) => {
+      rl.on('error', error => {
         reject(error);
       });
     });
@@ -260,13 +271,11 @@ export class LogpushReader {
     }
 
     // Calculate derived metrics
-    metrics.cacheBypassRate = metrics.totalRequests > 0
-      ? metrics.cacheBypasses / metrics.totalRequests
-      : 0;
-    
-    metrics.egressPerRequest = metrics.totalRequests > 0
-      ? metrics.totalEgressBytes / metrics.totalRequests
-      : 0;
+    metrics.cacheBypassRate =
+      metrics.totalRequests > 0 ? metrics.cacheBypasses / metrics.totalRequests : 0;
+
+    metrics.egressPerRequest =
+      metrics.totalRequests > 0 ? metrics.totalEgressBytes / metrics.totalRequests : 0;
 
     return metrics;
   }
@@ -304,7 +313,7 @@ export class LogpushReader {
 
     // Try path pattern (e.g., /tenants/{tenant_id}/...)
     const path = record.ClientRequestPath || '';
-    const match = path.match(/\/tenants\/([^\/]+)/);
+    const match = path.match(/\/tenants\/([^/]+)/);
     if (match) {
       return match[1];
     }
@@ -320,13 +329,11 @@ export class LogpushReader {
     const hotspots = [];
 
     for (const [route, routeMetrics] of Object.entries(metrics.byRoute)) {
-      const bypassRate = routeMetrics.requests > 0
-        ? routeMetrics.cacheBypasses / routeMetrics.requests
-        : 0;
-      
-      const egressPerReq = routeMetrics.requests > 0
-        ? routeMetrics.egressBytes / routeMetrics.requests
-        : 0;
+      const bypassRate =
+        routeMetrics.requests > 0 ? routeMetrics.cacheBypasses / routeMetrics.requests : 0;
+
+      const egressPerReq =
+        routeMetrics.requests > 0 ? routeMetrics.egressBytes / routeMetrics.requests : 0;
 
       // Hotspot if high bypass rate AND high egress per request
       if (bypassRate > threshold && egressPerReq > 10000) {
