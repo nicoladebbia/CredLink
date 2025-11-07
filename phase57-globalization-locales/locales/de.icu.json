@@ -1,0 +1,79 @@
+{
+  "badge": {
+    "disclosure": "{count, plural, one {Inhaltsausweis} other {Inhaltsausweise}}",
+    "verified": "Verifiziert",
+    "failed": "Fehlgeschlagen",
+    "unknown": "Unbekannt",
+    "viewDetails": "Details Anzeigen",
+    "learnMore": "Mehr Erfahren",
+    "createdBy": "Erstellt von {creator}",
+    "editedBy": "Bearbeitet von {editor}",
+    "timestamp": "am {date, date, medium}",
+    "verificationCount": "{count, plural, =0 {Keine Überprüfungen} one {# Überprüfung heute} other {# Überprüfungen heute}}"
+  },
+  "verify": {
+    "status": "{status, select, ok {Verifiziert} fail {Fehlgeschlagen} other {Unbekannt}}",
+    "checking": "Authentizität wird überprüft...",
+    "success": "Inhaltsauthentizität verifiziert",
+    "failure": "Überprüfung fehlgeschlagen",
+    "noCredentials": "Keine Inhaltsausweise gefunden",
+    "survivalRate": "{rate, number, percent} Überlebensrate",
+    "lastChecked": "Zuletzt überprüft {time, date, short}"
+  },
+  "onboarding": {
+    "welcome": "Willkommen bei C2PA Inhaltsauthentizität",
+    "step1": "Schritt {current} von {total}",
+    "getStarted": "Starten",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "finish": "Beenden",
+    "skip": "Vorläufig überspringen"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "overview": "Übersicht",
+    "verifications": "{count, plural, =0 {Keine Überprüfungen} one {# Überprüfung} other {# Überprüfungen}}",
+    "dateRange": "{start, date, medium} – {end, date, medium}",
+    "totalAssets": "{count, number, compact} {count, plural, one {Asset} other {Assets}}",
+    "activeUsers": "{count, number, compact} {count, plural, one {aktiver Benutzer} other {aktive Benutzer}}"
+  },
+  "compliance": {
+    "euTransparency": "Dieser Inhalt enthält Transparenzinformationen wie von EU-Vorschriften gefordert.",
+    "disclosure": "Inhaltsausweise bieten Transparenz über Inhaltserstellung und -bearbeitung.",
+    "privacyNotice": "Datenschutzhinweis",
+    "termsOfService": "Nutzungsbedingungen",
+    "dataProtection": "Datenschutz"
+  },
+  "errors": {
+    "generic": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+    "notFound": "Inhalt nicht gefunden.",
+    "unauthorized": "Sie sind nicht berechtigt, diesen Inhalt anzuzeigen.",
+    "invalidFormat": "Ungültiges Format. Bitte überprüfen Sie Ihre Eingabe.",
+    "timeout": "Zeitüberschreitung. Bitte versuchen Sie es erneut."
+  },
+  "actions": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "copy": "Kopieren",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "share": "Teilen",
+    "export": "Exportieren"
+  },
+  "dates": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "tomorrow": "Morgen",
+    "lastWeek": "Letzte Woche",
+    "lastMonth": "Letzten Monat",
+    "custom": "Benutzerdefinierter Bereich"
+  },
+  "numbers": {
+    "thousand": "Tsd",
+    "million": "Mio",
+    "billion": "Mrd"
+  }
+}

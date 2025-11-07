@@ -1,75 +1,54 @@
 {
   "name": "phase57-globalization-locales",
   "version": "1.2.0",
-  "description": "C2PA Globalization & Locales - Internationalization for badge UI, docs, and onboarding across 9 locales with RTL support",
-  "type": "module",
+  "description": "Phase 57 - Globalization & Locales: BCP-47 + ICU MessageFormat + RTL support",
+  "type": "commonjs",
   "main": "src/i18n.js",
   "scripts": {
     "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
     "test:rtl": "jest tests/rtl.test.js",
     "validate:coverage": "node scripts/validate-coverage.js",
     "validate:icu": "node scripts/validate-icu.js",
     "pseudo:generate": "node scripts/generate-pseudo-locale.js",
-    "pseudo:test": "node scripts/test-pseudo-locale.js",
+    "pseudo:test": "node scripts/test-pseudo-localization.js",
     "visual:diff": "node scripts/visual-diff-rtl.js",
-    "lint": "eslint src/ tests/",
-    "lint:fix": "eslint src/ tests/ --fix",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\"",
-    "build": "webpack --mode production",
-    "build:locales": "node scripts/build-locales.js",
-    "extract:strings": "node scripts/extract-strings.js",
-    "sync:translations": "node scripts/sync-translations.js",
-    "validate": "npm run lint && npm run test && npm run validate:coverage && npm run validate:icu"
+    "lint": "eslint src/**/*.js tests/**/*.js scripts/**/*.js",
+    "lint:fix": "eslint src/**/*.js tests/**/*.js scripts/**/*.js --fix",
+    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"scripts/**/*.js\"",
+    "build": "node scripts/build.js"
   },
   "keywords": [
-    "c2pa",
     "i18n",
-    "l10n",
-    "globalization",
-    "localization",
     "internationalization",
+    "globalization",
+    "locales",
     "rtl",
-    "bidi",
     "icu",
-    "intl",
-    "translations"
+    "c2pa",
+    "content-credentials"
   ],
-  "author": "C2 Concierge, Inc.",
+  "author": "C2PA Concierge Team",
   "license": "MIT",
   "dependencies": {
-    "intl-messageformat": "^10.5.8",
-    "@formatjs/intl": "^2.10.0",
-    "@formatjs/icu-messageformat-parser": "^2.7.3"
+    "intl-messageformat": "^10.5.0",
+    "@formatjs/intl-locale": "^3.4.0",
+    "@formatjs/intl-numberformat": "^8.3.0",
+    "@formatjs/intl-datetimeformat": "^6.3.0"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "eslint": "^8.57.1",
-    "eslint-config-airbnb-base": "^15.0.0",
-    "eslint-plugin-import": "^2.29.1",
     "jest": "^29.7.0",
-    "jsdom": "^24.0.0",
-    "playwright": "^1.55.1",
-    "prettier": "^3.2.5",
-    "webpack": "^5.91.0",
-    "webpack-cli": "^5.1.4"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "eslint": "^8.57.0",
+    "prettier": "^3.1.0",
+    "jsdom": "^23.0.1",
+    "playwright": "^1.40.0"
   },
   "jest": {
     "testEnvironment": "node",
-    "transform": {},
-    "moduleNameMapper": {
-      "^(\\.{1,2}/.*)\\.js$": "$1"
-    },
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/**/*.test.js"
     ],
-    "coverageDirectory": "coverage",
     "coverageThreshold": {
       "global": {
         "branches": 80,

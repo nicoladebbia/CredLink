@@ -1,0 +1,79 @@
+{
+  "badge": {
+    "disclosure": "{count, plural, one {Credencial de Conteúdo} other {Credenciais de Conteúdo}}",
+    "verified": "Verificado",
+    "failed": "Falhou",
+    "unknown": "Desconhecido",
+    "viewDetails": "Ver Detalhes",
+    "learnMore": "Saiba Mais",
+    "createdBy": "Criado por {creator}",
+    "editedBy": "Editado por {editor}",
+    "timestamp": "em {date, date, medium}",
+    "verificationCount": "{count, plural, =0 {Nenhuma verificação} one {# verificação hoje} other {# verificações hoje}}"
+  },
+  "verify": {
+    "status": "{status, select, ok {Verificado} fail {Falhou} other {Desconhecido}}",
+    "checking": "Verificando autenticidade...",
+    "success": "Autenticidade do conteúdo verificada",
+    "failure": "Verificação falhou",
+    "noCredentials": "Nenhuma credencial de conteúdo encontrada",
+    "survivalRate": "{rate, number, percent} taxa de sobrevivência",
+    "lastChecked": "Última verificação {time, date, short}"
+  },
+  "onboarding": {
+    "welcome": "Bem-vindo à C2PA Autenticidade de Conteúdo",
+    "step1": "Passo {current} de {total}",
+    "getStarted": "Começar",
+    "next": "Próximo",
+    "previous": "Anterior",
+    "finish": "Finalizar",
+    "skip": "Pular por agora"
+  },
+  "dashboard": {
+    "title": "Painel de Controle",
+    "overview": "Visão Geral",
+    "verifications": "{count, plural, =0 {Nenhuma verificação} one {# verificação} other {# verificações}}",
+    "dateRange": "{start, date, medium} – {end, date, medium}",
+    "totalAssets": "{count, number, compact} {count, plural, one {ativo} other {ativos}}",
+    "activeUsers": "{count, number, compact} {count, plural, one {usuário ativo} other {usuários ativos}}"
+  },
+  "compliance": {
+    "euTransparency": "Este conteúdo inclui informações de transparência conforme exigido pelos regulamentos da UE.",
+    "disclosure": "As Credenciais de Conteúdo fornecem transparência sobre a criação e edição do conteúdo.",
+    "privacyNotice": "Aviso de Privacidade",
+    "termsOfService": "Termos de Serviço",
+    "dataProtection": "Proteção de Dados"
+  },
+  "errors": {
+    "generic": "Ocorreu um erro. Por favor, tente novamente.",
+    "network": "Erro de rede. Por favor, verifique sua conexão.",
+    "notFound": "Conteúdo não encontrado.",
+    "unauthorized": "Você não está autorizado a ver este conteúdo.",
+    "invalidFormat": "Formato inválido. Por favor, verifique sua entrada.",
+    "timeout": "Tempo esgotado. Por favor, tente novamente."
+  },
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "copy": "Copiar",
+    "download": "Baixar",
+    "upload": "Enviar",
+    "share": "Compartilhar",
+    "export": "Exportar"
+  },
+  "dates": {
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "tomorrow": "Amanhã",
+    "lastWeek": "Semana passada",
+    "lastMonth": "Mês passado",
+    "custom": "Intervalo personalizado"
+  },
+  "numbers": {
+    "thousand": "mil",
+    "million": "M",
+    "billion": "bi"
+  }
+}
