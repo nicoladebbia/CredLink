@@ -37,7 +37,7 @@ export class AnalyticsService {
       ssl: process.env.DB_SSL === 'true',
       max: 10,
       connectionTimeoutMillis: 5000,
-      query_timeout: 30000,
+      queryTimeout: 30000,
     });
   }
 
@@ -379,12 +379,21 @@ export class AnalyticsService {
         params.push(startDate.toISOString(), endDate.toISOString());
       }
 
+      // First get total failures for percentage calculation
+      const totalQuery = `
+        SELECT COUNT(*) as total_failures
+        FROM verify_results
+        ${whereClause}
+      `;
+      const totalResult = await this.pool.query(totalQuery, params);
+      const totalFailures = parseInt(totalResult.rows[0].total_failures);
+
+      // Then get breakdown by provider/route
       const query = `
         SELECT 
           provider,
           route,
-          COUNT(*) as breakage_count,
-          ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) as breakage_pct
+          COUNT(*) as breakage_count
         FROM verify_results
         ${whereClause}
         GROUP BY provider, route
@@ -401,7 +410,10 @@ export class AnalyticsService {
           provider: row.provider,
           route: row.route,
           breakageCount: parseInt(row.breakage_count),
-          breakagePercentage: parseFloat(row.breakage_pct),
+          breakagePercentage:
+            totalFailures > 0
+              ? parseFloat(((100.0 * parseInt(row.breakage_count)) / totalFailures).toFixed(2))
+              : 0,
         })),
         generatedAt: new Date().toISOString(),
       };

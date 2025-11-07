@@ -56,7 +56,7 @@ export class CustodyService {
       ssl: process.env.DB_SSL === 'true',
       max: 10,
       connectionTimeoutMillis: 5000,
-      query_timeout: 30000,
+      queryTimeout: 30000,
     });
   }
 

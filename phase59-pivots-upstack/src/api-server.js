@@ -54,12 +54,10 @@ export class APIServer {
         const { mode, rotation, region } = req.body;
 
         if (!mode || !['aws-kms', 'cloudhsm', 'yubihsm2'].includes(mode)) {
-          return res
-            .status(400)
-            .json({
-              error: 'Invalid mode. Must be: aws-kms, cloudhsm, or yubihsm2',
-              requestId: req.requestId,
-            });
+          return res.status(400).json({
+            error: 'Invalid mode. Must be: aws-kms, cloudhsm, or yubihsm2',
+            requestId: req.requestId,
+          });
         }
 
         const result = await this.custodyService.provisionTenantKey(id, { mode, rotation, region });
@@ -113,12 +111,10 @@ export class APIServer {
         const { source, asset_id, result, manifest, provider, ts } = req.body;
 
         if (!source || !asset_id || !result || !manifest) {
-          return res
-            .status(400)
-            .json({
-              error: 'source, asset_id, result, and manifest required',
-              requestId: req.requestId,
-            });
+          return res.status(400).json({
+            error: 'source, asset_id, result, and manifest required',
+            requestId: req.requestId,
+          });
         }
 
         const ingestResult = await this.analyticsService.ingestVerifyResult(req.body);

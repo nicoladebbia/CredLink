@@ -24,6 +24,9 @@ async function runExitTests() {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     ssl: process.env.DB_SSL === 'true',
+    max: 10,
+    connectionTimeoutMillis: 5000,
+    queryTimeout: 30000,
   });
 
   let exitsPassed = 0;
