@@ -1,15 +1,18 @@
 # Playbook: Workers CPU Drift
 
 ## Symptom
+
 Cloudflare Workers CPU-ms per request increases significantly, driving up compute costs.
 
 ## Detection Criteria
+
 - CPU-ms per request increases by >30%
 - Total CPU-ms cost increases while request volume stays flat
 - Impact: $20-200/day depending on traffic
 - **Reference**: [Cloudflare Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/)
 
 ## Root Causes
+
 1. **Heavy computation**: Expensive operations in hot path
 2. **Inefficient algorithms**: O(n²) instead of O(n log n)
 3. **Excessive parsing**: Re-parsing same data multiple times
@@ -19,6 +22,7 @@ Cloudflare Workers CPU-ms per request increases significantly, driving up comput
 ## Remediation Steps
 
 ### Step 1: Profile Code Path
+
 Identify expensive operations:
 
 ```javascript
@@ -26,25 +30,26 @@ Identify expensive operations:
 export default {
   async fetch(request, env, ctx) {
     const startCpu = Date.now();
-    
+
     try {
       // Your code here
       const response = await handleRequest(request, env);
-      
+
       const cpuMs = Date.now() - startCpu;
-      
+
       // Log if exceeds threshold
-      if (cpuMs > 50) {  // 50ms threshold
+      if (cpuMs > 50) {
+        // 50ms threshold
         console.warn('High CPU usage', {
           path: new URL(request.url).pathname,
           cpuMs,
           method: request.method
         });
       }
-      
+
       // Add header for monitoring
       response.headers.set('X-CPU-Ms', cpuMs.toString());
-      
+
       return response;
     } catch (error) {
       const cpuMs = Date.now() - startCpu;
@@ -56,9 +61,11 @@ export default {
 ```
 
 ### Step 2: Optimize Hot Paths
+
 Common optimizations:
 
 #### A. Cache Parsed Data
+
 ```javascript
 // Before: Re-parsing on every request
 const manifest = JSON.parse(await manifestText);
@@ -75,6 +82,7 @@ function getCachedManifest(key, text) {
 ```
 
 #### B. Lazy Load Heavy Operations
+
 ```javascript
 // Before: Always load heavy module
 import { verifySignature } from 'heavy-crypto-lib';
@@ -82,13 +90,14 @@ import { verifySignature } from 'heavy-crypto-lib';
 // After: Lazy load only when needed
 async function verifyIfNeeded(signature, data) {
   if (!signature) return true;
-  
+
   const { verifySignature } = await import('heavy-crypto-lib');
   return verifySignature(signature, data);
 }
 ```
 
 #### C. Use Efficient Data Structures
+
 ```javascript
 // Before: Array search (O(n))
 const item = array.find(x => x.id === targetId);
@@ -99,6 +108,7 @@ const item = itemMap.get(targetId);
 ```
 
 #### D. Batch Operations
+
 ```javascript
 // Before: Individual crypto operations
 for (const item of items) {
@@ -106,12 +116,11 @@ for (const item of items) {
 }
 
 // After: Batch with Promise.all
-await Promise.all(
-  items.map(item => crypto.subtle.digest('SHA-256', item))
-);
+await Promise.all(items.map(item => crypto.subtle.digest('SHA-256', item)));
 ```
 
 ### Step 3: Implement Request Sampling
+
 Don't verify every request if not needed:
 
 ```javascript
@@ -123,13 +132,14 @@ async function sampleVerification(request, manifest) {
     // Fast path: skip verification
     return { verified: 'sampled', skipped: true };
   }
-  
+
   // Slow path: full verification
   return await fullVerification(manifest);
 }
 ```
 
 ### Step 4: Use Workers KV for Expensive Results
+
 Cache expensive computation results:
 
 ```javascript
@@ -138,7 +148,7 @@ const cacheKey = `verify:${manifestHash}`;
 const cached = await env.CACHE.get(cacheKey);
 
 if (cached) {
-  return JSON.parse(cached);  // Fast!
+  return JSON.parse(cached); // Fast!
 }
 
 const result = await expensiveVerification(manifest);
@@ -150,6 +160,7 @@ return result;
 ```
 
 ### Step 5: Canary Slimmer Route
+
 Test optimized version with small traffic percentage:
 
 ```javascript
@@ -177,9 +188,11 @@ GROUP BY version;
 ```
 
 ### Step 6: Validate Pricing
+
 Confirm you're using latest Workers pricing:
 
 **Current Pricing** (as of 2024):
+
 - Requests: $0.15 per million ($0.00000015 per request)
 - CPU-ms: $2.00 per million CPU-ms ($0.000002 per CPU-ms)
 - KV reads: $0.50 per million
@@ -201,6 +214,7 @@ function calculateCost(requests, cpuMs) {
 ```
 
 ### Step 7: Monitor Performance
+
 Track CPU-ms trends:
 
 ```sql
@@ -216,12 +230,14 @@ ORDER BY date DESC;
 ```
 
 ## Success Criteria
+
 - CPU-ms per request decreases by 30-50%
 - Compute costs drop proportionally
 - Request latency stays same or improves
 - No increase in error rates
 
 ## Rollback Plan
+
 If optimization causes issues:
 
 1. **Immediate**: Feature flag to disable optimization
@@ -236,6 +252,7 @@ if (env.DISABLE_OPTIMIZATION === 'true') {
 ```
 
 ## Cost Impact Calculation
+
 ```
 # Example calculation
 Current state:
@@ -257,23 +274,25 @@ Annual savings: $57,600
 
 ## Common CPU-Heavy Operations
 
-| Operation | Typical CPU-ms | Optimization |
-|-----------|----------------|--------------|
-| JSON.parse (1KB) | 0.1-0.5 | Cache result |
-| JSON.parse (100KB) | 10-50 | Stream parse |
-| Crypto verify (RSA-2048) | 5-15 | Use Ed25519 |
-| Crypto verify (Ed25519) | 1-3 | Cache results |
-| Regex match (simple) | 0.01-0.1 | Use string methods |
-| Regex match (complex) | 1-10 | Simplify pattern |
-| Array.find (1000 items) | 0.5-2 | Use Map |
-| Array.sort (1000 items) | 1-5 | Sort once, reuse |
+| Operation                | Typical CPU-ms | Optimization       |
+| ------------------------ | -------------- | ------------------ |
+| JSON.parse (1KB)         | 0.1-0.5        | Cache result       |
+| JSON.parse (100KB)       | 10-50          | Stream parse       |
+| Crypto verify (RSA-2048) | 5-15           | Use Ed25519        |
+| Crypto verify (Ed25519)  | 1-3            | Cache results      |
+| Regex match (simple)     | 0.01-0.1       | Use string methods |
+| Regex match (complex)    | 1-10           | Simplify pattern   |
+| Array.find (1000 items)  | 0.5-2          | Use Map            |
+| Array.sort (1000 items)  | 1-5            | Sort once, reuse   |
 
 ## References
+
 - [Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/)
 - [Workers Best Practices](https://developers.cloudflare.com/workers/platform/best-practices/)
 - [Workers Performance](https://developers.cloudflare.com/workers/platform/limits/)
 
 ## Additional Optimizations
+
 1. **WebAssembly**: Move heavy computation to WASM for 2-10× speedup
 2. **Durable Objects**: Offload stateful operations
 3. **Request coalescing**: Batch multiple requests into one Worker invocation

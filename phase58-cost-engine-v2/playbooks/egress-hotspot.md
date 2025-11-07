@@ -1,15 +1,18 @@
 # Playbook: Egress Hotspot
 
 ## Symptom
+
 High egress costs from manifest origin due to cache bypasses and large file transfers.
 
 ## Detection Criteria
+
 - Egress per request increases by >50%
 - High cache-bypass rate (>50%) on specific routes
 - Large response sizes combined with high request volume
 - Impact: $100-1000/day in egress charges
 
 ## Root Causes
+
 1. **Origin on S3**: Paying AWS egress fees ($0.09/GB)
 2. **Embed-chasing**: Optimizers/validators re-requesting manifests
 3. **Cache misses**: Manifests not being cached at edge
@@ -18,9 +21,11 @@ High egress costs from manifest origin due to cache bypasses and large file tran
 ## Remediation Steps
 
 ### Step 1: Migrate Manifest Origin to R2
+
 **Why**: Cloudflare R2 has ZERO egress charges when serving through Cloudflare CDN.
 
 **Pricing Comparison**:
+
 - AWS S3 egress: $0.09/GB
 - Cloudflare R2 egress (via Cloudflare): **$0.00/GB** ✅
 
@@ -43,14 +48,14 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const manifestPath = url.pathname.replace('/manifests/', '');
-    
+
     // Fetch from R2 (zero egress!)
     const object = await env.MANIFESTS_BUCKET.get(manifestPath);
-    
+
     if (!object) {
       return new Response('Manifest not found', { status: 404 });
     }
-    
+
     // Return with proper cache headers
     return new Response(object.body, {
       headers: {
@@ -64,41 +69,41 @@ export default {
 ```
 
 ### Step 2: Force Remote-Only for Embeds
+
 If optimizers are stripping manifests, force remote-only delivery:
 
 ```javascript
 // Detect optimizer user agents
-const optimizerAgents = [
-  'imgix', 'cloudinary', 'imagekit',
-  'GoogleImageProxy', 'TelegramBot'
-];
+const optimizerAgents = ['imgix', 'cloudinary', 'imagekit', 'GoogleImageProxy', 'TelegramBot'];
 
 function isOptimizer(userAgent) {
-  return optimizerAgents.some(agent =>
-    userAgent.toLowerCase().includes(agent.toLowerCase())
-  );
+  return optimizerAgents.some(agent => userAgent.toLowerCase().includes(agent.toLowerCase()));
 }
 
 // In Workers
 if (isOptimizer(request.headers.get('user-agent'))) {
   // Return manifest URL instead of embedding
-  return new Response(JSON.stringify({
-    manifestUrl: `https://manifests.yourdomain.com/${assetId}.c2pa`
-  }), {
-    headers: { 'Content-Type': 'application/json' }
-  });
+  return new Response(
+    JSON.stringify({
+      manifestUrl: `https://manifests.yourdomain.com/${assetId}.c2pa`
+    }),
+    {
+      headers: { 'Content-Type': 'application/json' }
+    }
+  );
 }
 ```
 
 ### Step 3: Add Regional R2 Buckets
+
 For global traffic, use regional R2 buckets:
 
 ```javascript
 // Select nearest R2 bucket based on Cloudflare colo
 const regionMap = {
-  'NA': 'manifests-us',
-  'EU': 'manifests-eu',
-  'APAC': 'manifests-apac'
+  NA: 'manifests-us',
+  EU: 'manifests-eu',
+  APAC: 'manifests-apac'
 };
 
 const region = getRegionFromColo(request.cf.colo);
@@ -108,11 +113,13 @@ const object = await bucket.get(manifestPath);
 ```
 
 **Regional Colos**:
+
 - North America: IAD, ORD, DFW, LAX, SEA, MIA
 - Europe: LHR, FRA, AMS, CDG
 - APAC: SIN, NRT, HKG, SYD
 
 ### Step 4: Implement Cache Warming
+
 Pre-warm cache for popular manifests:
 
 ```javascript
@@ -121,11 +128,11 @@ export default {
   async scheduled(event, env, ctx) {
     // Get top 1000 manifests from analytics
     const topManifests = await getTopManifests(env, 1000);
-    
+
     // Warm cache
     for (const manifestId of topManifests) {
       const url = `https://manifests.yourdomain.com/${manifestId}.c2pa`;
-      
+
       // Make request to warm cache
       await fetch(url, {
         cf: { cacheTtl: 3600 }
@@ -136,6 +143,7 @@ export default {
 ```
 
 ### Step 5: Monitor Egress Reduction
+
 Track egress before and after migration:
 
 ```sql
@@ -163,15 +171,18 @@ ORDER BY date DESC;
 ```
 
 ## Success Criteria
+
 - Egress costs drop by 90%+ (S3 → R2)
 - Cache hit rate increases to >80%
 - Response times improve due to edge caching
 - Manifest availability remains 99.9%+
 
 ## Rollback Plan
+
 If R2 migration causes issues:
 
 1. **Immediate**: Update Workers to point back to S3:
+
    ```javascript
    const S3_FALLBACK = 'https://your-bucket.s3.amazonaws.com';
    const object = await fetch(`${S3_FALLBACK}/${manifestPath}`);
@@ -181,6 +192,7 @@ If R2 migration causes issues:
 3. **Monitor**: Watch error rates and latency
 
 ## Cost Impact Calculation
+
 ```
 # Example calculation
 Daily requests: 10,000,000
@@ -195,12 +207,14 @@ Annual savings: $16,200
 ```
 
 ## References
+
 - [Cloudflare R2 Documentation](https://developers.cloudflare.com/r2/)
 - [R2 Pricing Calculator](https://r2-calculator.cloudflare.com/)
 - [AWS S3 Pricing](https://aws.amazon.com/s3/pricing/)
 - [Zero Egress Announcement](https://blog.cloudflare.com/introducing-r2-object-storage/)
 
 ## Additional Optimizations
+
 1. **Compress manifests**: Use Brotli compression for 30-50% size reduction
 2. **Manifest deduplication**: Store common chunks once
 3. **Smart caching**: Cache based on content hash, not URL

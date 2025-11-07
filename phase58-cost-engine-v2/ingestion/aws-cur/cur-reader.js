@@ -1,7 +1,7 @@
 /**
  * AWS CUR 2.0 Reader
  * Ingests Cost and Usage Reports from S3
- * 
+ *
  * Reference: https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html
  * Granularity: Hourly/Daily
  * Update frequency: 3× daily
@@ -20,14 +20,28 @@ export class CURReader {
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION || 'us-east-1'
     });
-    
+
     this.bucket = process.env.AWS_CUR_BUCKET;
     this.prefix = process.env.AWS_CUR_PREFIX || 'cur-data/';
     this.reportName = process.env.AWS_CUR_REPORT_NAME || 'hourly-cost-and-usage';
-    
+
     // Security: Validate configuration
     if (!this.bucket) {
       throw new Error('AWS_CUR_BUCKET environment variable is required');
+    }
+
+    // Security: Validate bucket name format
+    if (
+      !/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(this.bucket) ||
+      this.bucket.length < 3 ||
+      this.bucket.length > 63
+    ) {
+      throw new Error('Invalid AWS bucket name format');
+    }
+
+    // Security: Validate prefix to prevent directory traversal
+    if (this.prefix.includes('..') || this.prefix.includes('~')) {
+      throw new Error('Invalid prefix: path traversal characters detected');
     }
   }
 
@@ -50,16 +64,16 @@ export class CURReader {
       });
 
       const listResponse = await this.s3Client.send(listCommand);
-      
+
       if (!listResponse.Contents || listResponse.Contents.length === 0) {
         logger.warn('No CUR data found in S3');
         return null;
       }
 
       // Find latest manifest file
-      const manifestFiles = listResponse.Contents
-        .filter(obj => obj.Key.includes('Manifest.json'))
-        .sort((a, b) => b.LastModified - a.LastModified);
+      const manifestFiles = listResponse.Contents.filter(obj =>
+        obj.Key.includes('Manifest.json')
+      ).sort((a, b) => b.LastModified - a.LastModified);
 
       if (manifestFiles.length === 0) {
         logger.warn('No CUR manifest files found');
@@ -71,10 +85,10 @@ export class CURReader {
 
       // Read manifest to get data files
       const manifest = await this.readManifest(latestManifest.Key);
-      
+
       // Read and parse data files
       const records = await this.readDataFiles(manifest);
-      
+
       logger.info('CUR data read successfully', {
         records: records.length,
         billingPeriod: manifest.billingPeriod
@@ -144,7 +158,7 @@ export class CURReader {
         });
 
         const response = await this.s3Client.send(command);
-        
+
         // Handle gzipped CSV
         const records = await this.parseCSV(response.Body, reportKey.endsWith('.gz'));
         allRecords.push(...records);
@@ -175,11 +189,9 @@ export class CURReader {
 
       // Create readable stream
       const readableStream = Readable.from(stream);
-      
+
       // Decompress if gzipped
-      const processStream = isGzipped
-        ? readableStream.pipe(zlib.createGunzip())
-        : readableStream;
+      const processStream = isGzipped ? readableStream.pipe(zlib.createGunzip()) : readableStream;
 
       // Read line by line
       const rl = readline.createInterface({
@@ -187,14 +199,14 @@ export class CURReader {
         crlfDelay: Infinity
       });
 
-      rl.on('line', (line) => {
+      rl.on('line', line => {
         if (!headers) {
           // First line is headers
           headers = line.split(',').map(h => h.trim().replace(/"/g, ''));
         } else {
           // Parse data line
           const values = this.parseCSVLine(line);
-          
+
           // Security: Limit record size
           if (values.length > 500) {
             logger.warn('Skipping oversized record', { columns: values.length });
@@ -205,7 +217,7 @@ export class CURReader {
           headers.forEach((header, i) => {
             record[header] = values[i] || '';
           });
-          
+
           records.push(record);
 
           // Security: Limit total records per file
@@ -220,7 +232,7 @@ export class CURReader {
         resolve(records);
       });
 
-      rl.on('error', (error) => {
+      rl.on('error', error => {
         reject(error);
       });
     });
@@ -267,27 +279,29 @@ export class CURReader {
    * Maps CUR columns to our internal schema
    */
   transformRecords(records) {
-    return records.map(record => {
-      // Security: Validate required fields
-      if (!record.line_item_usage_account_id || !record.line_item_usage_start_date) {
-        logger.warn('Skipping record with missing required fields');
-        return null;
-      }
+    return records
+      .map(record => {
+        // Security: Validate required fields
+        if (!record.line_item_usage_account_id || !record.line_item_usage_start_date) {
+          logger.warn('Skipping record with missing required fields');
+          return null;
+        }
 
-      return {
-        timestamp: record.line_item_usage_start_date,
-        account_id: record.line_item_usage_account_id,
-        service: record.product_servicename || 'Unknown',
-        usage_type: record.line_item_usage_type || '',
-        operation: record.line_item_operation || '',
-        resource_id: record.line_item_resource_id || '',
-        cost: parseFloat(record.line_item_unblended_cost) || 0,
-        usage_amount: parseFloat(record.line_item_usage_amount) || 0,
-        usage_unit: record.pricing_unit || '',
-        tags: this.extractTags(record),
-        raw: record // Keep for debugging
-      };
-    }).filter(r => r !== null);
+        return {
+          timestamp: record.line_item_usage_start_date,
+          account_id: record.line_item_usage_account_id,
+          service: record.product_servicename || 'Unknown',
+          usage_type: record.line_item_usage_type || '',
+          operation: record.line_item_operation || '',
+          resource_id: record.line_item_resource_id || '',
+          cost: parseFloat(record.line_item_unblended_cost) || 0,
+          usage_amount: parseFloat(record.line_item_usage_amount) || 0,
+          usage_unit: record.pricing_unit || '',
+          tags: this.extractTags(record),
+          raw: record // Keep for debugging
+        };
+      })
+      .filter(r => r !== null);
   }
 
   /**

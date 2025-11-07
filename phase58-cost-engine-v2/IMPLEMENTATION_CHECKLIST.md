@@ -3,6 +3,7 @@
 ## Core Components
 
 ### Ingestion (Hourly) ✅
+
 - [x] AWS CUR 2.0 Reader
   - [x] S3 manifest parsing
   - [x] CSV/gzip handling
@@ -25,6 +26,7 @@
   - [x] Cost projection
 
 ### Allocation (FinOps) ✅
+
 - [x] Tag-based allocation (1.0 confidence)
   - [x] tenant_id tag support
   - [x] environment tag support
@@ -39,6 +41,7 @@
 - [x] Allocation statistics
 
 ### Detection (Hybrid) ✅
+
 - [x] Rule-based detection
   - [x] Egress hotspot rule
   - [x] TSA explosion rule
@@ -52,6 +55,7 @@
 - [x] Evidence collection
 
 ### Policy Engine ✅
+
 - [x] Action recommendation
 - [x] Auto-action with thresholds
 - [x] Approval workflow
@@ -61,6 +65,7 @@
 - [x] Alert dispatch (webhook/SNS)
 
 ### Dashboards ✅
+
 - [x] REST API server
 - [x] Per-tenant P&L endpoint
 - [x] Gross margin trends endpoint
@@ -80,7 +85,6 @@
   - [x] RFC 9211 Cache-Status reference
   - [x] Success criteria
   - [x] Rollback plan
-  
 - [x] Egress Hotspot
   - [x] R2 migration guide
   - [x] Force remote-only strategy
@@ -88,14 +92,12 @@
   - [x] R2 zero egress validation
   - [x] Cost impact calculation
   - [x] S3 vs R2 comparison
-  
 - [x] TSA Token Explosion
   - [x] Timestamp batching (RFC 3161 compliant)
   - [x] Frequency reduction
   - [x] Tier selection
   - [x] Deduplication strategy
   - [x] Tokens per 1k assets metric
-  
 - [x] Workers CPU Drift
   - [x] Code profiling
   - [x] Hot path optimization
@@ -109,12 +111,10 @@
   - [x] Validate 2+ anomalies detected
   - [x] Validate fixes applied
   - [x] Calculate modeled savings
-  
 - [x] Test 2: Actionable Alerts
   - [x] Validate >70% resolution rate
   - [x] Verify proposed actions included
   - [x] Check escalation rate
-  
 - [x] Test 3: Dashboard Correlation
   - [x] Validate P&L data availability
   - [x] Check allocation confidence
@@ -130,14 +130,12 @@
   - [x] Interface schemas
   - [x] Dashboard documentation
   - [x] All RFC/standard references
-  
 - [x] Playbooks documentation
   - [x] Markdown format
   - [x] Step-by-step guides
   - [x] Code examples
   - [x] Cost calculations
   - [x] Reference links
-  
 - [x] API documentation
   - [x] Endpoint descriptions
   - [x] Request/response schemas
@@ -152,7 +150,6 @@
   - [x] Detection thresholds
   - [x] Policy engine settings
   - [x] Pricing configuration
-  
 - [x] .env.example file
 - [x] package.json with all scripts
 - [x] Database schema definitions
@@ -178,11 +175,13 @@
 ## References & Compliance ✅
 
 ### Standards
+
 - [x] RFC 3161 (Time-Stamp Protocol)
 - [x] RFC 9211 (HTTP Cache-Status Header)
 - [x] RFC 5861 (Cache-Control Extensions)
 
 ### Cloud Providers
+
 - [x] AWS CUR Documentation
 - [x] AWS Cost Anomaly Detection
 - [x] Cloudflare Workers Pricing
@@ -191,6 +190,7 @@
 - [x] Cloudflare Cache Documentation
 
 ### FinOps
+
 - [x] Cost Allocation Capability
 - [x] Unit Economics Capability
 - [x] FinOps Framework
