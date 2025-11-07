@@ -1,5 +1,8 @@
 # Phase 58 — Cost Engine v2 (FinOps)
 
+[![CI Pipeline](https://github.com/Nickiller04/c2-concierge/actions/workflows/ci.yml/badge.svg)](https://github.com/Nickiller04/c2-concierge/actions/workflows/ci.yml)
+[![Security Audit](https://img.shields.io/badge/security-hardened-brightgreen)](./SECURITY_AUDIT_REPORT.md)
+
 **Purpose**: Predict and prevent margin erosion before invoices land.
 
 Ship-ready implementation of real-time cost allocation, anomaly detection, and automated remediation following FinOps Foundation best practices.
@@ -75,12 +78,14 @@ Reference: [FinOps Cost Allocation](https://www.finops.org/framework/capabilitie
 Combines rule-based and seasonal baseline approaches:
 
 #### Rules
+
 - **Egress hotspot**: Egress/req ↑ >50% + cache-bypass ↑ >20pp
 - **TSA explosion**: Tokens/day ↑ >100%
 - **Workers CPU drift**: CPU-ms/verify ↑ >30%
 - **Cache bypass spike**: Bypass rate ↑ >30pp
 
 #### Baselines
+
 - EWMA (Exponentially Weighted Moving Average)
 - Cross-check with AWS Cost Anomaly Detection
 - Reference: [AWS Cost Anomaly Detection](https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html)
@@ -221,6 +226,7 @@ http://localhost:3000
 ```
 
 **Endpoints**:
+
 - `GET /api/pnl/:tenant` - Per-tenant P&L
 - `GET /api/margins` - Gross margin trends
 - `GET /api/anomalies` - Anomaly ledger
@@ -238,7 +244,7 @@ http://localhost:3000
   "kind": "egress_hotspot",
   "route": "/images/hero/*",
   "delta_pct": 142,
-  "impact_usd_day": 186.40,
+  "impact_usd_day": 186.4,
   "confidence": 0.87,
   "evidence": {
     "cache_bypass_rate": 0.61,
@@ -281,6 +287,7 @@ http://localhost:3000
 ## Dashboards
 
 ### 1. Gross Margin Trend
+
 Shows GM% over time with release overlay markers:
 
 ```
@@ -297,23 +304,26 @@ GM% ┤                                    ╭─╮
 ```
 
 ### 2. Anomaly Ledger
+
 Track detected → acknowledged → actioned → rollback flow:
 
-| Date | Tenant | Kind | Impact/Day | Status | $ Saved |
-|------|--------|------|------------|--------|---------|
-| 11/06 | acme | egress_hotspot | $186 | applied | $186 |
-| 11/05 | beta | tsa_explosion | $120 | applied | $120 |
-| 11/04 | acme | cache_bypass | $95 | rolled_back | -$15 |
+| Date  | Tenant | Kind           | Impact/Day | Status      | $ Saved |
+| ----- | ------ | -------------- | ---------- | ----------- | ------- |
+| 11/06 | acme   | egress_hotspot | $186       | applied     | $186    |
+| 11/05 | beta   | tsa_explosion  | $120       | applied     | $120    |
+| 11/04 | acme   | cache_bypass   | $95        | rolled_back | -$15    |
 
 ### 3. Top Drains
+
 Identify highest-cost operations:
 
 - TSA per 1k assets
 - Cache-bypass rate by route
-- Egress hotspots (bytes * cost / requests)
+- Egress hotspots (bytes \* cost / requests)
 - Workers CPU-ms per verify
 
 ### 4. Allocation Health
+
 FinOps hygiene metrics:
 
 - Allocation confidence distribution
@@ -326,12 +336,14 @@ FinOps hygiene metrics:
 Actionable fix guides for each anomaly type:
 
 ### 1. [Cache Bypass Spike](playbooks/cache-bypass-spike.md)
+
 - Add/raise TTL with `Cache-Control` headers
 - Verify cache eligibility (RFC 9211 `Cache-Status`)
 - Handle query string variations
 - **Reference**: [RFC 9211 - HTTP Cache-Status](https://www.rfc-editor.org/rfc/rfc9211.html)
 
 ### 2. [Egress Hotspot](playbooks/egress-hotspot.md)
+
 - Migrate manifest origin to R2 (zero egress)
 - Force remote-only for embed-chasers
 - Regional R2 bucket strategy
@@ -339,12 +351,14 @@ Actionable fix guides for each anomaly type:
 - **Reference**: [R2 Zero Egress](https://blog.cloudflare.com/introducing-r2-object-storage/)
 
 ### 3. [TSA Token Explosion](playbooks/tsa-token-explosion.md)
+
 - Implement timestamp batching (RFC 3161 compliant)
 - Reduce frequency for low-risk assertions
 - Use lower-cost TSA tiers
 - **Reference**: [RFC 3161 - Time-Stamp Protocol](https://www.ietf.org/rfc/rfc3161.txt)
 
 ### 4. [Workers CPU Drift](playbooks/workers-cpu-drift.md)
+
 - Profile code paths
 - Cache parsed data
 - Use efficient data structures
@@ -360,16 +374,19 @@ npm run test:exit
 ```
 
 ### Test 1: Anomaly Detection (PASS/FAIL)
+
 ✅ Two real anomalies caught pre-invoice  
 ✅ Fixes applied (auto or manual)  
 ✅ Modeled $ saved logged
 
 ### Test 2: Actionable Alerts (PASS/FAIL)
+
 ✅ Tenant alerts include steps  
 ✅ >70% resolved without engineering tickets  
 ✅ Proposed actions in every alert
 
 ### Test 3: Dashboard Live (PASS/FAIL)
+
 ✅ Gross-margin trend dashboard operational  
 ✅ Correlates margin movements with releases  
 ✅ Per-tenant P&L with confidence scores
@@ -377,11 +394,13 @@ npm run test:exit
 ## References
 
 ### Standards & RFCs
+
 - [RFC 3161 - Time-Stamp Protocol (TSP)](https://www.ietf.org/rfc/rfc3161.txt)
 - [RFC 9211 - HTTP Cache-Status Header](https://www.rfc-editor.org/rfc/rfc9211.html)
 - [RFC 5861 - HTTP Cache-Control Extensions](https://www.rfc-editor.org/rfc/rfc5861.html)
 
 ### Cloud Providers
+
 - [AWS CUR Documentation](https://docs.aws.amazon.com/cur/latest/userguide/what-is-cur.html)
 - [AWS Cost Anomaly Detection](https://docs.aws.amazon.com/cost-management/latest/userguide/getting-started-ad.html)
 - [Cloudflare Workers Pricing](https://developers.cloudflare.com/workers/platform/pricing/)
@@ -390,11 +409,13 @@ npm run test:exit
 - [Cloudflare Cache Documentation](https://developers.cloudflare.com/cache/)
 
 ### FinOps Foundation
+
 - [Cost Allocation Capability](https://www.finops.org/framework/capabilities/cost-allocation/)
 - [Unit Economics Capability](https://www.finops.org/framework/capabilities/unit-economics/)
 - [FinOps Framework](https://www.finops.org/framework/)
 
 ### Calculators & Tools
+
 - [R2 Pricing Calculator](https://r2-calculator.cloudflare.com/)
 - [AWS Pricing Calculator](https://calculator.aws/)
 
