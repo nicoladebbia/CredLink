@@ -1,0 +1,27 @@
+{
+  "headers": {
+    "access-control-allow-origin": "*",
+    "cache-control": "public, max-age=3600",
+    "connection": "close",
+    "content-length": "343",
+    "content-type": "image/jpeg",
+    "date": "Fri, 07 Nov 2025 02:08:03 GMT",
+    "etag": "W/\"157-cREzzTwOdRrutEqR88P6TiXwElU\"",
+    "link": "</manifests/421de8fee7be4ebe7155e77810cc3b5aceb853c6d8b4617c6c3ab49352044b48.c2pa>; rel=\"c2pa-manifest\"",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-c2-policy": "remote-only",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "x-manifest-hash": "421de8fee7be4ebe7155e77810cc3b5aceb853c6d8b4617c6c3ab49352044b48",
+    "x-powered-by": "Express",
+    "x-ratelimit-limit": "1000",
+    "x-ratelimit-remaining": "890",
+    "x-ratelimit-reset": "1762482177",
+    "x-xss-protection": "1; mode=block"
+  },
+  "link_header_present": true,
+  "x_c2_policy": "remote-only",
+  "content_type": "image/jpeg",
+  "cache_control": "public, max-age=3600"
+}

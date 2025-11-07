@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="C2 Concierge Acceptance Tests" tests="19" failures="0" timestamp="2025-11-07T02:08:03.657Z">
+  <testsuite name="Survival Matrix" tests="19" failures="0" skipped="0">
+    <testcase name="IMG_JPEG_Q75_STRIP" classname="acceptance.strip-happy" time="0.03">
+    </testcase>
+    <testcase name="IMG_RESIZE_1024" classname="acceptance.strip-happy" time="0.059">
+    </testcase>
+    <testcase name="IMG_CONVERT_WEBP" classname="acceptance.strip-happy" time="0.016">
+    </testcase>
+    <testcase name="IMG_CONVERT_AVIF" classname="acceptance.strip-happy" time="0.021">
+    </testcase>
+    <testcase name="IMG_CROP_CENTER" classname="acceptance.strip-happy" time="0.013">
+    </testcase>
+    <testcase name="IMG_PROGRESSIVE_BASELINE" classname="acceptance.strip-happy" time="0.015">
+    </testcase>
+    <testcase name="IMG_METADATA_REWRITE" classname="acceptance.strip-happy" time="0.014">
+    </testcase>
+    <testcase name="IMG_ROTATE_90" classname="acceptance.strip-happy" time="0.014">
+    </testcase>
+    <testcase name="IMG_WATERMARK_OVERLAY" classname="acceptance.strip-happy" time="0.082">
+    </testcase>
+    <testcase name="IMG_THUMBNAIL_150X150" classname="acceptance.strip-happy" time="0.019">
+    </testcase>
+    <testcase name="CDN_RECOMPRESS_Q80" classname="acceptance.strip-happy" time="0.014">
+    </testcase>
+    <testcase name="CDN_REWRITES_ETAG" classname="acceptance.strip-happy" time="0.013">
+    </testcase>
+    <testcase name="LINK_HEADER_DROPPED" classname="acceptance.strip-happy" time="0.014">
+    </testcase>
+    <testcase name="CACHE_POISON_ATTEMPT" classname="acceptance.strip-happy" time="0.014">
+    </testcase>
+    <testcase name="FILENAME_CHANGE" classname="acceptance.strip-happy" time="0.014">
+    </testcase>
+    <testcase name="IMG_PRESERVE_EMBED_NOP" classname="acceptance.preserve-embed" time="0.029">
+    </testcase>
+    <testcase name="IMG_PRESERVE_EMBED_RESIZE" classname="acceptance.preserve-embed" time="0.03">
+    </testcase>
+    <testcase name="REMOTE_ONLY_BASELINE" classname="acceptance.remote-only" time="0.011">
+    </testcase>
+    <testcase name="CSP_BLOCK_EMBED" classname="acceptance.remote-only" time="0.012">
+    </testcase>
+  </testsuite>
+</testsuites>
