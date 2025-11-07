@@ -41,8 +41,16 @@ export class CustodyService {
       logger.error('Missing required environment variables', { count: missing.length });
       throw new Error('Configuration incomplete');
     }
-    if (!/^[a-z]{2}-[a-z]+-\d+$/.test(process.env.AWS_REGION)) {
-      logger.error('Invalid AWS region format', { region: process.env.AWS_REGION });
+    
+    // Strict AWS region validation with whitelist
+    const VALID_AWS_REGIONS = [
+      'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2',
+      'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-central-1', 'eu-north-1',
+      'ap-south-1', 'ap-northeast-1', 'ap-northeast-2', 'ap-northeast-3',
+      'ap-southeast-1', 'ap-southeast-2', 'ca-central-1', 'sa-east-1',
+    ];
+    if (!VALID_AWS_REGIONS.includes(process.env.AWS_REGION)) {
+      logger.error('Invalid AWS region', { region: process.env.AWS_REGION });
       throw new Error('Invalid configuration');
     }
 
@@ -108,16 +116,25 @@ export class CustodyService {
     }
 
     if (isNaN(dbPort) || dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
+    
+    // Enhanced SSL configuration for production
+    const sslConfig = process.env.DB_SSL === 'true' ? {
+      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+      ca: process.env.DB_SSL_CA || undefined,
+    } : false;
+    
     return new Pool({
       host: dbHost,
       port: dbPort,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      ssl: process.env.DB_SSL === 'true',
+      ssl: sslConfig,
       max: 10,
       connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
       queryTimeout: 30000,
+      allowExitOnIdle: true,
     });
   }
 
@@ -299,6 +316,8 @@ export class CustodyService {
 
   async getTSATimestamp(_signature) {
     if (!this.tsaUrl) return null;
+    // TODO: Implement actual TSA timestamping with signature parameter
+    // For now, return placeholder
     return Buffer.from('tsa-timestamp-placeholder');
   }
 
@@ -423,6 +442,7 @@ export class CustodyService {
   }
 
   async getEvidencePacks(tenantId, _period) {
+    // TODO: Implement period filtering with _period parameter
     // Critical security: Strict tenant ID validation
     if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
     if (tenantId.length < 3 || tenantId.length > 64)
@@ -432,13 +452,26 @@ export class CustodyService {
       'SELECT * FROM evidence_packs WHERE tenant_id = $1 ORDER BY created_at DESC',
       [tenantId]
     );
-    return result.rows.map((row) => ({
-      id: row.id,
-      type: row.type,
-      tenantId: row.tenant_id,
-      content: JSON.parse(row.content),
-      hash: row.hash,
-      createdAt: row.created_at,
-    }));
+    return result.rows.map((row) => {
+      let content;
+      try {
+        content = JSON.parse(row.content);
+      } catch (error) {
+        logger.error('Failed to parse evidence pack content', {
+          id: row.id,
+          tenantId: row.tenant_id,
+          error: error.message,
+        });
+        content = { error: 'Invalid content format', raw: row.content };
+      }
+      return {
+        id: row.id,
+        type: row.type,
+        tenantId: row.tenant_id,
+        content,
+        hash: row.hash,
+        createdAt: row.created_at,
+      };
+    });
   }
 }

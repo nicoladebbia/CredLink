@@ -68,16 +68,25 @@ export class AnalyticsService {
     }
 
     if (isNaN(dbPort) || dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
+    
+    // Enhanced SSL configuration for production
+    const sslConfig = process.env.DB_SSL === 'true' ? {
+      rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+      ca: process.env.DB_SSL_CA || undefined,
+    } : false;
+    
     return new Pool({
       host: dbHost,
       port: dbPort,
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
-      ssl: process.env.DB_SSL === 'true',
+      ssl: sslConfig,
       max: 10,
       connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000,
       queryTimeout: 30000,
+      allowExitOnIdle: true,
     });
   }
 

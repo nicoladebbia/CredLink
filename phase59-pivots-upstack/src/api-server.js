@@ -25,8 +25,33 @@ export class APIServer {
   }
 
   setupMiddleware() {
-    this.app.use(helmet());
-    this.app.use(express.json({ limit: '10mb' }));
+    // Enhanced Helmet security headers
+    this.app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https:'],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+    }));
+    
+    // Strict JSON parsing with size limits
+    this.app.use(express.json({ 
+      limit: '10mb',
+      strict: true,
+      verify: (req, res, buf, encoding) => {
+        if (buf.length > 10 * 1024 * 1024) {
+          throw new Error('Request entity too large');
+        }
+      },
+    }));
 
     // Critical security: Strict rate limiting to prevent DoS
     const limiter = rateLimit({
@@ -66,6 +91,7 @@ export class APIServer {
           path: req.path,
           requestId: req.requestId,
           ip: req.ip,
+          userAgent: req.headers['user-agent'],
         });
         return res.status(401).json({
           error: 'Authentication required',
