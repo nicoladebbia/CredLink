@@ -6,15 +6,16 @@
   "main": "src/i18n.js",
   "scripts": {
     "test": "jest",
-    "test:rtl": "jest tests/rtl.test.js",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "validate:coverage": "node scripts/validate-coverage.js",
     "validate:icu": "node scripts/validate-icu.js",
     "pseudo:generate": "node scripts/generate-pseudo-locale.js",
     "pseudo:test": "node scripts/test-pseudo-localization.js",
     "visual:diff": "node scripts/visual-diff-rtl.js",
-    "lint": "eslint src/**/*.js tests/**/*.js scripts/**/*.js",
+    "lint": "eslint src/i18n.js src/badge-component.js src/pseudo-localization.js tests/i18n.test.js tests/rtl.test.js scripts/validate-coverage.js scripts/validate-icu.js",
     "lint:fix": "eslint src/**/*.js tests/**/*.js scripts/**/*.js --fix",
-    "format": "prettier --write \"src/**/*.js\" \"tests/**/*.js\" \"scripts/**/*.js\"",
+    "format": "prettier --write src/**/*.js tests/**/*.js scripts/**/*.js",
     "build": "node scripts/build.js"
   },
   "keywords": [
