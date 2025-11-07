@@ -7,6 +7,7 @@ import express from 'express';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import { createLogger } from './utils/logger.js';
 import { CustodyService } from '../custody/custody-service.js';
 import { AnalyticsService } from '../analytics/analytics-service.js';
@@ -36,7 +37,7 @@ export class APIServer {
       legacyHeaders: false,
     });
     this.app.use(limiter);
-    
+
     // Additional strict rate limiting for sensitive operations
     const custodyLimiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
@@ -50,70 +51,101 @@ export class APIServer {
     this.app.use((req, res, next) => {
       req.requestId = crypto.randomBytes(8).toString('hex');
       res.set('X-Request-ID', req.requestId);
-      
+
       // Skip auth for health check
       if (req.path === '/health') {
         logger.debug('Health check request', { requestId: req.requestId });
         return next();
       }
-      
+
       // Strict authentication check
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        logger.warn('Unauthorized access attempt - missing auth header', { 
-          method: req.method, 
-          path: req.path, 
+        logger.warn('Unauthorized access attempt - missing auth header', {
+          method: req.method,
+          path: req.path,
           requestId: req.requestId,
-          ip: req.ip 
+          ip: req.ip,
         });
-        return res.status(401).json({ 
-          error: 'Authentication required', 
-          requestId: req.requestId 
+        return res.status(401).json({
+          error: 'Authentication required',
+          requestId: req.requestId,
         });
       }
-      
+
       const token = authHeader.substring(7);
-      
+
       // Critical security: Constant-time token validation to prevent timing attacks
       const MIN_TOKEN_LENGTH = 32;
       if (!token || token.length !== Math.max(token.length, MIN_TOKEN_LENGTH)) {
-        logger.warn('Unauthorized access attempt - invalid token format', { 
-          method: req.method, 
-          path: req.path, 
+        logger.warn('Unauthorized access attempt - invalid token format', {
+          method: req.method,
+          path: req.path,
           requestId: req.requestId,
-          ip: req.ip 
+          ip: req.ip,
         });
-        return res.status(401).json({ 
-          error: 'Invalid authentication token', 
-          requestId: req.requestId 
+        return res.status(401).json({
+          error: 'Invalid authentication token',
+          requestId: req.requestId,
         });
       }
-      
+
       // Additional security: Check token format
       const validTokenFormat = /^[A-Za-z0-9+/=_-]+$/;
       if (!validTokenFormat.test(token)) {
-        logger.warn('Unauthorized access attempt - invalid token characters', { 
-          method: req.method, 
-          path: req.path, 
+        logger.warn('Unauthorized access attempt - invalid token characters', {
+          method: req.method,
+          path: req.path,
           requestId: req.requestId,
-          ip: req.ip 
+          ip: req.ip,
         });
-        return res.status(401).json({ 
-          error: 'Invalid authentication token format', 
-          requestId: req.requestId 
+        return res.status(401).json({
+          error: 'Invalid authentication token format',
+          requestId: req.requestId,
         });
       }
-      
-      // TODO: Implement proper JWT verification or API key validation
-      // For now, accept any valid format token but log for audit
-      logger.info('Authenticated request', { 
-        method: req.method, 
-        path: req.path, 
-        requestId: req.requestId,
-        ip: req.ip,
-        tokenPrefix: token.substring(0, 8) + '...'
-      });
-      
+
+      // Critical security: JWT verification
+      const jwtSecret = process.env.JWT_SECRET;
+      if (!jwtSecret) {
+        logger.error('JWT_SECRET not configured');
+        return res.status(500).json({
+          error: 'Authentication service unavailable',
+          requestId: req.requestId,
+        });
+      }
+
+      try {
+        const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+        req.user = {
+          id: decoded.sub,
+          tenantId: decoded.tenantId,
+          permissions: decoded.permissions || [],
+        };
+
+        // Log successful authentication
+        logger.info('Authenticated request', {
+          method: req.method,
+          path: req.path,
+          requestId: req.requestId,
+          ip: req.ip,
+          userId: req.user.id,
+          tenantId: req.user.tenantId,
+        });
+      } catch (error) {
+        logger.warn('Invalid JWT token', {
+          method: req.method,
+          path: req.path,
+          requestId: req.requestId,
+          ip: req.ip,
+          error: error.message,
+        });
+        return res.status(401).json({
+          error: 'Invalid authentication token',
+          requestId: req.requestId,
+        });
+      }
+
       next();
     });
   }
@@ -129,6 +161,20 @@ export class APIServer {
       try {
         const { id } = req.params;
         const { mode, rotation, region } = req.body;
+
+        // Authorization: User can only access their own tenant
+        if (req.user.tenantId !== id && !req.user.permissions.includes('admin')) {
+          logger.warn('Unauthorized tenant access attempt', {
+            userId: req.user.id,
+            requestedTenant: id,
+            userTenant: req.user.tenantId,
+            requestId: req.requestId,
+          });
+          return res.status(403).json({
+            error: 'Access denied',
+            requestId: req.requestId,
+          });
+        }
 
         if (!mode || !['aws-kms', 'cloudhsm', 'yubihsm2'].includes(mode)) {
           return res.status(400).json({

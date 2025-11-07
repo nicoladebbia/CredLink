@@ -20,47 +20,53 @@ export class AnalyticsService {
   validateEnvironment() {
     const required = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
     const missing = required.filter((key) => !process.env[key]);
-    if (missing.length > 0) throw new Error(`Missing: ${missing.join(', ')}`);
+    if (missing.length > 0) {
+      logger.error('Missing required environment variables', { count: missing.length });
+      throw new Error('Configuration incomplete');
+    }
   }
 
   initializeDatabase() {
     const dbHost = process.env.DB_HOST;
     const dbPort = parseInt(process.env.DB_PORT);
-    
+
     // Critical security: Strict hostname validation to prevent SSRF
     if (!dbHost || typeof dbHost !== 'string') throw new Error('DB hostname required');
-    
+
     // Check for localhost variations (allowed for development)
     const allowedLocalhosts = ['localhost', '127.0.0.1', '::1'];
     if (!allowedLocalhosts.includes(dbHost.toLowerCase())) {
       // Strict RFC-compliant hostname validation
-      const hostnameRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+      const hostnameRegex =
+        /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
       const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      
+
       if (!hostnameRegex.test(dbHost) && !ipRegex.test(dbHost)) {
         throw new Error('Invalid DB hostname format');
       }
-      
+
       // Additional security checks
       if (dbHost.startsWith('.') || dbHost.endsWith('.') || dbHost.includes('..')) {
         throw new Error('Invalid DB hostname format');
       }
-      
+
       // Validate IP address ranges if it's an IP
       if (ipRegex.test(dbHost)) {
         const octets = dbHost.split('.').map(Number);
-        if (octets.some(octet => octet < 0 || octet > 255)) {
+        if (octets.some((octet) => octet < 0 || octet > 255)) {
           throw new Error('Invalid IP address');
         }
         // Block private ranges except localhost
-        if (octets[0] === 10 || 
-            (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
-            (octets[0] === 192 && octets[1] === 168)) {
+        if (
+          octets[0] === 10 ||
+          (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+          (octets[0] === 192 && octets[1] === 168)
+        ) {
           throw new Error('Private IP ranges not allowed for database connections');
         }
       }
     }
-    
+
     if (isNaN(dbPort) || dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
     return new Pool({
       host: dbHost,
@@ -81,18 +87,39 @@ export class AnalyticsService {
    */
   async ingestVerifyResult(data) {
     try {
-      // Security: Validate inputs
+      // Critical security: Strict input validation
+      if (!data || typeof data !== 'object') throw new Error('Invalid data format');
+
+      // Validate source
       if (!data.source || typeof data.source !== 'string') throw new Error('Invalid source');
+      if (data.source.length < 1 || data.source.length > 50)
+        throw new Error('Invalid source length');
+      if (!/^[a-zA-Z0-9_-]+$/.test(data.source)) throw new Error('Invalid source format');
+
+      // Validate asset_id
       if (!data.asset_id || typeof data.asset_id !== 'string') throw new Error('Invalid asset_id');
+      if (data.asset_id.length < 1 || data.asset_id.length > 255)
+        throw new Error('Invalid asset_id length');
+      if (!/^[a-zA-Z0-9_-]+$/.test(data.asset_id)) throw new Error('Invalid asset_id format');
+
+      // Check data size to prevent DoS
+      const dataSize = JSON.stringify(data).length;
+      if (dataSize > 5 * 1024 * 1024) {
+        // 5MB limit
+        throw new Error('Data too large');
+      }
+
+      // Validate result
       if (!data.result || !['pass', 'fail'].includes(data.result))
         throw new Error('Invalid result');
+
+      // Validate manifest type
       if (!data.manifest || !['embedded', 'link'].includes(data.manifest))
         throw new Error('Invalid manifest type');
 
-      // Validate source
+      // Validate source against allowed list
       const validSources = ['cai-verify', 'vendor-x', 'cloudflare', 'cdn-preserve', 'custom'];
-      if (!validSources.includes(data.source))
-        throw new Error(`Invalid source. Must be one of: ${validSources.join(', ')}`);
+      if (!validSources.includes(data.source)) throw new Error('Invalid source');
 
       // Validate provider if present
       if (data.provider && !/^[a-zA-Z0-9_-]+$/.test(data.provider))
@@ -163,7 +190,8 @@ export class AnalyticsService {
     try {
       // Critical security: Strict tenant ID validation
       if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-      if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+      if (tenantId.length < 3 || tenantId.length > 64)
+        throw new Error('Tenant ID must be 3-64 characters');
       if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
 
       let whereClause = 'WHERE 1=1';
@@ -284,7 +312,8 @@ export class AnalyticsService {
     try {
       // Critical security: Strict tenant ID validation
       if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-      if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+      if (tenantId.length < 3 || tenantId.length > 64)
+        throw new Error('Tenant ID must be 3-64 characters');
       if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
       if (!period || !/^\d{4}-\d{2}$/.test(period))
         throw new Error('Invalid period format. Use YYYY-MM');
@@ -405,7 +434,8 @@ export class AnalyticsService {
     try {
       // Critical security: Strict tenant ID validation
       if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-      if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+      if (tenantId.length < 3 || tenantId.length > 64)
+        throw new Error('Tenant ID must be 3-64 characters');
       if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
 
       let whereClause = "WHERE result = 'fail'";

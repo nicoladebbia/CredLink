@@ -45,46 +45,68 @@ export class CustodyService {
       logger.error('Invalid AWS region format', { region: process.env.AWS_REGION });
       throw new Error('Invalid configuration');
     }
+
+    // Validate DEFAULT_ROTATION_DAYS
+    if (process.env.DEFAULT_ROTATION_DAYS) {
+      const rotationDays = parseInt(process.env.DEFAULT_ROTATION_DAYS);
+      if (isNaN(rotationDays) || rotationDays < 1 || rotationDays > 365) {
+        logger.error('Invalid DEFAULT_ROTATION_DAYS', { value: process.env.DEFAULT_ROTATION_DAYS });
+        throw new Error('Invalid configuration');
+      }
+    }
+
+    // Validate TSA_URL format if provided
+    if (process.env.TSA_URL) {
+      try {
+        new URL(process.env.TSA_URL);
+      } catch {
+        logger.error('Invalid TSA_URL format', { url: process.env.TSA_URL });
+        throw new Error('Invalid configuration');
+      }
+    }
   }
 
   initializeDatabase() {
     const dbHost = process.env.DB_HOST;
     const dbPort = parseInt(process.env.DB_PORT);
-    
+
     // Critical security: Strict hostname validation to prevent SSRF
     if (!dbHost || typeof dbHost !== 'string') throw new Error('DB hostname required');
-    
+
     // Check for localhost variations (allowed for development)
     const allowedLocalhosts = ['localhost', '127.0.0.1', '::1'];
     if (!allowedLocalhosts.includes(dbHost.toLowerCase())) {
       // Strict RFC-compliant hostname validation
-      const hostnameRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+      const hostnameRegex =
+        /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
       const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-      
+
       if (!hostnameRegex.test(dbHost) && !ipRegex.test(dbHost)) {
         throw new Error('Invalid DB hostname format');
       }
-      
+
       // Additional security checks
       if (dbHost.startsWith('.') || dbHost.endsWith('.') || dbHost.includes('..')) {
         throw new Error('Invalid DB hostname format');
       }
-      
+
       // Validate IP address ranges if it's an IP
       if (ipRegex.test(dbHost)) {
         const octets = dbHost.split('.').map(Number);
-        if (octets.some(octet => octet < 0 || octet > 255)) {
+        if (octets.some((octet) => octet < 0 || octet > 255)) {
           throw new Error('Invalid IP address');
         }
         // Block private ranges except localhost
-        if (octets[0] === 10 || 
-            (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
-            (octets[0] === 192 && octets[1] === 168)) {
+        if (
+          octets[0] === 10 ||
+          (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+          (octets[0] === 192 && octets[1] === 168)
+        ) {
           throw new Error('Private IP ranges not allowed for database connections');
         }
       }
     }
-    
+
     if (isNaN(dbPort) || dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
     return new Pool({
       host: dbHost,
@@ -110,10 +132,27 @@ export class CustodyService {
   async provisionTenantKey(tenantId, options = {}) {
     // Critical security: Strict tenant ID validation
     if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (tenantId.length < 3 || tenantId.length > 64)
+      throw new Error('Tenant ID must be 3-64 characters');
     if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
+
+    // Validate mode
     const mode = options.mode || 'aws-kms';
     if (!['aws-kms', 'cloudhsm', 'yubihsm2'].includes(mode)) throw new Error('Invalid mode');
+
+    // Validate rotation parameter
+    if (options.rotation) {
+      if (typeof options.rotation !== 'string') throw new Error('Invalid rotation format');
+      const rotationDays = parseInt(options.rotation.replace('d', ''));
+      if (isNaN(rotationDays) || rotationDays < 1 || rotationDays > 365) {
+        throw new Error('Rotation days must be between 1 and 365');
+      }
+    }
+
+    // Validate region parameter if provided
+    if (options.region && !/^[a-z]{2}-[a-z]+-\d+$/.test(options.region)) {
+      throw new Error('Invalid AWS region format');
+    }
 
     let keyData;
     if (mode === 'aws-kms')
@@ -211,8 +250,22 @@ export class CustodyService {
   async signManifest(tenantId, manifestData) {
     // Critical security: Strict tenant ID validation
     if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (tenantId.length < 3 || tenantId.length > 64)
+      throw new Error('Tenant ID must be 3-64 characters');
     if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
+
+    // Validate manifestData
+    if (!manifestData || typeof manifestData !== 'object')
+      throw new Error('Manifest data required');
+    if (Array.isArray(manifestData)) throw new Error('Manifest data must be an object');
+
+    // Check manifest data size to prevent DoS
+    const manifestSize = JSON.stringify(manifestData).length;
+    if (manifestSize > 1024 * 1024) {
+      // 1MB limit
+      throw new Error('Manifest data too large');
+    }
+
     const keyResult = await this.pool.query(
       'SELECT * FROM custody_keys WHERE tenant_id = $1 AND active = true ORDER BY created_at DESC LIMIT 1',
       [tenantId]
@@ -262,13 +315,25 @@ export class CustodyService {
   async rotateKey(tenantId, keyId, reason) {
     // Critical security: Strict tenant ID validation
     if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (tenantId.length < 3 || tenantId.length > 64)
+      throw new Error('Tenant ID must be 3-64 characters');
     if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
-    
+
+    // Validate keyId
+    if (!keyId || typeof keyId !== 'string') throw new Error('Key ID required');
+    if (keyId.length < 1 || keyId.length > 255) throw new Error('Invalid key ID length');
+    if (!/^[a-zA-Z0-9_-]+$/.test(keyId)) throw new Error('Invalid key ID format');
+
+    // Validate reason
+    if (!reason || typeof reason !== 'string') throw new Error('Reason required');
+    if (reason.length < 1 || reason.length > 100)
+      throw new Error('Reason must be 1-100 characters');
+    if (!/^[a-zA-Z0-9\s_-]+$/.test(reason)) throw new Error('Invalid reason format');
+
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      
+
       // Lock the key row to prevent concurrent rotations
       const keyResult = await client.query(
         'SELECT * FROM custody_keys WHERE tenant_id = $1 AND key_id = $2 FOR UPDATE',
@@ -277,7 +342,7 @@ export class CustodyService {
       if (keyResult.rows.length === 0) throw new Error('Key not found');
 
       const currentKey = keyResult.rows[0];
-      
+
       // Check if key is already being rotated
       if (!currentKey.active) {
         await client.query('ROLLBACK');
@@ -285,7 +350,7 @@ export class CustodyService {
       }
 
       const newKey = await this.provisionTenantKey(tenantId, { mode: currentKey.mode });
-      
+
       // Update old key status
       await client.query(
         'UPDATE custody_keys SET active = false, rotated_at = NOW() WHERE id = $1',
@@ -298,9 +363,9 @@ export class CustodyService {
         newKey,
         reason
       );
-      
+
       await client.query('COMMIT');
-      
+
       return {
         tenantId,
         oldKeyId: currentKey.key_id,
@@ -360,7 +425,8 @@ export class CustodyService {
   async getEvidencePacks(tenantId, _period) {
     // Critical security: Strict tenant ID validation
     if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
-    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (tenantId.length < 3 || tenantId.length > 64)
+      throw new Error('Tenant ID must be 3-64 characters');
     if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
     const result = await this.pool.query(
       'SELECT * FROM evidence_packs WHERE tenant_id = $1 ORDER BY created_at DESC',
