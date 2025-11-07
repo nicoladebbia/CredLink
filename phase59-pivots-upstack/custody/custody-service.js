@@ -37,16 +37,55 @@ export class CustodyService {
   validateEnvironment() {
     const required = ['DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'AWS_REGION'];
     const missing = required.filter((key) => !process.env[key]);
-    if (missing.length > 0) throw new Error(`Missing: ${missing.join(', ')}`);
-    if (!/^[a-z]{2}-[a-z]+-\d+$/.test(process.env.AWS_REGION))
-      throw new Error('Invalid AWS_REGION');
+    if (missing.length > 0) {
+      logger.error('Missing required environment variables', { count: missing.length });
+      throw new Error('Configuration incomplete');
+    }
+    if (!/^[a-z]{2}-[a-z]+-\d+$/.test(process.env.AWS_REGION)) {
+      logger.error('Invalid AWS region format', { region: process.env.AWS_REGION });
+      throw new Error('Invalid configuration');
+    }
   }
 
   initializeDatabase() {
     const dbHost = process.env.DB_HOST;
     const dbPort = parseInt(process.env.DB_PORT);
-    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) throw new Error('Invalid DB hostname');
-    if (dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
+    
+    // Critical security: Strict hostname validation to prevent SSRF
+    if (!dbHost || typeof dbHost !== 'string') throw new Error('DB hostname required');
+    
+    // Check for localhost variations (allowed for development)
+    const allowedLocalhosts = ['localhost', '127.0.0.1', '::1'];
+    if (!allowedLocalhosts.includes(dbHost.toLowerCase())) {
+      // Strict RFC-compliant hostname validation
+      const hostnameRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      
+      if (!hostnameRegex.test(dbHost) && !ipRegex.test(dbHost)) {
+        throw new Error('Invalid DB hostname format');
+      }
+      
+      // Additional security checks
+      if (dbHost.startsWith('.') || dbHost.endsWith('.') || dbHost.includes('..')) {
+        throw new Error('Invalid DB hostname format');
+      }
+      
+      // Validate IP address ranges if it's an IP
+      if (ipRegex.test(dbHost)) {
+        const octets = dbHost.split('.').map(Number);
+        if (octets.some(octet => octet < 0 || octet > 255)) {
+          throw new Error('Invalid IP address');
+        }
+        // Block private ranges except localhost
+        if (octets[0] === 10 || 
+            (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+            (octets[0] === 192 && octets[1] === 168)) {
+          throw new Error('Private IP ranges not allowed for database connections');
+        }
+      }
+    }
+    
+    if (isNaN(dbPort) || dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
     return new Pool({
       host: dbHost,
       port: dbPort,
@@ -69,7 +108,10 @@ export class CustodyService {
   }
 
   async provisionTenantKey(tenantId, options = {}) {
-    if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
+    // Critical security: Strict tenant ID validation
+    if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
     const mode = options.mode || 'aws-kms';
     if (!['aws-kms', 'cloudhsm', 'yubihsm2'].includes(mode)) throw new Error('Invalid mode');
 
@@ -167,7 +209,10 @@ export class CustodyService {
   }
 
   async signManifest(tenantId, manifestData) {
-    if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
+    // Critical security: Strict tenant ID validation
+    if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
     const keyResult = await this.pool.query(
       'SELECT * FROM custody_keys WHERE tenant_id = $1 AND active = true ORDER BY created_at DESC LIMIT 1',
       [tenantId]
@@ -215,34 +260,61 @@ export class CustodyService {
   }
 
   async rotateKey(tenantId, keyId, reason) {
-    if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
-    const keyResult = await this.pool.query(
-      'SELECT * FROM custody_keys WHERE tenant_id = $1 AND key_id = $2',
-      [tenantId, keyId]
-    );
-    if (keyResult.rows.length === 0) throw new Error('Key not found');
+    // Critical security: Strict tenant ID validation
+    if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
+    
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      
+      // Lock the key row to prevent concurrent rotations
+      const keyResult = await client.query(
+        'SELECT * FROM custody_keys WHERE tenant_id = $1 AND key_id = $2 FOR UPDATE',
+        [tenantId, keyId]
+      );
+      if (keyResult.rows.length === 0) throw new Error('Key not found');
 
-    const currentKey = keyResult.rows[0];
-    const newKey = await this.provisionTenantKey(tenantId, { mode: currentKey.mode });
-    await this.pool.query(
-      'UPDATE custody_keys SET active = false, rotated_at = NOW() WHERE id = $1',
-      [currentKey.id]
-    );
+      const currentKey = keyResult.rows[0];
+      
+      // Check if key is already being rotated
+      if (!currentKey.active) {
+        await client.query('ROLLBACK');
+        throw new Error('Key already rotated');
+      }
 
-    const evidencePack = await this.generateRotationEvidencePack(
-      tenantId,
-      currentKey,
-      newKey,
-      reason
-    );
-    return {
-      tenantId,
-      oldKeyId: currentKey.key_id,
-      newKeyId: newKey.keyId,
-      reason,
-      evidencePackId: evidencePack.id,
-      rotatedAt: new Date().toISOString(),
-    };
+      const newKey = await this.provisionTenantKey(tenantId, { mode: currentKey.mode });
+      
+      // Update old key status
+      await client.query(
+        'UPDATE custody_keys SET active = false, rotated_at = NOW() WHERE id = $1',
+        [currentKey.id]
+      );
+
+      const evidencePack = await this.generateRotationEvidencePack(
+        tenantId,
+        currentKey,
+        newKey,
+        reason
+      );
+      
+      await client.query('COMMIT');
+      
+      return {
+        tenantId,
+        oldKeyId: currentKey.key_id,
+        newKeyId: newKey.keyId,
+        reason,
+        evidencePackId: evidencePack.id,
+        rotatedAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async generateEvidencePack(tenantId, keyData, eventType) {
@@ -286,7 +358,10 @@ export class CustodyService {
   }
 
   async getEvidencePacks(tenantId, _period) {
-    if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
+    // Critical security: Strict tenant ID validation
+    if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+    if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+    if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
     const result = await this.pool.query(
       'SELECT * FROM evidence_packs WHERE tenant_id = $1 ORDER BY created_at DESC',
       [tenantId]

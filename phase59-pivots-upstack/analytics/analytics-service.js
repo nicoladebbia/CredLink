@@ -26,8 +26,42 @@ export class AnalyticsService {
   initializeDatabase() {
     const dbHost = process.env.DB_HOST;
     const dbPort = parseInt(process.env.DB_PORT);
-    if (!/^[a-zA-Z0-9.-]+$/.test(dbHost)) throw new Error('Invalid DB hostname');
-    if (dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
+    
+    // Critical security: Strict hostname validation to prevent SSRF
+    if (!dbHost || typeof dbHost !== 'string') throw new Error('DB hostname required');
+    
+    // Check for localhost variations (allowed for development)
+    const allowedLocalhosts = ['localhost', '127.0.0.1', '::1'];
+    if (!allowedLocalhosts.includes(dbHost.toLowerCase())) {
+      // Strict RFC-compliant hostname validation
+      const hostnameRegex = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+      const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      
+      if (!hostnameRegex.test(dbHost) && !ipRegex.test(dbHost)) {
+        throw new Error('Invalid DB hostname format');
+      }
+      
+      // Additional security checks
+      if (dbHost.startsWith('.') || dbHost.endsWith('.') || dbHost.includes('..')) {
+        throw new Error('Invalid DB hostname format');
+      }
+      
+      // Validate IP address ranges if it's an IP
+      if (ipRegex.test(dbHost)) {
+        const octets = dbHost.split('.').map(Number);
+        if (octets.some(octet => octet < 0 || octet > 255)) {
+          throw new Error('Invalid IP address');
+        }
+        // Block private ranges except localhost
+        if (octets[0] === 10 || 
+            (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+            (octets[0] === 192 && octets[1] === 168)) {
+          throw new Error('Private IP ranges not allowed for database connections');
+        }
+      }
+    }
+    
+    if (isNaN(dbPort) || dbPort < 1 || dbPort > 65535) throw new Error('Invalid DB port');
     return new Pool({
       host: dbHost,
       port: dbPort,
@@ -127,8 +161,10 @@ export class AnalyticsService {
    */
   async getSurvivalAnalytics(tenantId, period) {
     try {
-      // Security: Validate inputs
-      if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
+      // Critical security: Strict tenant ID validation
+      if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+      if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+      if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
 
       let whereClause = 'WHERE 1=1';
       const params = [];
@@ -246,8 +282,10 @@ export class AnalyticsService {
    */
   async getCompliancePack(tenantId, period, regions) {
     try {
-      // Security: Validate inputs
-      if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
+      // Critical security: Strict tenant ID validation
+      if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+      if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+      if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
       if (!period || !/^\d{4}-\d{2}$/.test(period))
         throw new Error('Invalid period format. Use YYYY-MM');
 
@@ -365,7 +403,10 @@ export class AnalyticsService {
    */
   async getBreakageAnalysis(tenantId, period) {
     try {
-      if (!tenantId || !/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID');
+      // Critical security: Strict tenant ID validation
+      if (!tenantId || typeof tenantId !== 'string') throw new Error('Tenant ID required');
+      if (tenantId.length < 3 || tenantId.length > 64) throw new Error('Tenant ID must be 3-64 characters');
+      if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) throw new Error('Invalid tenant ID format');
 
       let whereClause = "WHERE result = 'fail'";
       const params = [];
