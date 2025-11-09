@@ -1,5 +1,5 @@
 {
-  "name": "@c2/acceptance-cms",
+  "name": "@credlink/acceptance-cms",
   "version": "0.1.0",
   "description": "C2 Concierge CMS acceptance testing framework",
   "type": "module",

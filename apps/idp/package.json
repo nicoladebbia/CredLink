@@ -1,5 +1,5 @@
 {
-  "name": "@c2/idp",
+  "name": "@credlink/idp",
   "version": "1.0.0",
   "description": "SSO broker service for C2 Concierge",
   "main": "dist/index.js",
@@ -11,8 +11,8 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@c2/oidc-saml": "workspace:*",
-    "@c2/rbac": "workspace:*",
+    "@credlink/oidc-saml": "workspace:*",
+    "@credlink/rbac": "workspace:*",
     "hono": "^4.10.4"
   },
   "devDependencies": {

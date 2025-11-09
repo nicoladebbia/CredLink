@@ -3,7 +3,7 @@
  * Handles organization policies for enterprise controls
  */
 
-import { check, Subject, Action, Resource, Context } from '@c2/rbac';
+import { check, Subject, Action, Resource, Context } from '@credlink/rbac';
 
 export interface Policy {
   id: string;

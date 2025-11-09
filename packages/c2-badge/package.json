@@ -1,5 +1,5 @@
 {
-  "name": "@c2/c2-badge",
+  "name": "@credlink/c2-badge",
   "version": "0.1.0",
   "description": "C2PA Verification Badge Web Component",
   "type": "module",

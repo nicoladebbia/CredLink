@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signed Images Gallery - CredLink</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: white;
+      color: #667eea;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .gallery-item {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .gallery-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    }
+
+    .gallery-item__image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #f3f4f6;
+    }
+
+    .gallery-item__content {
+      padding: 1.5rem;
+    }
+
+    .gallery-item__title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #1f2937;
+    }
+
+    .gallery-item__meta {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .gallery-item__meta-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.25rem;
+    }
+
+    .gallery-item__meta-label {
+      font-weight: 600;
+    }
+
+    .gallery-item__actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .gallery-item__btn {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #e5e7eb;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .gallery-item__btn:hover {
+      background: #f9fafb;
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .badge-container {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .empty-state__icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    .empty-state__title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state__text {
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      opacity: 0;
+      transform: translateY(1rem);
+      transition: all 0.3s ease;
+      z-index: 1000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      border-left: 4px solid #10b981;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    /* C2 Badge Styles */
+    c2-badge {
+      display: block;
+      width: 100%;
+    }
+
+    c2-badge::part(badge) {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    c2-badge::part(badge):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🖼️ Signed Images Gallery</h1>
+      <p>View and verify your cryptographically signed images</p>
+    </div>
+
+    <div class="actions">
+      <a href="upload.html" class="btn btn-primary">
+        <span>📤</span>
+        Upload New Image
+      </a>
+      <button onclick="addDemoImages()" class="btn btn-secondary">
+        <span>✨</span>
+        Add Demo Images
+      </button>
+      <button onclick="clearGallery()" class="btn btn-danger">
+        <span>🗑️</span>
+        Clear Gallery
+      </button>
+    </div>
+
+    <div id="gallery" class="gallery"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Load C2 Badge Component -->
+  <script type="module" src="../packages/c2-badge/dist/c2-badge.js"></script>
+
+  <script>
+    const API_BASE = 'http://localhost:3001';
+    
+    // Load and display gallery
+    function loadGallery() {
+      const gallery = document.getElementById('gallery');
+      const signedImages = JSON.parse(localStorage.getItem('signedImages') || '[]');
+
+      if (signedImages.length === 0) {
+        gallery.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-state__icon">📭</div>
+            <h2 class="empty-state__title">No signed images yet</h2>
+            <p class="empty-state__text">Upload and sign your first image to get started!</p>
+            <a href="upload.html" class="btn btn-primary">Upload Image</a>
+          </div>
+        `;
+        return;
+      }
+
+      gallery.innerHTML = signedImages.map((image, index) => `
+        <div class="gallery-item">
+          <img src="${image.preview}" alt="${image.title || 'Signed image'}" class="gallery-item__image">
+          <div class="gallery-item__content">
+            <h3 class="gallery-item__title">${image.title || 'Untitled'}</h3>
+            <div class="gallery-item__meta">
+              <div class="gallery-item__meta-item">
+                <span class="gallery-item__meta-label">Creator:</span>
+                <span>${image.creator}</span>
+              </div>
+              <div class="gallery-item__meta-item">
+                <span class="gallery-item__meta-label">Signed:</span>
+                <span>${new Date(image.timestamp).toLocaleDateString()}</span>
+              </div>
+              <div class="gallery-item__meta-item">
+                <span class="gallery-item__meta-label">Algorithm:</span>
+                <span>${image.crypto_algorithm || 'SHA-256'}</span>
+              </div>
+            </div>
+            
+            <div class="gallery-item__actions">
+              <button onclick="copyManifestUrl('${image.manifestUrl}')" class="gallery-item__btn">
+                📋 Copy URL
+              </button>
+              <button onclick="shareImage(${index})" class="gallery-item__btn">
+                🔗 Share
+              </button>
+            </div>
+
+            <div class="badge-container">
+              <c2-badge 
+                api-url="${API_BASE}"
+                manifest-url="${image.manifestUrl}"
+                text="Verify Provenance">
+              </c2-badge>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function copyManifestUrl(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('Manifest URL copied to clipboard!', 'success');
+      }).catch(() => {
+        showToast('Failed to copy URL', 'error');
+      });
+    }
+
+    function shareImage(index) {
+      const signedImages = JSON.parse(localStorage.getItem('signedImages') || '[]');
+      const image = signedImages[index];
+      
+      const shareText = `Check out this cryptographically signed image!
+
+Title: ${image.title || 'Untitled'}
+Creator: ${image.creator}
+Signed: ${new Date(image.timestamp).toLocaleDateString()}
+${image.crypto_algorithm ? `Algorithm: ${image.crypto_algorithm}` : ''}
+
+Verify authenticity: ${image.manifestUrl}`;
+
+      if (navigator.share) {
+        navigator.share({
+          title: image.title || 'Signed Image',
+          text: shareText,
+          url: image.manifestUrl
+        }).catch(() => {
+          copyToClipboard(shareText);
+        });
+      } else {
+        copyToClipboard(shareText);
+      }
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Share text copied to clipboard!', 'success');
+      }).catch(() => {
+        showToast('Failed to copy share text', 'error');
+      });
+    }
+
+    function addDemoImages() {
+      const demoImages = [
+        {
+          title: 'Demo Landscape',
+          creator: 'demo@credlink.com',
+          manifestUrl: `${API_BASE}/manifests/demo123`,
+          preview: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23667eea" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" font-family="Arial" font-size="24" fill="white" text-anchor="middle" dy=".3em"%3EDemo Image%3C/text%3E%3C/svg%3E',
+          timestamp: new Date().toISOString(),
+          crypto_algorithm: 'RSA-SHA256'
+        }
+      ];
+
+      const existing = JSON.parse(localStorage.getItem('signedImages') || '[]');
+      localStorage.setItem('signedImages', JSON.stringify([...existing, ...demoImages]));
+      loadGallery();
+      showToast('Demo images added!', 'success');
+    }
+
+    function clearGallery() {
+      if (confirm('Are you sure you want to clear all signed images from the gallery?')) {
+        localStorage.removeItem('signedImages');
+        loadGallery();
+        showToast('Gallery cleared', 'success');
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type} show`;
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    // Load gallery on page load
+    loadGallery();
+  </script>
+</body>
+</html>

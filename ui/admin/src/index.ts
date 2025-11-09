@@ -6,7 +6,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from 'hono/cloudflare-workers';
-import { check, Subject } from '@c2/rbac';
+import { check, Subject } from '@credlink/rbac';
 
 const app = new Hono();
 

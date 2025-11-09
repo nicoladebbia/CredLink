@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.0] - 2025-01-01
 
 ### Added
-- Initial release of C2 Concierge SDK for Go v2
+- Initial release of CredLink SDK for Go v2
 - Full type safety with structs generated from OpenAPI specification
 - Context-aware operations with proper timeout handling
 - HTTP client with automatic retries and exponential backoff
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Telemetry integration framework
 - Streaming responses using Go channels
 - Idempotency key support for safe retries
-- Complete API coverage for all C2 Concierge endpoints
+- Complete API coverage for all CredLink endpoints
 
 ### Features
 - Asset verification by URL or direct content

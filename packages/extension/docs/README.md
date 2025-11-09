@@ -1,4 +1,4 @@
-# C2 Concierge Browser Extension
+# CredLink Browser Extension
 
 A privacy-first browser extension that discovers and verifies C2PA content credentials on images and videos without publisher cooperation.
 

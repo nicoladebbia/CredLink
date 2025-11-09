@@ -239,6 +239,6 @@ All changes follow this process:
 **Document Version**: 1.0.0  
 **Last Updated**: 2025-11-05  
 **Next Review**: 2025-12-05  
-**Maintained By**: C2 Concierge Compliance Team
+**Maintained By**: CredLink Compliance Team
 
 **⚠️ Important**: This document is for informational purposes only and does not constitute legal advice. Always consult qualified legal counsel for compliance matters.

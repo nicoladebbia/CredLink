@@ -1,5 +1,5 @@
 {
-  "name": "@c2/remote-only-sandbox",
+  "name": "@credlink/remote-only-sandbox",
   "version": "1.0.0",
   "description": "Remote-only CDN simulator sandbox",
   "main": "server.js",

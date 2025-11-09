@@ -1,5 +1,5 @@
 {
-  "name": "@c2/preserve-embed-sandbox",
+  "name": "@credlink/preserve-embed-sandbox",
   "version": "1.0.0",
   "description": "Preserve-embed CDN simulator sandbox",
   "main": "server.js",

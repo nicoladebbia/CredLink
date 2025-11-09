@@ -364,7 +364,7 @@ This will output detailed verification information to the browser console.
 
 For technical support and questions:
 - Documentation: https://docs.c2concierge.org
-- Issues: https://github.com/Nickiller04/c2-concierge/issues
+- Issues: https://github.com/Nickiller04/CredLink/issues
 - Security: security@c2concierge.org
 
 ## License

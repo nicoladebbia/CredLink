@@ -1,4 +1,4 @@
-# C2 Concierge Development Rules
+# CredLink Development Rules
 
 ## Core Principles
 - Remote-first provenance verification is the default

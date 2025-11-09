@@ -1,11 +1,11 @@
-# C2 Concierge Browser Extension - Privacy Policy
+# CredLink Browser Extension - Privacy Policy
 
 **Last Updated:** November 2, 2025  
 **Effective Date:** November 2, 2025
 
 ## Overview
 
-C2 Concierge is a privacy-first browser extension that verifies C2PA content credentials on images and videos. We are committed to protecting your privacy and ensuring transparency about data practices.
+CredLink is a privacy-first browser extension that verifies C2PA content credentials on images and videos. We are committed to protecting your privacy and ensuring transparency about data practices.
 
 ## Data We Collect
 
@@ -215,7 +215,7 @@ For material changes to privacy practices:
 ### Data Protection Officer
 
 - **Email**: dpo@c2concierge.org
-- **Address**: C2 Concierge Privacy Team, 123 Tech Street, San Francisco, CA 94105
+- **Address**: CredLink Privacy Team, 123 Tech Street, San Francisco, CA 94105
 
 ### Complaints
 

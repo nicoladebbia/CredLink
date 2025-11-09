@@ -35,18 +35,18 @@ echo "Cutover ID: $CUTOVER_ID" | tee -a "$LOG_FILE"
 
 # Check current status
 echo "1. Checking load balancer status..." | tee -a "$LOG_FILE"
-LB_STATUS=$(cloudflare lb get c2-concierge-lb --json)
+LB_STATUS=$(cloudflare lb get CredLink-lb --json)
 CURRENT_POOL=$(echo "$LB_STATUS" | jq -r '.default_pools[0]')
 echo "Current pool: $CURRENT_POOL" | tee -a "$LOG_FILE"
 
 # Check health of primary region
 echo "2. Checking ENAM region health..." | tee -a "$LOG_FILE"
-ENAM_HEALTH=$(curl -s --connect-timeout 5 "https://api-enam.c2-concierge.com/healthz" || echo "failed")
+ENAM_HEALTH=$(curl -s --connect-timeout 5 "https://api-enam.CredLink.com/healthz" || echo "failed")
 echo "ENAM health: $ENAM_HEALTH" | tee -a "$LOG_FILE"
 
 # Check health of standby region
 echo "3. Checking WEUR region health..." | tee -a "$LOG_FILE"
-WEUR_HEALTH=$(curl -s --connect-timeout 5 "https://api-weur.c2-concierge.com/healthz" || echo "failed")
+WEUR_HEALTH=$(curl -s --connect-timeout 5 "https://api-weur.CredLink.com/healthz" || echo "failed")
 echo "WEUR health: $WEUR_HEALTH" | tee -a "$LOG_FILE"
 
 # Determine if cutover is necessary
@@ -73,19 +73,19 @@ echo "=== Pre-Cutover Preparation ===" | tee -a "$LOG_FILE"
 
 # 1. Pause background jobs to prevent split-brain
 echo "1. Pausing background jobs..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/jobs/pause" \
+curl -s -X POST "https://api.CredLink.com/admin/jobs/pause" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "manual_cutover"}' | tee -a "$LOG_FILE"
 
 # 2. Take leadership snapshot
 echo "2. Capturing leadership state..." | tee -a "$LOG_FILE"
-LEADER_STATUS=$(curl -s "https://api.c2-concierge.com/admin/leader/status")
+LEADER_STATUS=$(curl -s "https://api.CredLink.com/admin/leader/status")
 echo "$LEADER_STATUS" | jq '.' > "/tmp/leader-snapshot-${CUTOVER_ID}.json"
 
 # 3. Verify replication queue is processed
 echo "3. Processing replication queue..." | tee -a "$LOG_FILE"
-QUEUE_PROCESS=$(curl -s -X POST "https://api.c2-concierge.com/admin/replication/process" \
+QUEUE_PROCESS=$(curl -s -X POST "https://api.CredLink.com/admin/replication/process" \
   -H "Authorization: Bearer $ADMIN_TOKEN")
 echo "Queue process result: $QUEUE_PROCESS" | tee -a "$LOG_FILE"
 
@@ -122,7 +122,7 @@ CUTOVER_START=$(date +%s)
 
 # 1. Update Cloudflare Load Balancer
 echo "1. Updating load balancer pools..." | tee -a "$LOG_FILE"
-cloudflare lb update c2-concierge-lb \
+cloudflare lb update CredLink-lb \
   --default-pools="pool-weur-standby" \
   --fallback-pools="pool-enam-primary" \
   --steering-policy="random" | tee -a "$LOG_FILE"
@@ -130,7 +130,7 @@ cloudflare lb update c2-concierge-lb \
 # Verify load balancer update
 echo "2. Verifying load balancer update..." | tee -a "$LOG_FILE"
 sleep 10
-NEW_POOL=$(cloudflare lb get c2-concierge-lb --json | jq -r '.default_pools[0]')
+NEW_POOL=$(cloudflare lb get CredLink-lb --json | jq -r '.default_pools[0]')
 if [[ "$NEW_POOL" != "pool-weur-standby" ]]; then
   echo "ERROR: Load balancer update failed" | tee -a "$LOG_FILE"
   exit 1
@@ -139,7 +139,7 @@ echo "Load balancer updated successfully" | tee -a "$LOG_FILE"
 
 # 3. Force leader transfer to WEUR
 echo "3. Transferring leadership to WEUR..." | tee -a "$LOG_FILE"
-LEADER_TRANSFER=$(curl -s -X POST "https://api.c2-concierge.com/admin/leader/transfer" \
+LEADER_TRANSFER=$(curl -s -X POST "https://api.CredLink.com/admin/leader/transfer" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"new_leader_id": "weur-instance-1", "region": "weur"}')
@@ -147,7 +147,7 @@ echo "Leader transfer result: $LEADER_TRANSFER" | tee -a "$LOG_FILE"
 
 # 4. Resume background jobs in new region
 echo "4. Resuming background jobs..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/jobs/resume" \
+curl -s -X POST "https://api.CredLink.com/admin/jobs/resume" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "cutover_complete"}' | tee -a "$LOG_FILE"
@@ -156,7 +156,7 @@ curl -s -X POST "https://api.c2-concierge.com/admin/jobs/resume" \
 echo "5. Validating service functionality..." | tee -a "$LOG_FILE"
 
 # Test sign API
-SIGN_TEST=$(curl -s -X POST "https://api.c2-concierge.com/sign" \
+SIGN_TEST=$(curl -s -X POST "https://api.CredLink.com/sign" \
   -H "Content-Type: application/json" \
   -d '{"manifest": "cutover-test", "tenant_id": "test"}')
 if echo "$SIGN_TEST" | jq -e '.manifest_hash' > /dev/null; then
@@ -166,7 +166,7 @@ else
 fi
 
 # Test verify API
-VERIFY_TEST=$(curl -s -X POST "https://api.c2-concierge.com/verify" \
+VERIFY_TEST=$(curl -s -X POST "https://api.CredLink.com/verify" \
   -H "Content-Type: application/json" \
   -d '{"manifest_hash": "test-hash", "tenant_id": "test"}')
 if echo "$VERIFY_TEST" | jq -e '.valid' > /dev/null; then
@@ -211,7 +211,7 @@ SERVICES=("api-gateway" "sign-service" "verify-service" "edge-relay")
 ALL_HEALTHY=true
 
 for service in "${SERVICES[@]}"; do
-  HEALTH=$(curl -s "https://api.c2-concierge.com/health/$service" || echo "unhealthy")
+  HEALTH=$(curl -s "https://api.CredLink.com/health/$service" || echo "unhealthy")
   if [[ "$HEALTH" == "ok" ]]; then
     echo "✓ $service healthy" | tee -a "$LOG_FILE"
   else
@@ -222,14 +222,14 @@ done
 
 # 2. Verify data consistency
 echo "2. Data consistency check..." | tee -a "$LOG_FILE"
-CONSISTENCY_CHECK=$(curl -s -X POST "https://api.c2-concierge.com/admin/consistency/check" \
+CONSISTENCY_CHECK=$(curl -s -X POST "https://api.CredLink.com/admin/consistency/check" \
   -H "Authorization: Bearer $ADMIN_TOKEN")
 CONSISTENCY_RESULT=$(echo "$CONSISTENCY_CHECK" | jq -r '.result // "failed"')
 echo "Consistency check: $CONSISTENCY_RESULT" | tee -a "$LOG_FILE"
 
 # 3. Monitor replication lag
 echo "3. Replication lag check..." | tee -a "$LOG_FILE"
-REPLICATION_LAG=$(curl -s "https://api.c2-concierge.com/status" | jq -r '.storage.replication_lag_seconds')
+REPLICATION_LAG=$(curl -s "https://api.CredLink.com/status" | jq -r '.storage.replication_lag_seconds')
 echo "Replication lag: ${REPLICATION_LAG} seconds" | tee -a "$LOG_FILE"
 
 if [[ $REPLICATION_LAG -gt 300 ]]; then
@@ -273,24 +273,24 @@ set -euo pipefail
 echo "=== Manual Cutover Rollback ===" | tee -a "$LOG_FILE"
 
 # 1. Pause jobs in current region
-curl -s -X POST "https://api.c2-concierge.com/admin/jobs/pause" \
+curl -s -X POST "https://api.CredLink.com/admin/jobs/pause" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "rollback_initiated"}'
 
 # 2. Switch load balancer back to primary
-cloudflare lb update c2-concierge-lb \
+cloudflare lb update CredLink-lb \
   --default-pools="pool-enam-primary" \
   --fallback-pools="pool-weur-standby"
 
 # 3. Transfer leadership back to ENAM
-curl -s -X POST "https://api.c2-concierge.com/admin/leader/transfer" \
+curl -s -X POST "https://api.CredLink.com/admin/leader/transfer" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"new_leader_id": "enam-instance-1", "region": "enam"}'
 
 # 4. Resume jobs in ENAM
-curl -s -X POST "https://api.c2-concierge.com/admin/jobs/resume" \
+curl -s -X POST "https://api.CredLink.com/admin/jobs/resume" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "rollback_complete"}'
@@ -328,17 +328,17 @@ echo "Outage ID: $OUTAGE_ID" | tee -a "$LOG_FILE"
 
 # Check TSA service health
 echo "1. Checking TSA service health..." | tee -a "$LOG_FILE"
-TSA_HEALTH=$(curl -s --connect-timeout 5 "https://tsa.c2-concierge.com/health" || echo "failed")
+TSA_HEALTH=$(curl -s --connect-timeout 5 "https://tsa.CredLink.com/health" || echo "failed")
 echo "TSA health: $TSA_HEALTH" | tee -a "$LOG_FILE"
 
 # Check TSA response times
 echo "2. Measuring TSA response times..." | tee -a "$LOG_FILE"
-TSA_LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "https://tsa.c2-concierge.com/timestamp" || echo "timeout")
+TSA_LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "https://tsa.CredLink.com/timestamp" || echo "timeout")
 echo "TSA latency: ${TSA_LATENCY}s" | tee -a "$LOG_FILE"
 
 # Check TSA error rates
 echo "3. Checking TSA error rates..." | tee -a "$LOG_FILE"
-TSA_METRICS=$(curl -s "https://api.c2-concierge.com/metrics/tsa" || echo "{}")
+TSA_METRICS=$(curl -s "https://api.CredLink.com/metrics/tsa" || echo "{}")
 ERROR_RATE=$(echo "$TSA_METRICS" | jq -r '.error_rate_percentage // 0')
 echo "TSA error rate: ${ERROR_RATE}%" | tee -a "$LOG_FILE"
 
@@ -364,26 +364,26 @@ echo "=== Activating Fallback TSA ===" | tee -a "$LOG_FILE"
 
 # 1. Enable fallback TSA configuration
 echo "1. Enabling fallback TSA..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/tsa/fallback/enable" \
+curl -s -X POST "https://api.CredLink.com/admin/tsa/fallback/enable" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "tsa_outage", "severity": "'$SEVERITY'"}' | tee -a "$LOG_FILE"
 
 # 2. Update service configuration
 echo "2. Updating service configuration..." | tee -a "$LOG_FILE"
-kubectl patch configmap c2-concierge-config -n c2-concierge \
-  --patch '{"data":{"tsa_fallback_enabled":"true","tsa_primary_url":"https://tsa-backup.c2-concierge.com"}}'
+kubectl patch configmap CredLink-config -n CredLink \
+  --patch '{"data":{"tsa_fallback_enabled":"true","tsa_primary_url":"https://tsa-backup.CredLink.com"}}'
 
 # 3. Restart affected services
 echo "3. Restarting sign service..." | tee -a "$LOG_FILE"
-kubectl rollout restart deployment/sign-service -n c2-concierge
+kubectl rollout restart deployment/sign-service -n CredLink
 
 # Wait for restart
-kubectl rollout status deployment/sign-service -n c2-concierge --timeout=300s
+kubectl rollout status deployment/sign-service -n CredLink --timeout=300s
 
 # 4. Validate fallback TSA is working
 echo "4. Validating fallback TSA..." | tee -a "$LOG_FILE"
-FALLBACK_TEST=$(curl -s -X POST "https://api.c2-concierge.com/sign" \
+FALLBACK_TEST=$(curl -s -X POST "https://api.CredLink.com/sign" \
   -H "Content-Type: application/json" \
   -d '{"manifest": "tsa-fallback-test", "tenant_id": "test"}')
 
@@ -411,16 +411,16 @@ for i in {1..9}; do
   echo "Check $i/9..." | tee -a "$LOG_FILE"
   
   # Check fallback TSA health
-  FALLBACK_HEALTH=$(curl -s "https://tsa-backup.c2-concierge.com/health" || echo "failed")
+  FALLBACK_HEALTH=$(curl -s "https://tsa-backup.CredLink.com/health" || echo "failed")
   echo "Fallback TSA health: $FALLBACK_HEALTH" | tee -a "$LOG_FILE"
   
   # Check signing performance
-  SIGN_LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "https://api.c2-concierge.com/sign" \
+  SIGN_LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "https://api.CredLink.com/sign" \
     -X POST -H "Content-Type: application/json" -d '{"manifest": "monitor-test", "tenant_id": "test"}')
   echo "Sign latency: ${SIGN_LATENCY}s" | tee -a "$LOG_FILE"
   
   # Check error rates
-  CURRENT_ERROR_RATE=$(curl -s "https://api.c2-concierge.com/metrics/tsa" | jq -r '.error_rate_percentage // 0')
+  CURRENT_ERROR_RATE=$(curl -s "https://api.CredLink.com/metrics/tsa" | jq -r '.error_rate_percentage // 0')
   echo "Current error rate: ${CURRENT_ERROR_RATE}%" | tee -a "$LOG_FILE"
   
   # Alert if performance degrades
@@ -457,7 +457,7 @@ echo "=== Recovering to Primary TSA ===" | tee -a "$LOG_FILE"
 
 # 1. Check primary TSA health
 echo "1. Checking primary TSA health..." | tee -a "$LOG_FILE"
-PRIMARY_HEALTH=$(curl -s "https://tsa.c2-concierge.com/health" || echo "failed")
+PRIMARY_HEALTH=$(curl -s "https://tsa.CredLink.com/health" || echo "failed")
 if [[ "$PRIMARY_HEALTH" != "ok" ]]; then
   echo "Primary TSA still unhealthy - extending fallback" | tee -a "$LOG_FILE"
   exit 0
@@ -465,7 +465,7 @@ fi
 
 # 2. Test primary TSA performance
 echo "2. Testing primary TSA performance..." | tee -a "$LOG_FILE"
-PRIMARY_LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "https://tsa.c2-concierge.com/timestamp")
+PRIMARY_LATENCY=$(curl -s -o /dev/null -w "%{time_total}" "https://tsa.CredLink.com/timestamp")
 echo "Primary TSA latency: ${PRIMARY_LATENCY}s" | tee -a "$LOG_FILE"
 
 if [[ $(echo "$PRIMARY_LATENCY > 0.5" | bc -l) -eq 1 ]]; then
@@ -475,21 +475,21 @@ fi
 
 # 3. Switch back to primary TSA
 echo "3. Switching back to primary TSA..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/tsa/fallback/disable" \
+curl -s -X POST "https://api.CredLink.com/admin/tsa/fallback/disable" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "primary_recovered"}' | tee -a "$LOG_FILE"
 
 # 4. Update configuration
-kubectl patch configmap c2-concierge-config -n c2-concierge \
-  --patch '{"data":{"tsa_fallback_enabled":"false","tsa_primary_url":"https://tsa.c2-concierge.com"}}'
+kubectl patch configmap CredLink-config -n CredLink \
+  --patch '{"data":{"tsa_fallback_enabled":"false","tsa_primary_url":"https://tsa.CredLink.com"}}'
 
 # 5. Restart services
-kubectl rollout restart deployment/sign-service -n c2-concierge
-kubectl rollout status deployment/sign-service -n c2-concierge --timeout=300s
+kubectl rollout restart deployment/sign-service -n CredLink
+kubectl rollout status deployment/sign-service -n CredLink --timeout=300s
 
 # 6. Validate recovery
-RECOVERY_TEST=$(curl -s -X POST "https://api.c2-concierge.com/sign" \
+RECOVERY_TEST=$(curl -s -X POST "https://api.CredLink.com/sign" \
   -H "Content-Type: application/json" \
   -d '{"manifest": "recovery-test", "tenant_id": "test"}')
 
@@ -498,7 +498,7 @@ if echo "$RECOVERY_TEST" | jq -e '.timestamp' > /dev/null; then
 else
   echo "✗ Primary TSA recovery failed - re-enabling fallback" | tee -a "$LOG_FILE"
   # Re-enable fallback
-  curl -s -X POST "https://api.c2-concierge.com/admin/tsa/fallback/enable" \
+  curl -s -X POST "https://api.CredLink.com/admin/tsa/fallback/enable" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"reason": "recovery_failed"}'
@@ -538,7 +538,7 @@ echo "Drift ID: $DRIFT_ID" | tee -a "$LOG_FILE"
 
 # 1. Run immediate consistency check
 echo "1. Running consistency check..." | tee -a "$LOG_FILE"
-CONSISTENCY_CHECK=$(curl -s -X POST "https://api.c2-concierge.com/admin/consistency/check" \
+CONSISTENCY_CHECK=$(curl -s -X POST "https://api.CredLink.com/admin/consistency/check" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"sample_size": 1000, "auto_repair": false}')
@@ -549,13 +549,13 @@ echo "Mismatches found: $MISMATCH_COUNT (${MISMATCH_PERCENTAGE}%)" | tee -a "$LO
 
 # 2. Check replication queue
 echo "2. Checking replication queue..." | tee -a "$LOG_FILE"
-QUEUE_STATUS=$(curl -s "https://api.c2-concierge.com/admin/replication/queue/status")
+QUEUE_STATUS=$(curl -s "https://api.CredLink.com/admin/replication/queue/status")
 QUEUE_DEPTH=$(echo "$QUEUE_STATUS" | jq -r '.pending_count // 0')
 echo "Queue depth: $QUEUE_DEPTH" | tee -a "$LOG_FILE"
 
 # 3. Check replication lag
 echo "3. Checking replication lag..." | tee -a "$LOG_FILE"
-REPLICATION_LAG=$(curl -s "https://api.c2-concierge.com/status" | jq -r '.storage.replication_lag_seconds')
+REPLICATION_LAG=$(curl -s "https://api.CredLink.com/status" | jq -r '.storage.replication_lag_seconds')
 echo "Replication lag: ${REPLICATION_LAG} seconds" | tee -a "$LOG_FILE"
 
 # 4. Determine incident severity
@@ -583,7 +583,7 @@ echo "=== Bucket Drift Containment ===" | tee -a "$LOG_FILE"
 # 1. Pause writes to affected buckets if severity is high/critical
 if [[ "$SEVERITY" == "high" ]] || [[ "$SEVERITY" == "critical" ]]; then
   echo "1. Pausing writes to prevent further drift..." | tee -a "$LOG_FILE"
-  curl -s -X POST "https://api.c2-concierge.com/admin/storage/pause-writes" \
+  curl -s -X POST "https://api.CredLink.com/admin/storage/pause-writes" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"reason": "bucket_drift_containment"}' | tee -a "$LOG_FILE"
@@ -593,7 +593,7 @@ fi
 echo "2. Processing replication queue..." | tee -a "$LOG_FILE"
 for i in {1..5}; do
   echo "Processing attempt $i..." | tee -a "$LOG_FILE"
-  PROCESS_RESULT=$(curl -s -X POST "https://api.c2-concierge.com/admin/replication/process" \
+  PROCESS_RESULT=$(curl -s -X POST "https://api.CredLink.com/admin/replication/process" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"batch_size": 100}')
@@ -610,7 +610,7 @@ done
 
 # 3. Enable read-only mode for consistency checks
 echo "3. Enabling read-only mode..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/storage/readonly" \
+curl -s -X POST "https://api.CredLink.com/admin/storage/readonly" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "consistency_check"}' | tee -a "$LOG_FILE"
@@ -629,7 +629,7 @@ echo "=== Bucket Drift Repair ===" | tee -a "$LOG_FILE"
 
 # 1. Run comprehensive consistency check with auto-repair
 echo "1. Running comprehensive consistency check..." | tee -a "$LOG_FILE"
-COMPREHENSIVE_CHECK=$(curl -s -X POST "https://api.c2-concierge.com/admin/consistency/check" \
+COMPREHENSIVE_CHECK=$(curl -s -X POST "https://api.CredLink.com/admin/consistency/check" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"sample_size": 10000, "auto_repair": true, "repair_strategy": "primary_wins"}')
@@ -648,7 +648,7 @@ if [[ $REMAINING_MISMATCHES -gt 0 ]]; then
   for hash in $MISMATCHES; do
     echo "Repairing manifest: $hash" | tee -a "$LOG_FILE"
     
-    REPAIR_RESULT=$(curl -s -X POST "https://api.c2-concierge.com/admin/manifest/repair" \
+    REPAIR_RESULT=$(curl -s -X POST "https://api.CredLink.com/admin/manifest/repair" \
       -H "Authorization: Bearer $ADMIN_TOKEN" \
       -H "Content-Type: application/json" \
       -d "{\"hash\": \"$hash\", \"source\": \"primary\"}")
@@ -663,7 +663,7 @@ fi
 
 # 3. Final consistency verification
 echo "3. Final consistency verification..." | tee -a "$LOG_FILE"
-FINAL_CHECK=$(curl -s -X POST "https://api.c2-concierge.com/admin/consistency/check" \
+FINAL_CHECK=$(curl -s -X POST "https://api.CredLink.com/admin/consistency/check" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"sample_size": 5000, "auto_repair": false}')
@@ -691,7 +691,7 @@ echo "=== Bucket Drift Recovery ===" | tee -a "$LOG_FILE"
 
 # 1. Disable read-only mode
 echo "1. Disabling read-only mode..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/storage/readwrite" \
+curl -s -X POST "https://api.CredLink.com/admin/storage/readwrite" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"reason": "drift_repaired"}' | tee -a "$LOG_FILE"
@@ -699,7 +699,7 @@ curl -s -X POST "https://api.c2-concierge.com/admin/storage/readwrite" \
 # 2. Resume writes if paused
 if [[ "$SEVERITY" == "high" ]] || [[ "$SEVERITY" == "critical" ]]; then
   echo "2. Resuming writes..." | tee -a "$LOG_FILE"
-  curl -s -X POST "https://api.c2-concierge.com/admin/storage/resume-writes" \
+  curl -s -X POST "https://api.CredLink.com/admin/storage/resume-writes" \
     -H "Authorization: Bearer $ADMIN_TOKEN" \
     -H "Content-Type: application/json" \
     -d '{"reason": "drift_repaired"}' | tee -a "$LOG_FILE"
@@ -712,7 +712,7 @@ echo "3. Validating service functionality..." | tee -a "$LOG_FILE"
 TEST_HASH="drift-recovery-$(date +%s)"
 TEST_DATA='{"test": "bucket-drift-recovery", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
 
-STORE_RESPONSE=$(curl -s -X PUT "https://api.c2-concierge.com/manifest/$TEST_HASH" \
+STORE_RESPONSE=$(curl -s -X PUT "https://api.CredLink.com/manifest/$TEST_HASH" \
   -H "Content-Type: application/json" \
   -d "$TEST_DATA")
 
@@ -725,7 +725,7 @@ fi
 # Wait for replication
 sleep 30
 
-RETRIEVE_RESPONSE=$(curl -s "https://api.c2-concierge.com/manifest/$TEST_HASH")
+RETRIEVE_RESPONSE=$(curl -s "https://api.CredLink.com/manifest/$TEST_HASH")
 if echo "$RETRIEVE_RESPONSE" | jq -e '.test' > /dev/null; then
   echo "✓ Manifest retrieval working" | tee -a "$LOG_FILE"
 else
@@ -734,7 +734,7 @@ fi
 
 # 4. Update monitoring thresholds
 echo "4. Updating monitoring thresholds..." | tee -a "$LOG_FILE"
-curl -s -X POST "https://api.c2-concierge.com/admin/monitoring/thresholds" \
+curl -s -X POST "https://api.CredLink.com/admin/monitoring/thresholds" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
@@ -826,8 +826,8 @@ echo "Incident report: /tmp/incident-report-${DRIFT_ID}.json" | tee -a "$LOG_FIL
 - **Within 2 hours**: Performance degradation, customer impact
 
 ### Communication Channels
-- **Incident Channel**: #incidents-c2-concierge
-- **Status Page**: status.c2-concierge.com
+- **Incident Channel**: #incidents-CredLink
+- **Status Page**: status.CredLink.com
 - **Customer Notification**: automated for high/critical severity
 
 ### Runbook Maintenance

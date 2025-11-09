@@ -1,5 +1,5 @@
 {
-  "name": "@c2/sw-relay",
+  "name": "@credlink/sw-relay",
   "version": "0.1.0",
   "description": "Service Worker relay for C2PA manifests (offline + stale-while-revalidate)",
   "type": "module",

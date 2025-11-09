@@ -4,7 +4,7 @@
 
 ## Overview
 
-The break-glass protocol allows temporary bypass of C2 Concierge's remote-first policy for specific hostnames during emergency situations. This is a signed, audited, and time-limited mechanism designed for production incidents only.
+The break-glass protocol allows temporary bypass of CredLink's remote-first policy for specific hostnames during emergency situations. This is a signed, audited, and time-limited mechanism designed for production incidents only.
 
 ## Protocol Flow
 

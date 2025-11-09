@@ -54,7 +54,7 @@ class FastlyEdgeSigner {
 # fastly.toml
 name = "c2pa-edge-signer"
 description = "C2PA Edge Signing for Fastly Compute"
-authors = ["C2 Concierge Team"]
+authors = ["CredLink Team"]
 
 [scripts]
 build = "cargo build --bin fastly_edge_signer --release --target wasm32-wasi"

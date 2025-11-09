@@ -7,6 +7,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import multipart from '@fastify/multipart';
 import pino from 'pino';
 import { registerRoutes } from './routes.js';
 
@@ -75,7 +76,8 @@ function validateEnvironmentVariables(): void {
   // Validate allowed origins format
   if (process.env.ALLOWED_ORIGINS) {
     const origins = process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim());
-    const urlRegex = /^https?:\/\/[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(:\d+)?(\/.*)?$/;
+    // Allow localhost and IP addresses, as well as domains with TLDs
+    const urlRegex = /^https?:\/\/(localhost|127\.0\.0\.1|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(:\d+)?(\/.*)?$/;
     for (const origin of origins) {
       if (origin !== '*' && !urlRegex.test(origin)) {
         console.warn(`Invalid origin in ALLOWED_ORIGINS: ${origin}`);
@@ -208,6 +210,28 @@ async function createServer() {
                  request.headers['x-real-ip'] ||
                  'unknown';
       return ip.toString();
+    }
+  });
+
+  // Register multipart plugin for file uploads with security limits
+  await fastify.register(multipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB max file size
+      files: 1, // Maximum 1 file per request
+      fields: 10, // Maximum 10 form fields
+      fieldNameSize: 100, // Maximum field name size
+      fieldSize: 1000 // Maximum field value size
+    },
+    attachFieldsToBody: false, // Security: Don't attach fields to body
+    sharedSchemaId: 'MultipartFileSchema',
+    throwFileSizeLimit: true, // Throw error when file size limit exceeded
+    onFile: (part: any) => {
+      // SECURITY: Log file upload attempts
+      fastify.log.debug({ 
+        filename: part.filename, 
+        mimetype: part.mimetype,
+        fieldname: part.fieldname 
+      }, 'File upload started');
     }
   });
 

@@ -1,5 +1,5 @@
 {
-  "name": "@c2/scim",
+  "name": "@credlink/scim",
   "version": "1.0.0",
   "description": "SCIM 2.0 provisioning service for C2 Concierge",
   "main": "dist/index.js",
@@ -11,8 +11,8 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@c2/rbac": "workspace:*",
-    "@c2/scim-core": "workspace:*",
+    "@credlink/rbac": "workspace:*",
+    "@credlink/scim-core": "workspace:*",
     "hono": "^4.10.4"
   },
   "devDependencies": {

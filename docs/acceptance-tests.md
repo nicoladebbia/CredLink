@@ -1,10 +1,10 @@
 # Acceptance Tests Documentation
 
-**Purpose**: Technical documentation for C2 Concierge's hostile-path matrix acceptance testing framework.
+**Purpose**: Technical documentation for CredLink's hostile-path matrix acceptance testing framework.
 
 ## Overview
 
-The acceptance test framework validates that C2 Concierge's remote-first survival doctrine holds under various hostile conditions. It simulates real-world scenarios where content transformations, CDN optimizations, and proxy behaviors might impact provenance verification.
+The acceptance test framework validates that CredLink's remote-first survival doctrine holds under various hostile conditions. It simulates real-world scenarios where content transformations, CDN optimizations, and proxy behaviors might impact provenance verification.
 
 ## Architecture
 

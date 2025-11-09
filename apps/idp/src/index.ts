@@ -7,8 +7,8 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { setCookie, getCookie } from 'hono/cookie';
 import { sign, verify } from 'hono/jwt';
-import { ssoManager, OIDCConfig, SAMLConfig, ClaimsMapping } from '@c2/oidc-saml';
-import { check, Subject } from '@c2/rbac';
+import { ssoManager, OIDCConfig, SAMLConfig, ClaimsMapping } from '@credlink/oidc-saml';
+import { check, Subject } from '@credlink/rbac';
 
 interface Session {
   user_id: string;

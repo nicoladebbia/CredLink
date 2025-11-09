@@ -8,7 +8,7 @@ import {
   tracer,
   type TraceAttributes,
   type SpanData
-} from '@c2/utils';
+} from '@credlink/utils';
 
 interface Env {
   REMOTE_ONLY?: string;

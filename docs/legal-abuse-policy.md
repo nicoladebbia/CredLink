@@ -43,8 +43,8 @@ Any attempt to use C2 Concierge for misleading purposes is strictly prohibited:
 ## Abuse Reporting
 
 ### Reporting Channels
-- **Primary**: abuse@c2-concierge.com
-- **Security Issues**: security@c2-concierge.com (PGP key available)
+- **Primary**: abuse@CredLink.com
+- **Security Issues**: security@CredLink.com (PGP key available)
 - **Emergency**: PagerDuty escalation for active threats
 
 ### Required Information
@@ -180,18 +180,18 @@ All abuse reports must include:
 ## Contact Information
 
 ### Abuse Reporting
-- **Email**: abuse@c2-concierge.com
-- **Form**: Online reporting form at c2-concierge.com/report-abuse
+- **Email**: abuse@CredLink.com
+- **Form**: Online reporting form at CredLink.com/report-abuse
 - **Hotline**: +1-555-ABUSE (business hours)
 
 ### Legal Inquiries
-- **Email**: legal@c2-concierge.com
+- **Email**: legal@CredLink.com
 - **Address**: 123 Tech Street, Wilmington, DE 19801
 - **Phone**: +1-555-LEGAL (business hours)
 
 ### Press Inquiries
-- **Email**: press@c2-concierge.com
-- **Security**: security@c2-concierge.com (PGP: 0xABCD1234)
+- **Email**: press@CredLink.com
+- **Security**: security@CredLink.com (PGP: 0xABCD1234)
 
 ---
 

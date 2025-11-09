@@ -1,5 +1,5 @@
 {
-  "name": "@c2/strip-happy-sandbox",
+  "name": "@credlink/strip-happy-sandbox",
   "version": "1.0.0",
   "description": "Strip-happy CDN simulator sandbox",
   "main": "server.js",

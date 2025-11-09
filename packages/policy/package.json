@@ -1,5 +1,5 @@
 {
-  "name": "@c2/policy",
+  "name": "@credlink/policy",
   "version": "0.1.0",
   "description": "Policy and feature flags for C2 Concierge",
   "main": "dist/index.js",

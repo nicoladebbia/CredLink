@@ -1,7 +1,7 @@
 {
-  "name": "c2-concierge",
+  "name": "credlink",
   "version": "0.1.0",
-  "description": "C2 Concierge: Provenance verification platform with remote-first survival doctrine",
+  "description": "CredLink: Content authenticity platform with remote-first proof survival",
   "private": true,
   "type": "module",
   "scripts": {

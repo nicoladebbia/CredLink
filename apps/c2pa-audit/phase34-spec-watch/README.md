@@ -65,8 +65,8 @@ The Spec Watch System provides automated detection, analysis, and contribution c
 
 ```bash
 # Clone the repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/apps/c2pa-audit/phase34-spec-watch
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink/apps/c2pa-audit/phase34-spec-watch
 
 # Install dependencies
 npm install

@@ -1293,7 +1293,7 @@ class ExecutiveROICalculator {
         doc.text(`Annualized Cost: ${document.getElementById('annualizedCost').textContent}`, 20, 120);
         
         // Save the PDF
-        doc.save('c2-concierge-roi-analysis.pdf');
+        doc.save('CredLink-roi-analysis.pdf');
     }
     
     scheduleConsultation() {

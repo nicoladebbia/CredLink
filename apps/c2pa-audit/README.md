@@ -42,8 +42,8 @@ Deliver a comprehensive audit solution for C2PA manifests that provides:
 ### Build from Source
 ```bash
 # Clone repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/apps/c2pa-audit
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink/apps/c2pa-audit
 
 # Install dependencies
 pnpm install
@@ -450,8 +450,8 @@ Get validation code reference.
 ### Development Setup
 ```bash
 # Clone and setup
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/apps/c2pa-audit
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink/apps/c2pa-audit
 pnpm install
 
 # Development mode
@@ -501,8 +501,8 @@ MIT License - see LICENSE file for details.
 
 ## 📞 Support
 
-- **Issues**: https://github.com/Nickiller04/c2-concierge/issues
-- **Discussions**: https://github.com/Nickiller04/c2-concierge/discussions
+- **Issues**: https://github.com/Nickiller04/CredLink/issues
+- **Discussions**: https://github.com/Nickiller04/CredLink/discussions
 - **Specification**: https://spec.c2pa.org/
 
 ---

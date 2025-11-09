@@ -745,7 +745,7 @@ class PricingCalculator {
     exportResults() {
         const results = this.gatherResults();
         const csv = this.convertToCSV(results);
-        this.downloadCSV(csv, 'c2-concierge-pricing-estimate.csv');
+        this.downloadCSV(csv, 'CredLink-pricing-estimate.csv');
     }
     
     shareResults() {

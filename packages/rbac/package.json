@@ -1,5 +1,5 @@
 {
-  "name": "@c2/rbac",
+  "name": "@credlink/rbac",
   "version": "1.0.0",
   "description": "Central RBAC authorization for C2 Concierge",
   "main": "dist/index.js",

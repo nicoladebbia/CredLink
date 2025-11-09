@@ -1,10 +1,10 @@
-# C2 Concierge SDKs
+# CredLink SDKs
 
 [![JavaScript](https://img.shields.io/badge/JavaScript-1.3.0-blue.svg)](./sdk/js/)
 [![Python](https://img.shields.io/badge/Python-1.3.0-green.svg)](./sdk/python/)
 [![Go](https://img.shields.io/badge/Go-v2-orange.svg)](./sdk/go/)
 
-Ship-ready SDKs for cryptographic provenance verification and signing with the C2 Concierge API. Reduce time-to-first-verify (TT*V) to under 10 minutes with typed, tiny client libraries that wrap the HTTP API.
+Ship-ready SDKs for cryptographic provenance verification and signing with the CredLink API. Reduce time-to-first-verify (TT*V) to under 10 minutes with typed, tiny client libraries that wrap the HTTP API.
 
 ## 🚀 Quick Start
 
@@ -380,8 +380,8 @@ All SDKs follow [Semantic Versioning 2.0.0](https://semver.org/):
 - **API Reference**: https://docs.c2concierge.com/api
 - **OpenAPI Spec**: [./sdk/openapi/openapi.yaml](./sdk/openapi/openapi.yaml)
 - **Examples**: [./examples/](./examples/)
-- **GitHub Repository**: https://github.com/Nickiller04/c2-concierge
-- **Bug Reports**: https://github.com/Nickiller04/c2-concierge/issues
+- **GitHub Repository**: https://github.com/Nickiller04/CredLink
+- **Bug Reports**: https://github.com/Nickiller04/CredLink/issues
 - **Security Policy**: [./SECURITY.md](./SECURITY.md)
 
 ## 🏢 Enterprise
@@ -404,8 +404,8 @@ Contributions are welcome! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for d
 
 ```bash
 # Clone repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink
 
 # Setup JavaScript/TypeScript
 cd sdk/js
@@ -432,7 +432,7 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 ## 📊 Metrics
 
 - **TT*V**: Under 10 minutes from install to first verification
-- **API Coverage**: 100% of C2 Concierge API endpoints
+- **API Coverage**: 100% of CredLink API endpoints
 - **Test Coverage**: 95%+ across all SDKs
 - **Documentation**: 100% API documentation coverage
 - **Performance**: <100ms average response time
@@ -440,4 +440,4 @@ MIT License - see [LICENSE](./LICENSE) file for details.
 
 ---
 
-**Built with ❤️ by the C2 Concierge team**
+**Built with ❤️ by the CredLink team**

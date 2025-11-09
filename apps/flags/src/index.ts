@@ -5,7 +5,7 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { check, Subject } from '@c2/rbac';
+import { check, Subject } from '@credlink/rbac';
 
 interface FeatureFlag {
   id: string;

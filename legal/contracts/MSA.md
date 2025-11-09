@@ -1,11 +1,11 @@
 # Master Services Agreement
 
-**C2 Concierge Platform - C2PA-as-a-Service**
+**CredLink Platform - C2PA-as-a-Service**
 
 **Version**: 1.0.0  
 **Effective Date**: [Date]  
 **Parties**: 
-- **Provider**: C2 Concierge Inc., a Delaware corporation ("Provider")
+- **Provider**: CredLink Inc., a Delaware corporation ("Provider")
 - **Customer**: [Customer Name], a [State/Country] entity ("Customer")
 
 ---

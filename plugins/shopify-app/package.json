@@ -1,5 +1,5 @@
 {
-  "name": "@c2/shopify-app",
+  "name": "@credlink/shopify-app",
   "version": "0.1.0",
   "description": "C2 Concierge Shopify App for Content Credentials",
   "type": "module",

@@ -1,10 +1,10 @@
-# C2 Concierge SDK - JavaScript/TypeScript v1.3.0
+# CredLink SDK - JavaScript/TypeScript v1.3.0
 
 [![npm version](https://badge.fury.io/js/%40c2concierge%2Fsdk.svg)](https://badge.fury.io/js/%40c2concierge%2Fsdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-blue.svg)](https://www.typescriptlang.org/)
 
-A comprehensive JavaScript/TypeScript SDK for cryptographic provenance verification and signing with the C2 Concierge API.
+A comprehensive JavaScript/TypeScript SDK for cryptographic provenance verification and signing with the CredLink API.
 
 ## ✨ Features
 
@@ -378,8 +378,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [Documentation](https://docs.c2concierge.com)
 - [API Reference](https://docs.c2concierge.com/api)
 - [Examples](../../examples/)
-- [GitHub Repository](https://github.com/Nickiller04/c2-concierge)
-- [Bug Reports](https://github.com/Nickiller04/c2-concierge/issues)
+- [GitHub Repository](https://github.com/Nickiller04/CredLink)
+- [Bug Reports](https://github.com/Nickiller04/CredLink/issues)
 - [Security Policy](../../SECURITY.md)
 
 ## 🤝 Contributing

@@ -1,6 +1,6 @@
-# Contributing to C2 Concierge
+# Contributing to CredLink
 
-Thank you for your interest in contributing to C2 Concierge! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing to CredLink! This document provides guidelines and information for contributors.
 
 ## Getting Started
 
@@ -15,8 +15,8 @@ Thank you for your interest in contributing to C2 Concierge! This document provi
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/your-username/c2-concierge.git
-   cd c2-concierge
+   git clone https://github.com/your-username/CredLink.git
+   cd CredLink
    ```
 
 2. **Install Dependencies**
@@ -80,7 +80,7 @@ docs(readme): update installation instructions
 ## Project Structure
 
 ```
-c2-concierge/
+CredLink/
 ├── packages/           # Shared libraries
 │   ├── acceptance/     # Test harness
 │   ├── policy/         # Policy engine
@@ -244,4 +244,4 @@ By contributing, you agree that your contributions will be licensed under the sa
 
 ---
 
-Thank you for contributing to C2 Concierge! Your help makes this project better for everyone.
+Thank you for contributing to CredLink! Your help makes this project better for everyone.

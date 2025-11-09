@@ -112,3 +112,62 @@ export interface ApiResponse<T = unknown> {
   /** Timestamp of the response */
   timestamp: string;
 }
+
+// === SIGNING TYPES ===
+
+export interface SigningRequest {
+  /** Creator identifier (email, name, or org) */
+  creator: string;
+  /** Optional assertions about the content */
+  assertions?: {
+    /** AI-generated content flag */
+    ai_generated?: boolean;
+    /** Content description */
+    description?: string;
+    /** Content title */
+    title?: string;
+    /** Custom metadata */
+    metadata?: Record<string, unknown>;
+  };
+  /** Optional signing profile */
+  profile?: string;
+  /** Whether to include timestamp authority */
+  tsa?: boolean;
+}
+
+export interface SigningResult {
+  manifest_url: string;
+  image_hash: string;
+  created_at: string;
+  signer: {
+    name: string;
+    key_id: string;
+    organization: string;
+  };
+  manifest_hash: string;
+  storage: {
+    bucket: string;
+    key: string;
+    region?: string;
+  };
+  // Enhanced cryptographic fields
+  signature?: string;
+  crypto_algorithm?: string;
+  has_tsa_timestamp?: boolean;
+}
+
+export class SigningError extends Error {
+  code: 'INVALID_IMAGE' | 'IMAGE_TOO_LARGE' | 'UNSUPPORTED_FORMAT' | 'STORAGE_ERROR' | 'SIGNING_FAILED' | 'INVALID_REQUEST' | 'CREATOR_REQUIRED';
+  details?: Record<string, unknown>;
+
+  constructor(
+    code: 'INVALID_IMAGE' | 'IMAGE_TOO_LARGE' | 'UNSUPPORTED_FORMAT' | 'STORAGE_ERROR' | 'SIGNING_FAILED' | 'INVALID_REQUEST' | 'CREATOR_REQUIRED',
+    message: string,
+    details?: Record<string, unknown>
+  ) {
+    super(message);
+    this.code = code;
+    this.details = details;
+    this.name = 'SigningError';
+  }
+}

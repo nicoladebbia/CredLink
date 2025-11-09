@@ -124,31 +124,31 @@ Required environments for CD pipeline with manual approvals.
 
 Create the following teams in GitHub organization:
 
-1. **@c2-concierge/core-team**
+1. **@CredLink/core-team**
    - Role: Maintain
    - Members: Engineering leads, architects
 
-2. **@c2-concierge/security-team**
+2. **@CredLink/security-team**
    - Role: Maintain
    - Members: Security engineers, AppSec team
 
-3. **@c2-concierge/backend-team**
+3. **@CredLink/backend-team**
    - Role: Write
    - Members: Backend engineers
 
-4. **@c2-concierge/infra-team**
+4. **@CredLink/infra-team**
    - Role: Write
    - Members: DevOps, SRE, Platform engineers
 
-5. **@c2-concierge/db-team**
+5. **@CredLink/db-team**
    - Role: Write
    - Members: Database engineers, DBA
 
-6. **@c2-concierge/sre-team**
+6. **@CredLink/sre-team**
    - Role: Write
    - Members: SRE, on-call engineers
 
-7. **@c2-concierge/qa-team**
+7. **@CredLink/qa-team**
    - Role: Write
    - Members: QA engineers, test engineers
 
@@ -263,7 +263,7 @@ After setup, verify all protections are active:
 
 ```bash
 # Clone fresh
-git clone git@github.com:org/c2-concierge.git test-clone
+git clone git@github.com:org/CredLink.git test-clone
 cd test-clone
 
 # Try to push to main (should fail)

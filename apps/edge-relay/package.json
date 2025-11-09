@@ -1,5 +1,5 @@
 {
-  "name": "@c2/edge-relay",
+  "name": "@credlink/edge-relay",
   "version": "0.1.0",
   "description": "Cloudflare Edge Relay for zero-CORS manifest delivery",
   "type": "module",
@@ -10,7 +10,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@c2/utils": "workspace:*"
+    "@credlink/utils": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241018.0",

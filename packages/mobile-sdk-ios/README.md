@@ -1,4 +1,4 @@
-# C2 Concierge Mobile SDKs - Phase 25
+# CredLink Mobile SDKs - Phase 25
 
 ## Package Structure
 ```

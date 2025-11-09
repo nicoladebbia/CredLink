@@ -1,5 +1,5 @@
 {
-  "name": "@c2/manifest-store",
+  "name": "@credlink/manifest-store",
   "version": "0.1.0",
   "description": "Remote Manifest Store v1 - Write-once, hash-addressed manifest storage",
   "type": "module",
@@ -27,7 +27,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@c2/utils": "file:../utils"
+    "@credlink/utils": "file:../utils"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240512.0",

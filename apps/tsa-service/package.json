@@ -1,5 +1,5 @@
 {
-  "name": "@c2/tsa-service",
+  "name": "@credlink/tsa-service",
   "version": "1.0.0",
   "description": "RFC 3161/5816 TSA Redundancy & SLAs Service",
   "type": "module",

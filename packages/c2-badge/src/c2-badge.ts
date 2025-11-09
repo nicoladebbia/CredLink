@@ -273,7 +273,7 @@ export class C2Badge extends HTMLElement {
       link.id = STYLES_ID;
       link.rel = 'stylesheet';
       link.href = this.getAttribute('styles-url') || 
-        'https://cdn.jsdelivr.net/npm/@c2/c2-badge@latest/dist/styles.css';
+        'https://cdn.jsdelivr.net/npm/@credlink/c2-badge@latest/dist/styles.css';
       document.head.appendChild(link);
     }
   }

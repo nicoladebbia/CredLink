@@ -1,4 +1,4 @@
-# C2 Concierge Offline Verification Kit
+# CredLink Offline Verification Kit
 
 ## Purpose
 A self-contained, air-gapped verification kit for courtrooms, secure newsrooms, and crisis operations. Verifies C2PA manifests against a bundled trust-root snapshot without network access.

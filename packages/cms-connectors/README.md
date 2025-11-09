@@ -1,8 +1,8 @@
-# C2 Concierge CMS Connectors
+# CredLink CMS Connectors
 
 🔐 **Universal C2PA integration for popular CMS platforms**
 
-C2 Concierge provides seamless Content Authenticity Initiative (C2PA) integration for major Content Management Systems and Static Site Generators. Enable provenance tracking, content verification, and tamper-evident signing across your digital content ecosystem.
+CredLink provides seamless Content Authenticity Initiative (C2PA) integration for major Content Management Systems and Static Site Generators. Enable provenance tracking, content verification, and tamper-evident signing across your digital content ecosystem.
 
 ## 🚀 Quick Start
 
@@ -76,7 +76,7 @@ packages/cms-connectors/
 1. **Download the module**
    ```bash
    cd /path/to/drupal/modules/contrib
-   git clone https://github.com/Nickiller04/c2-concierge.git c2c_c2pa
+   git clone https://github.com/Nickiller04/CredLink.git c2c_c2pa
    ```
 
 2. **Install via Drush**
@@ -87,7 +87,7 @@ packages/cms-connectors/
 
 3. **Configure permissions**
    - Navigate to `/admin/people/permissions`
-   - Grant "Administer C2 Concierge" to appropriate roles
+   - Grant "Administer CredLink" to appropriate roles
 
 4. **Test integration**
    ```bash
@@ -524,8 +524,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ```bash
 # Clone repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/packages/cms-connectors
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink/packages/cms-connectors
 
 # Install dependencies
 npm install
@@ -557,18 +557,18 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 🆘 Support
 
 - **Documentation**: [docs.c2concierge.org](https://docs.c2concierge.org)
-- **Issues**: [GitHub Issues](https://github.com/Nickiller04/c2-concierge/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Nickiller04/c2-concierge/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Nickiller04/CredLink/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Nickiller04/CredLink/discussions)
 - **Email**: support@c2concierge.org
 
 ## 🔗 Related Projects
 
-- **[C2 Concierge Core](https://github.com/Nickiller04/c2-concierge)** - Core signing and verification services
-- **[C2 Concierge SDK](https://github.com/Nickiller04/c2-concierge-sdk)** - JavaScript/TypeScript SDK
-- **[C2 Concierge CLI](https://github.com/Nickiller04/c2-concierge-cli)** - Command-line tools
+- **[CredLink Core](https://github.com/Nickiller04/CredLink)** - Core signing and verification services
+- **[CredLink SDK](https://github.com/Nickiller04/CredLink-sdk)** - JavaScript/TypeScript SDK
+- **[CredLink CLI](https://github.com/Nickiller04/CredLink-cli)** - Command-line tools
 
 ---
 
-**Built with ❤️ by the C2 Concierge team**
+**Built with ❤️ by the CredLink team**
 
 *Enabling trustworthy content across the web*

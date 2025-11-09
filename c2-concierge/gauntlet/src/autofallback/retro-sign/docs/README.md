@@ -84,8 +84,8 @@ C2-Concierge is a comprehensive enterprise-grade key custody and management syst
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-org/c2-concierge.git
-   cd c2-concierge
+   git clone https://github.com/your-org/CredLink.git
+   cd CredLink
    ```
 
 2. **Build the Application**
@@ -258,8 +258,8 @@ docker-compose -f docker-compose.prod.yml up -d --scale keyctl=3
 kubectl apply -f deploy/k8s/
 
 # Monitor deployment
-kubectl get pods -n c2-concierge
-kubectl logs -f deployment/keyctl -n c2-concierge
+kubectl get pods -n CredLink
+kubectl logs -f deployment/keyctl -n CredLink
 ```
 
 ## API Reference
@@ -438,9 +438,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support
 
-- **Documentation**: [docs.c2-concierge.com](https://docs.c2-concierge.com)
-- **Community**: [GitHub Discussions](https://github.com/your-org/c2-concierge/discussions)
-- **Issues**: [GitHub Issues](https://github.com/your-org/c2-concierge/issues)
+- **Documentation**: [docs.CredLink.com](https://docs.CredLink.com)
+- **Community**: [GitHub Discussions](https://github.com/your-org/CredLink/discussions)
+- **Issues**: [GitHub Issues](https://github.com/your-org/CredLink/issues)
 - **Email**: support@yourorg.com
 
 ## Changelog

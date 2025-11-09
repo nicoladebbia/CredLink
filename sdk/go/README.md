@@ -1,10 +1,10 @@
-# C2 Concierge SDK - Go v2
+# CredLink SDK - Go v2
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/c2concierge/sdk-go/v2)](https://pkg.go.dev/github.com/c2concierge/sdk-go/v2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org/dl/)
 
-A comprehensive Go SDK for cryptographic provenance verification and signing with the C2 Concierge API.
+A comprehensive Go SDK for cryptographic provenance verification and signing with the CredLink API.
 
 ## ✨ Features
 
@@ -577,8 +577,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [Documentation](https://docs.c2concierge.com)
 - [API Reference](https://docs.c2concierge.com/api)
 - [Examples](../../examples/)
-- [GitHub Repository](https://github.com/Nickiller04/c2-concierge)
-- [Bug Reports](https://github.com/Nickiller04/c2-concierge/issues)
+- [GitHub Repository](https://github.com/Nickiller04/CredLink)
+- [Bug Reports](https://github.com/Nickiller04/CredLink/issues)
 - [Security Policy](../../SECURITY.md)
 
 ## 🤝 Contributing

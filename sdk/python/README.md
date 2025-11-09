@@ -1,10 +1,10 @@
-# C2 Concierge SDK - Python v1.3.0
+# CredLink SDK - Python v1.3.0
 
 [![PyPI version](https://badge.fury.io/py/c2concierge.svg)](https://badge.fury.io/py/c2concierge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-A comprehensive Python SDK for cryptographic provenance verification and signing with the C2 Concierge API.
+A comprehensive Python SDK for cryptographic provenance verification and signing with the CredLink API.
 
 ## ✨ Features
 
@@ -466,8 +466,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - [Documentation](https://docs.c2concierge.com)
 - [API Reference](https://docs.c2concierge.com/api)
 - [Examples](../../examples/)
-- [GitHub Repository](https://github.com/Nickiller04/c2-concierge)
-- [Bug Reports](https://github.com/Nickiller04/c2-concierge/issues)
+- [GitHub Repository](https://github.com/Nickiller04/CredLink)
+- [Bug Reports](https://github.com/Nickiller04/CredLink/issues)
 - [Security Policy](../../SECURITY.md)
 
 ## 🤝 Contributing

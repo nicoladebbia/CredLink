@@ -1,5 +1,5 @@
-import { policyFromEnvironment } from '@c2/policy';
-import { createCacheHeaders } from '@c2/utils';
+import { policyFromEnvironment } from '@credlink/policy';
+import { createCacheHeaders } from '@credlink/utils';
 export default {
     async fetch(req, env, ctx) {
         const url = new URL(req.url);

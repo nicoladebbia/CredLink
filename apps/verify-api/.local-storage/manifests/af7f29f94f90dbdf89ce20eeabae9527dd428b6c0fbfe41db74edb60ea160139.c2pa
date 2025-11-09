@@ -1,0 +1,92 @@
+{
+  "@context": "https://c2pa.org/specifications/1.0/context.json",
+  "@type": "c2pa.manifest",
+  "claim_generator": "CredLink Signing Service v2.0.0",
+  "claim_generator_version": "2.0.0",
+  "format": "application/c2pa",
+  "instance_id": "urn:uuid:c827258f-2cb1-4e0f-8295-18cf159f0307",
+  "title": "MVP Demo Image",
+  "claim": [
+    {
+      "label": "stds.assertions",
+      "claim_generator": "CredLink Signing Service v2.0.0",
+      "claim_generator_version": "2.0.0",
+      "assertions": [
+        {
+          "label": "c2pa.actions",
+          "data": {
+            "actions": [
+              {
+                "action": "c2pa.created",
+                "when": "2025-11-09T17:46:22.143Z",
+                "digitalSourceType": "https://schema.org/Photograph",
+                "softwareAgent": "CredLink/2.0.0",
+                "parameters": {
+                  "format": "image/jpeg",
+                  "size": 22
+                }
+              }
+            ]
+          }
+        },
+        {
+          "label": "c2pa.hash.data",
+          "data": {
+            "name": "jumbf manifest",
+            "alg": "sha256",
+            "hash": "d20f6ffd523b78a86cd2f916fa34af5d1918d75f7b142237c752ad6b254213ab",
+            "pad": "ZDIwZjZmZmQ1MjNiNzhhODZjZDJmOTE2ZmEzNGFmNWQxOTE4ZDc1ZjdiMTQyMjM3Yzc1MmFkNmIyNTQyMTNhYg=="
+          }
+        },
+        {
+          "label": "c2pa.ai_generative_training",
+          "data": {
+            "use": "notAllowed",
+            "constraint_info": {
+              "name": "AI Training Policy",
+              "constraint_type": "training"
+            }
+          }
+        },
+        {
+          "label": "stds.schema-org.CreativeWork",
+          "data": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "author": {
+              "@type": "Person",
+              "name": "mvp-demo@credlink.com"
+            },
+            "name": "MVP Demo Image",
+            "description": "Testing the working MVP"
+          }
+        },
+        {
+          "label": "c2pa.signature",
+          "data": {
+            "algorithm": "rs256",
+            "signature": "HBfQLOfySnmoWCVSEb52P0zJbdZUJbuTRYi9NenKBnvSlTaIVM52iC025rk9b0gae6hpZ3JJ2GcYjxs4BLDnvkveSb+EXfG1GK8FEzX0/GHWqoUE6TwGAnNJGkyE3+DjMvc22UB42mteUvkHDr4fPX9WsmVSAEowXAZJ0DeKpbDX5q0T+xa3N7rWnQabGQvCEU88sZ8F2ghwwgj3IgXmubGhq/UWDgse2/sTfyzRTNyfqRQWtHYJisdmcsU7Bzf00B2hUF9lcHU9zmLyjqzMX+RCaybYRQSqi3VGD03TOol6ypDb/N1ZLaCPNeFZQBQTw7zbR+hjr9XeEH3vktZGYg==",
+            "hash": "af7f29f94f90dbdf89ce20eeabae9527dd428b6c0fbfe41db74edb60ea160139",
+            "key_id": "demo-key-1",
+            "signer": {
+              "name": "mvp-demo@credlink.com",
+              "organization": "CredLink Demo",
+              "key_id": "demo-key-1",
+              "public_key_fingerprint": "6b23bf94d1afacee"
+            },
+            "timestamp": "2025-11-09T17:46:22.143Z"
+          }
+        }
+      ]
+    }
+  ],
+  "signature_info": {
+    "alg": "rs256",
+    "issuer": "CredLink Demo",
+    "cert_serial_number": "demo-key-1",
+    "time": "2025-11-09T17:46:22.143Z",
+    "signature": "HBfQLOfySnmoWCVSEb52P0zJbdZUJbuTRYi9NenKBnvSlTaIVM52iC025rk9b0gae6hpZ3JJ2GcYjxs4BLDnvkveSb+EXfG1GK8FEzX0/GHWqoUE6TwGAnNJGkyE3+DjMvc22UB42mteUvkHDr4fPX9WsmVSAEowXAZJ0DeKpbDX5q0T+xa3N7rWnQabGQvCEU88sZ8F2ghwwgj3IgXmubGhq/UWDgse2/sTfyzRTNyfqRQWtHYJisdmcsU7Bzf00B2hUF9lcHU9zmLyjqzMX+RCaybYRQSqi3VGD03TOol6ypDb/N1ZLaCPNeFZQBQTw7zbR+hjr9XeEH3vktZGYg==",
+    "public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAipKBOpn4C6mcCeXvF0Ph\nBDMH9IeE1K8pqaDlM9nxRGN5zyYnkQ6h93wtXt/hGhs7Vn7tVMVmp7V6Xw+VO1uY\nGpjx68yf57aKp/wTdo3+G0LPmQepl5+T7yBml+Nk0zZndU+XfikOH6k585T/GYVq\nsGZ/YuXi56g7ZHcXA90sNqb0aBg/Bepulq2ac3tQ7wO8IXjruU9JdLdlXKSm4jHp\ntQePtAndSB2jCRDfo4OKDiqTw1U1po+lqpYfm0qOyy5RccxTlnyEW1deiGX+fkg+\n2+igEOZXNKKW8YsxF9NzuemVkrUf990Bj4pMdNtUhyL7YYT3EVMMbo9NhA3d2104\nTQIDAQAB\n-----END PUBLIC KEY-----\n",
+    "signing_time": "2025-11-09T17:46:22.148Z"
+  }
+}

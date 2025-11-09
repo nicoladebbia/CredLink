@@ -1,5 +1,5 @@
 {
-  "name": "@c2/policy",
+  "name": "@credlink/policy",
   "version": "1.0.0",
   "description": "Phase 20: Policy Engine & Assertions Builder - Human-readable DSL to C2PA assertions compiler",
   "main": "dist/index.js",
@@ -17,7 +17,7 @@
     "compile": "node dist/cli.js compile"
   },
   "dependencies": {
-    "@c2/rbac": "workspace:*",
+    "@credlink/rbac": "workspace:*",
     "yaml": "^2.3.4",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",

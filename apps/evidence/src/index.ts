@@ -5,8 +5,8 @@
 
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { check, Subject } from '@c2/rbac';
-import { auditLogger } from '@c2/audit';
+import { check, Subject } from '@credlink/rbac';
+import { auditLogger } from '@credlink/audit';
 
 interface EvidencePack {
   id: string;

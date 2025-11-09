@@ -1197,7 +1197,7 @@ function exportToPDF() {
     // Add detailed breakdown
     // ... more PDF generation code
     
-    doc.save('c2-concierge-cost-analysis.pdf');
+    doc.save('CredLink-cost-analysis.pdf');
 }
 ```
 

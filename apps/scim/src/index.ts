@@ -12,8 +12,8 @@ import {
   SCIMListResponse,
   SCIMValidator,
   SCIMPatchOperation
-} from '@c2/scim-core';
-import { check, Subject } from '@c2/rbac';
+} from '@credlink/scim-core';
+import { check, Subject } from '@credlink/rbac';
 
 const app = new Hono();
 

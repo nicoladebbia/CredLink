@@ -1,5 +1,5 @@
 {
-  "name": "@c2/oidc-saml",
+  "name": "@credlink/oidc-saml",
   "version": "1.0.0",
   "description": "OIDC and SAML provider implementations for C2 Concierge",
   "main": "dist/index.js",

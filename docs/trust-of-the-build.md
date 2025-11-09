@@ -1,10 +1,10 @@
-# Trust of the Build - C2 Concierge Supply Chain Security
+# Trust of the Build - CredLink Supply Chain Security
 
-This document explains how to verify the integrity, provenance, and security of C2 Concierge releases.
+This document explains how to verify the integrity, provenance, and security of CredLink releases.
 
 ## Overview
 
-Every C2 Concierge release includes:
+Every CredLink release includes:
 - **Cryptographic signatures** using Sigstore keyless signing
 - **SLSA provenance attestations** from GitHub Actions
 - **SBOMs** in SPDX 2.3 and CycloneDX formats
@@ -17,7 +17,7 @@ Every C2 Concierge release includes:
 
 ```bash
 # Verify the image signature
-cosign verify ghcr.io/nickiller04/c2-concierge:latest
+cosign verify ghcr.io/nickiller04/CredLink:latest
 
 # Expected output: Verification successful
 ```
@@ -26,17 +26,17 @@ cosign verify ghcr.io/nickiller04/c2-concierge:latest
 
 ```bash
 # List attestations
-cosign attestations list ghcr.io/nickiller04/c2-concierge:latest
+cosign attestations list ghcr.io/nickiller04/CredLink:latest
 
 # Verify SLSA provenance
-cosign verify-attestation --type slsaprovenance ghcr.io/nickiller04/c2-concierge:latest
+cosign verify-attestation --type slsaprovenance ghcr.io/nickiller04/CredLink:latest
 ```
 
 ### 3. Download and Verify SBOM
 
 ```bash
 # Download SBOM attestation
-cosign verify-attestation --type sbom ghcr.io/nickiller04/c2-concierge:latest > sbom.json
+cosign verify-attestation --type sbom ghcr.io/nickiller04/CredLink:latest > sbom.json
 
 # Extract and validate SBOM
 jq '.predicate' sbom.json > sbom.spdx.json
@@ -63,14 +63,14 @@ curl -sSfL https://raw.githubusercontent.com/aquasecurity/trivy/main/install.sh 
 
 ```bash
 # Set the image tag
-IMAGE="ghcr.io/nickiller04/c2-concierge:latest"
+IMAGE="ghcr.io/nickiller04/CredLink:latest"
 
 # Verify the signature
 cosign verify "$IMAGE"
 
 # Verify with specific issuer
 cosign verify "$IMAGE" \
-  --certificate-identity-regexp "repo:Nickiller04/c2-concierge:.*" \
+  --certificate-identity-regexp "repo:Nickiller04/CredLink:.*" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
 ```
 
@@ -82,7 +82,7 @@ cosign verify "$IMAGE" \
 # Verify SLSA provenance attestation
 cosign verify-attestation \
   --type slsaprovenance \
-  --certificate-identity-regexp "repo:Nickiller04/c2-concierge:.*" \
+  --certificate-identity-regexp "repo:Nickiller04/CredLink:.*" \
   --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
   "$IMAGE"
 
@@ -136,8 +136,8 @@ trivy sbom attested-sbom.spdx.json --severity CRITICAL,HIGH
 
 ```bash
 # Clone the repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink
 
 # Get the provenance commit
 COMMIT=$(cat provenance.json | jq -r '.materials[0].digest.sha1')
@@ -165,8 +165,8 @@ docker buildx imagetools inspect local-test
 
 ### GitHub Artifact Attestations
 
-- **Repository**: https://github.com/Nickiller04/c2-concierge
-- **Attestations**: https://github.com/Nickiller04/c2-concierge/attestations
+- **Repository**: https://github.com/Nickiller04/CredLink
+- **Attestations**: https://github.com/Nickiller04/CredLink/attestations
 
 ### Rekor Transparency Log
 
@@ -174,7 +174,7 @@ docker buildx imagetools inspect local-test
 
 ### Container Registry
 
-- **Image**: https://github.com/Nickiller04/c2-concierge/pkgs/container/c2-concierge
+- **Image**: https://github.com/Nickiller04/CredLink/pkgs/container/CredLink
 - **SBOMs**: Attached as attestations
 
 ## Security Policy Enforcement
@@ -195,15 +195,15 @@ Our cluster enforces the following policies:
 apiVersion: policy.sigstore.dev/v1alpha1
 kind: ClusterImagePolicy
 metadata:
-  name: c2-concierge-policy
+  name: CredLink-policy
 spec:
   images:
-    - glob: "ghcr.io/nickiller04/c2-concierge/*"
+    - glob: "ghcr.io/nickiller04/CredLink/*"
   authorities:
     - keyless:
         identities:
           - issuer: "https://token.actions.githubusercontent.com"
-            subjectRegExp: "^repo:Nickiller04/c2-concierge:.*$"
+            subjectRegExp: "^repo:Nickiller04/CredLink:.*$"
   attestations:
     - name: slsa-provenance
       predicateType: "https://slsa.dev/provenance/v1"
@@ -291,9 +291,9 @@ syft diff IMAGE1 IMAGE2
 
 For questions about supply chain security:
 
-- **Issues**: https://github.com/Nickiller04/c2-concierge/issues
-- **Security**: security@c2-concierge.com
-- **Documentation**: https://docs.c2-concierge.com/security
+- **Issues**: https://github.com/Nickiller04/CredLink/issues
+- **Security**: security@CredLink.com
+- **Documentation**: https://docs.CredLink.com/security
 
 ---
 

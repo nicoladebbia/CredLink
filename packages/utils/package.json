@@ -1,5 +1,5 @@
 {
-  "name": "@c2/utils",
+  "name": "@credlink/utils",
   "version": "0.1.0",
   "description": "Shared utilities for C2 Concierge",
   "main": "dist/index.js",

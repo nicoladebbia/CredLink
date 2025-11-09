@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2025-01-01
 
 ### Added
-- Initial release of C2 Concierge SDK for Python
+- Initial release of CredLink SDK for Python
 - Full type hints with Pydantic models generated from OpenAPI specification
 - Async/await support with context managers
 - HTTP client with automatic retries and exponential backoff
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optional OpenTelemetry telemetry integration
 - Streaming responses using async generators
 - Idempotency key support for safe retries
-- Complete API coverage for all C2 Concierge endpoints
+- Complete API coverage for all CredLink endpoints
 
 ### Features
 - Asset verification by URL or direct content

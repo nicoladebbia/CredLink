@@ -1,6 +1,6 @@
 # Data Residency & Transfer Memo
 
-**C2 Concierge Platform - Regional Data Processing**
+**CredLink Platform - Regional Data Processing**
 
 ## Available Regions
 

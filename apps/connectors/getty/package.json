@@ -1,5 +1,5 @@
 {
-  "name": "@c2/connectors-getty",
+  "name": "@credlink/connectors-getty",
   "version": "1.0.0",
   "description": "Getty Images connector with OAuth and rate limiting",
   "main": "dist/index.js",
@@ -11,8 +11,8 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@c2/connectors": "workspace:*",
-    "@c2/rbac": "workspace:*",
+    "@credlink/connectors": "workspace:*",
+    "@credlink/rbac": "workspace:*",
     "hono": "^4.10.4",
     "node-fetch": "^3.3.2"
   },

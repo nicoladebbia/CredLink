@@ -1,5 +1,5 @@
 {
-  "name": "@c2/reportgen",
+  "name": "@credlink/reportgen",
   "version": "0.1.0",
   "description": "Survival Report HTML generator",
   "main": "src/index.ts",
@@ -9,7 +9,7 @@
     "generate": "node dist/index.js"
   },
   "dependencies": {
-    "@c2/utils": "workspace:*"
+    "@credlink/utils": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

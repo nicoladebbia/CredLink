@@ -2,7 +2,7 @@
 
 ## Overview
 
-The C2 Concierge Offline Verification Kit enables air-gapped verification of C2PA manifests without any network access. This is essential for courtrooms, secure newsrooms, and crisis operations where network connectivity is restricted or prohibited.
+The CredLink Offline Verification Kit enables air-gapped verification of C2PA manifests without any network access. This is essential for courtrooms, secure newsrooms, and crisis operations where network connectivity is restricted or prohibited.
 
 ## Quick Start
 
@@ -267,7 +267,7 @@ The offline kit is designed for maximum security in air-gapped environments:
 
 ### Trust Pack Security
 
-- **Vendor Signing**: Trust packs signed with C2 Concierge vendor keys
+- **Vendor Signing**: Trust packs signed with CredLink vendor keys
 - **Integrity Verification**: Trust pack signatures verified before use
 - **Version Control**: Track trust pack versions and rollback capability
 - **Secure Distribution**: Trust packs distributed via secure media

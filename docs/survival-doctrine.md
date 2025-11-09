@@ -1,6 +1,6 @@
 # Survival Doctrine
 
-**Purpose**: One page all developers and customers can cite for C2 Concierge's provenance verification guarantees.
+**Purpose**: One page all developers and customers can cite for CredLink's provenance verification guarantees.
 
 ## Core Principles
 
@@ -24,7 +24,7 @@
 - Bucket policies prevent overwrites (WORM-like behavior)
 
 ### Provenance Not Truth
-- C2 Concierge provides verifiable provenance of content; it does not assert truth, accuracy, or endorsement
+- CredLink provides verifiable provenance of content; it does not assert truth, accuracy, or endorsement
 - Assertions reflect source and transformations; we block deceptive claims
 - We are a provenance layer, not a fact-checking service
 

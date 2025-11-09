@@ -412,8 +412,8 @@ curl http://localhost:3000/api/v1/profiles | jq '.data[].hash'
 
 ```bash
 # Clone repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/apps/c2pa-audit/phase33-reverse-lab
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink/apps/c2pa-audit/phase33-reverse-lab
 
 # Install dependencies
 pnpm install
@@ -445,9 +445,9 @@ MIT License - see LICENSE file for details.
 
 ## Support
 
-- **Issues**: https://github.com/Nickiller04/c2-concierge/issues
-- **Discussions**: https://github.com/Nickiller04/c2-concierge/discussions
-- **Documentation**: https://github.com/Nickiller04/c2-concierge/wiki
+- **Issues**: https://github.com/Nickiller04/CredLink/issues
+- **Discussions**: https://github.com/Nickiller04/CredLink/discussions
+- **Documentation**: https://github.com/Nickiller04/CredLink/wiki
 
 ---
 

@@ -1,5 +1,23 @@
 # CredLink
 
+[![Status](https://img.shields.io/badge/Status-Alpha%20Development-red)](docs/archived/CURRENT-STATE-ASSESSMENT.md)
+[![Timeline](https://img.shields.io/badge/MVP%20Launch-January%202025-blue)](PRODUCTION-ROADMAP.md)
+[![Completion](https://img.shields.io/badge/Complete-15%25-orange)](START-HERE.md)
+
+⚠️ **STATUS: Alpha (15% Complete)**
+
+**NOT production-ready.** Core signing/verification works. Most features are documented but not implemented. Use for prototyping only.
+
+### Quick Links
+- 🎯 [See the Full Vision](PRODUCTION-ROADMAP.md)
+- 📋 [What's Actually Done?](docs/archived/CURRENT-STATE-ASSESSMENT.md)
+- 🚀 [MVP Timeline](phasemap.md)
+- 📖 [Architecture Deep Dive](CREDLINK-TECHNICAL-HOW-IT-WORKS.md)
+- 🤝 [How to Contribute](CONTRIBUTING.md)
+- 🔒 [Security Policy](SECURITY.md)
+
+---
+
 **Prove any image is real. Authenticity survives 99.9% of internet.**
 
 CredLink is a content authenticity platform that attaches cryptographic proof to images, proving they're genuine—even after 1,000 shares, compression, and CDN optimization. Works for newsrooms fighting deepfakes, e-commerce reducing chargebacks, brands proving compliance, and anyone who needs to prove an image is real.
@@ -85,105 +103,148 @@ Competitors fail because they embed proof in image metadata. CDNs strip it. We p
 
 ---
 
-## Getting Started (For Developers)
+## Getting Started
 
-### Prerequisites
-```bash
-Node.js ≥ 20.0.0
-pnpm ≥ 8.0.0
-ImageMagick (for transformations)
-```
+### ⚠️ Coming January 2025
 
-### Quick Install
+**Nothing is deployable yet.** This is alpha development code.
+
+**What works:**
+- ✅ Core C2PA signing/verification logic
+- ✅ Acceptance test framework
+- ✅ Development sandboxes
+
+**What doesn't work:**
+- ❌ Production API endpoints
+- ❌ Real infrastructure deployment
+- ❌ Plugins (WordPress, Shopify, etc.)
+- ❌ SDK packages
+- ❌ Most features described in this README
+
+**If you want to help:**
+1. Read [START-HERE.md](START-HERE.md) for project overview
+2. Check [PRODUCTION-ROADMAP.md](PRODUCTION-ROADMAP.md) for timeline
+3. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute
+
+**For development/testing only:**
 ```bash
-# Clone and install
+# Prerequisites: Node.js ≥ 20.0.0, pnpm ≥ 8.0.0
 git clone https://github.com/your-org/credlink.git
 cd credlink
 pnpm install
 pnpm build
-
-# Start acceptance tests
-pnpm test:acceptance
-
-# View results
-open .artifacts/acceptance/report.html
+pnpm test:acceptance  # Run test suite
+open .artifacts/acceptance/report.html  # View results
 ```
 
-### API Overview (What You Build With)
+---
 
-**Sign an image:**
-```bash
+## What It Will Look Like
+
+⚠️ **Mockups/demos not yet available.** These are planned for December 2024.
+
+**Expected user experience** (once built):
+
+1. **Publisher signs image:**
+   - Upload photo to CMS (WordPress, Shopify, etc.)
+   - CredLink auto-signs in background
+   - Publisher gets manifest URL: `https://manifests.credlink.com/sha256:abc...`
+
+2. **Image circulates the internet:**
+   - Shared on social media 1,000+ times
+   - Compressed by CDNs
+   - Metadata stripped
+   - **Proof survives** via manifest URL
+
+3. **Viewer verifies authenticity:**
+   - Sees verification badge on image
+   - Clicks badge → modal opens
+   - Shows: ✓ Creator, ✓ Timestamp, ✓ Edit history
+   - Or shows: ❌ NOT VERIFIED (no proof found)
+
+**Visual demos coming soon:**
+- 📹 30-second GIF of full flow
+- 📸 Badge on product page
+- 📸 Verification modal
+- 📸 Admin dashboard
+
+For now, see [Component Status Table](#implementation-status) for what's actually built.
+
+---
+
+### API Overview (Planned)
+
+⚠️ **These endpoints don't exist yet.** See [docs/API.md](docs/API.md) (in progress)
+
+**Planned: Sign an image**
+```javascript
+// NOT YET IMPLEMENTED
 POST /sign
 Input: image URL or upload
 Output: manifest_url (proof of authenticity)
 
-Example:
-curl -X POST https://api.credlink.com/sign \
-  -F "image=@photo.jpg" \
-  -F "creator=jane@newsroom.com"
-
-Response: {
-  "manifest_url": "https://manifests.credlink.com/sha256:abc123...",
-  "survival_rate": "99.9%",
-  "created_at": "2025-11-06T10:30:00Z"
-}
+// Pseudocode example:
+const response = await fetch('https://api.credlink.com/sign', {
+  method: 'POST',
+  body: formData  // image file + metadata
+});
+// Response: { manifest_url, survival_rate, created_at }
 ```
 
-**Verify an image:**
-```bash
+**Planned: Verify an image**
+```javascript
+// NOT YET IMPLEMENTED
 POST /verify
 Input: image URL or manifest URL
 Output: valid (true/false), creator info, edit history
 
-Example:
-curl -X POST https://api.credlink.com/verify \
-  -d "image_url=https://example.com/photo.jpg"
-
-Response: {
-  "valid": true,
-  "creator": "jane@newsroom.com",
-  "created_at": "2025-11-06T10:30:00Z",
-  "manifest_url": "https://manifests.credlink.com/sha256:abc123...",
-  "warnings": []
-}
+// Pseudocode example:
+const response = await fetch('https://api.credlink.com/verify', {
+  method: 'POST',
+  body: JSON.stringify({ image_url: '...' })
+});
+// Response: { valid, creator, created_at, manifest_url, warnings }
 ```
 
-### Real Examples
+### Integration Examples (Planned)
 
-**For WordPress:**
+⚠️ **None of these exist yet. Coming in January 2025.**
+
+**Planned: WordPress Plugin**
 ```bash
-# Plugin signs images on upload automatically
-wp plugin install credlink
-# Configure with your API key
-# Images are automatically signed when added to posts
+# NOT YET AVAILABLE
+# Future: wp plugin install credlink
+# Future: Configure with API key
+# Future: Auto-sign images on upload
 ```
 
-**For Shopify:**
+**Planned: Shopify App**
 ```bash
-# Install CredLink app → auto-signs product photos
-# Badge appears on product pages
-# Customers click to verify authenticity
+# NOT YET AVAILABLE
+# Future: Install from Shopify App Store
+# Future: Auto-sign product photos
+# Future: Show verification badge on product pages
 ```
 
-**For Custom Platforms:**
+**Planned: JavaScript SDK**
 ```javascript
+// NOT YET IMPLEMENTED
+// Pseudocode for future SDK:
 import { CredLink } from '@credlink/sdk';
 
 const credlink = new CredLink({ apiKey: 'your-key' });
 
-// Sign image
+// Sign image (future)
 const result = await credlink.sign({
   imageUrl: 'https://cdn.example.com/product.jpg',
   creator: 'seller@example.com',
   assertions: { ai_generated: false }
 });
-console.log(result.manifestUrl); // Share this URL
 
-// Verify image
+// Verify image (future)
 const verification = await credlink.verify({
   imageUrl: 'https://cdn.example.com/product.jpg'
 });
-console.log(verification.valid); // true or false
 ```
 
 ---
@@ -347,7 +408,11 @@ credlink/
 
 ---
 
-## Pricing (Who Pays What)
+## Pricing (Planned)
+
+⚠️ **Not accepting customers yet. Pricing is preliminary.**
+
+**Planned pricing tiers:**
 
 | Tier | Images/Month | Price | Best For |
 |------|--------------|-------|----------|
@@ -355,19 +420,19 @@ credlink/
 | **Professional** | 100K | $699/mo | Mid-market newsroom, brand campaigns |
 | **Enterprise** | 1M+ | $2,499/mo | Fortune 500, large marketplace |
 
-**Add-ons:**
-- Advanced analytics: +$99/mo (which verified images drive engagement?)
-- Custom integrations: +$299-1,000 (Figma, Canva, Adobe plugins)
-- Priority support: +$199/mo (4-hour response SLA)
+**Planned add-ons:**
+- Advanced analytics: +$99/mo
+- Custom integrations: +$299-1,000
+- Priority support: +$199/mo
+- Retro-signing CLI: $0.10-0.35 per image
 
-**Retro-signing CLI** (for existing images):
-- $0.10-0.35 per image (bulk discount available)
+**Timeline**: Accepting first customers in January 2025
 
 ---
 
 ## Installation & Deployment
 
-### Development
+### Development (What Actually Works)
 ```bash
 # Install dependencies
 pnpm install
@@ -375,61 +440,61 @@ pnpm install
 # Build all packages
 pnpm build
 
-# Run full test suite
+# Run acceptance tests (this works!)
 pnpm test:acceptance
 
-# Start edge worker locally
-cd apps/edge-worker
-npx wrangler dev --local --port 8787
-
-# In another terminal: start sandboxes
-../scripts/run-sandboxes.sh
+# View test results
+open .artifacts/acceptance/report.html
 ```
 
-### Production (Self-Hosted)
+### Production Deployment
+
+⚠️ **NOT READY FOR PRODUCTION**
+
+The following deployment methods are **planned but not functional yet**:
+
+**Planned: Self-Hosted**
 ```bash
-# Build Docker image
-docker build -f Dockerfile -t credlink:latest .
-
-# Deploy to your infrastructure
-# See: /infra/terraform/ for full setup
-terraform apply
+# NOT YET WORKING
+# Future: docker build -f Dockerfile -t credlink:latest .
+# Future: terraform apply in /infra/terraform/
 ```
 
-### Cloud (Cloudflare)
+**Planned: Cloudflare**
 ```bash
-# Deploy edge worker
-wrangler publish
-
-# Set environment secrets
-wrangler secret put HMAC_SECRET
-wrangler secret put KMS_KEY_ID
+# NOT YET WORKING
+# Future: wrangler publish
+# Future: wrangler secret put HMAC_SECRET
 ```
+
+**Timeline**: January 2025 for first production deployment
 
 ---
 
-## Configuration (What You Can Tweak)
+## Configuration (Planned)
 
-### Environment Variables
+⚠️ **Most configuration options are not implemented yet.**
+
+### Planned: Environment Variables
 ```bash
-# Signing & Verification
-REMOTE_ONLY=1                          # Force remote manifests (default: true)
-PRESERVE_PATHS=/media/preserve/        # Paths allowing embeds (optional)
-MANIFEST_BASE=https://manifests.credlink.com # Where manifests live
+# NOT YET IMPLEMENTED
+# Future configuration:
+REMOTE_ONLY=1                          # Force remote manifests
+PRESERVE_PATHS=/media/preserve/        # Paths allowing embeds
+MANIFEST_BASE=https://manifests.credlink.com
 
-# Security
 HMAC_SECRET=your-256-bit-key          # Log signing secret
-KMS_KEY_ID=arn:aws:kms:...            # Key encryption (AWS/GCP)
-BREAK_GLASS_TOKEN=...                  # Emergency override (max 2 hours)
+KMS_KEY_ID=arn:aws:kms:...            # Key encryption
 
-# Cloudflare
 CLOUDFLARE_ACCOUNT_ID=...
 CLOUDFLARE_API_TOKEN=...
 R2_BUCKET=credlink-manifests
 ```
 
-### Policy Configuration
+### Planned: Policy Configuration
 ```json
+// NOT YET IMPLEMENTED
+// Future policy config:
 {
   "remote_only": true,
   "preserve_paths": ["/media/preserve/"],
@@ -501,55 +566,99 @@ See `/legal/`:
 
 ---
 
-## Current Status & Roadmap
+## Implementation Status
 
-### ✅ Phase 0 (Complete)
-- [x] Monorepo scaffold with pnpm workspaces
-- [x] Cloudflare Edge Worker with policy enforcement
-- [x] Hostile-path matrix with 16+ test scenarios
-- [x] Three sandbox environments (strip-happy, preserve-embed, remote-only)
-- [x] Acceptance harness with deterministic logging
-- [x] HTML report generation
-- [x] CI/CD hard gates
+### Component Status Table
 
-### 🚀 Phase 1 (Next: 4-6 weeks)
-- [ ] Rust C2PA signer (production-grade)
-- [ ] Timestamp Authority (TSA) integration
-- [ ] Production key management
-- [ ] Real infrastructure (live Cloudflare + R2)
-- [ ] First 5 paying customers
+| Component | Status | Timeline | Notes |
+|-----------|--------|----------|-------|
+| **Architecture & Design** | ✅ Complete | Done | Remote-first doctrine, hostile-path matrix |
+| **Test Framework** | ✅ Complete | Done | 16+ scenarios, acceptance harness |
+| **Core C2PA Logic** | ✅ Complete | Done | Sign/verify works in tests |
+| **Monorepo Structure** | ✅ Complete | Done | pnpm workspaces, turbo build |
+| **Image Signing API** | 🚀 In Progress | Week 2 (Dec 2024) | Production endpoints |
+| **Verification API** | 🚀 In Progress | Week 3 (Dec 2024) | /verify endpoint |
+| **Badge Web Component** | 🚀 In Progress | Week 4 (Dec 2024) | `<c2-badge>` element |
+| **Cloudflare Infrastructure** | 📋 Queued | Week 5 (Jan 2025) | Edge workers, R2 storage |
+| **JavaScript SDK** | 📋 Queued | Week 6 (Jan 2025) | `@credlink/sdk` |
+| **WordPress Plugin** | 📋 Queued | Week 7 (Jan 2025) | Auto-sign on upload |
+| **Shopify App** | 📋 Queued | Week 8 (Jan 2025) | Product photo signing |
+| **Browser Extensions** | ⏸️ Deferred | Q2 2025 | Chrome, Safari, Edge |
+| **Mobile SDKs** | ⏸️ Deferred | Q2 2025 | iOS, Android |
+| **Analytics Dashboard** | ⏸️ Deferred | Q3 2025 | Engagement metrics |
 
-### 📋 Phase 2 (Months 4-6)
-- [ ] WordPress plugin
-- [ ] Shopify app
-- [ ] Figma plugin
-- [ ] Analytics dashboard
+**Legend**: ✅ Complete | 🚀 In Progress | 📋 Queued | ⏸️ Deferred
 
-### 🌎 Phase 3+ (Long-term)
-- [ ] Mobile SDKs (iOS, Android)
+---
+
+### Visual Proof of Concept
+
+⚠️ **No demo visuals available yet.** Coming in December 2024.
+
+**Planned visuals** (not yet created):
+- 📹 30-second demo GIF: sign → verify → badge flow
+- 📸 Screenshot: Verification badge on product page
+- 📸 Screenshot: Verification modal with metadata
+- 📸 Screenshot: Admin dashboard
+
+**Current state**: Text-based documentation only. Visual demos will be added once components are functional.
+
+**Want to see it work?** Run the test suite:
+```bash
+pnpm test:acceptance
+open .artifacts/acceptance/report.html
+```
+
+---
+
+### Detailed Roadmap
+
+### ✅ What Actually Works (15% Complete)
+- [x] Monorepo structure with pnpm workspaces
+- [x] Acceptance test framework
+- [x] Hostile-path test scenarios (16+)
+- [x] Development sandbox environments
+- [x] Core C2PA signing/verification logic
+- [x] HTML report generation for tests
+
+### ⚠️ What's NOT Working Yet
+- [ ] Production API endpoints
+- [ ] Real infrastructure deployment
+- [ ] Cloudflare Edge Worker (policy enforcement)
+- [ ] Timestamp Authority integration
+- [ ] Key management system
+- [ ] All plugins (WordPress, Shopify, etc.)
+- [ ] All SDKs (JavaScript, Python, etc.)
 - [ ] Browser extensions
-- [ ] AI content labeling
-- [ ] Offline verification
+- [ ] Mobile SDKs
+- [ ] Production monitoring/alerting
+
+### 🚀 Next Up (January 2025 Target)
+- [ ] Production-ready C2PA signer
+- [ ] Live Cloudflare + R2 infrastructure
+- [ ] Working API endpoints (/sign, /verify)
+- [ ] Basic JavaScript SDK
+- [ ] First 5 beta customers
+
+**See [PRODUCTION-ROADMAP.md](PRODUCTION-ROADMAP.md) for detailed timeline.**
 
 ---
 
 ## Support & Community
 
+⚠️ **Project is in alpha. No production support available yet.**
+
 ### For Developers
-- **Docs**: Read `/docs/` directory
-- **API Reference**: `/docs/api.md`
-- **Issues**: GitHub issue tracker
+- **Docs**: Read `/docs/` directory (work in progress)
+- **Issues**: GitHub issue tracker (for bugs/features)
 - **Discussions**: GitHub discussions for Q&A
 
-### For Security Issues
-- **Email**: security@credlink.com (not public)
-- **Response time**: 24 hours
-- **Bounty program**: Available (see SECURITY.md)
+### Security Issues
+- See [SECURITY.md](SECURITY.md) for security policy
+- Email: security@credlink.com (when production-ready)
 
-### For Abuse Reports
-- **Email**: abuse@credlink.com
-- **Examples**: Deepfakes, misinformation, revenge porn
-- **Response time**: 48 hours
+### Abuse Reports
+- Not applicable yet (no production service)
 
 ---
 
@@ -607,10 +716,11 @@ Blockchain requires everyone on the same chain. We use Cloudflare's edge network
 
 ## Contact
 
-- **Website**: https://credlink.com
-- **Email**: hello@credlink.com
-- **Twitter**: @credlink
-- **LinkedIn**: /company/credlink
+⚠️ **Alpha project - no official website/social media yet**
+
+- **GitHub**: This repository
+- **Email**: TBD (coming with launch)
+- **Website**: Coming January 2025
 
 ---
 

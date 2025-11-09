@@ -1,6 +1,6 @@
-# Reproducible Builds for C2 Concierge
+# Reproducible Builds for CredLink
 
-This document explains how C2 Concierge achieves reproducible builds and how to verify them.
+This document explains how CredLink achieves reproducible builds and how to verify them.
 
 ## Overview
 
@@ -45,8 +45,8 @@ To reproduce a specific build:
 
 ```bash
 # Clone the repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink
 
 # Checkout the specific commit
 git checkout <commit-sha>
@@ -58,11 +58,11 @@ export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 docker buildx build \
   --build-arg SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH \
   -f Dockerfile.reproducible \
-  --tag c2-concierge:reproducible \
+  --tag CredLink:reproducible \
   .
 
 # Compare digests
-docker images --digests c2-concierge
+docker images --digests CredLink
 ```
 
 ### Verifying Digests
@@ -71,10 +71,10 @@ Compare the produced image digest with the published one:
 
 ```bash
 # Get published digest
-docker buildx imagetools inspect ghcr.io/nickiller04/c2-concierge:<tag>
+docker buildx imagetools inspect ghcr.io/nickiller04/CredLink:<tag>
 
 # Compare with local build
-docker buildx imagetools inspect c2-concierge:reproducible
+docker buildx imagetools inspect CredLink:reproducible
 ```
 
 ## Variance Controls
@@ -128,16 +128,16 @@ Our GitHub Actions workflow ensures:
 
 ```bash
 # Compare layer digests
-docker history ghcr.io/nickiller04/c2-concierge:<tag>
-docker history c2-concierge:reproducible
+docker history ghcr.io/nickiller04/CredLink:<tag>
+docker history CredLink:reproducible
 
 # Inspect image config
-docker inspect ghcr.io/nickiller04/c2-concierge:<tag>
-docker inspect c2-concierge:reproducible
+docker inspect ghcr.io/nickiller04/CredLink:<tag>
+docker inspect CredLink:reproducible
 
 # Check file differences
-docker run --rm -it ghcr.io/nickiller04/c2-concierge:<tag> find /app -type f -exec sha256sum {} \; | sort
-docker run --rm -it c2-concierge:reproducible find /app -type f -exec sha256sum {} \; | sort
+docker run --rm -it ghcr.io/nickiller04/CredLink:<tag> find /app -type f -exec sha256sum {} \; | sort
+docker run --rm -it CredLink:reproducible find /app -type f -exec sha256sum {} \; | sort
 ```
 
 ## Metrics

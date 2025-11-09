@@ -1,5 +1,5 @@
 {
-  "name": "@c2/feature-flags",
+  "name": "@credlink/feature-flags",
   "version": "1.0.0",
   "description": "Feature flags system for C2 Concierge - Phase 46",
   "type": "module",

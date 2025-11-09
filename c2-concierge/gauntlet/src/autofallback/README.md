@@ -61,7 +61,7 @@ The C2 Auto-Fallback System is an enterprise-grade edge computing solution that 
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd c2-concierge/gauntlet/src/autofallback
+cd CredLink/gauntlet/src/autofallback
 
 # Install dependencies
 npm install

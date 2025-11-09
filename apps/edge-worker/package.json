@@ -1,5 +1,5 @@
 {
-  "name": "@c2/edge-worker",
+  "name": "@credlink/edge-worker",
   "version": "0.1.0",
   "description": "Cloudflare Edge Worker for C2 Concierge",
   "main": "src/index.ts",
@@ -9,8 +9,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@c2/policy": "workspace:*",
-    "@c2/utils": "workspace:*"
+    "@credlink/policy": "workspace:*",
+    "@credlink/utils": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231025.0",

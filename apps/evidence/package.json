@@ -1,5 +1,5 @@
 {
-  "name": "@c2/evidence",
+  "name": "@credlink/evidence",
   "version": "1.0.0",
   "description": "Evidence pack generator for SOC 2/ISO compliance",
   "main": "dist/index.js",
@@ -11,8 +11,8 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@c2/audit": "workspace:*",
-    "@c2/rbac": "workspace:*",
+    "@credlink/audit": "workspace:*",
+    "@credlink/rbac": "workspace:*",
     "hono": "^4.10.4"
   },
   "devDependencies": {

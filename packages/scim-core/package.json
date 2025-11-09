@@ -1,5 +1,5 @@
 {
-  "name": "@c2/scim-core",
+  "name": "@credlink/scim-core",
   "version": "1.0.0",
   "description": "SCIM 2.0 core implementation for C2 Concierge",
   "main": "dist/index.js",

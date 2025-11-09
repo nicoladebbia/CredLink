@@ -1,5 +1,5 @@
 {
-  "name": "@c2/connectors",
+  "name": "@credlink/connectors",
   "version": "1.0.0",
   "description": "Marketplace connectors for Getty, AP, Shutterstock with read-only adapters",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@c2/rbac": "workspace:*",
+    "@credlink/rbac": "workspace:*",
     "hono": "^4.10.4",
     "node-fetch": "^3.3.2"
   },

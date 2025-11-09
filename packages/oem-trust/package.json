@@ -1,5 +1,5 @@
 {
-  "name": "@c2/oem-trust",
+  "name": "@credlink/oem-trust",
   "version": "0.1.0",
   "description": "OEM trust profiles, certificate pins, and device guidance (Phase 15)",
   "type": "module",

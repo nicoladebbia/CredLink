@@ -1,6 +1,6 @@
 # Supply Chain Security Runbook
 
-This runbook provides operational procedures for managing C2 Concierge's supply chain security.
+This runbook provides operational procedures for managing CredLink's supply chain security.
 
 ## Table of Contents
 
@@ -17,24 +17,24 @@ This runbook provides operational procedures for managing C2 Concierge's supply 
 
 ```bash
 # Check recent build status
-gh run list --repo Nickiller04/c2-concierge --limit 10
+gh run list --repo Nickiller04/CredLink --limit 10
 
 # Verify latest build artifacts
-gh run view --repo Nickiller04/c2-concierge --log
+gh run view --repo Nickiller04/CredLink --log
 
 # Check attestations for latest release
-cosign attestations list ghcr.io/nickiller04/c2-concierge:latest
+cosign attestations list ghcr.io/nickiller04/CredLink:latest
 ```
 
 ### 2. Verify Security Scans
 
 ```bash
 # Check latest CVE scan results
-trivy image --severity CRITICAL,HIGH ghcr.io/nickiller04/c2-concierge:latest
+trivy image --severity CRITICAL,HIGH ghcr.io/nickiller04/CredLink:latest
 
 # Verify SBOM generation
-./scripts/generate-sbom.sh ghcr.io/nickiller04/c2-concierge:latest ./sboms
-./scripts/verify-sbom.sh ./sboms ghcr.io/nickiller04/c2-concierge:latest
+./scripts/generate-sbom.sh ghcr.io/nickiller04/CredLink:latest ./sboms
+./scripts/verify-sbom.sh ./sboms ghcr.io/nickiller04/CredLink:latest
 ```
 
 ### 3. Monitor Admission Control
@@ -57,22 +57,22 @@ kubectl get clusterimagepolicies
 #### Detection
 ```bash
 # Verify image signatures
-cosign verify ghcr.io/nickiller04/c2-concierge:latest
+cosign verify ghcr.io/nickiller04/CredLink:latest
 
 # Check provenance attestation
-cosign verify-attestation --type slsaprovenance ghcr.io/nickiller04/c2-concierge:latest
+cosign verify-attestation --type slsaprovenance ghcr.io/nickiller04/CredLink:latest
 
 # Scan for unexpected vulnerabilities
-trivy image --severity CRITICAL,HIGH,MEDIUM ghcr.io/nickiller04/c2-concierge:latest
+trivy image --severity CRITICAL,HIGH,MEDIUM ghcr.io/nickiller04/CredLink:latest
 ```
 
 #### Containment
 ```bash
 # Block suspicious image
-kubectl create imagepolicy block-suspicious --image "ghcr.io/nickiller04/c2-concierge:*" --block
+kubectl create imagepolicy block-suspicious --image "ghcr.io/nickiller04/CredLink:*" --block
 
 # Scale down affected deployments
-kubectl scale deployment c2-concierge --replicas=0
+kubectl scale deployment CredLink --replicas=0
 
 # Enable audit logging
 kubectl patch clusterimagepolicy require-signed-and-provenance -p '{"spec":{"mode":"enforce"}}'
@@ -81,14 +81,14 @@ kubectl patch clusterimagepolicy require-signed-and-provenance -p '{"spec":{"mod
 #### Investigation
 ```bash
 # Check build provenance
-cosign verify-attestation --type slsaprovenance ghcr.io/nickiller04/c2-concierge:suspicious-tag
+cosign verify-attestation --type slsaprovenance ghcr.io/nickiller04/CredLink:suspicious-tag
 
 # Compare with known good build
-docker buildx imagetools inspect ghcr.io/nickiller04/c2-concierge:latest
-docker buildx imagetools inspect ghcr.io/nickiller04/c2-concierge:suspicious-tag
+docker buildx imagetools inspect ghcr.io/nickiller04/CredLink:latest
+docker buildx imagetools inspect ghcr.io/nickiller04/CredLink:suspicious-tag
 
 # Check Rekor transparency log
-cosign verify ghcr.io/nickiller04/c2-concierge:suspicious-tag --output-json | jq '.[0].logIndex'
+cosign verify ghcr.io/nickiller04/CredLink:suspicious-tag --output-json | jq '.[0].logIndex'
 ```
 
 #### Recovery
@@ -99,14 +99,14 @@ export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
 docker buildx build --build-arg SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH -f Dockerfile.reproducible .
 
 # Sign new image
-cosign sign ghcr.io/nickiller04/c2-concierge:recovery
+cosign sign ghcr.io/nickiller04/CredLink:recovery
 
 # Generate new attestations
-./scripts/generate-sbom.sh ghcr.io/nickiller04/c2-concierge:recovery ./sboms
-cosign attest --predicate-type sbom --predicate ./sboms/sbom.spdx.json ghcr.io/nickiller04/c2-concierge:recovery
+./scripts/generate-sbom.sh ghcr.io/nickiller04/CredLink:recovery ./sboms
+cosign attest --predicate-type sbom --predicate ./sboms/sbom.spdx.json ghcr.io/nickiller04/CredLink:recovery
 
 # Update deployment
-kubectl set image deployment/c2-concierge c2-concierge=ghcr.io/nickiller04/c2-concierge:recovery
+kubectl set image deployment/CredLink CredLink=ghcr.io/nickiller04/CredLink:recovery
 ```
 
 ### 2. CVE Outbreak
@@ -114,7 +114,7 @@ kubectl set image deployment/c2-concierge c2-concierge=ghcr.io/nickiller04/c2-co
 #### Assessment
 ```bash
 # Scan all images in registry
-trivy image --severity CRITICAL,HIGH --format json --output cve-scan.json ghcr.io/nickiller04/c2-concierge:*
+trivy image --severity CRITICAL,HIGH --format json --output cve-scan.json ghcr.io/nickiller04/CredLink:*
 
 # Analyze impact
 jq '.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity == "HIGH")' cve-scan.json
@@ -123,7 +123,7 @@ jq '.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL" or .Severity =
 #### Response
 ```bash
 # Check if vulnerable components are in runtime
-kubectl exec -it deployment/c2-concierge -- dpkg -l | grep <vulnerable-package>
+kubectl exec -it deployment/CredLink -- dpkg -l | grep <vulnerable-package>
 
 # Update dependencies
 pnpm update
@@ -142,10 +142,10 @@ Since we use keyless signing, no static keys need rotation. However, OIDC identi
 
 ```bash
 # Update repository permissions
-gh repo edit Nickiller04/c2-concierge --enable-oidc
+gh repo edit Nickiller04/CredLink --enable-oidc
 
 # Update workflow permissions
-gh api repos/Nickiller04/c2-concierge/actions/permissions/workflow -X PATCH -f '{"default_permissions":"write"}'
+gh api repos/Nickiller04/CredLink/actions/permissions/workflow -X PATCH -f '{"default_permissions":"write"}'
 ```
 
 ### 2. Policy Controller Rotation
@@ -185,8 +185,8 @@ echo "0 2 * * * /usr/local/bin/trivy image --download-db-only" | crontab -
 
 ```bash
 # Cross-validate scanners
-trivy image ghcr.io/nickiller04/c2-concierge:latest --format json --output trivy-results.json
-grype ghcr.io/nickiller04/c2-concierge:latest --output-json > grype-results.json
+trivy image ghcr.io/nickiller04/CredLink:latest --format json --output trivy-results.json
+grype ghcr.io/nickiller04/CredLink:latest --output-json > grype-results.json
 
 # Compare results
 jq -r '.Results[].Vulnerabilities[].VulnerabilityID' trivy-results.json | sort > trivy-cves.txt
@@ -216,7 +216,7 @@ kubectl edit clusterimagepolicy require-signed-and-provenance
 kubectl get clusterimagepolicy require-signed-and-provenance -o yaml
 
 # Test policy with dry run
-kubectl run test-pod --image=ghcr.io/nickiller04/c2-concierge:latest --dry-run=client -o yaml
+kubectl run test-pod --image=ghcr.io/nickiller04/CredLink:latest --dry-run=client -o yaml
 ```
 
 ### 2. Break-Glass Procedures
@@ -248,22 +248,22 @@ kubectl run test-unsigned --image=nginx:latest --dry-run=client
 #### Issue: `cosign verify` fails
 ```bash
 # Check if image exists
-docker buildx imagetools inspect ghcr.io/nickiller04/c2-concierge:latest
+docker buildx imagetools inspect ghcr.io/nickiller04/CredLink:latest
 
 # Check attestations
-cosign attestations list ghcr.io/nickiller04/c2-concierge:latest
+cosign attestations list ghcr.io/nickiller04/CredLink:latest
 
 # Re-sign if necessary
-cosign sign ghcr.io/nickiller04/c2-concierge:latest
+cosign sign ghcr.io/nickiller04/CredLink:latest
 ```
 
 #### Issue: Invalid certificate
 ```bash
 # Check certificate details
-cosign verify ghcr.io/nickiller04/c2-concierge:latest --insecure-skip-verify
+cosign verify ghcr.io/nickiller04/CredLink:latest --insecure-skip-verify
 
 # Verify issuer
-cosign verify ghcr.io/nickiller04/c2-concierge:latest --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+cosign verify ghcr.io/nickiller04/CredLink:latest --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
 ```
 
 ### 2. Attestation Failures
@@ -271,16 +271,16 @@ cosign verify ghcr.io/nickiller04/c2-concierge:latest --certificate-oidc-issuer 
 #### Issue: Missing SLSA provenance
 ```bash
 # Check workflow status
-gh run view --repo Nickiller04/c2-concierge
+gh run view --repo Nickiller04/CredLink
 
 # Re-run attestations
-gh workflow run build-sign-attest.yml --repo Nickiller04/c2-concierge
+gh workflow run build-sign-attest.yml --repo Nickiller04/CredLink
 ```
 
 #### Issue: Invalid SBOM format
 ```bash
 # Regenerate SBOM
-./scripts/generate-sbom.sh ghcr.io/nickiller04/c2-concierge:latest ./sboms
+./scripts/generate-sbom.sh ghcr.io/nickiller04/CredLink:latest ./sboms
 
 # Validate format
 jq empty ./sboms/sbom.spdx.json
@@ -311,7 +311,7 @@ kubectl describe clusterimagepolicy require-signed-and-provenance
 kubectl get events --field-selector type=Warning
 
 # Test with specific image
-cosign verify ghcr.io/nickiller04/c2-concierge:being-rejected
+cosign verify ghcr.io/nickiller04/CredLink:being-rejected
 ```
 
 ### 4. Build Failures
@@ -335,7 +335,7 @@ docker buildx build --build-arg SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH -f Dockerfi
 trivy image --download-db-only
 
 # Scan with detailed output
-trivy image --severity CRITICAL,HIGH ghcr.io/nickiller04/c2-concierge:latest
+trivy image --severity CRITICAL,HIGH ghcr.io/nickiller04/CredLink:latest
 
 # Check for false positives
 echo "CVE-ID" >> .trivyignore
@@ -364,13 +364,13 @@ echo "CVE-ID" >> .trivyignore
 
 ```bash
 # Recent build status
-gh run list --repo Nickiller04/c2-concierge --limit 24 --json status,conclusion,createdAt
+gh run list --repo Nickiller04/CredLink --limit 24 --json status,conclusion,createdAt
 
 # Admission denials
 kubectl get events --field-selector type=Warning --sort-by='.lastTimestamp' | tail -20
 
 # Vulnerability trends
-trivy image --format json ghcr.io/nickiller04/c2-concierge:latest | jq '.Results[].Vulnerabilities | length'
+trivy image --format json ghcr.io/nickiller04/CredLink:latest | jq '.Results[].Vulnerabilities | length'
 ```
 
 ## Escalation Procedures
@@ -390,7 +390,7 @@ trivy image --format json ghcr.io/nickiller04/c2-concierge:latest | jq '.Results
 
 ### 3. Contacts
 
-- **Security Lead**: security@c2-concierge.com
+- **Security Lead**: security@CredLink.com
 - **On-call Engineer**: +1-555-SECURITY
 - **GitHub Support**: https://support.github.com
 - **Sigstore Community**: https://sigstore.dev/community

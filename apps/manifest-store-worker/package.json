@@ -1,5 +1,5 @@
 {
-  "name": "@c2/manifest-store-worker",
+  "name": "@credlink/manifest-store-worker",
   "version": "0.1.0",
   "description": "Cloudflare Worker for Remote Manifest Store v1",
   "type": "module",
@@ -14,7 +14,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@c2/manifest-store": "file:../../packages/manifest-store"
+    "@credlink/manifest-store": "file:../../packages/manifest-store"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

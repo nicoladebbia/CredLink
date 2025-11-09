@@ -234,9 +234,9 @@ name = "c2-status-page"
 compatibility_date = "2025-11-02"
 
 [vars]
-STATUS_PAGE_URL = "https://status.c2-concierge.com"
+STATUS_PAGE_URL = "https://status.CredLink.com"
 INCIDENT_WEBHOOK = "https://hooks.slack.com/..."
-MONITORING_API = "https://monitoring.c2-concierge.com"
+MONITORING_API = "https://monitoring.CredLink.com"
 
 [[kv_namespaces]]
 binding = "STATUS_KV"

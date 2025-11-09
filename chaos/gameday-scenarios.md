@@ -34,8 +34,8 @@ echo "Started at: $(date)" | tee -a "$LOG_FILE"
 # Configuration
 PRIMARY_REGION="enam"
 STANDBY_REGION="weur"
-API_URL="https://api.c2-concierge.com"
-LB_ID="c2-concierge-lb"
+API_URL="https://api.CredLink.com"
+LB_ID="CredLink-lb"
 PRIMARY_POOL="pool-enam-primary"
 STANDBY_POOL="pool-weur-standby"
 
@@ -84,8 +84,8 @@ echo "=== Phase 2: Simulate Regional Outage ===" | tee -a "$LOG_FILE"
 OUTAGE_START=$(date +%s)
 
 # Disable primary region services
-kubectl scale deployment --replicas=0 -n c2-concierge -l region=enam || true
-kubectl patch service api-gateway-enam -n c2-concierge -p '{"spec":{"selector":{"region":"disabled"}}}' || true
+kubectl scale deployment --replicas=0 -n CredLink -l region=enam || true
+kubectl patch service api-gateway-enam -n CredLink -p '{"spec":{"selector":{"region":"disabled"}}}' || true
 
 # Wait for health checks to fail
 echo "Waiting for health checks to detect outage..." | tee -a "$LOG_FILE"
@@ -184,13 +184,13 @@ echo "=== Phase 4: Recovery Validation ===" | tee -a "$LOG_FILE"
 RECOVERY_START=$(date +%s)
 
 # Restore primary region
-kubectl scale deployment --replicas=3 -n c2-concierge -l region=enam || true
-kubectl patch service api-gateway-enam -n c2-concierge -p '{"spec":{"selector":{"region":"enam"}}}' || true
+kubectl scale deployment --replicas=3 -n CredLink -l region=enam || true
+kubectl patch service api-gateway-enam -n CredLink -p '{"spec":{"selector":{"region":"enam"}}}' || true
 
 # Wait for primary to be healthy
 echo "Waiting for primary region to recover..." | tee -a "$LOG_FILE"
 for i in {1..60}; do
-  PRIMARY_HEALTH=$(curl -s --connect-timeout 5 "https://api-enam.c2-concierge.com/healthz" || echo "failed")
+  PRIMARY_HEALTH=$(curl -s --connect-timeout 5 "https://api-enam.CredLink.com/healthz" || echo "failed")
   if [[ "$PRIMARY_HEALTH" == "ok" ]]; then
     echo "Primary region recovered after ${i} seconds" | tee -a "$LOG_FILE"
     break
@@ -304,7 +304,7 @@ echo "GameDay ID: $GAME_DAY_ID" | tee -a "$LOG_FILE"
 # Configuration
 PRIMARY_BUCKET="manifests-enam"
 SECONDARY_BUCKET="manifests-weur"
-API_URL="https://api.c2-concierge.com"
+API_URL="https://api.CredLink.com"
 
 # Initialize results
 cat > "$RESULTS_FILE" << EOF
@@ -347,7 +347,7 @@ sleep 30
 # Verify replication
 REPLICATED_COUNT=0
 for HASH in "${TEST_MANIFESTS[@]}"; do
-  SECONDARY_CHECK=$(curl -s "https://api-weur.c2-concierge.com/manifest/$HASH" || echo "not_found")
+  SECONDARY_CHECK=$(curl -s "https://api-weur.CredLink.com/manifest/$HASH" || echo "not_found")
   if [[ "$SECONDARY_CHECK" != "not_found" ]]; then
     ((REPLICATED_COUNT++))
   fi
@@ -465,7 +465,7 @@ for HASH in "${ALL_MANIFESTS[@]}"; do
   PRIMARY_CHECK=$(curl -s "$API_URL/manifest/$HASH" || echo "not_found")
   
   # Check secondary
-  SECONDARY_CHECK=$(curl -s "https://api-weur.c2-concierge.com/manifest/$HASH" || echo "not_found")
+  SECONDARY_CHECK=$(curl -s "https://api-weur.CredLink.com/manifest/$HASH" || echo "not_found")
   
   if [[ "$PRIMARY_CHECK" != "not_found" ]] && [[ "$SECONDARY_CHECK" != "not_found" ]]; then
     ((INTEGRITY_PASSED++))
@@ -556,7 +556,7 @@ echo "GameDay ID: $GAME_DAY_ID" | tee -a "$LOG_FILE"
 
 # Configuration
 LEADER_DO="leader-coordinator"
-API_URL="https://api.c2-concierge.com"
+API_URL="https://api.CredLink.com"
 
 # Initialize results
 cat > "$RESULTS_FILE" << EOF
@@ -671,8 +671,8 @@ echo "=== Phase 4: Validate Single Leader ===" | tee -a "$LOG_FILE"
 SINGLE_LEADER_START=$(date +%s)
 
 # Check that only one leader exists across regions
-ENAM_LEADER=$(curl -s "https://api-enam.c2-concierge.com/admin/leader/status" | jq -r '.leader_id // "none"')
-WEUR_LEADER=$(curl -s "https://api-weur.c2-concierge.com/admin/leader/status" | jq -r '.leader_id // "none"')
+ENAM_LEADER=$(curl -s "https://api-enam.CredLink.com/admin/leader/status" | jq -r '.leader_id // "none"')
+WEUR_LEADER=$(curl -s "https://api-weur.CredLink.com/admin/leader/status" | jq -r '.leader_id // "none"')
 
 echo "ENAM leader: $ENAM_LEADER" | tee -a "$LOG_FILE"
 echo "WEUR leader: $WEUR_LEADER" | tee -a "$LOG_FILE"

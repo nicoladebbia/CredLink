@@ -1,10 +1,10 @@
 # Survival Report Specification
 
-**Purpose**: Define the structure, format, and interpretation of C2 Concierge survival reports.
+**Purpose**: Define the structure, format, and interpretation of CredLink survival reports.
 
 ## Report Overview
 
-Survival reports are generated after running the hostile-path matrix acceptance tests. They provide comprehensive metrics on how well C2 Concierge's remote-first provenance system survives various hostile conditions.
+Survival reports are generated after running the hostile-path matrix acceptance tests. They provide comprehensive metrics on how well CredLink's remote-first provenance system survives various hostile conditions.
 
 ## Report Structure
 
@@ -186,9 +186,9 @@ Survival reports are generated after running the hostile-path matrix acceptance 
 ### Monitoring Integration
 ```javascript
 // Prometheus metrics example
-c2_survival_remote_rate{job="c2-concierge"} 1.0
-c2_survival_embed_rate{job="c2-concierge"} 0.93
-c2_scenarios_failed{job="c2-concierge"} 0
+c2_survival_remote_rate{job="CredLink"} 1.0
+c2_survival_embed_rate{job="CredLink"} 0.93
+c2_scenarios_failed{job="CredLink"} 0
 ```
 
 ### Alerting Rules
@@ -200,7 +200,7 @@ c2_scenarios_failed{job="c2-concierge"} 0
   labels:
     severity: critical
   annotations:
-    summary: "C2 Concierge remote survival rate below threshold"
+    summary: "CredLink remote survival rate below threshold"
 ```
 
 ## Historical Analysis

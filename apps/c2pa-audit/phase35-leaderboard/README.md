@@ -56,8 +56,8 @@ phase35-leaderboard/
 
 ```bash
 # Clone the repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/apps/c2pa-audit/phase35-leaderboard
+git clone https://github.com/Nickiller04/CredLink.git
+cd CredLink/apps/c2pa-audit/phase35-leaderboard
 
 # Install dependencies
 npm install
@@ -462,8 +462,8 @@ MIT License - see LICENSE file for details.
 ## Support
 
 - **Documentation**: [docs/](./docs/)
-- **Issues**: [GitHub Issues](https://github.com/Nickiller04/c2-concierge/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/Nickiller04/c2-concierge/discussions)
+- **Issues**: [GitHub Issues](https://github.com/Nickiller04/CredLink/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Nickiller04/CredLink/discussions)
 - **Security**: security@c2pa.org
 
 ## Acknowledgments

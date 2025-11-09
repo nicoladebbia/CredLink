@@ -3,7 +3,7 @@
 
 ## Overview
 
-This repository contains Terraform infrastructure blueprints for the C2 Concierge platform, providing reproducible, one-command environments with sane defaults and guardrails.
+This repository contains Terraform infrastructure blueprints for the CredLink platform, providing reproducible, one-command environments with sane defaults and guardrails.
 
 ## Architecture
 

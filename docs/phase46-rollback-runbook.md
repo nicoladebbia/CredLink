@@ -78,7 +78,7 @@ Is there a production incident?
 
 #### Method A: Dashboard (GUI)
 1. Navigate to Cloudflare Dashboard
-2. Workers & Pages → Select `c2-concierge-api`
+2. Workers & Pages → Select `CredLink-api`
 3. Click "Rollbacks" tab
 4. Select previous stable version
 5. Click "Rollback" → Confirm

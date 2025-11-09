@@ -1,5 +1,5 @@
 {
-  "name": "@c2/flags",
+  "name": "@credlink/flags",
   "version": "1.0.0",
   "description": "Feature flags service for C2 Concierge",
   "main": "dist/index.js",
@@ -11,7 +11,7 @@
     "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "@c2/rbac": "workspace:*",
+    "@credlink/rbac": "workspace:*",
     "hono": "^4.10.4"
   },
   "devDependencies": {
