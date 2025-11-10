@@ -5,7 +5,7 @@
  * into a build process to ensure all assets have valid provenance.
  */
 
-import { Client, ValidationError } from '@c2concierge/sdk';
+import { Client, ValidationError } from '@credlink/sdk';
 
 // Initialize client
 const client = new Client({

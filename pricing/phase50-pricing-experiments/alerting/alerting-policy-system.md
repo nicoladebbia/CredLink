@@ -562,9 +562,9 @@ class AlertCommunicationSystem {
       ...alertData,
       customerName: alertData.customerName || 'Valued Customer',
       companyName: alertData.companyName || 'Your Company',
-      dashboardUrl: `https://dashboard.c2concierge.com/customers/${customerId}`,
-      supportUrl: 'https://support.c2concierge.com',
-      billingUrl: `https://billing.c2concierge.com/customers/${customerId}`
+      dashboardUrl: `https://dashboard.credlink.com/customers/${customerId}`,
+      supportUrl: 'https://support.credlink.com',
+      billingUrl: `https://billing.credlink.com/customers/${customerId}`
     };
     
     return template.render(context);
@@ -582,7 +582,7 @@ class EmailChannel {
     
     const email = {
       to: customerEmail,
-      from: 'alerts@c2concierge.com',
+      from: 'alerts@credlink.com',
       subject: message.subject,
       html: message.html,
       text: message.text
@@ -739,7 +739,7 @@ class EmailTemplate {
           </div>
           
           <p style="color: #6b7280; font-size: 14px;">
-            Questions? Contact us at <a href="mailto:billing@c2concierge.com" style="color: #3b82f6;">billing@c2concierge.com</a>
+            Questions? Contact us at <a href="mailto:billing@credlink.com" style="color: #3b82f6;">billing@credlink.com</a>
           </p>
         </div>
       </div>

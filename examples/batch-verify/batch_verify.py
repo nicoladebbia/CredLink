@@ -13,7 +13,7 @@ from typing import Dict, List, Optional
 import feedparser
 import httpx
 
-from c2concierge import Client, BatchVerifyRequest, BatchVerifyResponse
+from credlink import Client, BatchVerifyRequest, BatchVerifyResponse
 
 
 async def extract_urls_from_rss(feed_url: str) -> List[str]:

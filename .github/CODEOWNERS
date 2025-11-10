@@ -5,49 +5,49 @@
 # Required for protected branches (main, release/*)
 
 # Global owners (required for all changes)
-* @c2-concierge/core-team
+* @credlink/core-team
 
 # Critical infrastructure - requires security team review
-/.github/workflows/ @c2-concierge/core-team @c2-concierge/security-team
-/infra/ @c2-concierge/core-team @c2-concierge/infra-team
-/security/ @c2-concierge/security-team
-/scripts/survival_harness.sh @c2-concierge/core-team @c2-concierge/qa-team
+/.github/workflows/ @credlink/core-team @credlink/security-team
+/infra/ @credlink/core-team @credlink/infra-team
+/security/ @credlink/security-team
+/scripts/survival_harness.sh @credlink/core-team @credlink/qa-team
 
 # Database migrations - requires DB team review
-/infra/db/ @c2-concierge/core-team @c2-concierge/db-team
+/infra/db/ @credlink/core-team @credlink/db-team
 
 # API Gateway and core services
-/apps/api-gw/ @c2-concierge/core-team @c2-concierge/backend-team
-/apps/audit/ @c2-concierge/core-team @c2-concierge/backend-team
+/apps/api-gw/ @credlink/core-team @credlink/backend-team
+/apps/audit/ @credlink/core-team @credlink/backend-team
 
 # SDK changes require core team approval
-/sdk/ @c2-concierge/core-team @c2-concierge/sdk-team
+/sdk/ @credlink/core-team @credlink/sdk-team
 
 # C2PA audit and verification
-/apps/c2pa-audit/ @c2-concierge/core-team @c2-concierge/c2pa-team
+/apps/c2pa-audit/ @credlink/core-team @credlink/c2pa-team
 
 # Documentation
-/docs/ @c2-concierge/core-team
-/README.md @c2-concierge/core-team
-/SECURITY.md @c2-concierge/security-team
+/docs/ @credlink/core-team
+/README.md @credlink/core-team
+/SECURITY.md @credlink/security-team
 
 # Enterprise architecture
-/enterprise-architecture/ @c2-concierge/core-team @c2-concierge/architecture-team
+/enterprise-architecture/ @credlink/core-team @credlink/architecture-team
 
 # Disaster recovery and runbooks
-/runbooks/ @c2-concierge/core-team @c2-concierge/sre-team
-/docs/runbooks/ @c2-concierge/core-team @c2-concierge/sre-team
+/runbooks/ @credlink/core-team @credlink/sre-team
+/docs/runbooks/ @credlink/core-team @credlink/sre-team
 
 # Build and deployment configuration
-/Dockerfile @c2-concierge/core-team @c2-concierge/infra-team
-/docker-compose.yml @c2-concierge/core-team @c2-concierge/infra-team
-/Makefile @c2-concierge/core-team
+/Dockerfile @credlink/core-team @credlink/infra-team
+/docker-compose.yml @credlink/core-team @credlink/infra-team
+/Makefile @credlink/core-team
 
 # Package manager configuration
-/package.json @c2-concierge/core-team
-/pnpm-workspace.yaml @c2-concierge/core-team
-/turbo.json @c2-concierge/core-team
+/package.json @credlink/core-team
+/pnpm-workspace.yaml @credlink/core-team
+/turbo.json @credlink/core-team
 
 # Security and compliance
-/SECURITY_AUDIT_REPORT.md @c2-concierge/security-team
-/.trivyignore @c2-concierge/security-team
+/SECURITY_AUDIT_REPORT.md @credlink/security-team
+/.trivyignore @credlink/security-team

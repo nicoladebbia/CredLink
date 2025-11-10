@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/c2concierge/sdk-go/v2/c2c"
+	"github.com/credlink/sdk-go/v2/c2c"
 )
 
 func main() {

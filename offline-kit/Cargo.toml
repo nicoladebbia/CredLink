@@ -5,7 +5,7 @@ edition = "2021"
 description = "C2 Concierge Offline Verification Kit CLI"
 authors = ["C2 Concierge Team"]
 license = "MIT"
-repository = "https://github.com/Nickiller04/c2-concierge"
+repository = "https://github.com/Nickiller04/credlink"
 
 [[bin]]
 name = "c2c-offline"

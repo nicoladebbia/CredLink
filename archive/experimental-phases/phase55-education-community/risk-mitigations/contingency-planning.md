@@ -624,7 +624,7 @@ class DemoFailuresContingency {
       message: `We're experiencing technical issues with some demos. We've activated ${strategy} as a temporary solution.`,
       affectedDemos: impact.totalDemos,
       estimatedResolution: '24-48 hours',
-      supportContact: 'support@c2concierge.com'
+      supportContact: 'support@credlink.com'
     };
     
     await this.communicationService.sendBroadcast(communication);

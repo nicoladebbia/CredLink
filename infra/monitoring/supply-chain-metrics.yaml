@@ -79,7 +79,7 @@ data:
         annotations:
           summary: "Build success rate below 90%"
           description: "Build success rate is {{ $value }}% for the last 5 minutes"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#build-failures"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#build-failures"
       
       - alert: SupplyChainSignatureVerificationFailure
         expr: supply_chain:signature_verification_failures > 0
@@ -90,7 +90,7 @@ data:
         annotations:
           summary: "Signature verification failures detected"
           description: "{{ $value }} signature verification failures in the last 5 minutes"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#signature-verification-failures"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#signature-verification-failures"
       
       - alert: SupplyChainCriticalVulnerabilityFound
         expr: supply_chain:critical_vulnerabilities_found > 0
@@ -101,7 +101,7 @@ data:
         annotations:
           summary: "Critical vulnerabilities found in scan"
           description: "{{ $value }} critical vulnerabilities detected in recent scans"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#cve-outbreak"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#cve-outbreak"
       
       # Warning Alerts
       - alert: SupplyChainAdmissionDenialRateHigh
@@ -113,7 +113,7 @@ data:
         annotations:
           summary: "High admission denial rate"
           description: "Admission denial rate is {{ $value }}% for the last 10 minutes"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#admission-control-issues"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#admission-control-issues"
       
       - alert: SupplyChainUnsignedImageAttempts
         expr: supply_chain:unsigned_image_attempts > 5
@@ -124,7 +124,7 @@ data:
         annotations:
           summary: "Multiple unsigned image deployment attempts"
           description: "{{ $value }} attempts to deploy unsigned images in the last 5 minutes"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#unsigned-image-attempts"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#unsigned-image-attempts"
       
       - alert: SupplyChainHighVulnerabilityFound
         expr: supply_chain:high_vulnerabilities_found > 0
@@ -135,7 +135,7 @@ data:
         annotations:
           summary: "High severity vulnerabilities found"
           description: "{{ $value }} high severity vulnerabilities detected in recent scans"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#cve-outbreak"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#cve-outbreak"
       
       # Info Alerts
       - alert: SupplyChainReproducibleBuildFailure
@@ -147,7 +147,7 @@ data:
         annotations:
           summary: "Reproducible build success rate below 95%"
           description: "Reproducible build success rate is {{ $value }}% for the last 15 minutes"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#reproducible-build-failures"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#reproducible-build-failures"
       
       - alert: SupplyChainSbomVerificationFailure
         expr: supply_chain:sbom_verification_success_rate < 90
@@ -158,7 +158,7 @@ data:
         annotations:
           summary: "SBOM verification success rate below 90%"
           description: "SBOM verification success rate is {{ $value }}% for the last 10 minutes"
-          runbook: "https://docs.c2-concierge.com/runbooks/supply-chain-security#attestation-failures"
+          runbook: "https://docs.credlink.com/runbooks/supply-chain-security#attestation-failures"
 
 ---
 # Grafana Dashboard Configuration

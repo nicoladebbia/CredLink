@@ -16,7 +16,7 @@ services:
   discourse:
     image: discourse/discourse:stable
     restart: always
-    hostname: discourse.c2concierge.com
+    hostname: discourse.credlink.com
     ports:
       - "80:80"
       - "443:443"
@@ -491,7 +491,7 @@ class SupportDeflectionBot {
         });
         \`\`\`
       `,
-      forumLink: 'https://community.c2concierge.com/t/wordpress-manifest-troubleshooting/123',
+      forumLink: 'https://community.credlink.com/t/wordpress-manifest-troubleshooting/123',
       module: 'module-2'
     });
     
@@ -504,7 +504,7 @@ class SupportDeflectionBot {
         
         Test URL: https://contentauthenticity.org/verify?url=YOUR_ASSET_URL
       `,
-      forumLink: 'https://community.c2concierge.com/t/cai-verify-troubleshooting/456',
+      forumLink: 'https://community.credlink.com/t/cai-verify-troubleshooting/456',
       module: 'module-3'
     });
     
@@ -817,7 +817,7 @@ class ForumGitHubSync {
     await this.githubClient.createDiscussion({
       title: forumQuestion.title,
       body: discussionBody,
-      repository: 'c2-concierge/sdk',
+      repository: 'credlink/sdk',
       category: 'SDK Usage'
     });
   }

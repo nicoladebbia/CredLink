@@ -29,7 +29,7 @@ jobs:
     # NOTE: Uncomment environment protection after configuring 'staging' environment in GitHub settings
     # environment: 
     #   name: staging
-    #   url: https://staging.c2concierge.dev
+    #   url: https://staging.credlink.dev
     
     steps:
       - name: Checkout code
@@ -63,7 +63,7 @@ jobs:
           sleep 30
           
           echo "🏥 Running health check..."
-          curl -f https://staging.c2concierge.dev/health || exit 1
+          curl -f https://staging.credlink.dev/health || exit 1
           
           echo "✅ Staging deployment healthy"
 
@@ -76,7 +76,7 @@ jobs:
     # NOTE: Uncomment environment protection after configuring 'production' environment in GitHub settings
     # environment:
     #   name: production
-    #   url: https://c2concierge.dev
+    #   url: https://credlink.dev
     
     steps:
       - name: Checkout code
@@ -169,7 +169,7 @@ jobs:
     # NOTE: Uncomment environment protection after configuring 'production' environment in GitHub settings
     # environment:
     #   name: production
-    #   url: https://c2concierge.dev
+    #   url: https://credlink.dev
     
     steps:
       - name: Checkout code
@@ -224,10 +224,10 @@ jobs:
           sleep 30
           
           # Health check
-          curl -f https://c2concierge.dev/health || exit 1
+          curl -f https://credlink.dev/health || exit 1
           
           # Quick survival check
-          curl -f https://c2concierge.dev/api/verify/test || echo "Verify endpoint check"
+          curl -f https://credlink.dev/api/verify/test || echo "Verify endpoint check"
           
           echo "✅ Production deployment verified"
       
@@ -276,7 +276,7 @@ jobs:
         run: |
           echo "🏥 Verifying rollback..."
           sleep 30
-          curl -f https://c2concierge.dev/health || exit 1
+          curl -f https://credlink.dev/health || exit 1
           echo "✅ Rollback successful"
       
       - name: Record rollback

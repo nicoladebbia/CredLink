@@ -53,7 +53,7 @@ func AddGlobalFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().BoolVar(&globalOpts.Quiet, "quiet", false, "Suppress non-error output")
 	cmd.PersistentFlags().BoolVar(&globalOpts.Yes, "yes", false, "Auto-confirm prompts")
 	cmd.PersistentFlags().StringVar(&globalOpts.Profile, "profile", "", "Signing profile ID")
-	cmd.PersistentFlags().StringVar(&globalOpts.Endpoint, "endpoint", "https://api.c2concierge.com/v1", "API endpoint URL")
+	cmd.PersistentFlags().StringVar(&globalOpts.Endpoint, "endpoint", "https://api.credlink.com/v1", "API endpoint URL")
 	cmd.PersistentFlags().IntVar(&globalOpts.Retries, "retries", 5, "Maximum retry attempts")
 	cmd.PersistentFlags().DurationVar(&globalOpts.Timeout, "timeout", 30*time.Second, "Request timeout")
 	cmd.PersistentFlags().StringVar(&globalOpts.IdempotencyKey, "idempotency-key", "", "Idempotency key for safe retries")

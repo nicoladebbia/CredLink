@@ -1,0 +1,68 @@
+{
+  "name": "@credlink/compliance",
+  "version": "0.1.0",
+  "description": "CredLink Compliance v2 - EU/UK/US/BR Regulatory Support",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "npm run build && node --test dist/**/*.test.js",
+    "test:acceptance": "npm run build && node --test dist/tests/phase48-acceptance.test.js",
+    "test:unit": "npm run build && node --test dist/tests/*.test.js --grep 'Unit'",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@credlink/utils": "file:../utils",
+    "fastify": "^4.24.3",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/type-provider-typebox": "^4.0.0",
+    "@fastify/rate-limit": "^9.1.0",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/jwt": "^10.0.0",
+    "helmet": "^7.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/jsdom": "^21.1.6",
+    "typescript": "^5.3.0"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./assertions": {
+      "import": "./dist/assertions.js", 
+      "types": "./dist/assertions.d.ts"
+    },
+    "./reporting": {
+      "import": "./dist/reporting.js",
+      "types": "./dist/reporting.d.ts"
+    },
+    "./generator": {
+      "import": "./dist/generator.js",
+      "types": "./dist/generator.d.ts"
+    },
+    "./retention": {
+      "import": "./dist/retention.js",
+      "types": "./dist/retention.d.ts"
+    },
+    "./api": {
+      "import": "./dist/api.js",
+      "types": "./dist/api.d.ts"
+    }
+  },
+  "keywords": [
+    "c2pa",
+    "compliance",
+    "eu-ai-act",
+    "dsa",
+    "lgpd",
+    "ftc",
+    "online-safety-act"
+  ],
+  "author": "CredLink Team",
+  "license": "MIT"
+}

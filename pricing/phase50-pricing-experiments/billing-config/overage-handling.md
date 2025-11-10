@@ -138,7 +138,7 @@ const alertSystem = {
     },
     webhook: {
       enabled: true,
-      url: `${process.env.API_BASE_URL || 'https://api.c2concierge.com'}/webhooks/usage-alerts`,
+      url: `${process.env.API_BASE_URL || 'https://api.credlink.com'}/webhooks/usage-alerts`,
       events: ["usage.warning", "usage.critical", "usage.exceeded"],
       retry_policy: {
         max_attempts: 3,
@@ -217,7 +217,7 @@ const alertSystem = {
     <a href="{{dashboard_url}}/billing/upgrade" class="btn-secondary">Upgrade Plan</a>
   </div>
   
-  <p>Questions? Contact us at <a href="mailto:billing@c2concierge.com">billing@c2concierge.com</a></p>
+  <p>Questions? Contact us at <a href="mailto:billing@credlink.com">billing@credlink.com</a></p>
 </div>
 ```
 

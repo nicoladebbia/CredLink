@@ -9,12 +9,12 @@ This document summarizes all changes made to transform the README from misleadin
 
 ### 1. Fixed Naming Rot ✅
 **Problem**: Three different names in use
-- `c2-concierge` in package.json
+- `credlink` in package.json
 - `CredLink` in docs
 - `@c2/` in code imports
 
 **Solution**: Global renaming across 150+ files
-- All package.json: `"c2-concierge"` → `"credlink"`
+- All package.json: `"credlink"` → `"credlink"`
 - All TypeScript/JavaScript: `@c2/*` → `@credlink/*`
 - All markdown: `C2 Concierge` → `CredLink`
 

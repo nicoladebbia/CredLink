@@ -285,7 +285,7 @@
     "collection_method": "charge_automatically",
     "payment_method_types": ["card", "ach_debit"],
     "invoice_settings": {
-      "footer": "Questions? Email billing@c2concierge.com",
+      "footer": "Questions? Email billing@credlink.com",
       "days_until_due": 30,
       "automatic_tax": {
         "enabled": true
@@ -334,7 +334,7 @@
       },
       "webhook": {
         "enabled": true,
-        "url": "https://api.c2concierge.com/webhooks/usage-alerts",
+        "url": "https://api.credlink.com/webhooks/usage-alerts",
         "events": ["usage.warning", "usage.critical", "usage.exceeded"]
       },
       "in_app": {

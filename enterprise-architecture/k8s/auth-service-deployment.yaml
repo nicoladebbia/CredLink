@@ -45,7 +45,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: auth-service
-        image: ghcr.io/c2concierge/auth-service:latest
+        image: ghcr.io/credlink/auth-service:latest
         imagePullPolicy: Always
         ports:
         - name: http
@@ -495,7 +495,7 @@ data:
           "skipSuccessfulRequests": false
         },
         "cors": {
-          "origin": ["https://c2concierge.com", "https://admin.c2concierge.com"],
+          "origin": ["https://credlink.com", "https://admin.credlink.com"],
           "credentials": true,
           "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
           "allowedHeaders": ["Content-Type", "Authorization", "X-Request-ID"]

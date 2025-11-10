@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/c2concierge/cli/internal/cmd"
+	"github.com/credlink/cli/internal/cmd"
 	"github.com/spf13/cobra"
 )
 

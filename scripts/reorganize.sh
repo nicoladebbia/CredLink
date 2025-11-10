@@ -8,7 +8,7 @@ echo "🚨 CredLink Repository Reorganization"
 echo "======================================"
 echo ""
 echo "This will:"
-echo "  - Rename c2-concierge → credlink"
+echo "  - Rename credlink → credlink"
 echo "  - Reorganize folder structure"
 echo "  - Archive phase-numbered folders"
 echo "  - Delete redundant files"
@@ -54,7 +54,7 @@ echo "🔄 Moving SDKs..."
 # Move CMS connectors
 echo "🔄 Moving CMS connectors..."
 [ -d "packages/cms-connectors" ] && mv packages/cms-connectors integrations/cms/ || true
-[ -d "plugins/wp-c2concierge" ] && mv plugins/wp-c2concierge integrations/cms/wordpress/ || true
+[ -d "plugins/wp-credlink" ] && mv plugins/wp-credlink integrations/cms/wordpress/ || true
 [ -d "plugins/shopify-app" ] && mv plugins/shopify-app integrations/cms/shopify/ || true
 
 # Move tests

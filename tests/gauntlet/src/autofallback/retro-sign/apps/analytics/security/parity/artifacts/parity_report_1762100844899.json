@@ -1,0 +1,176 @@
+{
+  "timestamp": "2025-11-02T16:27:24.899Z",
+  "summary": {
+    "total_tests": 4,
+    "passed_tests": 0,
+    "failed_tests": 4,
+    "success_rate": "0.00%",
+    "decision_agreement": "50.00%",
+    "error_agreement": "0.00%",
+    "performance_compliance": "100.00%",
+    "overall_score": "50.00%"
+  },
+  "quality_gates": {
+    "decision_agreement_threshold": 95,
+    "error_detection_threshold": 90,
+    "performance_compliance_threshold": 85,
+    "overall_score_threshold": 90,
+    "all_passed": false
+  },
+  "results": [
+    {
+      "test": {
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/valid/basic.json",
+        "description": "Basic valid manifest",
+        "category": "valid",
+        "expected_decision": "VALID"
+      },
+      "our_result": {
+        "decision": "VALID",
+        "error_code": "OK",
+        "error_message": "Provenance verified",
+        "execution_time_ms": 2,
+        "success": true
+      },
+      "reference_results": [
+        {
+          "tool": "c2patool",
+          "decision": "VALID",
+          "execution_time_ms": 100,
+          "success": false,
+          "error_code": "TOOL_UNAVAILABLE"
+        },
+        {
+          "tool": "cai_verify",
+          "decision": "VALID",
+          "execution_time_ms": 0,
+          "success": true
+        }
+      ],
+      "decision_matches": true,
+      "error_matches": false,
+      "performance_compliant": true,
+      "overall_match": false,
+      "discrepancies": [
+        "Error handling does not match reference implementations"
+      ]
+    },
+    {
+      "test": {
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/valid/with_assertions.json",
+        "description": "Valid manifest with assertions",
+        "category": "valid",
+        "expected_decision": "VALID"
+      },
+      "our_result": {
+        "decision": "VALID",
+        "error_code": "OK",
+        "error_message": "Provenance verified",
+        "execution_time_ms": 0,
+        "success": true
+      },
+      "reference_results": [
+        {
+          "tool": "c2patool",
+          "decision": "VALID",
+          "execution_time_ms": 100,
+          "success": false,
+          "error_code": "TOOL_UNAVAILABLE"
+        },
+        {
+          "tool": "cai_verify",
+          "decision": "VALID",
+          "execution_time_ms": 0,
+          "success": true
+        }
+      ],
+      "decision_matches": true,
+      "error_matches": false,
+      "performance_compliant": true,
+      "overall_match": false,
+      "discrepancies": [
+        "Error handling does not match reference implementations"
+      ]
+    },
+    {
+      "test": {
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/malformed/invalid_json.json",
+        "description": "Invalid JSON structure",
+        "category": "malformed",
+        "expected_decision": "DESTROYED"
+      },
+      "our_result": {
+        "decision": "DESTROYED",
+        "error_code": "C2PA_JUMBF_LEN",
+        "error_message": "This file's Content Credentials are broken: Malformed JUMBF length",
+        "execution_time_ms": 1,
+        "success": true
+      },
+      "reference_results": [
+        {
+          "tool": "c2patool",
+          "decision": "DESTROYED",
+          "execution_time_ms": 100,
+          "success": false,
+          "error_code": "TOOL_UNAVAILABLE"
+        },
+        {
+          "tool": "cai_verify",
+          "decision": "DESTROYED",
+          "execution_time_ms": 0,
+          "success": true
+        }
+      ],
+      "decision_matches": false,
+      "error_matches": false,
+      "performance_compliant": true,
+      "overall_match": false,
+      "discrepancies": [
+        "Decision codes do not match reference implementations",
+        "Error handling does not match reference implementations"
+      ]
+    },
+    {
+      "test": {
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/edge/empty_manifest.json",
+        "description": "Empty manifest edge case",
+        "category": "edge",
+        "expected_decision": "DESTROYED"
+      },
+      "our_result": {
+        "decision": "DESTROYED",
+        "error_code": "C2PA_JUMBF_LEN",
+        "error_message": "This file's Content Credentials are broken: Malformed JUMBF length",
+        "execution_time_ms": 0,
+        "success": true
+      },
+      "reference_results": [
+        {
+          "tool": "c2patool",
+          "decision": "DEGRADED",
+          "execution_time_ms": 100,
+          "success": false,
+          "error_code": "TOOL_UNAVAILABLE"
+        },
+        {
+          "tool": "cai_verify",
+          "decision": "DEGRADED",
+          "execution_time_ms": 0,
+          "success": true
+        }
+      ],
+      "decision_matches": false,
+      "error_matches": false,
+      "performance_compliant": true,
+      "overall_match": false,
+      "discrepancies": [
+        "Decision codes do not match reference implementations",
+        "Error handling does not match reference implementations"
+      ]
+    }
+  ],
+  "recommendations": [
+    "Significant parity issues require immediate attention",
+    "Review 2 decision code mismatches"
+  ]
+}

@@ -145,7 +145,7 @@ func generateMockManifest(asset string) map[string]interface{} {
 	return map[string]interface{}{
 		"label":       "c2pa-manifest",
 		"manifest_id": fmt.Sprintf("manifest-%x", len(asset)),
-		"title":       "C2 Concierge Manifest",
+		"title":       "CredLink Manifest",
 		"format":      "application/json",
 		"instance_id": fmt.Sprintf("instance-%x", len(asset)*2),
 		"assertions": []map[string]interface{}{
@@ -187,8 +187,8 @@ func generateMockClaims() []map[string]interface{} {
 func generateMockCertificates() []map[string]interface{} {
 	return []map[string]interface{}{
 		{
-			"subject":    "CN=C2 Concierge Signer",
-			"issuer":     "CN=C2 Concierge CA",
+			"subject":    "CN=CredLink Signer",
+			"issuer":     "CN=CredLink CA",
 			"serial":     "1234567890ABCDEF",
 			"not_before": "2025-01-01T00:00:00Z",
 			"not_after":  "2026-01-01T00:00:00Z",

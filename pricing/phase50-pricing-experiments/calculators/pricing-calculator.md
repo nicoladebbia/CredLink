@@ -446,8 +446,8 @@
             <div class="text-center">
                 <p class="text-gray-400">
                     Questions about pricing? 
-                    <a href="mailto:billing@c2concierge.com" class="text-blue-400 hover:text-blue-300">
-                        billing@c2concierge.com
+                    <a href="mailto:billing@credlink.com" class="text-blue-400 hover:text-blue-300">
+                        billing@credlink.com
                     </a>
                 </p>
                 <p class="text-gray-500 text-sm mt-2">
@@ -919,7 +919,7 @@ const analytics = {
 {
   "hosting": {
     "provider": "netlify",
-    "domain": "calculator.c2concierge.com",
+    "domain": "calculator.credlink.com",
     "ssl": true,
     "redirects": [
       {
@@ -952,8 +952,8 @@ const analytics = {
 <meta property="og:title" content="C2 Concierge Pricing Calculator">
 <meta property="og:description" content="Get transparent pricing for C2PA content verification and signing services">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://calculator.c2concierge.com">
-<meta property="og:image" content="https://calculator.c2concierge.com/og-image.png">
+<meta property="og:url" content="https://calculator.credlink.com">
+<meta property="og:image" content="https://calculator.credlink.com/og-image.png">
 ```
 
 ---

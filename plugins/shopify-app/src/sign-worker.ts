@@ -347,7 +347,7 @@ class SignWorker {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': 'C2Concierge-Shopify/0.1.0',
+            'User-Agent': 'CredLink-Shopify/0.1.0',
             'X-Request-ID': request_id,
             'X-Shop-Domain': shop_domain
           },

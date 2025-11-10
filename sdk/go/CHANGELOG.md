@@ -43,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hash format validation
 
 ### Breaking Changes from v1
-- Module path updated to `github.com/c2concierge/sdk-go/v2`
+- Module path updated to `github.com/credlink/sdk-go/v2`
 - Context parameter added to all client methods
 - Error handling updated with structured error types
 - Configuration options restructured for better type safety

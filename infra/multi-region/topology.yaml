@@ -5,7 +5,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: multi-region-topology
-  namespace: c2-concierge
+  namespace: credlink
 data:
   topology.yaml: |
     # Multi-Region Topology Definition
@@ -14,22 +14,22 @@ data:
         name: ENAM
         display_name: "Eastern North America"
         cloudflare_code: "enam"
-        dns_zone: "c2-concierge.com"
+        dns_zone: "credlink.com"
         
         # API Endpoints
         services:
           api_gateway:
-            hostname: "api.c2-concierge.com"
+            hostname: "api.credlink.com"
             internal_lb: "api-gateway-enam.internal"
             ports: { external: 443, internal: 8080 }
           
           sign_service:
-            hostname: "sign.c2-concierge.com" 
+            hostname: "sign.credlink.com" 
             internal_lb: "sign-service-enam.internal"
             ports: { external: 443, internal: 3001 }
           
           verify_service:
-            hostname: "verify.c2-concierge.com"
+            hostname: "verify.credlink.com"
             internal_lb: "verify-service-enam.internal" 
             ports: { external: 443, internal: 3002 }
           
@@ -52,22 +52,22 @@ data:
         name: WEUR
         display_name: "Western Europe"
         cloudflare_code: "weur"
-        dns_zone: "c2-concierge.com"
+        dns_zone: "credlink.com"
         
         # API Endpoints (hot standby)
         services:
           api_gateway:
-            hostname: "api-standby.c2-concierge.com"
+            hostname: "api-standby.credlink.com"
             internal_lb: "api-gateway-weur.internal"
             ports: { external: 443, internal: 8080 }
           
           sign_service:
-            hostname: "sign-standby.c2-concierge.com"
+            hostname: "sign-standby.credlink.com"
             internal_lb: "sign-service-weur.internal"
             ports: { external: 443, internal: 3001 }
           
           verify_service:
-            hostname: "verify-standby.c2-concierge.com"
+            hostname: "verify-standby.credlink.com"
             internal_lb: "verify-service-weur.internal"
             ports: { external: 443, internal: 3002 }
           
@@ -88,8 +88,8 @@ data:
 
     # Cloudflare Load Balancer Configuration
     load_balancer:
-      name: "c2-concierge-lb"
-      dns_name: "api.c2-concierge.com"
+      name: "credlink-lb"
+      dns_name: "api.credlink.com"
       ttl: 60
       
       pools:
@@ -313,21 +313,21 @@ data:
     dns:
       ttl: 60
       records:
-        - name: "api.c2-concierge.com"
+        - name: "api.credlink.com"
           type: "CNAME"
-          target: "c2-concierge-lb.c2-concierge.com"
+          target: "credlink-lb.credlink.com"
           
-        - name: "sign.c2-concierge.com"
+        - name: "sign.credlink.com"
           type: "CNAME"
-          target: "c2-concierge-lb.c2-concierge.com"
+          target: "credlink-lb.credlink.com"
           
-        - name: "verify.c2-concierge.com"
+        - name: "verify.credlink.com"
           type: "CNAME"
-          target: "c2-concierge-lb.c2-concierge.com"
+          target: "credlink-lb.credlink.com"
           
-        - name: "manifests.c2-concierge.com"
+        - name: "manifests.credlink.com"
           type: "CNAME"
-          target: "c2-concierge-lb.c2-concierge.com"
+          target: "credlink-lb.credlink.com"
           
     # Traffic Steering Rules
     steering:
@@ -356,12 +356,12 @@ data:
 apiVersion: cloudflare.com/v1
 kind: LoadBalancer
 metadata:
-  name: c2-concierge-lb
-  namespace: c2-concierge
+  name: credlink-lb
+  namespace: credlink
 spec:
-  name: "c2-concierge-lb"
+  name: "credlink-lb"
   dns:
-    name: "api.c2-concierge.com"
+    name: "api.credlink.com"
     ttl: 60
     
   pools:
@@ -488,7 +488,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway-enam
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: api-gateway
     region: enam
@@ -514,7 +514,7 @@ spec:
                 values: ["us-east-1"]
       containers:
       - name: api-gateway
-        image: "c2-concierge/api-gateway:latest"
+        image: "credlink/api-gateway:latest"
         ports:
         - containerPort: 8080
         - containerPort: 9090  # Health check port
@@ -556,7 +556,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway-weur
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: api-gateway
     region: weur
@@ -582,7 +582,7 @@ spec:
                 values: ["eu-west-1"]
       containers:
       - name: api-gateway
-        image: "c2-concierge/api-gateway:latest"
+        image: "credlink/api-gateway:latest"
         ports:
         - containerPort: 8080
         - containerPort: 9090  # Health check port

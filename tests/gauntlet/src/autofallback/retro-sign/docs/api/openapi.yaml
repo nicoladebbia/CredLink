@@ -1,0 +1,1683 @@
+openapi: 3.0.3
+info:
+  title: C2-Concierge API
+  description: |
+    Enterprise Key Custody System API
+    
+    C2-Concierge provides comprehensive key management, rotation, and incident response
+    capabilities for enterprise environments. This API supports multi-backend key
+    management, automated workflows, and advanced security monitoring.
+    
+    ## Authentication
+    
+    All API requests require authentication using Bearer tokens obtained from the
+    `/auth/login` endpoint. Tokens expire after 1 hour of inactivity.
+    
+    ## Rate Limiting
+    
+    API endpoints are rate-limited to 100 requests per minute per tenant.
+    
+    ## Error Handling
+    
+    The API uses standard HTTP status codes with detailed error responses in JSON format.
+    
+  version: 1.0.0
+  contact:
+    name: C2-Concierge Support
+    email: support@credlink.com
+    url: https://credlink.com/support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.credlink.com/v1
+    description: Production server
+  - url: https://staging-api.credlink.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Development server
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate user
+      description: |
+        Authenticate a user and return a JWT Bearer token.
+        The token must be included in the Authorization header for all subsequent requests.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              standard_login:
+                summary: Standard user login
+                value:
+                  username: "admin@example.com"
+                  password: "securePassword123"
+                  tenant_id: "example-tenant"
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                successful_login:
+                  summary: Successful authentication
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    token_type: "Bearer"
+                    expires_in: 3600
+                    user:
+                      user_id: "user-123"
+                      username: "admin@example.com"
+                      permissions:
+                        - "policy:read"
+                        - "policy:write"
+                        - "rotation:execute"
+                      tenant_id: "example-tenant"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: |
+        Invalidate the current authentication token.
+        The token will be added to a blacklist and cannot be used again.
+      operationId: logout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+              examples:
+                logout_success:
+                  summary: Successful logout
+                  value:
+                    message: "Logged out successfully"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh authentication token
+      description: |
+        Refresh an existing authentication token before it expires.
+        The new token will have the same permissions and expiration time.
+      operationId: refreshToken
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /policies:
+    get:
+      tags:
+        - Policy Management
+      summary: List signing policies
+      description: |
+        Retrieve a paginated list of signing policies for the authenticated tenant.
+        Supports filtering by key type, provider, and status.
+      operationId: listPolicies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: key_type
+          in: query
+          description: Filter by key type
+          schema:
+            $ref: '#/components/schemas/KeyType'
+        - name: provider
+          in: query
+          description: Filter by provider
+          schema:
+            type: string
+            enum: ["yubihsm2", "aws-kms", "gcp-kms", "azure-kv", "software"]
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: ["active", "inactive", "pending", "error"]
+      responses:
+        '200':
+          description: Policies retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Policy Management
+      summary: Create signing policy
+      description: |
+        Create a new signing policy for the specified tenant.
+        The policy defines key configuration, rotation settings, and security controls.
+      operationId: createPolicy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePolicyRequest'
+            examples:
+              hsm_policy:
+                summary: HSM-based policy
+                value:
+                  tenant_id: "example-tenant"
+                  algorithm: "ES256"
+                  tsa_profile: "std"
+                  key_type: "hsm"
+                  provider: "yubihsm2"
+                  handle: "key-001"
+                  rotate_every_days: 30
+                  max_issuance_per_24h: 1000
+      responses:
+        '201':
+          description: Policy created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Policy already exists for tenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                policy_exists:
+                  summary: Policy already exists
+                  value:
+                    error: "Policy already exists"
+                    message: "A policy for tenant 'example-tenant' already exists"
+                    code: "POLICY_EXISTS"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /policies/{tenant_id}:
+    get:
+      tags:
+        - Policy Management
+      summary: Get signing policy
+      description: |
+        Retrieve the signing policy for a specific tenant.
+        Returns the complete policy configuration including key details and rotation settings.
+      operationId: getPolicy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          description: Tenant identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Policy retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Policy Management
+      summary: Update signing policy
+      description: |
+        Update an existing signing policy.
+        Only the specified fields will be updated; other fields remain unchanged.
+      operationId: updatePolicy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          description: Tenant identifier
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePolicyRequest'
+      responses:
+        '200':
+          description: Policy updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Policy Management
+      summary: Delete signing policy
+      description: |
+        Delete a signing policy and associated keys.
+        This action cannot be undone and will invalidate all existing signatures.
+      operationId: deletePolicy
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenant_id
+          in: path
+          required: true
+          description: Tenant identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Policy deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rotations:
+    get:
+      tags:
+        - Rotation Management
+      summary: List key rotations
+      description: |
+        Retrieve a paginated list of key rotations.
+        Supports filtering by status, tenant, and date range.
+      operationId: listRotations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: status
+          in: query
+          description: Filter by rotation status
+          schema:
+            $ref: '#/components/schemas/RotationStatus'
+        - name: tenant_id
+          in: query
+          description: Filter by tenant
+          schema:
+            type: string
+            format: uuid
+        - name: from_date
+          in: query
+          description: Filter by start date
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          description: Filter by end date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Rotations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Rotation Management
+      summary: Schedule key rotation
+      description: |
+        Schedule a new key rotation for the specified tenant.
+        The rotation will be executed automatically at the scheduled time.
+      operationId: scheduleRotation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleRotationRequest'
+      responses:
+        '201':
+          description: Rotation scheduled successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Policy not found for tenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rotations/{rotation_id}/execute:
+    post:
+      tags:
+        - Rotation Management
+      summary: Execute key rotation
+      description: |
+        Immediately execute a scheduled key rotation.
+        This will trigger the complete rotation workflow including key generation, testing, and cutover.
+      operationId: executeRotation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rotation_id
+          in: path
+          required: true
+          description: Rotation identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rotation execution started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotationExecutionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Rotation already in progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rotations/{rotation_id}/status:
+    get:
+      tags:
+        - Rotation Management
+      summary: Get rotation status
+      description: |
+        Retrieve the current status and progress of a key rotation.
+        Includes detailed information about each phase of the rotation.
+      operationId: getRotationStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rotation_id
+          in: path
+          required: true
+          description: Rotation identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rotation status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotationStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /rotations/{rotation_id}/rollback:
+    post:
+      tags:
+        - Rotation Management
+      summary: Rollback key rotation
+      description: |
+        Rollback a failed or problematic key rotation.
+        This will restore the previous key and invalidate the new key.
+      operationId: rollbackRotation
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rotation_id
+          in: path
+          required: true
+          description: Rotation identifier
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RollbackRequest'
+      responses:
+        '200':
+          description: Rollback initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/Response'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Rollback not possible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /incidents:
+    get:
+      tags:
+        - Incident Management
+      summary: List incidents
+      description: |
+        Retrieve a paginated list of security incidents.
+        Supports filtering by severity, status, and incident type.
+      operationId: listIncidents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: severity
+          in: query
+          description: Filter by severity
+          schema:
+            $ref: '#/components/schemas/IncidentSeverity'
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: ["active", "resolved", "escalated"]
+        - name: incident_type
+          in: query
+          description: Filter by incident type
+          schema:
+            $ref: '#/components/schemas/IncidentType'
+      responses:
+        '200':
+          description: Incidents retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Incident Management
+      summary: Create incident
+      description: |
+        Create a new security incident.
+        This will trigger automated detection and response workflows.
+      operationId: createIncident
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateIncidentRequest'
+      responses:
+        '201':
+          description: Incident created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /incidents/{incident_id}/resolve:
+    post:
+      tags:
+        - Incident Management
+      summary: Resolve incident
+      description: |
+        Mark an incident as resolved with optional resolution notes.
+        This will stop automated response actions for the incident.
+      operationId: resolveIncident
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          description: Incident identifier
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveIncidentRequest'
+      responses:
+        '200':
+          description: Incident resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Incident already resolved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /incidents/{incident_id}/timeline:
+    get:
+      tags:
+        - Incident Management
+      summary: Get incident timeline
+      description: |
+        Retrieve the complete timeline of events for an incident.
+        Includes detection, response actions, and status changes.
+      operationId: getIncidentTimeline
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: incident_id
+          in: path
+          required: true
+          description: Incident identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Timeline retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IncidentTimelineResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /monitoring/health:
+    get:
+      tags:
+        - Monitoring
+      summary: Health check
+      description: |
+        Perform a comprehensive health check of all system components.
+        Returns the status of database, backends, and dependent services.
+      operationId: healthCheck
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Health check completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheckResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /monitoring/metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: Get system metrics
+      description: |
+        Retrieve current system metrics including performance, security, and business metrics.
+        Metrics are available in Prometheus format.
+      operationId: getMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: format
+          in: query
+          description: Response format
+          schema:
+            type: string
+            enum: ["json", "prometheus"]
+            default: "json"
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+            text/plain:
+              schema:
+                type: string
+                description: Prometheus metrics format
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+        - tenant_id
+      properties:
+        username:
+          type: string
+          format: email
+          description: User email address
+          example: "admin@example.com"
+        password:
+          type: string
+          format: password
+          description: User password
+          minLength: 8
+          example: "securePassword123"
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    LoginResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+        - user
+      properties:
+        access_token:
+          type: string
+          description: JWT Bearer token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          enum: ["Bearer"]
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+          example: 3600
+        user:
+          $ref: '#/components/schemas/UserInfo'
+
+    UserInfo:
+      type: object
+      required:
+        - user_id
+        - username
+        - permissions
+        - tenant_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: "user-123"
+        username:
+          type: string
+          format: email
+          description: User email address
+          example: "admin@example.com"
+        permissions:
+          type: array
+          items:
+            type: string
+          description: User permissions
+          example: ["policy:read", "policy:write", "rotation:execute"]
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+    CreatePolicyRequest:
+      type: object
+      required:
+        - tenant_id
+        - algorithm
+        - key_type
+        - provider
+        - handle
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+          description: Tenant identifier
+        algorithm:
+          type: string
+          enum: ["ES256", "RS256", "PS256"]
+          description: Signature algorithm
+          example: "ES256"
+        tsa_profile:
+          type: string
+          description: Timestamp authority profile
+          example: "std"
+        assertions_allow:
+          type: array
+          items:
+            type: string
+          description: Allowed assertion types
+          example: ["c2pa.actions"]
+        assertions_deny:
+          type: array
+          items:
+            type: string
+          description: Denied assertion types
+          example: []
+        embed_allowed_origins:
+          type: array
+          items:
+            type: string
+          description: Allowed embedding origins
+          example: ["https://example.com"]
+        key_type:
+          $ref: '#/components/schemas/KeyType'
+        provider:
+          type: string
+          enum: ["yubihsm2", "aws-kms", "gcp-kms", "azure-kv", "software"]
+          description: Key provider
+          example: "yubihsm2"
+        handle:
+          type: string
+          description: Key handle or identifier
+          example: "key-001"
+        rotate_every_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: Key rotation interval in days
+          example: 30
+        max_issuance_per_24h:
+          type: integer
+          minimum: 1
+          description: Maximum signatures per 24 hours
+          example: 1000
+
+    UpdatePolicyRequest:
+      type: object
+      properties:
+        algorithm:
+          type: string
+          enum: ["ES256", "RS256", "PS256"]
+        tsa_profile:
+          type: string
+        assertions_allow:
+          type: array
+          items:
+            type: string
+        assertions_deny:
+          type: array
+          items:
+            type: string
+        embed_allowed_origins:
+          type: array
+          items:
+            type: string
+        rotate_every_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+        max_issuance_per_24h:
+          type: integer
+          minimum: 1
+        sign_enabled:
+          type: boolean
+          description: Enable/disable signing
+
+    KeyType:
+      type: string
+      enum: ["hsm", "kms", "software"]
+      description: Type of key storage
+
+    PolicyResponse:
+      type: object
+      required:
+        - tenant_id
+        - policy
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        policy:
+          $ref: '#/components/schemas/SigningPolicy'
+
+    SigningPolicy:
+      type: object
+      required:
+        - tenant_id
+        - algorithm
+        - key
+        - created_at
+        - updated_at
+        - policy_hash
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        algorithm:
+          type: string
+        tsa_profile:
+          type: string
+        assertions_allow:
+          type: array
+          items:
+            type: string
+        assertions_deny:
+          type: array
+          items:
+            type: string
+        embed_allowed_origins:
+          type: array
+          items:
+            type: string
+        key:
+          $ref: '#/components/schemas/KeyConfig'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        policy_hash:
+          type: string
+          description: SHA-256 hash of policy configuration
+
+    KeyConfig:
+      type: object
+      required:
+        - key_type
+        - provider
+        - handle
+        - not_before
+        - not_after
+        - rotate_every_days
+        - max_issuance_per_24h
+        - sign_enabled
+      properties:
+        key_type:
+          $ref: '#/components/schemas/KeyType'
+        provider:
+          type: string
+        handle:
+          type: string
+        cert_chain:
+          type: array
+          items:
+            type: string
+          description: Certificate chain
+        not_before:
+          type: string
+          format: date-time
+        not_after:
+          type: string
+          format: date-time
+        rotate_every_days:
+          type: integer
+        max_issuance_per_24h:
+          type: integer
+        sign_enabled:
+          type: boolean
+
+    PolicyListResponse:
+      type: object
+      required:
+        - policies
+        - pagination
+      properties:
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ScheduleRotationRequest:
+      type: object
+      required:
+        - tenant_id
+        - scheduled_time
+        - owner
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        scheduled_time:
+          type: string
+          format: date-time
+          description: When to execute the rotation
+        owner:
+          type: string
+          description: Who requested the rotation
+          example: "admin@example.com"
+        approval_required:
+          type: boolean
+          description: Whether approval is required
+          default: false
+
+    RotationResponse:
+      type: object
+      required:
+        - rotation_id
+        - rotation
+      properties:
+        rotation_id:
+          type: string
+          format: uuid
+        rotation:
+          $ref: '#/components/schemas/Rotation'
+
+    Rotation:
+      type: object
+      required:
+        - tenant_id
+        - scheduled_rotation
+        - status
+        - created_at
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        scheduled_rotation:
+          type: string
+          format: date-time
+        rotation_window_start:
+          type: string
+          format: date-time
+        rotation_window_end:
+          type: string
+          format: date-time
+        owner:
+          type: string
+        approval_required:
+          type: boolean
+        status:
+          $ref: '#/components/schemas/RotationStatus'
+        created_at:
+          type: string
+          format: date-time
+
+    RotationStatus:
+      type: string
+      enum: ["scheduled", "in_progress", "completed", "failed", "rolled_back"]
+
+    RotationListResponse:
+      type: object
+      required:
+        - rotations
+        - pagination
+      properties:
+        rotations:
+          type: array
+          items:
+            $ref: '#/components/schemas/RotationResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    RotationExecutionResponse:
+      type: object
+      required:
+        - rotation_id
+        - execution_id
+        - status
+      properties:
+        rotation_id:
+          type: string
+          format: uuid
+        execution_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: ["started", "in_progress", "completed", "failed"]
+        estimated_duration:
+          type: integer
+          description: Estimated completion time in seconds
+        current_phase:
+          type: string
+          description: Current rotation phase
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    RotationStatusResponse:
+      type: object
+      required:
+        - rotation_id
+        - status
+        - phases
+      properties:
+        rotation_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/RotationStatus'
+        current_phase:
+          type: string
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        phases:
+          type: array
+          items:
+            $ref: '#/components/schemas/RotationPhase'
+        started_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+
+    RotationPhase:
+      type: object
+      required:
+        - name
+        - status
+        - started_at
+      properties:
+        name:
+          type: string
+          description: Phase name
+          example: "key_generation"
+        status:
+          type: string
+          enum: ["pending", "in_progress", "completed", "failed"]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        duration_seconds:
+          type: integer
+        error_message:
+          type: string
+
+    RollbackRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Reason for rollback
+          example: "Key generation failed"
+        force:
+          type: boolean
+          description: Force rollback even if validation fails
+          default: false
+
+    CreateIncidentRequest:
+      type: object
+      required:
+        - tenant_id
+        - incident_type
+        - severity
+        - description
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        incident_type:
+          $ref: '#/components/schemas/IncidentType'
+        severity:
+          $ref: '#/components/schemas/IncidentSeverity'
+        description:
+          type: string
+          description: Detailed description of the incident
+          example: "Potential key compromise detected"
+        affected_keys:
+          type: array
+          items:
+            type: string
+          description: List of affected key identifiers
+        metadata:
+          type: object
+          description: Additional incident metadata
+          example:
+            source: "automated_detection"
+            confidence: 0.85
+
+    IncidentType:
+      type: string
+      enum: ["key_compromise", "hsm_failure", "backend_outage", "policy_violation", "security_alert", "compliance_failure"]
+
+    IncidentSeverity:
+      type: string
+      enum: ["low", "medium", "high", "critical"]
+
+    IncidentResponse:
+      type: object
+      required:
+        - incident_id
+        - incident
+      properties:
+        incident_id:
+          type: string
+          format: uuid
+        incident:
+          $ref: '#/components/schemas/Incident'
+
+    Incident:
+      type: object
+      required:
+        - tenant_id
+        - incident_type
+        - severity
+        - description
+        - status
+        - created_at
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        incident_type:
+          $ref: '#/components/schemas/IncidentType'
+        severity:
+          $ref: '#/components/schemas/IncidentSeverity'
+        description:
+          type: string
+        status:
+          type: string
+          enum: ["active", "resolved", "escalated"]
+        affected_keys:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        resolution_note:
+          type: string
+
+    IncidentListResponse:
+      type: object
+      required:
+        - incidents
+        - pagination
+      properties:
+        incidents:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncidentResponse'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ResolveIncidentRequest:
+      type: object
+      properties:
+        resolution_note:
+          type: string
+          description: Notes about the resolution
+          example: "False positive - no actual compromise detected"
+
+    IncidentTimelineResponse:
+      type: object
+      required:
+        - incident_id
+        - events
+      properties:
+        incident_id:
+          type: string
+          format: uuid
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/IncidentEvent'
+
+    IncidentEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - description
+      properties:
+        event_type:
+          type: string
+          enum: ["detected", "escalated", "response_triggered", "resolved"]
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+        actor:
+          type: string
+          description: Who performed the action
+        metadata:
+          type: object
+
+    HealthCheckResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - components
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "degraded", "unhealthy"]
+        timestamp:
+          type: string
+          format: date-time
+        components:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ComponentHealth'
+        uptime_seconds:
+          type: integer
+          description: System uptime in seconds
+        version:
+          type: string
+          description: Application version
+
+    ComponentHealth:
+      type: object
+      required:
+        - status
+        - response_time_ms
+      properties:
+        status:
+          type: string
+          enum: ["healthy", "unhealthy"]
+        response_time_ms:
+          type: integer
+          description: Response time in milliseconds
+        last_check:
+          type: string
+          format: date-time
+        error_message:
+          type: string
+
+    MetricsResponse:
+      type: object
+      required:
+        - timestamp
+        - metrics
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        metrics:
+          type: object
+          description: System metrics
+          properties:
+            performance:
+              $ref: '#/components/schemas/PerformanceMetrics'
+            security:
+              $ref: '#/components/schemas/SecurityMetrics'
+            business:
+              $ref: '#/components/schemas/BusinessMetrics'
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        requests_per_second:
+          type: number
+        average_response_time_ms:
+          type: number
+        error_rate:
+          type: number
+        cpu_usage_percent:
+          type: number
+        memory_usage_percent:
+          type: number
+
+    SecurityMetrics:
+      type: object
+      properties:
+        authentication_attempts:
+          type: integer
+        failed_authentications:
+          type: integer
+        threats_detected:
+          type: integer
+        active_incidents:
+          type: integer
+
+    BusinessMetrics:
+      type: object
+      properties:
+        total_policies:
+          type: integer
+        active_rotations:
+          type: integer
+        completed_rotations_today:
+          type: integer
+        keys_managed:
+          type: integer
+
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - total_pages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+        total:
+          type: integer
+          minimum: 0
+        total_pages:
+          type: integer
+          minimum: 0
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+
+    SuccessResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - code
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "ValidationError"
+        message:
+          type: string
+          description: Detailed error message
+          example: "Invalid request parameters"
+        code:
+          type: string
+          description: Error code for programmatic handling
+          example: "VALIDATION_ERROR"
+        details:
+          type: object
+          description: Additional error details
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation_error:
+              summary: Validation failed
+              value:
+                error: "ValidationError"
+                message: "Invalid request parameters"
+                code: "VALIDATION_ERROR"
+                details:
+                  field: "tenant_id"
+                  issue: "Invalid UUID format"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            auth_required:
+              summary: Authentication required
+              value:
+                error: "Unauthorized"
+                message: "Authentication token is required"
+                code: "AUTH_REQUIRED"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            permission_denied:
+              summary: Insufficient permissions
+              value:
+                error: "Forbidden"
+                message: "Insufficient permissions for this operation"
+                code: "PERMISSION_DENIED"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not_found:
+              summary: Resource not found
+              value:
+                error: "NotFound"
+                message: "The requested resource was not found"
+                code: "NOT_FOUND"
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            rate_limited:
+              summary: Rate limit exceeded
+              value:
+                error: "TooManyRequests"
+                message: "Rate limit exceeded. Please try again later."
+                code: "RATE_LIMIT_EXCEEDED"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            internal_error:
+              summary: Internal server error
+              value:
+                error: "InternalError"
+                message: "An internal server error occurred"
+                code: "INTERNAL_ERROR"
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: Policy Management
+    description: Signing policy CRUD operations
+  - name: Rotation Management
+    description: Key rotation scheduling and execution
+  - name: Incident Management
+    description: Security incident detection and response
+  - name: Monitoring
+    description: System health and metrics

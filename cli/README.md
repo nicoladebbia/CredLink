@@ -1,10 +1,10 @@
-# C2 Concierge CLI
+# CredLink CLI
 
 Operator-grade power tools for cryptographic provenance verification, signing, and compliance.
 
 ## Overview
 
-The C2 Concierge CLI provides a comprehensive command-line interface for:
+The CredLink CLI provides a comprehensive command-line interface for:
 - **Signing** files and directories with optional TSA timestamps
 - **Verification** of assets with page crawling and batch processing
 - **Inspection** of manifests and claims
@@ -17,16 +17,16 @@ The C2 Concierge CLI provides a comprehensive command-line interface for:
 
 ### Pre-built Binaries
 
-Download the appropriate binary for your platform from the [releases page](https://github.com/c2concierge/cli/releases).
+Download the appropriate binary for your platform from the [releases page](https://github.com/credlink/cli/releases).
 
-- Linux x86_64: `c2c-linux-amd64`
-- Windows x64: `c2c-windows-amd64.exe`
-- macOS Universal: `c2c-darwin-universal`
+- Linux x86_64: `credlink-linux-amd64`
+- Windows x64: `credlink-windows-amd64.exe`
+- macOS Universal: `credlink-darwin-universal`
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/c2concierge/cli.git
+git clone https://github.com/credlink/cli.git
 cd cli
 make build-all
 ```
@@ -35,19 +35,19 @@ make build-all
 
 ```bash
 # Verify a single asset
-c2c verify image.jpg
+credlink verify image.jpg
 
 # Sign a folder with TSA timestamps
-c2c sign ./images --tsa --concurrency 8
+credlink sign ./images --tsa --concurrency 8
 
 # Verify a web page and all assets
-c2c verify https://example.com/article --page --json
+credlink verify https://example.com/article --page --json
 
 # Batch verify from a feed
-c2c batch verify --feed assets.jsonl --resume
+credlink batch verify --feed assets.jsonl --resume
 
 # Generate a compliance pack
-c2c pack --input s3://bucket/campaign/ --out campaign-pack.tar.gz
+credlink pack --input s3://bucket/campaign/ --out campaign-pack.tar.gz
 ```
 
 ## Commands
@@ -71,7 +71,7 @@ These flags are available on all commands:
 Sign files, directories, or cloud prefixes.
 
 ```bash
-c2c sign <path> [options]
+credlink sign <path> [options]
 ```
 
 **Options:**
@@ -88,13 +88,13 @@ c2c sign <path> [options]
 **Examples:**
 ```bash
 # Sign local folder
-c2c sign ./images --tsa --profile newsroom
+credlink sign ./images --tsa --profile newsroom
 
 # Sign cloud prefix with high concurrency
-c2c sign s3://bucket/assets/ --concurrency 12 --resume
+credlink sign s3://bucket/assets/ --concurrency 12 --resume
 
 # Dry run with cost projection
-c2c sign ./photos --dry-run --json
+credlink sign ./photos --dry-run --json
 ```
 
 ### Verify
@@ -102,7 +102,7 @@ c2c sign ./photos --dry-run --json
 Verify single or multiple assets.
 
 ```bash
-c2c verify <path|url> [options]
+credlink verify <path|url> [options]
 ```
 
 **Options:**
@@ -117,16 +117,16 @@ c2c verify <path|url> [options]
 **Examples:**
 ```bash
 # Verify single asset
-c2c verify image.jpg
+credlink verify image.jpg
 
 # Verify web page and assets
-c2c verify https://news.example/article --page --json
+credlink verify https://news.example/article --page --json
 
 # Verify cloud prefix
-c2c verify s3://bucket/photos/ --prefix --threshold survival>=0.95
+credlink verify s3://bucket/photos/ --prefix --threshold survival>=0.95
 
 # Stream verification results
-c2c verify r2://account/bucket/assets/ --stream > results.ndjson
+credlink verify r2://account/bucket/assets/ --stream > results.ndjson
 ```
 
 ### Inspect
@@ -134,7 +134,7 @@ c2c verify r2://account/bucket/assets/ --stream > results.ndjson
 Display manifest information and claims.
 
 ```bash
-c2c inspect <asset> [options]
+credlink inspect <asset> [options]
 ```
 
 **Options:**
@@ -147,16 +147,16 @@ c2c inspect <asset> [options]
 **Examples:**
 ```bash
 # Show summary
-c2c inspect image.jpg
+credlink inspect image.jpg
 
 # Detailed manifest
-c2c inspect s3://bucket/asset.jpg --detail
+credlink inspect s3://bucket/asset.jpg --detail
 
 # Table format
-c2c inspect asset.jpg --format table
+credlink inspect asset.jpg --format table
 
 # Include certificates
-c2c inspect asset.jpg --cert --detail
+credlink inspect asset.jpg --cert --detail
 ```
 
 ### Diff
@@ -164,7 +164,7 @@ c2c inspect asset.jpg --cert --detail
 Compare two assets or manifests.
 
 ```bash
-c2c diff <assetA> <assetB|manifest> [options]
+credlink diff <assetA> <assetB|manifest> [options]
 ```
 
 **Options:**
@@ -176,13 +176,13 @@ c2c diff <assetA> <assetB|manifest> [options]
 **Examples:**
 ```bash
 # Compare two assets
-c2c diff image1.jpg image2.jpg
+credlink diff image1.jpg image2.jpg
 
 # Compare with manifest
-c2c diff asset.jpg manifest.json
+credlink diff asset.jpg manifest.json
 
 # Show all differences
-c2c diff asset1.jpg asset2.jpg --certs --context 5
+credlink diff asset1.jpg asset2.jpg --certs --context 5
 ```
 
 ### Batch
@@ -190,7 +190,7 @@ c2c diff asset1.jpg asset2.jpg --certs --context 5
 Execute batch operations from feed files.
 
 ```bash
-c2c batch <command> [options]
+credlink batch <command> [options]
 ```
 
 **Subcommands:**
@@ -209,13 +209,13 @@ c2c batch <command> [options]
 **Examples:**
 ```bash
 # Batch verify from local file
-c2c batch verify --feed assets.jsonl --resume
+credlink batch verify --feed assets.jsonl --resume
 
 # Batch verify from cloud storage
-c2c batch verify --from s3://bucket/feeds/today.jsonl --json
+credlink batch verify --from s3://bucket/feeds/today.jsonl --json
 
 # Batch sign with custom state file
-c2c batch sign --feed photos.csv --state-file photos.state
+credlink batch sign --feed photos.csv --state-file photos.state
 ```
 
 ### Pack
@@ -223,7 +223,7 @@ c2c batch sign --feed photos.csv --state-file photos.state
 Create Compliance Packs for WORM storage.
 
 ```bash
-c2c pack --input <glob|prefix> [options]
+credlink pack --input <glob|prefix> [options]
 ```
 
 **Options:**
@@ -238,13 +238,13 @@ c2c pack --input <glob|prefix> [options]
 **Examples:**
 ```bash
 # Pack local folder
-c2c pack --input "./photos/*.jpg" --out photos-pack.tar.gz
+credlink pack --input "./photos/*.jpg" --out photos-pack.tar.gz
 
 # Pack cloud prefix
-c2c pack --input s3://bucket/campaign/ --format tar.zst
+credlink pack --input s3://bucket/campaign/ --format tar.zst
 
 # Dry run with estimates
-c2c pack --input r2://acct/bkt/assets/ --dry-run
+credlink pack --input r2://acct/bkt/assets/ --dry-run
 ```
 
 ### Cache
@@ -252,7 +252,7 @@ c2c pack --input r2://acct/bkt/assets/ --dry-run
 Manage local cache for manifests and verification responses.
 
 ```bash
-c2c cache <command> [options]
+credlink cache <command> [options]
 ```
 
 **Subcommands:**
@@ -264,16 +264,16 @@ c2c cache <command> [options]
 **Examples:**
 ```bash
 # Show cache statistics
-c2c cache stats
+credlink cache stats
 
 # List cache contents
-c2c cache ls --json
+credlink cache ls --json
 
 # Prune entries older than 7 days
-c2c cache prune --max-age 168h
+credlink cache prune --max-age 168h
 
 # Clear all cache
-c2c cache clear
+credlink cache clear
 ```
 
 ### Ls
@@ -281,7 +281,7 @@ c2c cache clear
 List files and directories for local and cloud paths.
 
 ```bash
-c2c ls <path> [options]
+credlink ls <path> [options]
 ```
 
 **Options:**
@@ -297,16 +297,16 @@ c2c ls <path> [options]
 **Examples:**
 ```bash
 # List local directory
-c2c ls ./photos/
+credlink ls ./photos/
 
 # List cloud prefix
-c2c ls s3://bucket/photos/ --long
+credlink ls s3://bucket/photos/ --long
 
 # Recursive listing with filter
-c2c ls ./assets/ --recursive --filter "*.jpg"
+credlink ls ./assets/ --recursive --filter "*.jpg"
 
 # Sort by size
-c2c ls s3://bucket/ --sort size --human
+credlink ls s3://bucket/ --sort size --human
 ```
 
 ### Doctor
@@ -314,7 +314,7 @@ c2c ls s3://bucket/ --sort size --human
 Perform environment diagnostics.
 
 ```bash
-c2c doctor [options]
+credlink doctor [options]
 ```
 
 **Options:**
@@ -329,16 +329,16 @@ c2c doctor [options]
 **Examples:**
 ```bash
 # Run all checks
-c2c doctor
+credlink doctor
 
 # Verbose with auto-fix
-c2c doctor --verbose --fix
+credlink doctor --verbose --fix
 
 # Check only network
-c2c doctor --network
+credlink doctor --network
 
 # JSON output
-c2c doctor --json
+credlink doctor --json
 ```
 
 ## Exit Codes
@@ -407,43 +407,43 @@ The CLI follows standard configuration patterns:
 - `AWS_REGION`: AWS region for S3
 
 ### Cache Location
-- **Linux**: `$XDG_CACHE_HOME/c2concierge` or `~/.cache/c2concierge`
-- **macOS**: `~/Library/Caches/C2Concierge`
-- **Windows**: `%LOCALAPPDATA%\\C2Concierge\\Cache`
+- **Linux**: `$XDG_CACHE_HOME/credlink` or `~/.cache/credlink`
+- **macOS**: `~/Library/Caches/CredLink`
+- **Windows**: `%LOCALAPPDATA%\\CredLink\\Cache`
 
 ## Examples
 
 ### Retro-sign with TSA
 ```bash
-c2c sign ./images --tsa --profile newsroom-default --resume --concurrency 8
+credlink sign ./images --tsa --profile newsroom-default --resume --concurrency 8
 ```
 
 ### CI/CD Verification
 ```bash
-c2c verify --page https://news.example/post/42 --json \
+credlink verify --page https://news.example/post/42 --json \
   --threshold survival>=0.999 --timeout 10s
 ```
 
 ### Batch from Cloud Storage
 ```bash
-c2c batch verify --from r2://acct/bkt/feeds/today.jsonl --resume --json
+credlink batch verify --from r2://acct/bkt/feeds/today.jsonl --resume --json
 ```
 
 ### Asset Comparison
 ```bash
-c2c inspect s3://bucket/a.jpg --detail > a.manifest.json
-c2c inspect s3://bucket/a_1200.webp --detail > b.manifest.json
-c2c diff a.manifest.json b.manifest.json
+credlink inspect s3://bucket/a.jpg --detail > a.manifest.json
+credlink inspect s3://bucket/a_1200.webp --detail > b.manifest.json
+credlink diff a.manifest.json b.manifest.json
 ```
 
 ### Cost Projection
 ```bash
-c2c verify r2://acct/bkt/catalog/2025/ --prefix --dry-run --json
+credlink verify r2://acct/bkt/catalog/2025/ --prefix --dry-run --json
 ```
 
 ### Compliance Pack
 ```bash
-c2c pack --input r2://acct/bkt/campaign-14/ --out campaign-14-pack.tar.zst
+credlink pack --input r2://acct/bkt/campaign-14/ --out campaign-14-pack.tar.zst
 ```
 
 ## Troubleshooting
@@ -451,20 +451,20 @@ c2c pack --input r2://acct/bkt/campaign-14/ --out campaign-14-pack.tar.zst
 ### Windows Long Paths
 If you encounter path length issues on Windows:
 ```bash
-c2c doctor --paths --fix
+credlink doctor --paths --fix
 ```
 
 ### Network Issues
 Check connectivity and proxy settings:
 ```bash
-c2c doctor --network --verbose
+credlink doctor --network --verbose
 ```
 
 ### Cache Issues
 Clear or inspect cache:
 ```bash
-c2c cache stats
-c2c cache clear
+credlink cache stats
+credlink cache clear
 ```
 
 ## Contributing

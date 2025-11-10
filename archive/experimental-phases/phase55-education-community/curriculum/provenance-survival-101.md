@@ -66,7 +66,7 @@ add_action('send_headers', function() {
 ```
 
 **Verify with CAI**: [https://contentauthenticity.org/verify](https://contentauthenticity.org/verify)  
-**Live Demo**: [Demo Asset - Remote Manifest](https://demo.c2concierge.com/remote-survival)
+**Live Demo**: [Demo Asset - Remote Manifest](https://demo.credlink.com/remote-survival)
 
 ---
 
@@ -151,7 +151,7 @@ async function handleRequest(request) {
 ```
 
 **Verify with CAI**: [https://contentauthenticity.org/verify](https://contentauthenticity.org/verify)  
-**Stack Demos**: [WordPress](https://demo.c2concierge.com/wp) | [Shopify](https://demo.c2concierge.com/shopify) | [Cloudflare](https://demo.c2concierge.com/cf)
+**Stack Demos**: [WordPress](https://demo.credlink.com/wp) | [Shopify](https://demo.credlink.com/shopify) | [Cloudflare](https://demo.credlink.com/cf)
 
 ---
 
@@ -173,7 +173,7 @@ async function handleRequest(request) {
 const verifyResult = await fetch('/verify', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ assetUrl: 'https://demo.c2concierge.com/sample.jpg' })
+  body: JSON.stringify({ assetUrl: 'https://demo.credlink.com/sample.jpg' })
 });
 ```
 
@@ -182,7 +182,7 @@ const verifyResult = await fetch('/verify', {
 // Automated verification script
 async function verifyProvenance(assetUrl) {
   try {
-    const response = await fetch('https://api.c2concierge.com/verify', {
+    const response = await fetch('https://api.credlink.com/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ verifyProvenance('https://yourdomain.com/asset.jpg');
 ```
 
 **Verify with CAI**: [https://contentauthenticity.org/verify](https://contentauthenticity.org/verify)  
-**API Demo**: [Live /verify Demo](https://demo.c2concierge.com/verify)
+**API Demo**: [Live /verify Demo](https://demo.credlink.com/verify)
 
 ---
 
@@ -294,7 +294,7 @@ addEventListener('fetch', event => {
 ```
 
 **Verify with CAI**: [https://contentauthenticity.org/verify](https://contentauthenticity.org/verify)  
-**Optimizer Demo**: [Optimizer Survival Test](https://demo.c2concierge.com/optimizers)
+**Optimizer Demo**: [Optimizer Survival Test](https://demo.credlink.com/optimizers)
 
 ---
 
@@ -449,7 +449,7 @@ echo "🎉 All compliance tests passed!"
 ```
 
 **Verify with CAI**: [https://contentauthenticity.org/verify](https://contentauthenticity.org/verify)  
-**Compliance Demo**: [Live Compliance Test](https://demo.c2concierge.com/compliance)
+**Compliance Demo**: [Live Compliance Test](https://demo.credlink.com/compliance)
 
 ---
 
@@ -463,8 +463,8 @@ Upon completing all 5 modules:
 5. ✅ Generated compliance pack
 
 **Next Steps**:
-- Join our [Discourse Forum](https://community.c2concierge.com)
-- Attend [Monthly Office Hours](https://c2concierge.com/office-hours)
-- Submit your [15-minute to green demo](https://c2concierge.com/submit-demo)
+- Join our [Discourse Forum](https://community.credlink.com)
+- Attend [Monthly Office Hours](https://credlink.com/office-hours)
+- Submit your [15-minute to green demo](https://credlink.com/submit-demo)
 
 **Proof of Completion**: Post your CAI Verify link in the forum with hashtag #ProvenanceSurvival101

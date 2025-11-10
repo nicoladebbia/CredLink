@@ -7,7 +7,7 @@ The Compliance v2 API provides REST endpoints for generating unified compliance 
 ## Base URL
 
 ```
-Production: https://api.c2concierge.com/v1
+Production: https://api.credlink.com/v1
 Development: http://localhost:3000
 ```
 
@@ -51,8 +51,8 @@ Authorization: Bearer <your-api-token>
 ```json
 {
   "status": "ok",
-  "pack_url_pdf": "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf",
-  "pack_url_json": "https://storage.c2concierge.com/packs/acme-news/2025-10.json",
+  "pack_url_pdf": "https://storage.credlink.com/packs/acme-news/2025-10.pdf",
+  "pack_url_json": "https://storage.credlink.com/packs/acme-news/2025-10.json",
   "template_versions": {
     "eu_ai": "1.1.0",
     "dsa26": "1.2.0",
@@ -287,7 +287,7 @@ X-RateLimit-Reset: 1640995200
 import { ComplianceAPIClient } from '@c2/compliance-sdk';
 
 const client = new ComplianceAPIClient({
-  baseURL: 'https://api.c2concierge.com/v1',
+  baseURL: 'https://api.credlink.com/v1',
   apiKey: 'your-api-key'
 });
 
@@ -308,7 +308,7 @@ console.log('Pack generated:', pack.pack_url_pdf);
 from c2_concierge_sdk import ComplianceClient
 
 client = ComplianceClient(
-    base_url='https://api.c2concierge.com/v1',
+    base_url='https://api.credlink.com/v1',
     api_key='your-api-key'
 )
 
@@ -327,7 +327,7 @@ print(f'Pack generated: {pack.pack_url_pdf}')
 
 ```bash
 # Generate compliance pack
-curl -X POST https://api.c2concierge.com/v1/compliance/pack \
+curl -X POST https://api.credlink.com/v1/compliance/pack \
   -H "Authorization: Bearer your-api-key" \
   -H "Content-Type: application/json" \
   -d '{
@@ -351,8 +351,8 @@ curl -X POST https://api.c2concierge.com/v1/compliance/pack \
   "tenant_id": "acme-news",
   "period": "2025-10",
   "status": "success",
-  "pack_url_pdf": "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf",
-  "pack_url_json": "https://storage.c2concierge.com/packs/acme-news/2025-10.json",
+  "pack_url_pdf": "https://storage.credlink.com/packs/acme-news/2025-10.pdf",
+  "pack_url_json": "https://storage.credlink.com/packs/acme-news/2025-10.json",
   "generated_at": "2025-11-05T12:00:00.000Z"
 }
 ```
@@ -409,9 +409,9 @@ curl -X POST https://api.c2concierge.com/v1/compliance/pack \
 
 ## Support
 
-- **Documentation**: https://docs.c2concierge.com
-- **Support Email**: support@c2concierge.com
-- **Status Page**: https://status.c2concierge.com
+- **Documentation**: https://docs.credlink.com
+- **Support Email**: support@credlink.com
+- **Status Page**: https://status.credlink.com
 - **API Versioning**: Current version is v1, backward compatible changes only
 
 ## Changelog

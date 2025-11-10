@@ -19,7 +19,7 @@ const percentage = parseInt(getArg('percentage') || '5', 10);
 const version = getArg('version') || 'unknown';
 const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || 'your-account-id';
-const workerName = process.env.CLOUDFLARE_WORKER_NAME || 'c2-concierge-api';
+const workerName = process.env.CLOUDFLARE_WORKER_NAME || 'credlink-api';
 
 if (!apiToken) {
   console.error('❌ CLOUDFLARE_API_TOKEN environment variable not set');

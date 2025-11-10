@@ -1,0 +1,75 @@
+{
+  "timestamp": "2025-11-02T16:29:04.580Z",
+  "summary": {
+    "total_scenarios": 3,
+    "passed_scenarios": 3,
+    "failed_scenarios": 0,
+    "average_duration": 5.0040000000000004,
+    "total_incidents": 3
+  },
+  "results": [
+    {
+      "scenario": "tsa_down",
+      "started_at": "2025-11-02T16:28:04.542Z",
+      "completed_at": "2025-11-02T16:28:09.547Z",
+      "duration_seconds": 5.005,
+      "policy_decision": "DEGRADED",
+      "incident_detected": true,
+      "expected_policy": "DEGRADED",
+      "expected_incident": true,
+      "passed": true,
+      "metrics": {
+        "verification_latency_ms": 9535,
+        "error_rate_percent": 12,
+        "memory_usage_mb": 441,
+        "cpu_usage_percent": 44
+      },
+      "artifacts": [
+        "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/tsa_down_chaos.log"
+      ]
+    },
+    {
+      "scenario": "origin_5xx",
+      "started_at": "2025-11-02T16:28:24.558Z",
+      "completed_at": "2025-11-02T16:28:29.562Z",
+      "duration_seconds": 5.004,
+      "policy_decision": "BLOCKED",
+      "incident_detected": true,
+      "expected_policy": "BLOCKED",
+      "expected_incident": true,
+      "passed": true,
+      "metrics": {
+        "verification_latency_ms": 6015,
+        "error_rate_percent": 67,
+        "memory_usage_mb": 432,
+        "cpu_usage_percent": 91
+      },
+      "artifacts": [
+        "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/origin_5xx_chaos.log"
+      ]
+    },
+    {
+      "scenario": "stale_version",
+      "started_at": "2025-11-02T16:28:44.570Z",
+      "completed_at": "2025-11-02T16:28:49.573Z",
+      "duration_seconds": 5.003,
+      "policy_decision": "DEGRADED",
+      "incident_detected": true,
+      "expected_policy": "DEGRADED",
+      "expected_incident": true,
+      "passed": true,
+      "metrics": {
+        "verification_latency_ms": 322,
+        "error_rate_percent": 73,
+        "memory_usage_mb": 435,
+        "cpu_usage_percent": 72
+      },
+      "artifacts": [
+        "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/stale_version_chaos.log"
+      ]
+    }
+  ],
+  "recommendations": [
+    "All chaos scenarios passed - system is resilient"
+  ]
+}

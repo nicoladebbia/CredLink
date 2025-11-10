@@ -37,7 +37,7 @@ cp analytics/config.example.js analytics/config.js
 ```
 
 **Deliverables:**
-- [ ] Live Discourse forum at community.c2concierge.com
+- [ ] Live Discourse forum at community.credlink.com
 - [ ] GitHub Discussions enabled across all SDK repos
 - [ ] Analytics tracking implemented (Amplitude + GA4 + Segment)
 - [ ] Content management pipeline operational
@@ -185,14 +185,14 @@ echo "🧪 Content QA Checklist - Week 1"
 
 # Test Module 1
 echo "Testing Module 1..."
-curl -f https://docs.c2concierge.com/module-1 | grep -q "Why Embeds Break"
-curl -f https://demo.c2concierge.com/module-1-demo | grep -q "Interactive Demo"
+curl -f https://docs.credlink.com/module-1 | grep -q "Why Embeds Break"
+curl -f https://demo.credlink.com/module-1-demo | grep -q "Interactive Demo"
 
 # Test CAI Verify links
 echo "Testing CAI Verify integration..."
 CAI_URLS=(
-  "https://contentauthenticity.org/verify?url=https://demo.c2concierge.com/wp-sample.jpg"
-  "https://contentauthenticity.org/verify?url=https://demo.c2concierge.com/shopify-sample.jpg"
+  "https://contentauthenticity.org/verify?url=https://demo.credlink.com/wp-sample.jpg"
+  "https://contentauthenticity.org/verify?url=https://demo.credlink.com/shopify-sample.jpg"
 )
 
 for url in "${CAI_URLS[@]}"; do
@@ -249,10 +249,10 @@ We're excited to announce the launch of our comprehensive education platform for
 - Compliance officers
 
 ### Get Started:
-1. 🎓 Start with Module 1: https://docs.c2concierge.com/module-1
-2. 🛠️ Try your stack: https://docs.c2concierge.com/stack-guides
-3. 💬 Join community: https://community.c2concierge.com
-4. 🏆 Submit 15-minute demo: https://c2concierge.com/submit-demo
+1. 🎓 Start with Module 1: https://docs.credlink.com/module-1
+2. 🛠️ Try your stack: https://docs.credlink.com/stack-guides
+3. 💬 Join community: https://community.credlink.com
+4. 🏆 Submit 15-minute demo: https://credlink.com/submit-demo
 
 #C2PA #ContentAuthenticity #Provenance
 ```
@@ -287,11 +287,11 @@ npm run build:prod
 npm run deploy:prod
 
 # Update DNS and SSL
-./scripts/update-dns.sh docs.c2concierge.com
-./scripts/update-ssl.sh docs.c2concierge.com
+./scripts/update-dns.sh docs.credlink.com
+./scripts/update-ssl.sh docs.credlink.com
 
 # Enable forum features
-curl -X POST https://community.c2concierge.com/admin/enable \
+curl -X POST https://community.credlink.com/admin/enable \
   -H "Authorization: Bearer $DISCOURSE_API_KEY" \
   -d '{"features":["solved_answers","badges","email_notifications"]}'
 
@@ -302,7 +302,7 @@ echo "✅ Platform launched successfully"
 ```
 
 **Deliverables:**
-- [ ] Education platform live at docs.c2concierge.com
+- [ ] Education platform live at docs.credlink.com
 - [ ] Modules 1-2 published and accessible
 - [ ] Community forum open and accepting posts
 - [ ] GitHub Discussions active across repos
@@ -391,7 +391,7 @@ const firstSession = {
     reminder_emails: [24, 2, 0.5] // hours before
   },
   demo_content: {
-    wordpress_demo_url: 'https://demo.c2concierge.com/wordpress-live',
+    wordpress_demo_url: 'https://demo.credlink.com/wordpress-live',
     cai_verify_link: 'https://contentauthenticity.org/verify?url=DEMO_URL',
     code_snippets: ['functions.php', 'plugin-setup']
   }
@@ -520,7 +520,7 @@ await week1Analysis.implementOptimizations();
 echo "💬 Community Engagement - Week 2"
 
 # Check forum activity
-DISCOURSE_URL="https://community.c2concierge.com"
+DISCOURSE_URL="https://community.credlink.com"
 NEW_POSTS=$(curl -s "$DISCOURSE_URL/latest.json" | jq '.topic_list.topics | length')
 
 echo "New posts this week: $NEW_POSTS"
@@ -598,7 +598,7 @@ echo "✅ Community engagement complete"
 ```javascript
 // Automated verification script
 async function verifyProvenance(assetUrl) {
-  const response = await fetch('https://api.c2concierge.com/verify', {
+  const response = await fetch('https://api.credlink.com/verify', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -733,7 +733,7 @@ for stack in "${STACKS[@]}"; do
   
   # Customize for stack
   sed -i "s/STACK_NAME/$stack/g" README.md
-  sed -i "s/DEMO_URL/https:\/\/demo-$stack.c2concierge.com/g" README.md
+  sed -i "s/DEMO_URL/https:\/\/demo-$stack.credlink.com/g" README.md
   
   # Add stack-specific files
   if [ "$stack" = "wordpress" ]; then
@@ -790,9 +790,9 @@ echo "🧪 Integration Testing - Week 3"
 # Test Module 3 demos
 echo "Testing Module 3 demos..."
 MODULE3_DEMOS=(
-  "https://demo.c2concierge.com/verify-api"
-  "https://demo.c2concierge.com/cai-integration"
-  "https://demo.c2concierge.com/verification-dashboard"
+  "https://demo.credlink.com/verify-api"
+  "https://demo.credlink.com/cai-integration"
+  "https://demo.credlink.com/verification-dashboard"
 )
 
 for demo in "${MODULE3_DEMOS[@]}"; do
@@ -808,9 +808,9 @@ done
 # Test Module 4 demos
 echo "Testing Module 4 demos..."
 MODULE4_DEMOS=(
-  "https://demo.c2concierge.com/optimizer-detector"
-  "https://demo.c2concierge.com/cdn-comparison"
-  "https://demo.c2concierge.com/transformation-survival"
+  "https://demo.credlink.com/optimizer-detector"
+  "https://demo.credlink.com/cdn-comparison"
+  "https://demo.credlink.com/transformation-survival"
 )
 
 for demo in "${MODULE4_DEMOS[@]}"; do
@@ -828,7 +828,7 @@ echo "Testing starter kit demos..."
 STACKS=("wordpress" "shopify" "cloudflare" "nextjs" "fastify")
 
 for stack in "${STACKS[@]}"; do
-  DEMO_URL="https://demo-$stack.c2concierge.com"
+  DEMO_URL="https://demo-$stack.credlink.com"
   HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$DEMO_URL")
   
   if [ "$HTTP_STATUS" -eq 200 ]; then
@@ -928,7 +928,7 @@ const communityActivities = {
       if (question.tags.includes('module-3') || question.tags.includes('module-4')) {
         await discourseClient.createReply({
           topicId: question.id,
-          content: `Great question! Modules 3-4 are launching next week. They cover ${question.tags.includes('module-3') ? 'verification and CAI Verify integration' : 'optimizers and sandbox survival'}. You'll be able to access them at: https://docs.c2concierge.com/${question.tags[0]}`
+          content: `Great question! Modules 3-4 are launching next week. They cover ${question.tags.includes('module-3') ? 'verification and CAI Verify integration' : 'optimizers and sandbox survival'}. You'll be able to access them at: https://docs.credlink.com/${question.tags[0]}`
         });
       }
     }
@@ -1002,7 +1002,7 @@ npm run deploy:prod
 ./scripts/update-navigation.sh --add-module=3 --add-module=4
 
 # Update user progress tracking
-curl -X POST https://api.c2concierge.com/admin/update-progress \
+curl -X POST https://api.credlink.com/admin/update-progress \
   -H "Authorization: Bearer $ADMIN_API_KEY" \
   -d '{
     "new_modules": ["module-3", "module-4"],
@@ -1085,9 +1085,9 @@ const officeHoursExecution = {
       subject: 'Thanks for joining C2 Concierge Office Hours!',
       body: `Great session today! We had ${report.attendees} attendees and answered ${report.questionsAsked} questions. Recording: ${report.recordingUrl}`,
       resources: [
-        'https://docs.c2concierge.com/recap',
-        'https://community.c2concierge.com/office-hours-discussion',
-        'https://c2concierge.com/next-office-hours'
+        'https://docs.credlink.com/recap',
+        'https://community.credlink.com/office-hours-discussion',
+        'https://credlink.com/next-office-hours'
       ]
     });
     
@@ -1235,7 +1235,7 @@ const communityPrograms = {
     // Announce leaderboard
     await communityService.announce({
       title: '🏆 New: 15-Minute to Green Leaderboard!',
-      content: `Show off your C2PA implementation skills and win prizes! Submit your 15-minute demo: https://c2concierge.com/submit-demo`,
+      content: `Show off your C2PA implementation skills and win prizes! Submit your 15-minute demo: https://credlink.com/submit-demo`,
       channels: ['forum', 'github', 'twitter', 'linkedin']
     });
   },
@@ -1263,7 +1263,7 @@ const communityPrograms = {
     // Announce bounty program
     await communityService.announce({
       title: '💰 New: Demo Bounty Program!',
-      content: `Get paid for creating C2PA demos! Current bounties range from $100-$250. Submit yours: https://c2concierge.com/bounties`,
+      content: `Get paid for creating C2PA demos! Current bounties range from $100-$250. Submit yours: https://credlink.com/bounties`,
       channels: ['forum', 'github', 'twitter']
     });
   }
@@ -1545,7 +1545,7 @@ const weeklyKPIs = {
 echo "🎯 Phase 55 Exit Criteria Validation"
 
 # Criteria 1: 200+ sign-ups for Provenance Survival 101
-SIGNUPS=$(curl -s https://api.c2concierge.com/analytics/signups | jq '.total')
+SIGNUPS=$(curl -s https://api.credlink.com/analytics/signups | jq '.total')
 if [ "$SIGNUPS" -ge 200 ]; then
   echo "✅ Sign-ups goal met: $SIGNUPS (target: 200)"
 else
@@ -1553,7 +1553,7 @@ else
 fi
 
 # Criteria 2: Forum deflects recurring tickets
-TOP_QUESTIONS_SOLVED=$(curl -s https://community.c2concierge.com/api/top-questions | jq '.solved | length')
+TOP_QUESTIONS_SOLVED=$(curl -s https://community.credlink.com/api/top-questions | jq '.solved | length')
 if [ "$TOP_QUESTIONS_SOLVED" -ge 10 ]; then
   echo "✅ Forum deflection goal met: $TOP_QUESTIONS_SOLVED questions solved"
 else
@@ -1569,7 +1569,7 @@ else
 fi
 
 # Criteria 4: Partner webinar produces qualified leads
-WEBINAR_LEADS=$(curl -s https://api.c2concierge.com/webinar/leads | jq '.qualified_count')
+WEBINAR_LEADS=$(curl -s https://api.credlink.com/webinar/leads | jq '.qualified_count')
 if [ "$WEBINAR_LEADS" -ge 25 ]; then
   echo "✅ Webinar leads goal met: $WEBINAR_LEADS qualified leads (target: 25)"
 else

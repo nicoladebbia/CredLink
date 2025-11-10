@@ -6,7 +6,7 @@ set -euo pipefail
 
 # Configuration
 SBOM_DIR="${1:-./sboms}"
-IMAGE="${2:-ghcr.io/nickiller04/c2-concierge:latest}"
+IMAGE="${2:-ghcr.io/nickiller04/credlink:latest}"
 
 echo "Verifying SBOMs in: $SBOM_DIR"
 echo "For image: $IMAGE"

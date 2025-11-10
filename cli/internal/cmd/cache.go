@@ -236,22 +236,22 @@ func getCacheDir() string {
 	// Follow XDG Base Directory specification
 	if runtime.GOOS == "windows" {
 		if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
-			return filepath.Join(localAppData, "C2Concierge", "Cache")
+			return filepath.Join(localAppData, "CredLink", "Cache")
 		}
-		return filepath.Join(os.Getenv("USERPROFILE"), "AppData", "Local", "C2Concierge", "Cache")
+		return filepath.Join(os.Getenv("USERPROFILE"), "AppData", "Local", "CredLink", "Cache")
 	}
 
 	// Unix-like systems (Linux, macOS)
 	if xdgCache := os.Getenv("XDG_CACHE_HOME"); xdgCache != "" {
-		return filepath.Join(xdgCache, "c2concierge")
+		return filepath.Join(xdgCache, "credlink")
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(os.TempDir(), "c2concierge-cache")
+		return filepath.Join(os.TempDir(), "credlink-cache")
 	}
 
-	return filepath.Join(home, ".cache", "c2concierge")
+	return filepath.Join(home, ".cache", "credlink")
 }
 
 func listCacheEntries(cacheDir string) ([]CacheEntry, error) {

@@ -254,7 +254,7 @@ func createPackMetadata() map[string]interface{} {
 		"created_by":   "c2c-cli v1.0.0",
 		"input_source": packOpts.Input,
 		"format":       packOpts.Format,
-		"description":  "C2 Concierge Compliance Pack for WORM storage",
+		"description":  "CredLink Compliance Pack for WORM storage",
 		"standards": []string{
 			"C2PA 2.0",
 			"CAI Verify",
@@ -329,15 +329,15 @@ func createMockVerificationReports() map[string]interface{} {
 func createMockCertificateChain() map[string]interface{} {
 	return map[string]interface{}{
 		"signer_certificate": map[string]interface{}{
-			"subject":    "CN=C2 Concierge Signer",
-			"issuer":     "CN=C2 Concierge CA",
+			"subject":    "CN=CredLink Signer",
+			"issuer":     "CN=CredLink CA",
 			"serial":     "1234567890ABCDEF",
 			"thumbprint": "A1B2C3D4E5F67890...",
 			"valid_from": "2025-01-01T00:00:00Z",
 			"valid_to":   "2026-01-01T00:00:00Z",
 		},
 		"ca_certificate": map[string]interface{}{
-			"subject":    "CN=C2 Concierge CA",
+			"subject":    "CN=CredLink CA",
 			"issuer":     "CN=Root CA",
 			"serial":     "FEDCBA0987654321",
 			"thumbprint": "0987FEDCBA654321...",

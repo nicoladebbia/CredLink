@@ -6,7 +6,7 @@ import pytest
 import os
 from unittest.mock import Mock, patch
 
-from c2concierge import (
+from credlink import (
     Client,
     ClientConfig,
     ValidationError,
@@ -111,12 +111,12 @@ class TestConfiguration:
         # Valid config
         config = ClientConfig(api_key="test-key")
         assert config.api_key == "test-key"
-        assert config.base_url == "https://api.c2concierge.com/v1"
+        assert config.base_url == "https://api.credlink.com/v1"
         assert config.timeout_ms == 30000
 
     def test_retry_config_defaults(self):
         """Test RetryConfig default values"""
-        from c2concierge.types import RetryConfig
+        from credlink.types import RetryConfig
         
         config = RetryConfig()
         assert config.max_attempts == 5
@@ -126,7 +126,7 @@ class TestConfiguration:
 
     def test_telemetry_config_defaults(self):
         """Test TelemetryConfig default values"""
-        from c2concierge.types import TelemetryConfig
+        from credlink.types import TelemetryConfig
         
         config = TelemetryConfig()
         assert config.enabled is False

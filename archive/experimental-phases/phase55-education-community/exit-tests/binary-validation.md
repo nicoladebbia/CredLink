@@ -430,7 +430,7 @@ Phase55ExitTests.prototype.testForumDeflection = async function() {
 class CommunityReposTest {
   constructor(githubService) {
     this.github = githubService;
-    this.requiredSdks = ['c2-concierge', 'c2-wordpress-sdk', 'c2-shopify-sdk', 'c2-cloudflare-sdk'];
+    this.requiredSdks = ['credlink', 'c2-wordpress-sdk', 'c2-shopify-sdk', 'c2-cloudflare-sdk'];
   }
   
   async run() {
@@ -994,11 +994,11 @@ Phase55ExitTests.prototype.testWebinarLeads = async function() {
 class InfrastructureHealthTest {
   constructor() {
     this.services = [
-      { name: 'Documentation Site', url: 'https://docs.c2concierge.com', type: 'website' },
-      { name: 'Community Forum', url: 'https://community.c2concierge.com', type: 'forum' },
-      { name: 'Demo Sites', url: 'https://demo.c2concierge.com', type: 'website' },
-      { name: 'Analytics API', url: 'https://api.c2concierge.com/health', type: 'api' },
-      { name: 'Course Platform', url: 'https://learn.c2concierge.com/health', type: 'api' },
+      { name: 'Documentation Site', url: 'https://docs.credlink.com', type: 'website' },
+      { name: 'Community Forum', url: 'https://community.credlink.com', type: 'forum' },
+      { name: 'Demo Sites', url: 'https://demo.credlink.com', type: 'website' },
+      { name: 'Analytics API', url: 'https://api.credlink.com/health', type: 'api' },
+      { name: 'Course Platform', url: 'https://learn.credlink.com/health', type: 'api' },
       { name: 'CAI Verify Integration', url: 'https://contentauthenticity.org/health', type: 'external' }
     ];
     

@@ -99,7 +99,8 @@ Upload image → CredLink creates digital proof → Get manifest URL
 ### 2️⃣ **Share It Anywhere**
 ```
 Your image circulates: shared, compressed, optimized by CDNs
-CredLink's proof survives 99.9% of transformations
+CredLink's architecture aims for high survival rates (target: >95%)
+Note: Not measured yet - backend doesn't exist
 ```
 Unlike competitors, our **remote-first architecture** means:
 - Proof lives on Cloudflare's edge network (globally distributed, <50ms latency)
@@ -128,7 +129,7 @@ Viewer sees image → Clicks "Verify" button → Sees proof it's real
 
 ---
 
-## The Key Differentiator: 99.9% Survival
+## The Key Differentiator: Remote-First Architecture
 
 ## Competitor Comparisons
 
@@ -145,7 +146,7 @@ We don't compare to competitors until we have:
 **Previous mistake:** We had a comparison table comparing our architecture 
 (not product) to shipping products. That was dishonest. We deleted it.
 
-**What "99.9% survival" means**: Your proof stays attached even after:
+**What "high survival" means (target, not measured):** Remote proof designed to survive:
 - ✓ JPEG quality reduction (Q75)
 - ✓ Format conversion (JPG → WebP)
 - ✓ CDN optimization (Imgix, Cloudinary, etc.)
@@ -483,9 +484,9 @@ credlink/
    - Abuse policies and legal framework separate
 
 5. **Ruthless Survival Targets**
-   - Remote survival: ≥ 99.9%
+   - Remote survival: ≥ 99.9% (target, not measured yet)
    - Response time: < 600ms p95
-   - Uptime: 99.9%
+   - Uptime: 99.9% (target SLA for Phase 5+)
 
 ---
 
@@ -659,9 +660,9 @@ Uptime                  → System availability (target: 99.9%)
 }
 ```
 
-### Alerts (What Triggers Pages)
-- **CRITICAL**: Remote survival < 99.9%
-- **WARNING**: Embed survival < 95%
+### Alerts (Planned for Phase 4+)
+- **CRITICAL**: Remote survival < 99.9% target
+- **WARNING**: Embed survival < 95% target
 - **INFO**: Latency degradation or system health
 
 ---

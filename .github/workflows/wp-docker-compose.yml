@@ -138,13 +138,13 @@ jobs:
     - name: Build WordPress plugin
       run: |
         # Check if plugin directory exists
-        if [ ! -d "plugins/wp-c2concierge" ]; then
-          echo "⚠️ plugins/wp-c2concierge directory not found, creating placeholder"
-          mkdir -p plugins/wp-c2concierge
-          echo '<?php\n/**\n * Plugin Name: C2 Concierge\n * Description: C2 Concierge integration plugin\n * Version: 1.0.0\n * Author: C2 Concierge Team\n */' > plugins/wp-c2concierge/wp-c2concierge.php
+        if [ ! -d "plugins/wp-credlink" ]; then
+          echo "⚠️ plugins/wp-credlink directory not found, creating placeholder"
+          mkdir -p plugins/wp-credlink
+          echo '<?php\n/**\n * Plugin Name: C2 Concierge\n * Description: C2 Concierge integration plugin\n * Version: 1.0.0\n * Author: C2 Concierge Team\n */' > plugins/wp-credlink/wp-credlink.php
         fi
         
-        cd plugins/wp-c2concierge
+        cd plugins/wp-credlink
         
         # Check if package.json exists and has build script
         if [ -f "package.json" ] && grep -q '"build"' package.json; then
@@ -155,23 +155,23 @@ jobs:
         fi
         
         # Create plugin zip
-        zip -r ../wp-c2concierge-test.zip . || echo "Zip creation completed with warnings"
+        zip -r ../wp-credlink-test.zip . || echo "Zip creation completed with warnings"
 
     - name: Install and test C2 Concierge plugin
       run: |
         # Check if plugin zip exists
-        if [ ! -f "plugins/wp-c2concierge-test.zip" ]; then
+        if [ ! -f "plugins/wp-credlink-test.zip" ]; then
           echo "❌ Plugin zip file not found"
           exit 1
         fi
         
         # Copy plugin to WordPress container
-        docker cp plugins/wp-c2concierge-test.zip wordpress:/tmp/ || echo "⚠️ Plugin copy completed with warnings"
+        docker cp plugins/wp-credlink-test.zip wordpress:/tmp/ || echo "⚠️ Plugin copy completed with warnings"
         
         # Install our plugin in WordPress container
         docker exec wordpress bash -c "
           cd /var/www/html &&
-          if wp plugin install /tmp/wp-c2concierge-test.zip --activate --allow-root; then
+          if wp plugin install /tmp/wp-credlink-test.zip --activate --allow-root; then
             echo '✅ Plugin installed and activated successfully'
             wp plugin list --status=active --allow-root || echo 'Plugin list check failed'
           else
@@ -181,7 +181,7 @@ jobs:
 
     - name: Run WordPress plugin tests
       run: |
-        cd plugins/wp-c2concierge
+        cd plugins/wp-credlink
         
         # Run PHP syntax checks (if PHP files exist)
         if find . -name "*.php" -type f | head -1 >/dev/null 2>&1; then
@@ -221,7 +221,7 @@ jobs:
         
         # Test image upload with C2PA
         curl -X POST \
-          -F "file=@plugins/wp-c2concierge/test-assets/test-image.jpg" \
+          -F "file=@plugins/wp-credlink/test-assets/test-image.jpg" \
           http://localhost:8080/wp-json/wp/v2/media \
           # NOTE: WORDPRESS_AUTH_TOKEN must be configured in GitHub repository settings
           -H "Authorization: Basic ${{ secrets.WORDPRESS_AUTH_TOKEN }}"  # noinspection GitHubSecretsInEnv || echo "Media upload test failed"

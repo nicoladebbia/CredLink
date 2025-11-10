@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      IMAGE: ghcr.io/nickiller04/c2-concierge:${{ github.sha }}
+      IMAGE: ghcr.io/nickiller04/credlink:${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -180,7 +180,7 @@ jobs:
           
           # Verify signature with full certificate chain
           if cosign verify \
-            --certificate-identity-regexp="^repo:Nickiller04/c2-concierge:ref:refs/(heads|tags)/.*$" \
+            --certificate-identity-regexp="^repo:Nickiller04/credlink:ref:refs/(heads|tags)/.*$" \
             --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
             ${{ env.IMAGE }} >/dev/null 2>&1; then
             echo "✅ Signature verification successful"

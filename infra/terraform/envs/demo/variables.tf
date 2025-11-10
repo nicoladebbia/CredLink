@@ -69,8 +69,8 @@ variable "worker_routes" {
   description = "Worker routes configuration"
   type        = list(string)
   default = [
-    "demo.c2concierge.com/manifest/*",
-    "demo.c2concierge.com/api/*"
+    "demo.credlink.com/manifest/*",
+    "demo.credlink.com/api/*"
   ]
 }
 
@@ -100,8 +100,8 @@ variable "health_check_urls" {
   description = "Health check URLs"
   type        = list(string)
   default = [
-    "https://demo.c2concierge.com/health/cache",
-    "https://demo.c2concierge.com/health/rehydration"
+    "https://demo.credlink.com/health/cache",
+    "https://demo.credlink.com/health/rehydration"
   ]
 }
 
@@ -114,7 +114,7 @@ variable "alert_channels" {
   default = {
     "email" = {
       type   = "email"
-      target = "alerts@c2concierge.com"
+      target = "alerts@credlink.com"
     }
   }
 }

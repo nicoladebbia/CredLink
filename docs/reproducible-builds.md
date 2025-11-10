@@ -98,7 +98,7 @@ docker buildx imagetools inspect CredLink:reproducible
 - **Timezone**: UTC
 - **Locale**: C.UTF-8
 - **Node Environment**: production
-- **User**: Non-root (c2concierge:1001)
+- **User**: Non-root (credlink:1001)
 
 ## Continuous Integration
 

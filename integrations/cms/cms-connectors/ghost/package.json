@@ -1,0 +1,55 @@
+{
+  "name": "@credlink/ghost-connector",
+  "version": "1.0.0",
+  "description": "CredLink connector for Ghost with theme integration and webhook support",
+  "main": "ghost-connector.js",
+  "type": "module",
+  "scripts": {
+    "start": "node ghost-webhook.js",
+    "dev": "nodemon ghost-webhook.js",
+    "test": "jest",
+    "lint": "eslint *.js",
+    "bundle": "webpack --mode production"
+  },
+  "keywords": [
+    "c2pa",
+    "content-authenticity",
+    "ghost",
+    "cms",
+    "connector",
+    "webhook",
+    "theme",
+    "handlebars"
+  ],
+  "author": "CredLink Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nickiller04/credlink.git",
+    "directory": "packages/cms-connectors/ghost"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "connector-ghost.hbs",
+    "ghost-connector.js",
+    "ghost-webhook.js",
+    "README.md",
+    "dist/"
+  ]
+}

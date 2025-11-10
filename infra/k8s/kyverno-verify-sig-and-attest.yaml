@@ -16,14 +16,14 @@ spec:
           kinds: ["Pod", "Deployment", "StatefulSet", "DaemonSet", "Job", "CronJob"]
       verifyImages:
         - imageReferences: 
-            - "ghcr.io/nickiller04/c2-concierge/*"
+            - "ghcr.io/nickiller04/credlink/*"
           attestations:
             - type: "https://slsa.dev/provenance/v1"
               conditions:
                 - all:
                   - key: "{{ builder.id }}"
                     operator: Equals
-                    value: "https://github.com/Nickiller04/c2-concierge"
+                    value: "https://github.com/Nickiller04/credlink"
                   - key: "{{ buildType }}"
                     operator: Any
             - type: "https://spdx.dev/Document"
@@ -36,4 +36,4 @@ spec:
             url: "https://fulcio.sigstore.dev"
             identities:
               - issuer: "https://token.actions.githubusercontent.com"
-                subject: "^repo:Nickiller04/c2-concierge:ref:refs/heads/.*:.*$"
+                subject: "^repo:Nickiller04/credlink:ref:refs/heads/.*:.*$"

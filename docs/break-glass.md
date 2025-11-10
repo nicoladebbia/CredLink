@@ -86,7 +86,7 @@ if (await isBreakGlassActive(env, hostname)) {
 # Impact: All image assets failing verification
 # Solution: Temporary break-glass for 1 hour during migration window
 
-curl -X POST https://api.c2-concierge.com/break-glass \
+curl -X POST https://api.credlink.com/break-glass \
   -H "Authorization: Bearer $BREAK_GLASS_TOKEN" \
   -d '{
     "hostname": "images.example.com",
@@ -101,7 +101,7 @@ curl -X POST https://api.c2-concierge.com/break-glass \
 # Impact: Customer-facing content not loading
 # Solution: 30-minute bypass while investigating
 
-curl -X POST https://api.c2-concierge.com/break-glass \
+curl -X POST https://api.credlink.com/break-glass \
   -H "Authorization: Bearer $BREAK_GLASS_TOKEN" \
   -d '{
     "hostname": "cdn.example.com",

@@ -5,7 +5,7 @@
  * into static HTML files to enable automatic manifest discovery.
  */
 
-import { Client } from '@c2concierge/sdk';
+import { Client } from '@credlink/sdk';
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 

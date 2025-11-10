@@ -64,8 +64,8 @@ module "worker_relay" {
   script_name = "${local.name_prefix}-relay"
 
   routes = [
-    "${var.env}.c2concierge.com/manifest/*",
-    "${var.env}.c2concierge.com/api/*"
+    "${var.env}.credlink.com/manifest/*",
+    "${var.env}.credlink.com/api/*"
   ]
 
   static_dir            = "../../apps/worker/dist"
@@ -118,15 +118,15 @@ module "monitors" {
   project = var.project
 
   health_checks = [
-    "https://${var.env}.c2concierge.com/health/cache",
-    "https://${var.env}.c2concierge.com/health/rehydration",
-    "https://${var.env}.c2concierge.com/health/worker"
+    "https://${var.env}.credlink.com/health/cache",
+    "https://${var.env}.credlink.com/health/rehydration",
+    "https://${var.env}.credlink.com/health/worker"
   ]
 
   alert_channels = {
     "email" = {
       type   = "email"
-      target = "alerts@c2concierge.com"
+      target = "alerts@credlink.com"
     }
   }
 
@@ -294,16 +294,16 @@ module "monitors_prod" {
   project = var.project
 
   health_checks = [
-    "https://c2concierge.com/health/cache",
-    "https://c2concierge.com/health/rehydration",
-    "https://c2concierge.com/health/worker",
-    "https://api.c2concierge.com/health"
+    "https://credlink.com/health/cache",
+    "https://credlink.com/health/rehydration",
+    "https://credlink.com/health/worker",
+    "https://api.credlink.com/health"
   ]
 
   alert_channels = {
     "email" = {
       type   = "email"
-      target = "alerts@c2concierge.com"
+      target = "alerts@credlink.com"
     }
     "slack" = {
       type   = "webhook"
@@ -318,7 +318,7 @@ module "monitors_prod" {
   synthetic_transactions = {
     "manifest-upload" = {
       method = "POST"
-      url    = "https://c2concierge.com/api/manifest"
+      url    = "https://credlink.com/api/manifest"
       headers = {
         "Content-Type"  = "application/json"
         "Authorization" = "Bearer ${var.api_token}"
@@ -329,7 +329,7 @@ module "monitors_prod" {
     }
     "verification-endpoint" = {
       method                 = "GET"
-      url                    = "https://c2concierge.com/api/verify/status"
+      url                    = "https://credlink.com/api/verify/status"
       expected_codes         = [200]
       expected_body          = "healthy"
       timeout_seconds        = 30

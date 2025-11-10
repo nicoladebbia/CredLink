@@ -60,7 +60,7 @@ These scripts are called by `.github/workflows/cd-phase46.yml`:
 Run locally against staging:
 ```bash
 export CLOUDFLARE_API_TOKEN="your-token"
-export CANARY_ENDPOINT="https://staging.c2concierge.dev"
+export CANARY_ENDPOINT="https://staging.credlink.dev"
 
 # Test canary routing
 node canary_route.js --percentage 5 --version test-123

@@ -1,0 +1,105 @@
+[package]
+name = "c2c"
+version = "0.1.0"
+edition = "2021"
+authors = ["CredLink Inc."]
+description = "C2 Concierge retro-sign CLI - Phase 8 implementation"
+license = "MIT"
+repository = "https://github.com/credlink/credlink"
+
+[[bin]]
+name = "c2c"
+path = "src/main.rs"
+
+[features]
+default = ["full"]
+full = []
+
+[dependencies]
+# CLI & Configuration
+clap = { version = "4.4", features = ["derive", "env"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+config = "0.13"
+
+# Async Runtime
+tokio = { version = "1.35", features = ["full"] }
+tokio-util = { version = "0.7", features = ["codec"] }
+
+# Database & Checkpoints
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid"] }
+
+# AWS/S3 Integration
+aws-config = { version = "1.5", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.38"
+aws-sdk-sts = "1.38"
+
+# Cryptography
+sha2 = "0.10"
+hex = "0.4"
+ring = "0.17"
+pbkdf2 = { version = "0.12", features = ["sha2"] }
+
+# HTTP Client
+reqwest = { version = "0.11", features = ["json", "stream", "rustls-tls"] }
+
+# Metrics & Monitoring
+prometheus = "0.13"
+metrics = "0.22"
+metrics-exporter-prometheus = "0.13"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+
+# Time & Date
+chrono = { version = "0.4", features = ["serde"] }
+humantime = "2.1"
+
+# Error Handling
+anyhow = "1.0"
+thiserror = "1.0"
+async-trait = "0.1"
+
+# Utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+bytes = "1.5"
+futures = "0.3"
+futures-util = "0.3"
+pin-project-lite = "0.2"
+backoff = { version = "0.4", features = ["tokio"] }
+indicatif = "0.17"
+console = "0.15"
+tabled = "0.15"
+rand = "0.8"
+urlencoding = "2.1"
+html-escape = "0.2"
+getrandom = "0.2"
+regex = "1.10"
+
+# HTML Reports
+tera = "1.19"
+serde_yaml = "0.9"
+
+# Compression
+flate2 = "1.0"
+
+# Testing
+tempfile = "3.8"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3.8"
+tokio-test = "0.4"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "unwind"
+strip = true
+opt-level = 3
+
+[profile.dev]
+debug = true

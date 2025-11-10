@@ -19,7 +19,7 @@ CURRENT_VERSION=$(wrangler versions list --env staging | head -2 | tail -1 | awk
 echo "Current version: $CURRENT_VERSION"
 
 # 3. Make a test request
-curl https://staging.c2concierge.dev/api/version > /tmp/before-rollback.json
+curl https://staging.credlink.dev/api/version > /tmp/before-rollback.json
 
 # 4. Deploy another version
 echo "// rollback test" >> src/index.ts
@@ -38,9 +38,9 @@ else
 fi
 
 # 7. Verify no data loss
-curl https://staging.c2concierge.dev/api/version > /tmp/after-rollback.json
+curl https://staging.credlink.dev/api/version > /tmp/after-rollback.json
 # Check that service is functional
-curl -f https://staging.c2concierge.dev/health || exit 1
+curl -f https://staging.credlink.dev/health || exit 1
 ```
 
 **Pass criteria**: Rollback completes in < 2 minutes, service remains available, no errors
@@ -128,8 +128,8 @@ liquibase update
 wrangler rollback --env staging
 
 # 5. Verify old app works with new schema
-curl -f https://staging.c2concierge.dev/health || exit 1
-curl -f https://staging.c2concierge.dev/api/test || exit 1
+curl -f https://staging.credlink.dev/health || exit 1
+curl -f https://staging.credlink.dev/api/test || exit 1
 
 # 6. No DB rollback needed - schema is compatible
 echo "✅ PASS: Compat-first strategy verified"
@@ -146,7 +146,7 @@ echo "✅ PASS: Compat-first strategy verified"
 **Steps**:
 ```bash
 # 1. Baseline metrics
-curl https://c2concierge.dev/metrics/baseline > /tmp/baseline.json
+curl https://credlink.dev/metrics/baseline > /tmp/baseline.json
 
 # 2. Deploy canary with intentional regression
 # (In real test, deploy version with degraded performance)
@@ -166,7 +166,7 @@ fi
 
 # 4. Verify abort path executed
 # Check that canary was rolled back
-CANARY_TRAFFIC=$(curl -s https://c2concierge.dev/api/canary-status | jq -r '.percentage')
+CANARY_TRAFFIC=$(curl -s https://credlink.dev/api/canary-status | jq -r '.percentage')
 if [ "$CANARY_TRAFFIC" = "0" ]; then
   echo "✅ PASS: Abort path executed correctly"
 else
@@ -261,7 +261,7 @@ fi
 cai_verify "$TEST_ASSET" > /tmp/cai-verify-result.json
 
 # 4. Verify with our implementation
-curl -f https://staging.c2concierge.dev/api/verify -F "file=@$TEST_ASSET" > /tmp/our-verify-result.json
+curl -f https://staging.credlink.dev/api/verify -F "file=@$TEST_ASSET" > /tmp/our-verify-result.json
 
 # 5. Compare outcomes
 CAI_STATUS=$(jq -r '.status' /tmp/cai-verify-result.json)

@@ -217,7 +217,7 @@ otlp_api_key = "your-otlp-api-key-here"  # Required for production
 cors_rule {
   allowed_headers = ["*"]  # TOO PERMISSIVE
   allowed_methods = ["GET", "HEAD", "OPTIONS"]
-  allowed_origins = ["https://c2concierge.com", "https://*.c2concierge.com"]
+  allowed_origins = ["https://credlink.com", "https://*.credlink.com"]
 }
 ```
 
@@ -237,7 +237,7 @@ cors_rule {
     "Origin"
   ]
   allowed_methods = ["GET", "HEAD", "OPTIONS"]
-  allowed_origins = ["https://c2concierge.com", "https://*.c2concierge.com"]
+  allowed_origins = ["https://credlink.com", "https://*.credlink.com"]
   max_age_seconds = 3600
 }
 ```

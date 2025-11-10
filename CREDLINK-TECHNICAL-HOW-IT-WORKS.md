@@ -1,5 +1,24 @@
 # CredLink: Complete Technical Deep-Dive
-## How Images Get Authenticated & How To Verify Them
+
+**⚠️ CRITICAL: ARCHITECTURE DOCUMENTATION - NOT IMPLEMENTATION**
+
+**Status:** Backend doesn't exist (0% complete). This describes PLANNED architecture, not working implementation.
+
+**What this document describes:**
+- Architecture design ✅
+- How it WOULD work ✅
+- Technical flow ✅
+
+**What this document does NOT mean:**
+- Backend is implemented ❌
+- System is working ❌
+- Metrics are measured ❌
+
+**Timeline:** Backend implementation starts Phase 3 (4-8 weeks from now)
+
+---
+
+## How Images Get Authenticated & How To Verify Them (Planned Architecture)
 
 ---
 
@@ -897,7 +916,7 @@ The genius of CredLink is **separation of concerns**:
    - Immutable (never changes)
    - Works even if embed is stripped ✓
 
-**This is why CredLink achieves 99.9% survival** while competitors fail at 85-92%.
+**This is why CredLink's architecture TARGETS high survival rates** (not measured yet - backend doesn't exist). Competitors using embed-only fail at 85-92%.
 
 ---
 

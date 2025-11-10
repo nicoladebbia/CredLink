@@ -390,7 +390,7 @@ class RealTimeUsageWidget {
     this.container = container;
     this.config = config;
     this.authToken = this.getAuthToken();
-    this.webSocket = new WebSocket(`wss://api.c2concierge.com/realtime/usage?token=${this.authToken}`);
+    this.webSocket = new WebSocket(`wss://api.credlink.com/realtime/usage?token=${this.authToken}`);
     this.setupWebSocket();
   }
   
@@ -1138,10 +1138,10 @@ class RealTimeDashboardIntegration {
   
   getWebSocketUrl(source) {
     const urls = {
-      usage_metrics: 'wss://api.c2concierge.com/realtime/usage',
-      billing_events: 'wss://api.c2concierge.com/realtime/billing',
-      customer_events: 'wss://api.c2concierge.com/realtime/customers',
-      system_health: 'wss://api.c2concierge.com/realtime/health'
+      usage_metrics: 'wss://api.credlink.com/realtime/usage',
+      billing_events: 'wss://api.credlink.com/realtime/billing',
+      customer_events: 'wss://api.credlink.com/realtime/customers',
+      system_health: 'wss://api.credlink.com/realtime/health'
     };
     
     return urls[source] || urls.usage_metrics;

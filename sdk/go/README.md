@@ -1,6 +1,6 @@
 # CredLink SDK - Go v2
 
-[![GoDoc](https://pkg.go.dev/badge/github.com/c2concierge/sdk-go/v2)](https://pkg.go.dev/github.com/c2concierge/sdk-go/v2)
+[![GoDoc](https://pkg.go.dev/badge/github.com/credlink/sdk-go/v2)](https://pkg.go.dev/github.com/credlink/sdk-go/v2)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Go Version](https://img.shields.io/badge/go-1.21+-blue.svg)](https://golang.org/dl/)
 
@@ -20,7 +20,7 @@ A comprehensive Go SDK for cryptographic provenance verification and signing wit
 ## 📦 Installation
 
 ```bash
-go get github.com/c2concierge/sdk-go/v2
+go get github.com/credlink/sdk-go/v2
 ```
 
 ## 🚀 Quick Start
@@ -33,18 +33,18 @@ import (
     "fmt"
     "log"
     
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/credlink"
 )
 
 func main() {
     // Initialize client
-    client := c2c.NewClientWithAPIKey("your-api-key")
+    client := credlink.NewClientWithAPIKey("your-api-key")
     defer client.Close()
     
     // Verify an asset
     result, err := client.VerifyAsset(context.Background(), 
         "https://example.com/image.jpg", 
-        c2c.VerifyAssetOptions{PolicyID: "default"})
+        credlink.VerifyAssetOptions{PolicyID: "default"})
     if err != nil {
         log.Fatal(err)
     }
@@ -54,7 +54,7 @@ func main() {
     // Verify page assets during build
     resultCh, err := client.VerifyPage(context.Background(), 
         "https://site.example/article", 
-        c2c.VerifyPageOptions{})
+        credlink.VerifyPageOptions{})
     if err != nil {
         log.Fatal(err)
     }
@@ -74,21 +74,21 @@ func main() {
 ```go
 import (
     "time"
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/credlink"
 )
 
-config := &c2c.Config{
+config := &credlink.Config{
     APIKey:    "your-api-key",
-    BaseURL:   "https://api.c2concierge.com/v1", // Optional
+    BaseURL:   "https://api.credlink.com/v1", // Optional
     TimeoutMs: 30 * time.Second,                 // Optional
-    Telemetry: &c2c.TelemetryConfig{             // Optional
+    Telemetry: &credlink.TelemetryConfig{             // Optional
         Enabled: true,
         OTel: map[string]string{
             "service_name":    "my-app",
             "service_version": "1.0.0",
         },
     },
-    Retries: &c2c.RetryConfig{ // Optional
+    Retries: &credlink.RetryConfig{ // Optional
         MaxAttempts: 5,
         BaseMs:      250 * time.Millisecond,
         MaxMs:       5 * time.Second,
@@ -96,7 +96,7 @@ config := &c2c.Config{
     },
 }
 
-client := c2c.NewClient(config)
+client := credlink.NewClient(config)
 ```
 
 ### Asset Verification
@@ -105,19 +105,19 @@ client := c2c.NewClient(config)
 // Verify by URL
 result, err := client.VerifyAsset(context.Background(), 
     "https://example.com/image.jpg", 
-    c2c.VerifyAssetOptions{
+    credlink.VerifyAssetOptions{
         PolicyID:    "default",
-        Timeout:     c2c.Ptr(5 * time.Second),
-        CachedETag:  c2c.Ptr(`"abc123def456"`),
-        EnableDelta: c2c.Ptr(true),
+        Timeout:     credlink.Ptr(5 * time.Second),
+        CachedETag:  credlink.Ptr(`"abc123def456"`),
+        EnableDelta: credlink.Ptr(true),
     })
 
 // Verify by content (base64 encoded)
 result, err := client.VerifyAsset(context.Background(), 
     "base64-encoded-content", 
-    c2c.VerifyAssetOptions{
+    credlink.VerifyAssetOptions{
         PolicyID:    "default",
-        ContentType: c2c.Ptr("image/jpeg"),
+        ContentType: credlink.Ptr("image/jpeg"),
     })
 ```
 
@@ -127,10 +127,10 @@ result, err := client.VerifyAsset(context.Background(),
 // Verify all assets on a page
 resultCh, err := client.VerifyPage(context.Background(), 
     "https://example.com/article", 
-    c2c.VerifyPageOptions{
-        FollowLinks: c2c.Ptr(true),
-        MaxDepth:    c2c.Ptr(2),
-        PolicyID:    c2c.Ptr("default"),
+    credlink.VerifyPageOptions{
+        FollowLinks: credlink.Ptr(true),
+        MaxDepth:    credlink.Ptr(2),
+        PolicyID:    credlink.Ptr("default"),
     })
 
 for asset := range resultCh {
@@ -154,9 +154,9 @@ assets := []string{
 
 resultCh, err := client.BatchVerify(context.Background(), 
     assets, 
-    c2c.BatchVerifyOptions{
-        Parallel:       c2c.Ptr(true),
-        TimeoutPerAsset: c2c.Ptr(5 * time.Second),
+    credlink.BatchVerifyOptions{
+        Parallel:       credlink.Ptr(true),
+        TimeoutPerAsset: credlink.Ptr(5 * time.Second),
     })
 
 for result := range resultCh {
@@ -174,10 +174,10 @@ for result := range resultCh {
 // Inject C2PA manifest links into HTML
 modifiedHTML, err := client.InjectLink(context.Background(), 
     htmlContent, 
-    c2c.InjectLinkOptions{
+    credlink.InjectLinkOptions{
         ManifestURL: "https://manifests.example.com/{sha256}.c2pa",
-        Strategy:    c2c.Ptr("sha256_path"),
-        Selector:    c2c.Ptr("img[src], video[src]"),
+        Strategy:    credlink.Ptr("sha256_path"),
+        Selector:    credlink.Ptr("img[src], video[src]"),
     })
 ```
 
@@ -187,10 +187,10 @@ modifiedHTML, err := client.InjectLink(context.Background(),
 // Sign a folder with RFC-3161 timestamps
 job, err := client.SignFolder(context.Background(), 
     "./public/images", 
-    c2c.SignFolderOptions{
+    credlink.SignFolderOptions{
         ProfileID:  "newsroom-default",
-        TSA:        c2c.Ptr(true),
-        Recursive:  c2c.Ptr(true),
+        TSA:        credlink.Ptr(true),
+        Recursive:  credlink.Ptr(true),
         FilePatterns: []string{"*.jpg", "*.png", "*.mp4"},
     })
 
@@ -205,18 +205,18 @@ fmt.Printf("Job status: %s\n", status.Status)
 // Get manifest with conditional request
 manifest, err := client.GetManifest(context.Background(), 
     hash, 
-    c2c.GetManifestOptions{
-        CachedETag: c2c.Ptr(`"abc123def456"`),
-        Format:     c2c.Ptr("json"),
+    credlink.GetManifestOptions{
+        CachedETag: credlink.Ptr(`"abc123def456"`),
+        Format:     credlink.Ptr("json"),
     })
 
 // Store manifest with idempotency
 result, err := client.PutManifest(context.Background(), 
     hash, 
     manifestContent, 
-    c2c.PutManifestOptions{
-        ContentType:     c2c.Ptr("application/c2pa"),
-        IdempotencyKey: c2c.Ptr("unique-key-for-this-manifest"),
+    credlink.PutManifestOptions{
+        ContentType:     credlink.Ptr("application/c2pa"),
+        IdempotencyKey: credlink.Ptr("unique-key-for-this-manifest"),
     })
 ```
 
@@ -228,19 +228,19 @@ The SDK provides comprehensive error handling with actionable hints:
 import (
     "fmt"
     "log"
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/credlink"
 )
 
 func main() {
-    client := c2c.NewClientWithAPIKey("your-api-key")
+    client := credlink.NewClientWithAPIKey("your-api-key")
     
     result, err := client.VerifyAsset(context.Background(), 
         "https://example.com/image.jpg", 
-        c2c.VerifyAssetOptions{PolicyID: "default"})
+        credlink.VerifyAssetOptions{PolicyID: "default"})
     
     if err != nil {
         switch e := err.(type) {
-        case *c2c.RateLimitError:
+        case *credlink.RateLimitError:
             fmt.Println(e.Summary()) // "C2C RateLimitError: 429 (Retry-After=60s) - Rate limit exceeded"
             if e.RetryAfter != nil {
                 fmt.Printf("Retry after: %d seconds\n", *e.RetryAfter)
@@ -248,9 +248,9 @@ func main() {
             for _, step := range e.NextSteps() {
                 fmt.Printf("- %s\n", step)
             }
-        case *c2c.ValidationError:
+        case *credlink.ValidationError:
             fmt.Printf("Validation error: %s\n", e.Hint)
-        case *c2c.C2ConciergeError:
+        case *credlink.CredLinkError:
             fmt.Printf("Request ID: %s\n", e.RequestID())
             fmt.Printf("Documentation: %s\n", e.DocsURL())
         default:
@@ -267,9 +267,9 @@ func main() {
 Enable telemetry for observability:
 
 ```go
-config := &c2c.Config{
+config := &credlink.Config{
     APIKey: "your-api-key",
-    Telemetry: &c2c.TelemetryConfig{
+    Telemetry: &credlink.TelemetryConfig{
         Enabled: true,
         OTel: map[string]string{
             "service_name":    "my-app",
@@ -278,7 +278,7 @@ config := &c2c.Config{
     },
 }
 
-client := c2c.NewClient(config)
+client := credlink.NewClient(config)
 ```
 
 ## 🔄 Retries and Backoff
@@ -294,9 +294,9 @@ The SDK automatically handles retries with exponential backoff:
 Configure custom retry behavior:
 
 ```go
-config := &c2c.Config{
+config := &credlink.Config{
     APIKey: "your-api-key",
-    Retries: &c2c.RetryConfig{
+    Retries: &credlink.RetryConfig{
         MaxAttempts: 3,
         BaseMs:      500 * time.Millisecond,
         MaxMs:       10 * time.Second,
@@ -304,7 +304,7 @@ config := &c2c.Config{
     },
 }
 
-client := c2c.NewClient(config)
+client := credlink.NewClient(config)
 ```
 
 ## 🛡️ Security Best Practices
@@ -316,7 +316,7 @@ import "os"
 
 // Never hardcode API keys
 apiKey := os.Getenv("C2_API_KEY")
-client := c2c.NewClientWithAPIKey(apiKey)
+client := credlink.NewClientWithAPIKey(apiKey)
 
 // Use environment variables or secret management
 ```
@@ -327,9 +327,9 @@ client := c2c.NewClientWithAPIKey(apiKey)
 // Always validate content type when using buffers
 result, err := client.VerifyAsset(context.Background(), 
     base64Content, 
-    c2c.VerifyAssetOptions{
+    credlink.VerifyAssetOptions{
         PolicyID:    "default",
-        ContentType: c2c.Ptr("image/jpeg"), // Required for buffer verification
+        ContentType: credlink.Ptr("image/jpeg"), // Required for buffer verification
     })
 ```
 
@@ -340,7 +340,7 @@ result, err := client.VerifyAsset(context.Background(),
 idempotencyKey := "unique-operation-id"
 result, err := client.SignFolder(context.Background(), 
     "./images", 
-    c2c.SignFolderOptions{
+    credlink.SignFolderOptions{
         ProfileID:      "default",
         IdempotencyKey: &idempotencyKey,
     })
@@ -360,7 +360,7 @@ import (
     "log"
     "os"
     
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/credlink"
 )
 
 func main() {
@@ -369,7 +369,7 @@ func main() {
         log.Fatal("C2_API_KEY environment variable is required")
     }
     
-    client := c2c.NewClientWithAPIKey(apiKey)
+    client := credlink.NewClientWithAPIKey(apiKey)
     defer client.Close()
     
     pageUrls := []string{
@@ -385,8 +385,8 @@ func main() {
     }
 }
 
-func verifyPageAssets(ctx context.Context, client *c2c.Client, url string) error {
-    resultCh, err := client.VerifyPage(ctx, url, c2c.VerifyPageOptions{})
+func verifyPageAssets(ctx context.Context, client *credlink.Client, url string) error {
+    resultCh, err := client.VerifyPage(ctx, url, credlink.VerifyPageOptions{})
     if err != nil {
         return err
     }
@@ -421,12 +421,12 @@ import (
     "log"
     "os"
     
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/credlink"
 )
 
 func main() {
     apiKey := os.Getenv("C2_API_KEY")
-    client := c2c.NewClientWithAPIKey(apiKey)
+    client := credlink.NewClientWithAPIKey(apiKey)
     defer client.Close()
     
     // Extract URLs from RSS feed
@@ -451,8 +451,8 @@ func main() {
     fmt.Printf("Batch verification complete: %d/%d verified\n", verified, len(results))
 }
 
-func batchVerifyAssets(ctx context.Context, client *c2c.Client, urls []string) ([]BatchResult, error) {
-    resultCh, err := client.BatchVerify(ctx, urls, c2c.BatchVerifyOptions{})
+func batchVerifyAssets(ctx context.Context, client *credlink.Client, urls []string) ([]BatchResult, error) {
+    resultCh, err := client.BatchVerify(ctx, urls, credlink.BatchVerifyOptions{})
     if err != nil {
         return nil, err
     }
@@ -497,11 +497,11 @@ import (
     "fmt"
     "time"
     
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/credlink"
 )
 
 func main() {
-    client := c2c.NewClientWithAPIKey("your-api-key")
+    client := credlink.NewClientWithAPIKey("your-api-key")
     defer client.Close()
     
     // Create context with 10-second timeout
@@ -510,7 +510,7 @@ func main() {
     
     result, err := client.VerifyAsset(ctx, 
         "https://example.com/image.jpg", 
-        c2c.VerifyAssetOptions{PolicyID: "default"})
+        credlink.VerifyAssetOptions{PolicyID: "default"})
     
     if err != nil {
         if ctx.Err() == context.DeadlineExceeded {
@@ -574,8 +574,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🔗 Links
 
-- [Documentation](https://docs.c2concierge.com)
-- [API Reference](https://docs.c2concierge.com/api)
+- [Documentation](https://docs.credlink.com)
+- [API Reference](https://docs.credlink.com/api)
 - [Examples](../../examples/)
 - [GitHub Repository](https://github.com/Nickiller04/CredLink)
 - [Bug Reports](https://github.com/Nickiller04/CredLink/issues)

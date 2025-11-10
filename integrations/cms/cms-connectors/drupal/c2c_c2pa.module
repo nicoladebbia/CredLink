@@ -1,0 +1,311 @@
+<?php
+
+/**
+ * @file
+ * C2 Concierge C2PA integration for Drupal.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\media\MediaInterface;
+use Drupal\file\FileInterface;
+
+/**
+ * Implements hook_help().
+ */
+function c2c_c2pa_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.c2c_c2pa':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The C2 Concierge C2PA module integrates Content Authenticity Initiative (CAI) provenance with Drupal media assets. It automatically signs uploaded media with C2PA manifests and injects discovery headers for verification.') . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Automatic Signing') . '</dt>';
+      $output .= '<dd>' . t('Media files are automatically signed with C2PA manifests when uploaded, creating tamper-evident provenance records.') . '</dd>';
+      $output .= '<dt>' . t('Header Injection') . '</dt>';
+      $output .= '<dd>' . t('HTTP Link headers are automatically injected on media pages to enable C2PA discovery according to the specification.') . '</dd>';
+      $output .= '<dt>' . t('Verification Badge') . '</dt>';
+      $output .= '<dd>' . t('A verification badge is displayed on signed media, allowing users to view provenance information.') . '</dd>';
+      $output .= '</dl>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function c2c_c2pa_entity_insert(EntityInterface $entity) {
+  // Only process media entities
+  if (!$entity instanceof MediaInterface) {
+    return;
+  }
+
+  // Load the media subscriber service
+  try {
+    /** @var \Drupal\c2c_c2pa\EventSubscriber\C2PAMediaSubscriber $subscriber */
+    $subscriber = \Drupal::service('c2c_c2pa.media_subscriber');
+    $subscriber->onMediaInsert($entity);
+  } catch (\Exception $e) {
+    \Drupal::logger('c2c_c2pa')->error('Media subscriber service unavailable: @message', [
+      '@message' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function c2c_c2pa_entity_update(EntityInterface $entity) {
+  // Only process media entities
+  if (!$entity instanceof MediaInterface) {
+    return;
+  }
+
+  // Check if the file has changed
+  if ($entity->hasField('field_media_image') || $entity->hasField('field_media_video_file')) {
+    $original = $entity->original;
+    if ($original) {
+      $current_file = _c2c_c2pa_get_media_file($entity);
+      $original_file = _c2c_c2pa_get_media_file($original);
+      
+      // If file changed, re-process
+      if ($current_file && $original_file && $current_file->id() !== $original_file->id()) {
+        try {
+          /** @var \Drupal\c2c_c2pa\EventSubscriber\C2PAMediaSubscriber $subscriber */
+          $subscriber = \Drupal::service('c2c_c2pa.media_subscriber');
+          $subscriber->onMediaInsert($entity);
+        } catch (\Exception $e) {
+          \Drupal::logger('c2c_c2pa')->error('Media re-processing failed: @message', [
+            '@message' => $e->getMessage(),
+          ]);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function c2c_c2pa_cron() {
+  $config = \Drupal::config('c2c_c2pa.settings');
+  
+  // Only run retro-signing if enabled
+  if (!$config->get('retro_signing_enabled')) {
+    return;
+  }
+
+  $logger = \Drupal::logger('c2c_c2pa');
+  
+  try {
+    _c2c_c2pa_retro_sign_recent_media();
+    _c2c_c2pa_update_survival_metrics();
+    _c2c_c2pa_cleanup_old_manifests();
+  } catch (\Exception $e) {
+    $logger->error('Cron processing failed: @message', ['@message' => $e->getMessage()]);
+  }
+}
+
+/**
+ * Retro-signs recent media without manifests.
+ */
+function _c2c_c2pa_retro_sign_recent_media() {
+  $config = \Drupal::config('c2c_c2pa.settings');
+  $retro_days = $config->get('retro_signing_days') ?: 7;
+  
+  $cutoff_time = \Drupal::time()->getRequestTime() - ($retro_days * 24 * 60 * 60);
+  
+  // Find media without manifests
+  $query = \Drupal::entityQuery('media')
+    ->condition('created', $cutoff_time, '>=')
+    ->condition('status', 1)
+    ->accessCheck(FALSE);
+  
+  // Only check media types that have the manifest field
+  $media_types = $config->get('supported_media_types') ?: ['image', 'video'];
+  $query->condition('bundle', $media_types, 'IN');
+  
+  // Exclude media that already have manifests
+  if (\Drupal::entityTypeManager()->getStorage('media')->getFieldMap('field_c2pa_manifest_url')) {
+    $orGroup = $query->orConditionGroup()
+      ->condition('field_c2pa_manifest_url', '', '=')
+      ->notExists('field_c2pa_manifest_url');
+    $query->condition($orGroup);
+  }
+  
+  $media_ids = $query->execute();
+  
+  if (empty($media_ids)) {
+    return;
+  }
+  
+  $logger = \Drupal::logger('c2c_c2pa');
+  $logger->info('Retro-signing @count media assets', ['@count' => count($media_ids)]);
+  
+  /** @var \Drupal\c2c_c2pa\C2PAMediaSubscriber $subscriber */
+  $subscriber = \Drupal::service('c2c_c2pa.media_subscriber');
+  
+  $processed = 0;
+  $failed = 0;
+  
+  foreach ($media_ids as $media_id) {
+    try {
+      $media = \Drupal::entityTypeManager()->getStorage('media')->load($media_id);
+      if ($media) {
+        $subscriber->onMediaInsert($media);
+        $processed++;
+      }
+    } catch (\Exception $e) {
+      $failed++;
+      $logger->error('Retro-signing failed for media @id: @message', [
+        '@id' => $media_id,
+        '@message' => $e->getMessage(),
+      ]);
+    }
+  }
+  
+  $logger->info('Retro-signing completed: @processed processed, @failed failed', [
+    '@processed' => $processed,
+    '@failed' => $failed,
+  ]);
+}
+
+/**
+ * Updates survival metrics.
+ */
+function _c2c_c2pa_update_survival_metrics() {
+  $config = \Drupal::config('c2c_c2pa.settings');
+  
+  if (!$config->get('enable_telemetry')) {
+    return;
+  }
+
+  try {
+    $analytics_url = $config->get('analytics_url') ?: 'https://analytics.credlink.org/telemetry';
+    
+    // Count signed media
+    $signed_count = \Drupal::entityQuery('media')
+      ->condition('field_c2pa_manifest_url', '', '<>')
+      ->condition('status', 1)
+      ->count()
+      ->accessCheck(FALSE)
+      ->execute();
+    
+    // Count total media
+    $total_count = \Drupal::entityQuery('media')
+      ->condition('status', 1)
+      ->count()
+      ->accessCheck(FALSE)
+      ->execute();
+    
+    \Drupal::httpClient()->post($analytics_url, [
+      'json' => [
+        'event' => 'survival_metrics',
+        'platform' => 'drupal',
+        'version' => '1.0.0',
+        'timestamp' => date('c'),
+        'data' => [
+          'signed_media_count' => $signed_count,
+          'total_media_count' => $total_count,
+          'signing_rate' => $total_count > 0 ? ($signed_count / $total_count) : 0,
+        ],
+      ],
+      'timeout' => 5,
+    ]);
+  } catch (\Exception $e) {
+    \Drupal::logger('c2c_c2pa')->warning('Survival metrics update failed: @message', [
+      '@message' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
+ * Cleans up old manifests.
+ */
+function _c2c_c2pa_cleanup_old_manifests() {
+  $config = \Drupal::config('c2c_c2pa.settings');
+  $retention_days = $config->get('manifest_retention_days') ?: 365;
+  
+  $cutoff_time = \Drupal::time()->getRequestTime() - ($retention_days * 24 * 60 * 60);
+  
+  // Find media with old manifests
+  $query = \Drupal::entityQuery('media')
+    ->condition('created', $cutoff_time, '<')
+    ->condition('field_c2pa_manifest_url', '', '<>')
+    ->condition('status', 0) // Only unpublished media
+    ->accessCheck(FALSE);
+  
+  $media_ids = $query->execute();
+  
+  if (empty($media_ids)) {
+    return;
+  }
+  
+  $logger = \Drupal::logger('c2c_c2pa');
+  $logger->info('Cleaning up manifests for @count old media assets', ['@count' => count($media_ids)]);
+  
+  $cleaned = 0;
+  
+  foreach ($media_ids as $media_id) {
+    try {
+      $media = \Drupal::entityTypeManager()->getStorage('media')->load($media_id);
+      if ($media) {
+        $media->set('field_c2pa_manifest_url', '');
+        $media->save();
+        $cleaned++;
+      }
+    } catch (\Exception $e) {
+      $logger->error('Manifest cleanup failed for media @id: @message', [
+        '@id' => $media_id,
+        '@message' => $e->getMessage(),
+      ]);
+    }
+  }
+  
+  $logger->info('Manifest cleanup completed: @cleaned cleaned', ['@cleaned' => $cleaned]);
+}
+
+/**
+ * Gets the file entity from media.
+ */
+function _c2c_c2pa_get_media_file(MediaInterface $media): ?FileInterface {
+  if ($media->hasField('field_media_image') && !$media->get('field_media_image')->isEmpty()) {
+    return $media->get('field_media_image')->entity;
+  }
+
+  if ($media->hasField('field_media_video_file') && !$media->get('field_media_video_file')->isEmpty()) {
+    return $media->get('field_media_video_file')->entity;
+  }
+
+  if ($media->hasField('field_media_file') && !$media->get('field_media_file')->isEmpty()) {
+    return $media->get('field_media_file')->entity;
+  }
+
+  return null;
+}
+
+/**
+ * Implements hook_page_attachments().
+ */
+function c2c_c2pa_page_attachments(array &$attachments) {
+  $config = \Drupal::config('c2c_c2pa.settings');
+  
+  // Only add badge script if enabled
+  if (!$config->get('enable_badge')) {
+    return;
+  }
+
+  $attachments['#attached']['html_head'][] = [
+    [
+      '#tag' => 'script',
+      '#attributes' => [
+        'src' => 'https://cdn.credlink.org/c2-badge.js',
+        'async' => TRUE,
+        'integrity' => 'sha384-DEFAULT_INTEGRITY_HASH',
+        'crossorigin' => 'anonymous',
+      ],
+    ],
+    'c2c_badge_script',
+  ];
+}

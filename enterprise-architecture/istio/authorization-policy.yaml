@@ -222,8 +222,8 @@ spec:
     matchLabels:
       app: auth-service
   jwtRules:
-  - issuer: "https://c2concierge.com"
-    jwksUri: "https://c2concierge.com/.well-known/jwks.json"
+  - issuer: "https://credlink.com"
+    jwksUri: "https://credlink.com/.well-known/jwks.json"
     forwardOriginalToken: true
     fromHeaders:
     - name: "authorization"
@@ -412,7 +412,7 @@ metadata:
   namespace: c2c-enterprise
 spec:
   hosts:
-  - api.c2concierge.com
+  - api.credlink.com
   ports:
   - number: 443
     name: https
