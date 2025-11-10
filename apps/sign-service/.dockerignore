@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+npm-debug.log
+pnpm-debug.log
+
+# Build output
+dist
+*.tsbuildinfo
+
+# Tests
+coverage
+**/*.test.ts
+**/*.spec.ts
+src/tests
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Git
+.git
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+tmp
+temp
+*.tmp
+
+# Test fixtures
+test-fixtures
