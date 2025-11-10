@@ -36,7 +36,7 @@ s3_lifecycle_expiration_days = 365         # Delete after 1 year (0 = never)
 
 # Monitoring
 enable_enhanced_monitoring = true
-alarm_email = "ops@credlink.com"           # Email for CloudWatch alarms
+alert_email                 = "alerts@credlink.com"           # Email for CloudWatch alarms
 
 # Cost Management
 cost_alert_threshold = 200                 # Monthly budget alert threshold (USD)

@@ -163,7 +163,22 @@ variable "cost_alert_threshold" {
 
 # Tags
 variable "tags" {
-  description = "Additional tags to apply to all resources"
+  description = "Tags to apply to all resources"
   type        = map(string)
-  default     = {}
+  default = {
+    Project     = "CredLink"
+    ManagedBy   = "Terraform"
+    Environment = "production"
+  }
+}
+
+variable "alert_email" {
+  description = "Email address for alert notifications"
+  type        = string
+  default     = "alerts@credlink.com"
+  
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.alert_email))
+    error_message = "The alert_email must be a valid email address."
+  }
 }
