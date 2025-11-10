@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CredLink Demo - Working Backend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f7fafc;
+        }
+        
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #edf2f7;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 0.5rem;
+            display: none;
+        }
+        
+        .result.show {
+            display: block;
+        }
+        
+        .result.success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+        }
+        
+        .result.error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+        }
+        
+        .preview {
+            margin-top: 1rem;
+            max-width: 100%;
+        }
+        
+        .preview img {
+            max-width: 100%;
+            border-radius: 0.5rem;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f7fafc;
+            border-radius: 0.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            color: #718096;
+            margin-top: 0.25rem;
+        }
+        
+        .info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 CredLink Demo</h1>
+            <p>Image Signing & Verification with C2PA</p>
+            <div class="status-badge">✅ Backend Operational</div>
+        </div>
+        
+        <div class="demo-grid">
+            <!-- Sign Panel -->
+            <div class="card">
+                <h2>📝 Sign Image</h2>
+                <div class="upload-area" id="signUpload">
+                    <p>📤 Click or drag image here</p>
+                    <p style="font-size: 0.875rem; color: #718096; margin-top: 0.5rem;">Max 50MB</p>
+                </div>
+                <input type="file" id="signFileInput" accept="image/*">
+                <button class="btn" id="signBtn" disabled>Sign Image</button>
+                
+                <div id="signResult" class="result"></div>
+                <div id="signPreview" class="preview"></div>
+            </div>
+            
+            <!-- Verify Panel -->
+            <div class="card">
+                <h2>✅ Verify Image</h2>
+                <div class="upload-area" id="verifyUpload">
+                    <p>📤 Click or drag image here</p>
+                    <p style="font-size: 0.875rem; color: #718096; margin-top: 0.5rem;">Max 50MB</p>
+                </div>
+                <input type="file" id="verifyFileInput" accept="image/*">
+                <button class="btn" id="verifyBtn" disabled>Verify Image</button>
+                
+                <div id="verifyResult" class="result"></div>
+            </div>
+        </div>
+        
+        <!-- Stats Panel -->
+        <div class="card">
+            <h2>📊 Service Statistics</h2>
+            <div class="stats" id="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalProofs">-</div>
+                    <div class="stat-label">Total Proofs</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgSignTime">-</div>
+                    <div class="stat-label">Avg Sign Time</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="avgVerifyTime">-</div>
+                    <div class="stat-label">Avg Verify Time</div>
+                </div>
+            </div>
+            <button class="btn" onclick="loadStats()" style="margin-top: 1rem;">Refresh Stats</button>
+            
+            <div class="info">
+                <strong>ℹ️ Backend Status:</strong> Sign service running on <code>http://localhost:3001</code>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        let signFile = null;
+        let verifyFile = null;
+        let signTimes = [];
+        let verifyTimes = [];
+        
+        // Sign upload handlers
+        const signUpload = document.getElementById('signUpload');
+        const signFileInput = document.getElementById('signFileInput');
+        const signBtn = document.getElementById('signBtn');
+        
+        signUpload.addEventListener('click', () => signFileInput.click());
+        signUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            signUpload.classList.add('dragover');
+        });
+        signUpload.addEventListener('dragleave', () => {
+            signUpload.classList.remove('dragover');
+        });
+        signUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            signUpload.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                signFileInput.files = e.dataTransfer.files;
+                handleSignFileSelect(e);
+            }
+        });
+        
+        signFileInput.addEventListener('change', handleSignFileSelect);
+        signBtn.addEventListener('click', signImage);
+        
+        function handleSignFileSelect(e) {
+            signFile = e.target.files[0];
+            if (signFile) {
+                signBtn.disabled = false;
+                signUpload.innerHTML = `<p>✅ ${signFile.name}</p><p style="font-size: 0.875rem; color: #718096;">${(signFile.size / 1024 / 1024).toFixed(2)} MB</p>`;
+            }
+        }
+        
+        async function signImage() {
+            if (!signFile) return;
+            
+            signBtn.disabled = true;
+            signBtn.textContent = 'Signing...';
+            const resultDiv = document.getElementById('signResult');
+            resultDiv.innerHTML = '<div class="spinner"></div>';
+            resultDiv.className = 'result show';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', signFile);
+                formData.append('issuer', 'Demo User');
+                
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE}/sign`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const duration = Date.now() - startTime;
+                signTimes.push(duration);
+                
+                if (!response.ok) throw new Error('Sign failed');
+                
+                const blob = await response.blob();
+                const proofUri = response.headers.get('X-Proof-Uri');
+                const manifestHash = response.headers.get('X-Manifest-Hash');
+                const processingTime = response.headers.get('X-Processing-Time');
+                
+                const url = URL.createObjectURL(blob);
+                
+                resultDiv.className = 'result show success';
+                resultDiv.innerHTML = `
+                    <strong>✅ Image Signed Successfully!</strong>
+                    <p style="margin-top: 0.5rem;"><strong>Proof URI:</strong><br><code>${proofUri}</code></p>
+                    <p style="margin-top: 0.5rem;"><strong>Manifest Hash:</strong><br><code>${manifestHash}</code></p>
+                    <p style="margin-top: 0.5rem;"><strong>Processing Time:</strong> ${processingTime}</p>
+                    <a href="${url}" download="signed-${signFile.name}" class="btn" style="margin-top: 1rem; display: inline-block; text-decoration: none;">Download Signed Image</a>
+                `;
+                
+                document.getElementById('signPreview').innerHTML = `<img src="${url}" alt="Signed image">`;
+                
+            } catch (error) {
+                resultDiv.className = 'result show error';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                signBtn.disabled = false;
+                signBtn.textContent = 'Sign Image';
+                loadStats();
+            }
+        }
+        
+        // Verify upload handlers
+        const verifyUpload = document.getElementById('verifyUpload');
+        const verifyFileInput = document.getElementById('verifyFileInput');
+        const verifyBtn = document.getElementById('verifyBtn');
+        
+        verifyUpload.addEventListener('click', () => verifyFileInput.click());
+        verifyUpload.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            verifyUpload.classList.add('dragover');
+        });
+        verifyUpload.addEventListener('dragleave', () => {
+            verifyUpload.classList.remove('dragover');
+        });
+        verifyUpload.addEventListener('drop', (e) => {
+            e.preventDefault();
+            verifyUpload.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                verifyFileInput.files = e.dataTransfer.files;
+                handleVerifyFileSelect(e);
+            }
+        });
+        
+        verifyFileInput.addEventListener('change', handleVerifyFileSelect);
+        verifyBtn.addEventListener('click', verifyImage);
+        
+        function handleVerifyFileSelect(e) {
+            verifyFile = e.target.files[0];
+            if (verifyFile) {
+                verifyBtn.disabled = false;
+                verifyUpload.innerHTML = `<p>✅ ${verifyFile.name}</p><p style="font-size: 0.875rem; color: #718096;">${(verifyFile.size / 1024 / 1024).toFixed(2)} MB</p>`;
+            }
+        }
+        
+        async function verifyImage() {
+            if (!verifyFile) return;
+            
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+            const resultDiv = document.getElementById('verifyResult');
+            resultDiv.innerHTML = '<div class="spinner"></div>';
+            resultDiv.className = 'result show';
+            
+            try {
+                const formData = new FormData();
+                formData.append('image', verifyFile);
+                
+                const startTime = Date.now();
+                const response = await fetch(`${API_BASE}/verify`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const duration = Date.now() - startTime;
+                verifyTimes.push(duration);
+                
+                if (!response.ok) throw new Error('Verify failed');
+                
+                const result = await response.json();
+                
+                resultDiv.className = `result show ${result.valid ? 'success' : 'error'}`;
+                resultDiv.innerHTML = `
+                    <strong>${result.valid ? '✅' : '❌'} Verification Result</strong>
+                    <p style="margin-top: 0.5rem;"><strong>Valid:</strong> ${result.valid ? 'Yes' : 'No'}</p>
+                    <p><strong>Confidence:</strong> ${result.confidence}%</p>
+                    <p><strong>Processing Time:</strong> ${result.processingTime}ms</p>
+                    <details style="margin-top: 1rem;">
+                        <summary style="cursor: pointer;"><strong>Details</strong></summary>
+                        <pre style="margin-top: 0.5rem; font-size: 0.75rem;">${JSON.stringify(result.details, null, 2)}</pre>
+                    </details>
+                `;
+                
+            } catch (error) {
+                resultDiv.className = 'result show error';
+                resultDiv.innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify Image';
+                loadStats();
+            }
+        }
+        
+        // Load stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/sign/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('totalProofs').textContent = stats.totalProofs;
+                document.getElementById('avgSignTime').textContent = signTimes.length ? 
+                    `${(signTimes.reduce((a, b) => a + b, 0) / signTimes.length).toFixed(0)}ms` : '-';
+                document.getElementById('avgVerifyTime').textContent = verifyTimes.length ? 
+                    `${(verifyTimes.reduce((a, b) => a + b, 0) / verifyTimes.length).toFixed(0)}ms` : '-';
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+        
+        // Load stats on page load
+        loadStats();
+    </script>
+</body>
+</html>
