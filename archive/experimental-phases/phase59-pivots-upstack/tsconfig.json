@@ -6,12 +6,12 @@
     "outDir": "./dist",
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "allowJs": false,
+    "allowJs": true,
     "checkJs": false,
     "noEmit": true,
     "strict": false,
     "skipLibCheck": true
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "coverage", "dist", "**/*.js", "analytics", "custody", "scripts", "src", "tests"]
+  "include": [],
+  "exclude": ["**/*"]
 }

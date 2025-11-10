@@ -20,13 +20,13 @@ A comprehensive JavaScript/TypeScript SDK for cryptographic provenance verificat
 ## 📦 Installation
 
 ```bash
-npm install @c2concierge/sdk
+npm install @credlink/sdk
 ```
 
 ## 🚀 Quick Start
 
 ```typescript
-import { Client } from '@c2concierge/sdk';
+import { Client } from '@credlink/sdk';
 
 // Initialize client
 const client = new Client({ 
@@ -179,7 +179,7 @@ import {
   RateLimitError, 
   ValidationError,
   AuthError 
-} from '@c2concierge/sdk';
+} from '@credlink/sdk';
 
 try {
   await client.verify('https://example.com/image.jpg', { policyId: 'default' });
@@ -202,7 +202,7 @@ try {
 Enable OpenTelemetry for observability:
 
 ```typescript
-import { Client } from '@c2concierge/sdk';
+import { Client } from '@credlink/sdk';
 
 const client = new Client({
   apiKey: process.env.C2_API_KEY,
@@ -285,7 +285,7 @@ const result = await client.signFolder('./images', {
 
 ```typescript
 // verify-build.js - Verify assets during build process
-import { Client } from '@c2concierge/sdk';
+import { Client } from '@credlink/sdk';
 
 const client = new Client({ apiKey: process.env.C2_API_KEY });
 
@@ -319,7 +319,7 @@ verifyBuildAssets([
 
 ```typescript
 // batch-verify.js - Process RSS feeds or asset lists
-import { Client } from '@c2concierge/sdk';
+import { Client } from '@credlink/sdk';
 
 const client = new Client({ apiKey: process.env.C2_API_KEY });
 

@@ -243,15 +243,15 @@ func getCacheDir() string {
 
 	// Unix-like systems (Linux, macOS)
 	if xdgCache := os.Getenv("XDG_CACHE_HOME"); xdgCache != "" {
-		return filepath.Join(xdgCache, "c2concierge")
+		return filepath.Join(xdgCache, "credlink")
 	}
 
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(os.TempDir(), "c2concierge-cache")
+		return filepath.Join(os.TempDir(), "credlink-cache")
 	}
 
-	return filepath.Join(home, ".cache", "c2concierge")
+	return filepath.Join(home, ".cache", "credlink")
 }
 
 func listCacheEntries(cacheDir string) ([]CacheEntry, error) {

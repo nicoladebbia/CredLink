@@ -15,12 +15,12 @@
 - All HTTP responses must include proper headers
 - Security headers (CSP, X-Content-Type-Options) are mandatory
 
-## Testing Requirements
-- All scenarios in hostile-path-matrix.yaml must pass
-- Remote survival rate must be ≥ 99.9%
-- Embed survival rate must be ≥ 95% in preserve-embed sandbox
+## Testing Requirements (Phase 4 Targets - Not Currently Met)
+- All scenarios in hostile-path-matrix.yaml must pass (Phase 4)
+- Remote survival rate TARGET: ≥ 99.9% (not measured yet)
+- Embed survival rate TARGET: ≥ 95% in preserve-embed sandbox (not measured yet)
 - Tests must be deterministic and reproducible
-- All logs must be signed and structured
+- All logs must be signed and structured (Phase 4)
 
 ## Architecture Guidelines
 - Modular design with clear separation of concerns

@@ -2,37 +2,6 @@
 
 Thank you for your interest in contributing to CredLink! This document provides guidelines and information for contributors.
 
-## 🎯 Honesty Principles (READ FIRST)
-
-**We are committed to radical transparency. Every contribution must follow these principles:**
-
-### 1. Never Make Unmeasured Claims
-- ❌ Don't claim "99.9% survival" without measurement
-- ❌ Don't claim "fast" without benchmarks
-- ❌ Don't claim "production ready" without deployment
-- ✅ Use "target", "goal", or "planned" for future features
-- ✅ Mark all claims with evidence or "unmeasured"
-
-### 2. Be Honest About What Doesn't Work
-- ❌ Don't hide broken features
-- ❌ Don't write docs as if features exist when they don't
-- ✅ Add warnings to broken features
-- ✅ Clearly separate "works" from "planned"
-
-### 3. No Vaporware Comparisons
-- ❌ Don't compare our architecture to competitors' shipping products
-- ❌ Don't claim we're "better" without proof
-- ✅ Wait until we ship to make comparisons
-- ✅ Compare fairly with measured data only
-
-### 4. Report Dishonest Claims
-If you find a dishonest claim:
-1. Open an issue using `.github/ISSUE_TEMPLATE/honesty-report.md`
-2. We'll fix it within 48 hours
-3. See [APOLOGY.md](APOLOGY.md) for our commitment
-
----
-
 ## Getting Started
 
 ### Prerequisites

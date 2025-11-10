@@ -1,5 +1,5 @@
 /**
- * Core types for the C2 Concierge SDK
+ * Core types for the CredLink SDK
  * Generated from OpenAPI specification v1.3.0
  */
 
@@ -84,7 +84,7 @@ export class AuthError extends C2ConciergeError {
   constructor(message: string, options: AuthErrorOptions = {}) {
     super(message, options);
     this.hint = options.hint || 'Check your API key in the X-API-Key header';
-    this.docsUrl = 'https://docs.c2concierge.com/api/errors#auth_error';
+    this.docsUrl = 'https://docs.credlink.com/api/errors#auth_error';
   }
 
   public getSummary(): string {
@@ -110,7 +110,7 @@ export class RateLimitError extends C2ConciergeError {
   constructor(message: string, options: RateLimitErrorOptions = {}) {
     super(message, options);
     this.hint = options.hint || 'Wait before retrying or implement exponential backoff';
-    this.docsUrl = 'https://docs.c2concierge.com/api/errors#rate_limit_error';
+    this.docsUrl = 'https://docs.credlink.com/api/errors#rate_limit_error';
   }
 
   public getSummary(): string {
@@ -143,7 +143,7 @@ export class ConflictError extends C2ConciergeError {
     this.code = 'CONFLICT_ERROR';
     this.statusCode = 409;
     this.hint = options.hint || 'Use idempotency keys for safe retries';
-    this.docsUrl = 'https://docs.c2concierge.com/api/errors#conflict_error';
+    this.docsUrl = 'https://docs.credlink.com/api/errors#conflict_error';
   }
 
   public getSummary(): string {
@@ -170,7 +170,7 @@ export class ValidationError extends C2ConciergeError {
     this.requestId = options.requestId;
     this.endpoint = options.endpoint;
     this.hint = options.hint || 'Check required fields and data formats';
-    this.docsUrl = 'https://docs.c2concierge.com/api/errors#validation_error';
+    this.docsUrl = 'https://docs.credlink.com/api/errors#validation_error';
   }
 
   public getSummary(): string {
@@ -196,7 +196,7 @@ export class ServerError extends C2ConciergeError {
     this.requestId = options.requestId;
     this.endpoint = options.endpoint;
     this.hint = options.hint || 'Server encountered an unexpected error';
-    this.docsUrl = 'https://docs.c2concierge.com/api/errors#server_error';
+    this.docsUrl = 'https://docs.credlink.com/api/errors#server_error';
   }
 
   public getSummary(): string {
@@ -222,7 +222,7 @@ export class NetworkError extends C2ConciergeError {
     this.requestId = options.requestId;
     this.endpoint = options.endpoint;
     this.hint = options.hint || 'Network connectivity issue encountered';
-    this.docsUrl = 'https://docs.c2concierge.com/api/errors#network_error';
+    this.docsUrl = 'https://docs.credlink.com/api/errors#network_error';
   }
 
   public getSummary(): string {

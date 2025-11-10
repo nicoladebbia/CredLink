@@ -12,7 +12,7 @@ LDFLAGS=-ldflags="-s -w -extldflags '-static'"
 OUTPUT_DIR=bin
 
 # Binary name
-BINARY_NAME=c2c
+BINARY_NAME=credlink
 
 # Version info
 VERSION=1.0.0
@@ -82,11 +82,11 @@ deps:
 release: build-all
 	@echo "Creating release package..."
 	@mkdir -p $(OUTPUT_DIR)/release
-	@tar -czf $(OUTPUT_DIR)/release/c2c-v$(VERSION)-linux-amd64.tar.gz \
+	@tar -czf $(OUTPUT_DIR)/release/credlink-v$(VERSION)-linux-amd64.tar.gz \
 		-C $(OUTPUT_DIR) $(BINARY_NAME)-linux-amd64
-	@cd $(OUTPUT_DIR) && zip -r release/c2c-v$(VERSION)-windows-amd64.zip \
+	@cd $(OUTPUT_DIR) && zip -r release/credlink-v$(VERSION)-windows-amd64.zip \
 		$(BINARY_NAME)-windows-amd64.exe
-	@tar -czf $(OUTPUT_DIR)/release/c2c-v$(VERSION)-darwin-universal.tar.gz \
+	@tar -czf $(OUTPUT_DIR)/release/credlink-v$(VERSION)-darwin-universal.tar.gz \
 		-C $(OUTPUT_DIR) $(BINARY_NAME)-darwin-universal
 
 # Development build with debug info

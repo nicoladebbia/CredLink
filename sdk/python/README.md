@@ -1,6 +1,6 @@
 # CredLink SDK - Python v1.3.0
 
-[![PyPI version](https://badge.fury.io/py/c2concierge.svg)](https://badge.fury.io/py/c2concierge)
+[![PyPI version](https://badge.fury.io/py/credlink.svg)](https://badge.fury.io/py/credlink)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
@@ -20,20 +20,20 @@ A comprehensive Python SDK for cryptographic provenance verification and signing
 ## 📦 Installation
 
 ```bash
-pip install c2concierge
+pip install credlink
 ```
 
 For development with optional dependencies:
 
 ```bash
-pip install c2concierge[dev,otel]
+pip install credlink[dev,otel]
 ```
 
 ## 🚀 Quick Start
 
 ```python
 import asyncio
-from c2concierge import Client
+from credlink import Client
 
 async def main():
     # Initialize client
@@ -60,11 +60,11 @@ asyncio.run(main())
 ### Client Configuration
 
 ```python
-from c2concierge import Client, ClientConfig, RetryConfig, TelemetryConfig
+from credlink import Client, ClientConfig, RetryConfig, TelemetryConfig
 
 config = ClientConfig(
     api_key="your-api-key",
-    base_url="https://api.c2concierge.com/v1",     # Optional
+    base_url="https://api.credlink.com/v1",     # Optional
     timeout_ms=30000,                              # Optional
     telemetry=TelemetryConfig(                     # Optional
         enabled=True,
@@ -209,8 +209,8 @@ The SDK provides comprehensive error handling with actionable hints:
 
 ```python
 import asyncio
-from c2concierge import Client
-from c2concierge.types import (
+from credlink import Client
+from credlink.types import (
     C2ConciergeError,
     RateLimitError,
     ValidationError,
@@ -243,7 +243,7 @@ asyncio.run(main())
 Enable OpenTelemetry for observability:
 
 ```python
-from c2concierge import Client, ClientConfig, TelemetryConfig
+from credlink import Client, ClientConfig, TelemetryConfig
 
 config = ClientConfig(
     api_key="your-api-key",
@@ -262,7 +262,7 @@ client = Client(config)
 Install the optional telemetry packages:
 
 ```bash
-pip install c2concierge[otel]
+pip install credlink[otel]
 ```
 
 ## 🔄 Retries and Backoff
@@ -278,7 +278,7 @@ The SDK automatically handles retries with exponential backoff:
 Configure custom retry behavior:
 
 ```python
-from c2concierge import Client, ClientConfig, RetryConfig
+from credlink import Client, ClientConfig, RetryConfig
 
 config = ClientConfig(
     api_key="your-api-key",
@@ -299,7 +299,7 @@ client = Client(config)
 
 ```python
 import os
-from c2concierge import Client
+from credlink import Client
 
 # Never hardcode API keys
 client = Client(api_key=os.getenv("C2_API_KEY"))
@@ -341,7 +341,7 @@ result = await client.sign_folder(
 # verify_build.py - Verify assets during build process
 import asyncio
 import sys
-from c2concierge import Client
+from credlink import Client
 
 async def verify_build_assets(page_urls):
     client = Client(api_key=os.getenv("C2_API_KEY"))
@@ -373,7 +373,7 @@ if __name__ == "__main__":
 ```python
 # batch_verify.py - Process RSS feeds or asset lists
 import asyncio
-from c2concierge import Client
+from credlink import Client
 
 async def batch_verify_from_feed(feed_url):
     client = Client(api_key=os.getenv("C2_API_KEY"))
@@ -428,7 +428,7 @@ pip install -e .[dev]
 pytest
 
 # Run tests with coverage
-pytest --cov=c2concierge --cov-report=html
+pytest --cov=credlink --cov-report=html
 
 # Run linting
 black src/
@@ -454,7 +454,7 @@ pytest -m integration
 pytest -m slow
 
 # Run with coverage
-pytest --cov=c2concierge --cov-report=term-missing
+pytest --cov=credlink --cov-report=term-missing
 ```
 
 ## 📄 License
@@ -463,8 +463,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🔗 Links
 
-- [Documentation](https://docs.c2concierge.com)
-- [API Reference](https://docs.c2concierge.com/api)
+- [Documentation](https://docs.credlink.com)
+- [API Reference](https://docs.credlink.com/api)
 - [Examples](../../examples/)
 - [GitHub Repository](https://github.com/Nickiller04/CredLink)
 - [Bug Reports](https://github.com/Nickiller04/CredLink/issues)

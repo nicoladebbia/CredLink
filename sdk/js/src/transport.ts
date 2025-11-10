@@ -17,7 +17,7 @@ import {
 // ============================================================================
 
 const DEFAULT_CONFIG = {
-  baseUrl: 'https://api.c2concierge.com/v1',
+  baseUrl: 'https://api.credlink.com/v1',
   timeoutMs: 30000,
   retries: {
     maxAttempts: 5,
@@ -25,7 +25,7 @@ const DEFAULT_CONFIG = {
     maxMs: 5000,
     jitter: true,
   },
-  userAgent: 'c2c-sdk/js/1.3.0',
+  userAgent: 'credlink-sdk/js/1.3.0',
 } as const;
 
 // ============================================================================

@@ -122,7 +122,7 @@ func checkNetworkConnectivity() []CheckResult {
 		Name: "DNS Resolution",
 	}
 
-	_, err := net.LookupHost("api.c2concierge.com")
+	_, err := net.LookupHost("api.credlink.com")
 	if err != nil {
 		result.Status = "error"
 		result.Message = "Cannot resolve API hostname"
@@ -140,7 +140,7 @@ func checkNetworkConnectivity() []CheckResult {
 		Name: "TCP Connectivity",
 	}
 
-	conn, err := net.DialTimeout("tcp", "api.c2concierge.com:443", 5*time.Second)
+	conn, err := net.DialTimeout("tcp", "api.credlink.com:443", 5*time.Second)
 	if err != nil {
 		result.Status = "warning"
 		result.Message = "Cannot connect to API endpoint"
@@ -251,7 +251,7 @@ func checkEncodingSupport() []CheckResult {
 		Name: "UTF-8 Encoding",
 	}
 
-	testString := "测试中文字符 🚀 C2 Concierge"
+	testString := "测试中文字符 🚀 CredLink"
 	if strings.Contains(testString, "测试") {
 		result.Status = "ok"
 		result.Message = "UTF-8 encoding fully supported"
@@ -347,7 +347,7 @@ func determineOverallStatus(summary Summary) string {
 }
 
 func printDoctorReport(report DoctorReport) error {
-	fmt.Printf("=== C2 Concierge CLI Doctor Report ===\n")
+	fmt.Printf("=== CredLink CLI Doctor Report ===\n")
 	fmt.Printf("Timestamp: %s\n", report.Timestamp.Format("2006-01-02 15:04:05"))
 	fmt.Printf("Platform: %s\n", report.Platform)
 	fmt.Printf("Version: %s\n", report.Version)
@@ -389,7 +389,7 @@ func printDoctorReport(report DoctorReport) error {
 
 	// Overall recommendation
 	if report.Overall == "ok" {
-		fmt.Printf("\n✓ Your environment is ready for C2 Concierge CLI\n")
+		fmt.Printf("\n✓ Your environment is ready for CredLink CLI\n")
 	} else if report.Overall == "warning" {
 		fmt.Printf("\n⚠ Your environment has warnings but should work\n")
 	} else {

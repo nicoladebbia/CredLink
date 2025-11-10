@@ -187,7 +187,7 @@ aws sts get-caller-identity
 vault status
 
 # Test IP restrictions (should work from allowed IP)
-curl -I https://your-worker.c2concierge.com/api/health
+curl -I https://your-worker.credlink.com/api/health
 ```
 
 ---
@@ -248,8 +248,8 @@ If you encounter issues with secret setup:
 4. **Review this guide** for missing configuration steps
 
 For additional help:
-- Infrastructure team: infra@c2concierge.com
-- Security team: security@c2concierge.com
+- Infrastructure team: infra@credlink.com
+- Security team: security@credlink.com
 
 ---
 

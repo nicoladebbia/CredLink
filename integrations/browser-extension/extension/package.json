@@ -1,0 +1,93 @@
+{
+  "name": "c2-concierge-extension",
+  "version": "0.1.0",
+  "description": "CredLink Browser Extension - Content Credentials Verification",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node tests/parse-link.test.js && node tests/e2e.test.js",
+    "lint": "eslint src/ lib/ popup.js",
+    "lint:fix": "eslint src/ lib/ popup.js --fix",
+    "clean": "rm -rf dist/",
+    "package": "npm run build && npm run test"
+  },
+  "keywords": [
+    "c2pa",
+    "content-credentials",
+    "verification",
+    "provenance",
+    "browser-extension",
+    "chrome",
+    "edge",
+    "safari",
+    "privacy",
+    "security"
+  ],
+  "author": "CredLink Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "directory": "packages/extension"
+  },
+  "bugs": {
+    "url": "https://github.com/Nickiller04/c2-concierge/issues"
+  },
+  "homepage": "https://github.com/Nickiller04/c2-concierge/tree/main/packages/extension",
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.1.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "extensionConfig": {
+    "chrome": {
+      "storeId": "c2-concierge-chrome-extension",
+      "category": "Productivity",
+      "languages": ["en"],
+      "privacyPolicy": "https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md"
+    },
+    "edge": {
+      "storeId": "c2-concierge-edge-extension",
+      "category": "Productivity",
+      "languages": ["en"],
+      "privacyPolicy": "https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md"
+    },
+    "safari": {
+      "bundleId": "com.c2concierge.safari-extension",
+      "category": "Productivity",
+      "privacyPolicy": "https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md"
+    }
+  },
+  "security": {
+    "contentSecurityPolicy": "script-src 'self'; object-src 'self'",
+    "permissions": ["storage", "webRequest", "scripting"],
+    "hostPermissions": ["*://*/*"],
+    "optionalPermissions": ["<all_urls>"],
+    "noEval": true,
+    "noInlineScripts": true,
+    "shadowDOM": true
+  },
+  "privacy": {
+    "dataCollection": "opt-in",
+    "tracking": false,
+    "analytics": false,
+    "thirdParty": false,
+    "localStorageOnly": true
+  },
+  "compliance": {
+    "manifestVersion": 3,
+    "mv3Compliant": true,
+    "cspCompliant": true,
+    "privacyCompliant": true,
+    "storeGuidelines": {
+      "chrome": true,
+      "edge": true,
+      "safari": true
+    }
+  }
+}

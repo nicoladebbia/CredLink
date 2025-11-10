@@ -1,4 +1,4 @@
-module github.com/c2concierge/cli
+module github.com/credlink/cli
 
 go 1.22
 

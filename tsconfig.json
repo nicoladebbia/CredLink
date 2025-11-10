@@ -14,8 +14,10 @@
     "composite": true
   },
   "include": [
-    "packages/*/src/**/*",
-    "apps/*/src/**/*"
+    "core/*/src/**/*",
+    "integrations/**/src/**/*",
+    "ui/*/src/**/*",
+    "tests/*/src/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -24,6 +26,7 @@
     "**/node_modules",
     "**/.artifacts",
     ".artifacts",
+    "archive",
     "sandboxes",
     "scripts",
     "**/*.test.ts",
@@ -32,70 +35,70 @@
   ],
   "references": [
     {
-      "path": "./packages/acceptance"
+      "path": "./tests/acceptance"
     },
     {
-      "path": "./packages/acceptance-cms"
+      "path": "./tests/integration/acceptance-cms"
     },
     {
-      "path": "./packages/utils"
+      "path": "./core/utils"
     },
     {
-      "path": "./packages/policy"
+      "path": "./core/policy"
     },
     {
-      "path": "./packages/manifest-store"
+      "path": "./core/manifest-store"
     },
     {
-      "path": "./packages/oem-trust"
+      "path": "./core/oem-trust"
     },
     {
-      "path": "./packages/rbac"
+      "path": "./core/rbac"
     },
     {
-      "path": "./packages/oidc-saml"
+      "path": "./core/oidc-saml"
     },
     {
-      "path": "./packages/scim-core"
+      "path": "./core/scim-core"
     },
     {
-      "path": "./apps/idp"
+      "path": "./core/idp"
     },
     {
-      "path": "./apps/scim"
+      "path": "./core/scim"
     },
     {
-      "path": "./apps/api-gw"
+      "path": "./core/api-gw"
     },
     {
-      "path": "./apps/policy"
+      "path": "./core/policy-engine"
     },
     {
-      "path": "./apps/audit"
+      "path": "./core/audit"
     },
     {
-      "path": "./apps/flags"
+      "path": "./core/flags"
     },
     {
-      "path": "./apps/evidence"
+      "path": "./core/evidence"
     },
     {
-      "path": "./packages/sw-relay"
+      "path": "./core/sw-relay"
     },
     {
-      "path": "./apps/edge-worker"
+      "path": "./core/edge-worker"
     },
     {
-      "path": "./apps/manifest-store-worker"
+      "path": "./core/manifest-store/manifest-store-worker"
     },
     {
-      "path": "./apps/reportgen"
+      "path": "./core/reportgen"
     },
     {
-      "path": "./apps/edge-relay"
+      "path": "./core/edge-relay"
     },
     {
-      "path": "./apps/verify-api"
+      "path": "./core/verify"
     }
   ]
 }

@@ -1,4 +1,4 @@
-module github.com/c2concierge/sdk-go/v2
+module github.com/credlink/sdk-go/v2
 
 go 1.21
 

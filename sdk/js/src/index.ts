@@ -1,5 +1,5 @@
 /**
- * C2 Concierge SDK - JavaScript/TypeScript v1.3.0
+ * CredLink SDK - JavaScript/TypeScript v1.3.0
  * 
  * A comprehensive SDK for cryptographic provenance verification and signing.
  * Features include:
@@ -13,7 +13,7 @@
  * 
  * @example
  * ```typescript
- * import { Client } from '@c2concierge/sdk';
+ * import { Client } from '@credlink/sdk';
  * 
  * const client = new Client({ 
  *   apiKey: process.env.C2_API_KEY 
@@ -110,7 +110,7 @@ export {
 
 // Version information
 export const VERSION = '1.3.0';
-export const USER_AGENT = `c2c-sdk/js/${VERSION}`;
+export const USER_AGENT = `credlink-sdk/js/${VERSION}`;
 
 // Quick factory function for common use cases
 export function createClient(config: ClientConfig): Client {
@@ -119,7 +119,7 @@ export function createClient(config: ClientConfig): Client {
 
 // Default configuration constants
 export const DEFAULT_CONFIG = {
-  baseUrl: 'https://api.c2concierge.com/v1',
+  baseUrl: 'https://api.credlink.com/v1',
   timeoutMs: 30000,
   retries: {
     maxAttempts: 5,

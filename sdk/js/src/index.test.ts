@@ -1,6 +1,6 @@
 import { Client, ValidationError, AuthError } from '../src/index.js';
 
-describe('C2 Concierge SDK', () => {
+describe('CredLink SDK', () => {
   const apiKey = process.env.C2_API_KEY || 'test-api-key';
 
   describe('Client', () => {

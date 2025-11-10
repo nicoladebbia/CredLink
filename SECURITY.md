@@ -8,13 +8,13 @@
 
 ## Reporting a Vulnerability
 
-The C2 Concierge team takes security vulnerabilities seriously. We appreciate your efforts to responsibly disclose your findings.
+The CredLink team takes security vulnerabilities seriously. We appreciate your efforts to responsibly disclose your findings.
 
 If you discover a security vulnerability, please report it to us privately **before** disclosing it publicly.
 
 ### How to Report
 
-- **Email**: security@c2concierge.com
+- **Email**: security@credlink.com
 - **PGP Key**: Available on request
 - **Response Time**: We aim to respond within 48 hours
 
@@ -111,8 +111,8 @@ Security researchers who responsibly disclose vulnerabilities will be:
 
 ## Security Contacts
 
-- **Security Team**: security@c2concierge.com
-- **Engineering Team**: engineering@c2concierge.com
+- **Security Team**: security@credlink.com
+- **Engineering Team**: engineering@credlink.com
 - **PGP Key**: Available upon request
 
 ## License
