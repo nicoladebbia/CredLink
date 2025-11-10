@@ -40,7 +40,7 @@ RUN apk add --no-cache imagemagick
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
-RUN adduser -S c2concierge -u 1001
+RUN adduser -S credlink -u 1001
 
 WORKDIR /app
 
@@ -68,8 +68,8 @@ COPY .env.example ./.env.example
 RUN mkdir -p .artifacts/logs .artifacts/acceptance fixtures
 
 # Change ownership
-RUN chown -R c2concierge:nodejs /app
-USER c2concierge
+RUN chown -R credlink:nodejs /app
+USER credlink
 
 # Expose sandbox ports
 EXPOSE 4101 4102 4103

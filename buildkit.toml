@@ -60,7 +60,7 @@
   # Security: Enable build traceability
   trace = true
   # Security: Restrict build sources
-  allowed-sources = ["local://.", "https://github.com/Nickiller04/c2-concierge"]
+  allowed-sources = ["local://.", "https://github.com/Nickiller04/credlink"]
 
 # Registry configuration with maximum security
 [registry."docker.io"]
