@@ -1,5 +1,5 @@
 {
-  "name": "c2-concierge-extension",
+  "name": "credlink-extension",
   "version": "0.1.0",
   "description": "CredLink Browser Extension - Content Credentials Verification",
   "type": "module",
@@ -27,13 +27,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "url": "https://github.com/Nickiller04/credlink.git",
     "directory": "packages/extension"
   },
   "bugs": {
-    "url": "https://github.com/Nickiller04/c2-concierge/issues"
+    "url": "https://github.com/Nickiller04/credlink/issues"
   },
-  "homepage": "https://github.com/Nickiller04/c2-concierge/tree/main/packages/extension",
+  "homepage": "https://github.com/Nickiller04/credlink/tree/main/packages/extension",
   "devDependencies": {
     "eslint": "^8.50.0",
     "eslint-config-standard": "^17.1.0",
@@ -46,21 +46,21 @@
   },
   "extensionConfig": {
     "chrome": {
-      "storeId": "c2-concierge-chrome-extension",
+      "storeId": "credlink-chrome-extension",
       "category": "Productivity",
       "languages": ["en"],
-      "privacyPolicy": "https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md"
+      "privacyPolicy": "https://github.com/Nickiller04/credlink/blob/main/PRIVACY.md"
     },
     "edge": {
-      "storeId": "c2-concierge-edge-extension",
+      "storeId": "credlink-edge-extension",
       "category": "Productivity",
       "languages": ["en"],
-      "privacyPolicy": "https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md"
+      "privacyPolicy": "https://github.com/Nickiller04/credlink/blob/main/PRIVACY.md"
     },
     "safari": {
-      "bundleId": "com.c2concierge.safari-extension",
+      "bundleId": "com.credlink.safari-extension",
       "category": "Productivity",
-      "privacyPolicy": "https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md"
+      "privacyPolicy": "https://github.com/Nickiller04/credlink/blob/main/PRIVACY.md"
     }
   },
   "security": {

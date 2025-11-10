@@ -51,13 +51,13 @@
   "license": "MIT",
   "repository": {
     "type": "commonjs",
-    "url": "https://github.com/nickiller04/c2-concierge",
+    "url": "https://github.com/nickiller04/credlink",
     "directory": "gauntlet/src/autofallback"
   },
   "bugs": {
-    "url": "https://github.com/nickiller04/c2-concierge/issues"
+    "url": "https://github.com/nickiller04/credlink/issues"
   },
-  "homepage": "https://github.com/nickiller04/c2-concierge/tree/main/gauntlet/src/autofallback",
+  "homepage": "https://github.com/nickiller04/credlink/tree/main/gauntlet/src/autofallback",
   "vitest": {
     "environment": "miniflare",
     "environmentOptions": {

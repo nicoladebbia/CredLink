@@ -73,11 +73,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/c2pa/c2-concierge.git",
+    "url": "https://github.com/c2pa/credlink.git",
     "directory": "apps/api"
   },
   "bugs": {
-    "url": "https://github.com/c2pa/c2-concierge/issues"
+    "url": "https://github.com/c2pa/credlink/issues"
   },
-  "homepage": "https://github.com/c2pa/c2-concierge#readme"
+  "homepage": "https://github.com/c2pa/credlink#readme"
 }

@@ -25,7 +25,7 @@
         "cpu_usage_percent": 82
       },
       "artifacts": [
-        "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/tsa_down_chaos.log"
+        "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/tsa_down_chaos.log"
       ]
     },
     {
@@ -45,7 +45,7 @@
         "cpu_usage_percent": 97
       },
       "artifacts": [
-        "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/origin_5xx_chaos.log"
+        "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/origin_5xx_chaos.log"
       ]
     },
     {
@@ -65,7 +65,7 @@
         "cpu_usage_percent": 79
       },
       "artifacts": [
-        "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/stale_version_chaos.log"
+        "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/chaos/artifacts/stale_version_chaos.log"
       ]
     }
   ],

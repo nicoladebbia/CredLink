@@ -20,7 +20,7 @@
   "results": [
     {
       "test": {
-        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/valid/basic.json",
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/valid/basic.json",
         "description": "Basic valid manifest",
         "category": "valid",
         "expected_decision": "VALID"
@@ -57,7 +57,7 @@
     },
     {
       "test": {
-        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/valid/with_assertions.json",
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/valid/with_assertions.json",
         "description": "Valid manifest with assertions",
         "category": "valid",
         "expected_decision": "VALID"
@@ -94,7 +94,7 @@
     },
     {
       "test": {
-        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/malformed/invalid_json.json",
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/malformed/invalid_json.json",
         "description": "Invalid JSON structure",
         "category": "malformed",
         "expected_decision": "DESTROYED"
@@ -132,7 +132,7 @@
     },
     {
       "test": {
-        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/c2-concierge/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/edge/empty_manifest.json",
+        "fixture_path": "/Users/nicoladebbia/Code_Ideas/CredLink/credlink/gauntlet/src/autofallback/retro-sign/apps/analytics/security/parity/fixtures/edge/empty_manifest.json",
         "description": "Empty manifest edge case",
         "category": "edge",
         "expected_decision": "DESTROYED"

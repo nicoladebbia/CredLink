@@ -1,5 +1,5 @@
 {
-  "name": "@c2concierge/acceptance-tests",
+  "name": "@credlink/acceptance-tests",
   "version": "1.0.0",
   "description": "CredLink acceptance tests for CMS connectors",
   "main": "acceptance/runner.js",
@@ -41,7 +41,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "url": "https://github.com/Nickiller04/credlink.git",
     "directory": "packages/cms-connectors/tests"
   },
   "publishConfig": {

@@ -13,16 +13,16 @@ info:
   version: 1.0.0
   contact:
     name: C2 Concierge Support
-    email: support@c2concierge.com
-    url: https://docs.c2concierge.com
+    email: support@credlink.com
+    url: https://docs.credlink.com
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://api.c2concierge.com/v1
+  - url: https://api.credlink.com/v1
     description: Production server
-  - url: https://staging-api.c2concierge.com/v1
+  - url: https://staging-api.credlink.com/v1
     description: Staging server
   - url: http://localhost:3000
     description: Development server
@@ -82,8 +82,8 @@ paths:
                 $ref: '#/components/schemas/CompliancePackResponse'
               example:
                 status: "ok"
-                pack_url_pdf: "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf"
-                pack_url_json: "https://storage.c2concierge.com/packs/acme-news/2025-10.json"
+                pack_url_pdf: "https://storage.credlink.com/packs/acme-news/2025-10.pdf"
+                pack_url_json: "https://storage.credlink.com/packs/acme-news/2025-10.json"
                 template_versions:
                   eu_ai: "1.1.0"
                   dsa26: "1.2.0"
@@ -368,12 +368,12 @@ components:
           type: string
           format: uri
           description: URL to download PDF pack (if requested)
-          example: "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf"
+          example: "https://storage.credlink.com/packs/acme-news/2025-10.pdf"
         pack_url_json:
           type: string
           format: uri
           description: URL to download JSON pack (if requested)
-          example: "https://storage.c2concierge.com/packs/acme-news/2025-10.json"
+          example: "https://storage.credlink.com/packs/acme-news/2025-10.json"
         template_versions:
           type: object
           description: Template versions used in pack generation

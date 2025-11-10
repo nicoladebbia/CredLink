@@ -20,8 +20,8 @@
     "demo:audio": "http-server docs/demos/audio -p 3001 -c-1 --cors",
     "install:all": "npm install && npm install --workspaces",
     "prepare": "npm run build --workspaces",
-    "docker:build": "docker build -t c2-concierge:latest .",
-    "docker:run": "docker run -p 3001:3001 -p 3000:3000 -p 9090:9090 c2-concierge:latest",
+    "docker:build": "docker build -t credlink:latest .",
+    "docker:run": "docker run -p 3001:3001 -p 3000:3000 -p 9090:9090 credlink:latest",
     "docker:dev": "docker-compose up --build"
   },
   "keywords": [
@@ -64,10 +64,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/c2pa/c2-concierge.git"
+    "url": "https://github.com/c2pa/credlink.git"
   },
   "bugs": {
-    "url": "https://github.com/c2pa/c2-concierge/issues"
+    "url": "https://github.com/c2pa/credlink/issues"
   },
-  "homepage": "https://github.com/c2pa/c2-concierge#readme"
+  "homepage": "https://github.com/c2pa/credlink#readme"
 }

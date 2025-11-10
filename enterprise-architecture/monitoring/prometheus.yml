@@ -203,9 +203,9 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-        - https://api.c2concierge.com/health
-        - https://shopify.c2concierge.com/health
-        - https://admin.c2concierge.com/health
+        - https://api.credlink.com/health
+        - https://shopify.credlink.com/health
+        - https://admin.credlink.com/health
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -286,7 +286,7 @@ scrape_configs:
         target_label: kubernetes_namespace
 
 remote_write:
-  - url: "https://prometheus-remote-write.c2concierge.com/api/v1/write"
+  - url: "https://prometheus-remote-write.credlink.com/api/v1/write"
     basic_auth:
       username: "c2c-prometheus"
       password: "${PROMETHEUS_REMOTE_WRITE_PASSWORD}"

@@ -8,15 +8,15 @@ info:
   version: 1.3.0
   contact:
     name: C2 Concierge Team
-    url: https://github.com/Nickiller04/c2-concierge
+    url: https://github.com/Nickiller04/credlink
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://api.c2concierge.com/v1
+  - url: https://api.credlink.com/v1
     description: Production server
-  - url: https://staging-api.c2concierge.com/v1
+  - url: https://staging-api.credlink.com/v1
     description: Staging server
 
 security:
@@ -747,7 +747,7 @@ components:
             status_url:
               type: string
               format: uri
-              example: "https://api.c2concierge.com/v1/jobs/job_abc123"
+              example: "https://api.credlink.com/v1/jobs/job_abc123"
             estimated_duration:
               type: integer
               description: Estimated completion time in seconds
@@ -803,7 +803,7 @@ components:
             url:
               type: string
               format: uri
-              example: "https://api.c2concierge.com/v1/manifests/abc123def456..."
+              example: "https://api.credlink.com/v1/manifests/abc123def456..."
         request_id:
           type: string
           example: "req_abc123"
@@ -830,7 +830,7 @@ components:
         docs_url:
           type: string
           format: uri
-          example: "https://docs.c2concierge.com/api/errors#validation_error"
+          example: "https://docs.credlink.com/api/errors#validation_error"
 
     ProblemDetails:
       type: object
@@ -839,7 +839,7 @@ components:
           type: string
           format: uri
           description: A URI reference that identifies the problem type
-          example: "https://docs.c2concierge.com/api/errors#validation_error"
+          example: "https://docs.credlink.com/api/errors#validation_error"
         title:
           type: string
           description: A short, human-readable summary of the problem type
@@ -856,7 +856,7 @@ components:
           type: string
           format: uri
           description: A URI reference that identifies the specific occurrence of the problem
-          example: "https://api.c2concierge.com/v1/errors/req_abc123"
+          example: "https://api.credlink.com/v1/errors/req_abc123"
         code:
           type: string
           description: Application-specific error code
@@ -886,7 +886,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://docs.c2concierge.com/api/errors#bad_request"
+            type: "https://docs.credlink.com/api/errors#bad_request"
             title: "Bad Request"
             status: 400
             detail: "The request could not be understood by the server"
@@ -902,7 +902,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://docs.c2concierge.com/api/errors#unauthorized"
+            type: "https://docs.credlink.com/api/errors#unauthorized"
             title: "Unauthorized"
             status: 401
             detail: "Authentication failed or missing"
@@ -932,7 +932,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://docs.c2concierge.com/api/errors#conflict"
+            type: "https://docs.credlink.com/api/errors#conflict"
             title: "Conflict"
             status: 409
             detail: "Request conflicts with current state"
@@ -949,7 +949,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://docs.c2concierge.com/api/errors#validation_error"
+            type: "https://docs.credlink.com/api/errors#validation_error"
             title: "Validation Error"
             status: 422
             detail: "Request data failed validation"
@@ -965,7 +965,7 @@ components:
           schema:
             $ref: '#/components/schemas/ProblemDetails'
           example:
-            type: "https://docs.c2concierge.com/api/errors#rate_limited"
+            type: "https://docs.credlink.com/api/errors#rate_limited"
             title: "Rate Limited"
             status: 429
             detail: "Rate limit exceeded"

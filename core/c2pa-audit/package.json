@@ -1,5 +1,5 @@
 {
-  "name": "@c2-concierge/c2pa-audit",
+  "name": "@credlink/c2pa-audit",
   "version": "1.0.0",
   "description": "Forensic-grade C2PA manifest diff and lineage tool",
   "main": "dist/index.js",

@@ -13,7 +13,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: keyctl-config
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: keyctl
     component: configuration

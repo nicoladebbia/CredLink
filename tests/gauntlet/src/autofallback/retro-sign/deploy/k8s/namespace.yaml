@@ -12,21 +12,21 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: c2-concierge
+  name: credlink
   labels:
-    name: c2-concierge
+    name: credlink
     environment: production
     security-level: high
   annotations:
     description: "C2-Concierge Key Custody Management Namespace"
-    contact: "security@c2-concierge.com"
+    contact: "security@credlink.com"
 ---
 # Resource Quota - Prevent resource exhaustion
 apiVersion: v1
 kind: ResourceQuota
 metadata:
-  name: c2-concierge-quota
-  namespace: c2-concierge
+  name: credlink-quota
+  namespace: credlink
 spec:
   hard:
     requests.cpu: "10"
@@ -43,8 +43,8 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: c2-concierge-network-policy
-  namespace: c2-concierge
+  name: credlink-network-policy
+  namespace: credlink
 spec:
   podSelector: {}
   policyTypes:
@@ -84,8 +84,8 @@ spec:
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: c2-concierge-psp
-  namespace: c2-concierge
+  name: credlink-psp
+  namespace: credlink
 spec:
   privileged: false
   allowPrivilegeEscalation: false

@@ -1,5 +1,5 @@
 {
-  "name": "@c2concierge/squarespace-connector",
+  "name": "@credlink/squarespace-connector",
   "version": "1.0.0",
   "description": "CredLink connector for Squarespace with commerce webhook support and badge integration",
   "main": "connector-squarespace.js",
@@ -39,7 +39,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "url": "https://github.com/Nickiller04/credlink.git",
     "directory": "packages/cms-connectors/squarespace"
   },
   "publishConfig": {

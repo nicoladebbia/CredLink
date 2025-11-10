@@ -1,5 +1,5 @@
 {
-  "name": "@c2concierge/webflow-connector",
+  "name": "@credlink/webflow-connector",
   "version": "1.0.0",
   "description": "CredLink connector for Webflow with webhook handling and badge integration",
   "main": "connector-webflow.js",
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "url": "https://github.com/Nickiller04/credlink.git",
     "directory": "packages/cms-connectors/webflow"
   },
   "publishConfig": {

@@ -1,5 +1,5 @@
 {
-  "name": "@c2concierge/edge-connectors",
+  "name": "@credlink/edge-connectors",
   "version": "1.0.0",
   "description": "CredLink edge connectors for Cloudflare Workers and Vercel Middleware",
   "main": "cloudflare-worker.js",
@@ -43,7 +43,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "url": "https://github.com/Nickiller04/credlink.git",
     "directory": "packages/cms-connectors/edge"
   },
   "publishConfig": {

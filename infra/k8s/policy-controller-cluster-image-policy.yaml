@@ -11,10 +11,10 @@ metadata:
 spec:
   # Maximum security: Restrict to exact repository with precise pattern matching
   images:
-    - glob: "ghcr.io/nickiller04/c2-concierge:*"
+    - glob: "ghcr.io/nickiller04/credlink:*"
       # Security: Exact repository match to prevent scope creep and confusion
       matchLabels:
-        app: "c2-concierge"
+        app: "credlink"
         security.level: "maximum"
   
   # Maximum security authorities with comprehensive trust anchors
@@ -24,7 +24,7 @@ spec:
           # Security: Exact issuer match with no variations allowed
           - issuer: "https://token.actions.githubusercontent.com"
             # Security: Maximum restriction subject validation to prevent any identity spoofing
-            subjectRegExp: "^repo:Nickiller04/c2-concierge:ref:refs/(heads|tags)/(main|develop|v[0-9]+\\.[0-9]+\\.[0-9]+):.*$"
+            subjectRegExp: "^repo:Nickiller04/credlink:ref:refs/(heads|tags)/(main|develop|v[0-9]+\\.[0-9]+\\.[0-9]+):.*$"
         # Security: Comprehensive trust anchors for maximum verification
         ctlog:
           url: "https://rekor.sigstore.dev"
@@ -61,12 +61,12 @@ spec:
             buildType: =~ "^https://github.com/actions/runner-container-images@v[0-9]+\\.[0-9]+\\.[0-9]+$"
             # Security: Exact builder ID validation with maximum restrictions
             builder: {
-              id: =~ "^https://github.com/Nickiller04/c2-concierge/\\.github/workflows/build-sign-attest\\.yml@[a-f0-9]{40,64}$"
+              id: =~ "^https://github.com/Nickiller04/credlink/\\.github/workflows/build-sign-attest\\.yml@[a-f0-9]{40,64}$"
             }
             # Security: Comprehensive materials validation to prevent supply chain injection
             materials: [{
               # Security: Exact repository URI with no variations
-              uri: =~ "^git\\+https://github.com/Nickiller04/c2-concierge\\.git$"
+              uri: =~ "^git\\+https://github.com/Nickiller04/credlink\\.git$"
               # Security: Require SHA256 digest for reproducibility
               digest: =~ "^sha256:[a-f0-9]{64}$"
               # Security: Validate material is from main or develop branch
@@ -78,7 +78,7 @@ spec:
             invocation: {
               # Security: Exact configuration source validation
               configSource: {
-                uri: =~ "^git\\+https://github.com/Nickiller04/c2-concierge\\.git$"
+                uri: =~ "^git\\+https://github.com/Nickiller04/credlink\\.git$"
                 digest: =~ "^sha256:[a-f0-9]{64}$"
                 # Security: Exact entry point validation
                 entryPoint: =~ "^\\.github/workflows/build-sign-attest\\.yml@refs/(heads|tags)/(main|develop|v[0-9]+\\.[0-9]+\\.[0-9]+)$"

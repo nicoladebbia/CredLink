@@ -24,16 +24,16 @@ info:
   version: 1.0.0
   contact:
     name: C2-Concierge Support
-    email: support@c2-concierge.com
-    url: https://c2-concierge.com/support
+    email: support@credlink.com
+    url: https://credlink.com/support
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: https://api.c2-concierge.com/v1
+  - url: https://api.credlink.com/v1
     description: Production server
-  - url: https://staging-api.c2-concierge.com/v1
+  - url: https://staging-api.credlink.com/v1
     description: Staging server
   - url: http://localhost:8080/v1
     description: Development server

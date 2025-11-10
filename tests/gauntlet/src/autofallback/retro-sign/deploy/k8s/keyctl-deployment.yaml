@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: keyctl
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: keyctl
     component: custody-service
@@ -54,7 +54,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: keyctl
-        image: c2-concierge/keyctl:1.0.0
+        image: credlink/keyctl:1.0.0
         imagePullPolicy: Always
         ports:
         - name: http
@@ -186,7 +186,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: keyctl
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: keyctl
     component: custody-service
@@ -212,7 +212,7 @@ apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: keyctl-pdb
-  namespace: c2-concierge
+  namespace: credlink
   annotations:
     description: "Ensure minimum availability during maintenance"
 spec:
@@ -227,7 +227,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: keyctl-hpa
-  namespace: c2-concierge
+  namespace: credlink
   annotations:
     description: "Auto-scale based on CPU and memory usage"
 spec:

@@ -1,5 +1,5 @@
 {
-  "name": "@c2concierge/ghost-connector",
+  "name": "@credlink/ghost-connector",
   "version": "1.0.0",
   "description": "CredLink connector for Ghost with theme integration and webhook support",
   "main": "ghost-connector.js",
@@ -39,7 +39,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Nickiller04/c2-concierge.git",
+    "url": "https://github.com/Nickiller04/credlink.git",
     "directory": "packages/cms-connectors/ghost"
   },
   "publishConfig": {

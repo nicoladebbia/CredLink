@@ -13,7 +13,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: keyctl-metrics
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: keyctl
     component: metrics
@@ -38,7 +38,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: prometheus
     component: monitoring
@@ -140,7 +140,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: prometheus
     component: monitoring
@@ -162,7 +162,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: grafana
     component: monitoring
@@ -206,7 +206,7 @@ spec:
         - name: GF_AUTH_LDAP_ENABLED
           value: "false"
         - name: GF_SERVER_ROOT_URL
-          value: "https://grafana.c2-concierge.com"
+          value: "https://grafana.credlink.com"
         ports:
         - name: web
           containerPort: 3000
@@ -263,7 +263,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: grafana
     component: monitoring
@@ -285,7 +285,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: alertmanager
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: alertmanager
     component: monitoring
@@ -315,7 +315,7 @@ spec:
         args:
           - '--config.file=/etc/alertmanager/alertmanager.yml'
           - '--storage.path=/alertmanager'
-          - '--web.external-url=https://alertmanager.c2-concierge.com'
+          - '--web.external-url=https://alertmanager.credlink.com'
           - '--web.route-prefix=/'
         ports:
         - name: web
@@ -369,7 +369,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: alertmanager
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: alertmanager
     component: monitoring
@@ -395,7 +395,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: node-exporter
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: node-exporter
     component: monitoring
@@ -457,7 +457,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: node-exporter
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: node-exporter
     component: monitoring
@@ -482,7 +482,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: keyctl-metrics
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: keyctl
     component: monitoring
@@ -503,7 +503,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: node-exporter-metrics
-  namespace: c2-concierge
+  namespace: credlink
   labels:
     app: node-exporter
     component: monitoring

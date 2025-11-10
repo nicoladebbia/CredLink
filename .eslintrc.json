@@ -35,7 +35,7 @@
     "*.d.ts",
     "*.js.map",
     "*.d.ts.map",
-    "c2-concierge/**",
+    "credlink/**",
     "plugins/**",
     "security/**",
     "packages/**/*.js",
