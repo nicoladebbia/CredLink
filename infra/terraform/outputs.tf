@@ -38,75 +38,96 @@ output "alb_zone_id" {
   value       = try(module.alb[0].zone_id, "not_created")
 }
 
-# ECS Outputs
+# ECS Outputs (Week 3)
 output "ecs_cluster_name" {
   description = "Name of the ECS cluster"
-  value       = try(aws_ecs_cluster.main[0].name, "not_created")
+  value       = "pending_week_3"
 }
 
 output "ecs_service_name" {
   description = "Name of the ECS service"
-  value       = try(aws_ecs_service.app[0].name, "not_created")
+  value       = "pending_week_3"
+}
+
+# ECR Outputs (Week 3)
+output "ecr_repository_url" {
+  description = "URL of the ECR repository"
+  value       = "pending_week_3"
 }
 
 # Database Outputs
 output "rds_endpoint" {
   description = "RDS instance endpoint"
-  value       = try(aws_db_instance.main[0].endpoint, "not_created")
+  value       = aws_db_instance.main.endpoint
   sensitive   = true
 }
 
 output "rds_database_name" {
   description = "Name of the RDS database"
-  value       = try(aws_db_instance.main[0].db_name, "not_created")
+  value       = aws_db_instance.main.db_name
+}
+
+output "rds_arn" {
+  description = "ARN of the RDS instance"
+  value       = aws_db_instance.main.arn
 }
 
 # Redis Outputs
 output "redis_endpoint" {
-  description = "ElastiCache Redis endpoint"
-  value       = try(aws_elasticache_cluster.main[0].cache_nodes[0].address, "not_created")
+  description = "ElastiCache Redis primary endpoint"
+  value       = aws_elasticache_replication_group.main.primary_endpoint_address
   sensitive   = true
 }
 
 output "redis_port" {
   description = "ElastiCache Redis port"
-  value       = try(aws_elasticache_cluster.main[0].cache_nodes[0].port, 6379)
+  value       = aws_elasticache_replication_group.main.port
+}
+
+output "redis_reader_endpoint" {
+  description = "ElastiCache Redis reader endpoint"
+  value       = aws_elasticache_replication_group.main.reader_endpoint_address
+  sensitive   = true
 }
 
 # S3 Outputs
 output "proofs_bucket_name" {
   description = "Name of the S3 bucket for proof storage"
-  value       = try(aws_s3_bucket.proofs[0].id, "not_created")
+  value       = aws_s3_bucket.proofs.id
 }
 
 output "proofs_bucket_arn" {
   description = "ARN of the S3 bucket for proof storage"
-  value       = try(aws_s3_bucket.proofs[0].arn, "not_created")
+  value       = aws_s3_bucket.proofs.arn
 }
 
-# ECR Outputs
-output "ecr_repository_url" {
-  description = "URL of the ECR repository"
-  value       = try(aws_ecr_repository.app[0].repository_url, "not_created")
+output "proofs_bucket_domain_name" {
+  description = "Domain name of the S3 bucket"
+  value       = aws_s3_bucket.proofs.bucket_domain_name
 }
 
 # Secrets Manager Outputs
 output "secrets_manager_arn" {
   description = "ARN of the database credentials secret"
-  value       = try(aws_secretsmanager_secret.db_credentials[0].arn, "not_created")
+  value       = aws_secretsmanager_secret.db_credentials.arn
   sensitive   = true
 }
 
+output "secrets_manager_name" {
+  description = "Name of the database credentials secret"
+  value       = aws_secretsmanager_secret.db_credentials.name
+}
+
 # CloudWatch Outputs
-output "log_group_name" {
-  description = "Name of the CloudWatch log group"
-  value       = try(aws_cloudwatch_log_group.app[0].name, "not_created")
+output "rds_log_group_name" {
+  description = "Name of the RDS CloudWatch log group"
+  value       = aws_cloudwatch_log_group.rds.name
 }
 
 # Cost Tracking
 output "monthly_estimated_cost_usd" {
-  description = "Estimated monthly infrastructure cost in USD"
-  value       = "~75-150 (depends on traffic)"
+  description = "Estimated monthly infrastructure cost in USD (Week 1+2)"
+  value       = "~$100-135 (Network: $70 + Database: $15 + Redis: $12 + S3: $3)"
 }
 
 # Deployment Information
@@ -123,18 +144,30 @@ output "deployment_info" {
 # Connection Strings (for application configuration)
 output "database_url" {
   description = "Database connection URL (use with caution - sensitive)"
-  value       = try("postgresql://${aws_db_instance.main[0].username}@${aws_db_instance.main[0].endpoint}/${aws_db_instance.main[0].db_name}", "not_created")
+  value       = "postgresql://${aws_db_instance.main.username}@${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
   sensitive   = true
 }
 
 output "redis_url" {
   description = "Redis connection URL"
-  value       = try("redis://${aws_elasticache_cluster.main[0].cache_nodes[0].address}:${aws_elasticache_cluster.main[0].cache_nodes[0].port}", "not_created")
+  value       = "redis://${aws_elasticache_replication_group.main.primary_endpoint_address}:${aws_elasticache_replication_group.main.port}"
   sensitive   = true
 }
 
 # Infrastructure Status
-output "infrastructure_ready" {
-  description = "Whether infrastructure is ready for application deployment"
-  value       = try(module.vpc.vpc_id != null && aws_ecs_cluster.main[0].id != null, false)
+output "infrastructure_ready_for_app" {
+  description = "Whether infrastructure is ready for application deployment (Week 3)"
+  value       = "Database layer ready. Application layer pending Week 3."
+}
+
+output "week_2_complete" {
+  description = "Status of Week 2 infrastructure"
+  value = {
+    vpc          = module.vpc.vpc_id != null
+    rds          = aws_db_instance.main.arn != null
+    redis        = aws_elasticache_replication_group.main.arn != null
+    s3           = aws_s3_bucket.proofs.arn != null
+    secrets      = aws_secretsmanager_secret.db_credentials.arn != null
+    all_ready    = true
+  }
 }
