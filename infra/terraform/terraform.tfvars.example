@@ -38,6 +38,9 @@ s3_lifecycle_expiration_days = 365         # Delete after 1 year (0 = never)
 enable_enhanced_monitoring = true
 alert_email                 = "alerts@credlink.com"           # Email for CloudWatch alarms
 
+# Disaster Recovery
+backup_region               = "us-west-2"                     # AWS region for disaster recovery backup
+
 # Cost Management
 cost_alert_threshold = 200                 # Monthly budget alert threshold (USD)
 
