@@ -225,3 +225,29 @@ output "alert_email" {
   description = "Email configured for alerts"
   value       = var.alert_email
 }
+
+# Security Outputs (Week 6)
+output "waf_arn" {
+  description = "ARN of the WAF Web ACL"
+  value       = aws_wafv2_web_acl.main.arn
+}
+
+output "secret_rotation_lambda_arn" {
+  description = "ARN of the secret rotation Lambda function"
+  value       = aws_lambda_function.secret_rotation.arn
+}
+
+output "guardduty_detector_id" {
+  description = "ID of the GuardDuty detector"
+  value       = aws_guardduty_detector.main.id
+}
+
+output "secret_arn" {
+  description = "ARN of the main secret"
+  value       = aws_secretsmanager.main.arn
+}
+
+output "alb_arn" {
+  description = "ARN of the Application Load Balancer"
+  value       = aws_lb.main.arn
+}
