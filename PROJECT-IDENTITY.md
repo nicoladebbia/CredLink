@@ -126,20 +126,18 @@ You're currently doing NEITHER of these honestly:
 
 **Reasoning:**
 
-The project has extensive commercial infrastructure already in place:
-- Pricing tiers and business model designed
-- Legal contracts and SLAs prepared
-- Enterprise architecture planned
-- Commercial positioning throughout codebase
+We are committed to building a production-ready C2PA content authenticity platform 
+that serves real customers and generates revenue. This is an 18-30 month journey 
+to build a world-class product with measured performance, real customer validation, 
+and proven value.
 
-This indicates the intent is to build a real business, not just research.
-The commitment is to build a production-ready C2PA platform over 18-30 months,
-acquire real customers, and generate revenue.
+We will not cut corners. We will build properly, measure everything, and earn 
+customer trust through demonstrated excellence.
 
 **Next steps based on choice:**
 
 1. Keep pricing structure (mark as "planned, not available yet")
-2. Keep legal/contracts (will need when customers arrive)
+2. Keep legal/contracts (will need when customers come)
 3. Update README: "In Development - Production timeline: 6-12 months"
 4. Remove all "production ready" false claims
 5. Create COMMERCIAL-ROADMAP.md
@@ -150,8 +148,8 @@ acquire real customers, and generate revenue.
 
 I commit to being honest about this choice in ALL documentation,
 communication, and marketing going forward. No more pretending to
-be what I'm not. This is a commercial product in development, not
-a finished product. Timeline: 6-12 months minimum to production-ready.
+be what I'm not. We are building a commercial product, but we are
+NOT production ready yet. Timeline: 6-12 months minimum.
 
-Signed: Project Team  
+Signed: Project Owner  
 Date: 2024-11-09
