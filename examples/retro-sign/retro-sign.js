@@ -5,7 +5,7 @@
  * in a folder with cryptographic timestamps and provenance.
  */
 
-import { Client, ConflictError } from '@c2concierge/sdk';
+import { Client, ConflictError } from '@credlink/sdk';
 import { readFile, writeFile, stat, readdir } from 'fs/promises';
 import { join, extname, relative } from 'path';
 import { createHash } from 'crypto';

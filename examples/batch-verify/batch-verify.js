@@ -5,7 +5,7 @@
  * from RSS feeds, JSONL files, or simple URL lists.
  */
 
-import { Client, RateLimitError } from '@c2concierge/sdk';
+import { Client, RateLimitError } from '@credlink/sdk';
 import { readFile, writeFile } from 'fs/promises';
 
 // Initialize client

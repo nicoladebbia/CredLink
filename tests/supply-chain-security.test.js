@@ -12,7 +12,7 @@ const { strict: assert } = require('assert');
 class SupplyChainSecurityTests {
   constructor() {
     this.results = [];
-    this.testImage = 'ghcr.io/nickiller04/c2-concierge:latest';
+    this.testImage = 'ghcr.io/nickiller04/credlink:latest';
     this.tempDir = './temp-test';
   }
 
@@ -114,7 +114,7 @@ class SupplyChainSecurityTests {
           { encoding: 'utf8', stdio: 'pipe' }
         );
 
-        if (!provenance.includes('github.com/Nickiller04/c2-concierge')) {
+        if (!provenance.includes('github.com/Nickiller04/credlink')) {
           throw new Error('Invalid builder ID in provenance');
         }
       } catch (error) {
@@ -276,7 +276,7 @@ class SupplyChainSecurityTests {
       try {
         // Verify keyless signature
         const signatureOutput = execSync(
-          `cosign verify ${this.testImage} --certificate-identity-regexp "repo:Nickiller04/c2-concierge:.*"`,
+          `cosign verify ${this.testImage} --certificate-identity-regexp "repo:Nickiller04/credlink:.*"`,
           { encoding: 'utf8', stdio: 'pipe' }
         );
 

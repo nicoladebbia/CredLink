@@ -49,7 +49,7 @@ export interface RetryConfig {
 // Error Types
 // ============================================================================
 
-export abstract class C2ConciergeError extends Error {
+export abstract class CredLinkError extends Error {
   public abstract readonly code: string;
   public abstract readonly statusCode: number;
   public requestId?: string;
@@ -77,7 +77,7 @@ export abstract class C2ConciergeError extends Error {
   public abstract getNextSteps(): string[];
 }
 
-export class AuthError extends C2ConciergeError {
+export class AuthError extends CredLinkError {
   public readonly code = 'AUTH_ERROR';
   public readonly statusCode = 401;
 
@@ -101,7 +101,7 @@ export class AuthError extends C2ConciergeError {
   }
 }
 
-export class RateLimitError extends C2ConciergeError {
+export class RateLimitError extends CredLinkError {
   public readonly code = 'RATE_LIMIT_ERROR';
   public readonly statusCode = 429;
   public readonly retryAfter?: number;
@@ -134,7 +134,7 @@ export class RateLimitError extends C2ConciergeError {
   }
 }
 
-export class ConflictError extends C2ConciergeError {
+export class ConflictError extends CredLinkError {
   public readonly code: string;
   public readonly statusCode: number;
 
@@ -161,7 +161,7 @@ export class ConflictError extends C2ConciergeError {
   }
 }
 
-export class ValidationError extends C2ConciergeError {
+export class ValidationError extends CredLinkError {
   public readonly code = 'VALIDATION_ERROR';
   public readonly statusCode = 422;
 
@@ -187,7 +187,7 @@ export class ValidationError extends C2ConciergeError {
   }
 }
 
-export class ServerError extends C2ConciergeError {
+export class ServerError extends CredLinkError {
   public readonly code = 'SERVER_ERROR';
   public readonly statusCode = 500;
 
@@ -213,7 +213,7 @@ export class ServerError extends C2ConciergeError {
   }
 }
 
-export class NetworkError extends C2ConciergeError {
+export class NetworkError extends CredLinkError {
   public readonly code = 'NETWORK_ERROR';
   public readonly statusCode = 0;
 

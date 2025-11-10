@@ -371,7 +371,7 @@ class OfflineVerifier {
         qrContainer.innerHTML = '';
         
         // Create verification URL
-        const verifyUrl = `https://verify.c2concierge.org/asset/${result.asset.id}`;
+        const verifyUrl = `https://verify.credlink.org/asset/${result.asset.id}`;
         
         // Generate QR code
         QRCode.toCanvas(qrContainer, verifyUrl, {
@@ -478,7 +478,7 @@ class OfflineVerifier {
     generateQRCode(assetId) {
         const canvas = document.getElementById('qrCanvas');
         const ctx = canvas.getContext('2d');
-        const url = `https://verify.c2concierge.org/asset/${assetId}`;
+        const url = `https://verify.credlink.org/asset/${assetId}`;
         
         // Simple QR code visualization (in production, use a proper QR library)
         const size = 200;

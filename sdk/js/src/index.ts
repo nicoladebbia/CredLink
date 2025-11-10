@@ -86,7 +86,7 @@ export type {
 
 // Export error classes for direct use
 import {
-  C2ConciergeError,
+  CredLinkError,
   AuthError,
   RateLimitError,
   ConflictError,
@@ -99,7 +99,7 @@ import type { ClientConfig } from './types.js';
 
 // Re-export error classes
 export {
-  C2ConciergeError,
+  CredLinkError,
   AuthError,
   RateLimitError,
   ConflictError,

@@ -2,7 +2,7 @@ import { v4 as randomUUID } from 'uuid';
 import {
   ClientConfig,
   RequestOptions,
-  C2ConciergeError,
+  CredLinkError,
   AuthError,
   RateLimitError,
   ConflictError,

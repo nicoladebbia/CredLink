@@ -51,7 +51,7 @@ class WordPressThemeTester {
     this.browser = await chromium.launch({ headless: false });
     this.context = await this.browser.newContext({
       viewport: { width: 1280, height: 720 },
-      userAgent: 'C2Concierge-Test/1.0'
+      userAgent: 'CredLink-Test/1.0'
     });
   }
 
@@ -177,25 +177,25 @@ class WordPressThemeTester {
     await page.goto(`${this.wp_url}/wp-admin/plugins.php`);
     
     // Check if plugin is already installed
-    const plugin_installed = await page.locator('#plugin-c2concierge').isVisible();
+    const plugin_installed = await page.locator('#plugin-credlink').isVisible();
     
     if (!plugin_installed) {
       // Upload plugin
       await page.click('#plugin-install');
       await page.click('[href="upload"]');
-      await page.setInputFiles('#pluginzip', 'plugins/wp-c2concierge.zip');
+      await page.setInputFiles('#pluginzip', 'plugins/wp-credlink.zip');
       await page.click('.install-now');
       await page.waitForSelector('.button.activate-now');
       await page.click('.activate-now');
     } else {
       // Activate if not active
-      const activate_button = page.locator('#plugin-c2concierge .activate-now');
+      const activate_button = page.locator('#plugin-credlink .activate-now');
       if (await activate_button.isVisible()) {
         await activate_button.click();
       }
     }
     
-    await page.waitForSelector('#plugin-c2concierge.active');
+    await page.waitForSelector('#plugin-credlink.active');
   }
 
   /**
@@ -325,9 +325,9 @@ class WordPressThemeTester {
   private async testUninstallSafety(page: Page, result: TestResult, post_id: number): Promise<void> {
     // Deactivate and delete plugin
     await page.goto(`${this.wp_url}/wp-admin/plugins.php`);
-    await page.click('#plugin-c2concierge .deactivate');
-    await page.waitForSelector('#plugin-c2concierge:not(.active)');
-    await page.click('#plugin-c2concierge .delete');
+    await page.click('#plugin-credlink .deactivate');
+    await page.waitForSelector('#plugin-credlink:not(.active)');
+    await page.click('#plugin-credlink .delete');
     await page.click('.button-primary'); // Confirm deletion
     await page.waitForSelector('#message');
     

@@ -412,8 +412,8 @@ export class DRAcceptanceTests {
 
       // Define region URLs with validation
       const regionUrls = [
-        'https://api-enam.c2-concierge.com',
-        'https://api-weur.c2-concierge.com'
+        'https://api-enam.credlink.com',
+        'https://api-weur.credlink.com'
       ];
 
       // Retrieve from both regions
@@ -450,8 +450,8 @@ export class DRAcceptanceTests {
     await this.runTest('Leader_Election_Single_Leader', async () => {
       // Define region URLs with validation
       const regionUrls = [
-        'https://api-enam.c2-concierge.com',
-        'https://api-weur.c2-concierge.com'
+        'https://api-enam.credlink.com',
+        'https://api-weur.credlink.com'
       ];
 
       // Get leader status from both regions
@@ -564,7 +564,7 @@ export class DRAcceptanceTests {
         throw new Error('CLOUDFLARE_API_TOKEN environment variable required');
       }
       
-      const lbResponse = await fetch(`https://api.cloudflare.com/client/v4/load_balancers/c2-concierge-lb`, {
+      const lbResponse = await fetch(`https://api.cloudflare.com/client/v4/load_balancers/credlink-lb`, {
         headers: { 'Authorization': `Bearer ${cloudflareApiToken}` }
       });
 
