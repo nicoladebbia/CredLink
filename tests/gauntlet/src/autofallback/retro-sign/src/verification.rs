@@ -157,7 +157,7 @@ impl Verifier {
         // Make verification request
         let response = self.client
             .get(&verification_url)
-            .header("User-Agent", "C2Concierge-Verifier/1.0")
+            .header("User-Agent", "CredLink-Verifier/1.0")
             .send()
             .await
             .with_context(|| "Failed to send verification request")?;

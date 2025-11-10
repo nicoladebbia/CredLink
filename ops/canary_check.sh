@@ -48,7 +48,7 @@ echo ""
 # Configuration
 INTERVAL=30  # Check every 30 seconds
 CHECKS=$((DURATION / INTERVAL))
-ENDPOINT="${CANARY_ENDPOINT:-https://c2concierge.dev}"
+ENDPOINT="${CANARY_ENDPOINT:-https://credlink.dev}"
 
 # Thresholds (based on Phase 46 SLOs)
 SURVIVAL_THRESHOLD=0.999      # 99.9% remote survival

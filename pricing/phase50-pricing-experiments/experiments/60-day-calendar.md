@@ -419,7 +419,7 @@ Over the next 60 days, we may be testing different pricing options to find the b
 Your current pricing and service will remain unchanged unless you choose to participate in new options.
 We'll notify you of any changes that affect your account before they take effect.
 
-Questions? Contact us at pricing@c2concierge.com
+Questions? Contact us at pricing@credlink.com
 ```
 
 **Post-Experiment Changes**

@@ -69,7 +69,7 @@ This is **planned enterprise-grade architecture** that will eventually support F
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/c2concierge/enterprise-architecture.git
+git clone https://github.com/credlink/enterprise-architecture.git
 cd enterprise-architecture
 ```
 

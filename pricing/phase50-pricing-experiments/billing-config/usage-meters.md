@@ -388,7 +388,7 @@ const usageTrackingMiddleware = {
       "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
       "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
       "img-src 'self' data: https:; " +
-      "connect-src 'self' https://api.stripe.com https://api.c2concierge.com wss://api.c2concierge.com"
+      "connect-src 'self' https://api.stripe.com https://api.credlink.com wss://api.credlink.com"
     );
     
     // Referrer Policy
@@ -400,8 +400,8 @@ const usageTrackingMiddleware = {
   // CORS middleware
   corsMiddleware: (req, res, next) => {
     const allowedOrigins = [
-      process.env.FRONTEND_URL || 'https://app.c2concierge.com',
-      'https://staging.c2concierge.com',
+      process.env.FRONTEND_URL || 'https://app.credlink.com',
+      'https://staging.credlink.com',
       'http://localhost:3000'
     ];
     

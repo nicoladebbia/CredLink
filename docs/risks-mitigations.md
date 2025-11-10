@@ -188,15 +188,15 @@ DNS caching and TTL settings may cause clients to continue using failed regions 
 dns_ttl_mitigations_immediate:
   - action: "Reduce DNS TTL to 60 seconds"
     records:
-      - api.c2-concierge.com: 60s
-      - cdn.c2-concierge.com: 60s
-      - *.c2-concierge.com: 60s
+      - api.credlink.com: 60s
+      - cdn.credlink.com: 60s
+      - *.credlink.com: 60s
     impact: "Max 60 seconds for DNS propagation"
     effort: "Low"
     owner: "Infrastructure Team"
   
   - action: "Implement failover bypass mechanism"
-    implementation: "api-failover.c2-concierge.com always points to secondary"
+    implementation: "api-failover.credlink.com always points to secondary"
     usage: "Emergency bypass when primary DNS fails"
     impact: "Provides immediate failover path"
     effort: "Low"

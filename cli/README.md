@@ -407,9 +407,9 @@ The CLI follows standard configuration patterns:
 - `AWS_REGION`: AWS region for S3
 
 ### Cache Location
-- **Linux**: `$XDG_CACHE_HOME/c2concierge` or `~/.cache/c2concierge`
-- **macOS**: `~/Library/Caches/C2Concierge`
-- **Windows**: `%LOCALAPPDATA%\\C2Concierge\\Cache`
+- **Linux**: `$XDG_CACHE_HOME/credlink` or `~/.cache/credlink`
+- **macOS**: `~/Library/Caches/CredLink`
+- **Windows**: `%LOCALAPPDATA%\\CredLink\\Cache`
 
 ## Examples
 

@@ -1,5 +1,5 @@
 === C2 Concierge - Content Credentials ===
-Contributors: c2concierge
+Contributors: credlink
 Tags: c2pa, provenance, content credentials, image verification, media
 Requires at least: 5.0
 Tested up to: 6.4
@@ -32,7 +32,7 @@ C2 Concierge automatically signs your media uploads with C2PA provenance metadat
 
 == Installation ==
 
-1. Upload the `wp-c2concierge` folder to your `/wp-content/plugins/` directory
+1. Upload the `wp-credlink` folder to your `/wp-content/plugins/` directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Configure your settings in Settings > C2 Concierge (optional)
 
@@ -114,7 +114,7 @@ Initial release of C2 Concierge for WordPress.
 * Efficient caching mechanisms
 
 **Support:**
-For support and documentation, visit [C2 Concierge](https://c2concierge.com).
+For support and documentation, visit [C2 Concierge](https://credlink.com).
 
 **License:**
 This plugin is released under the MIT License.

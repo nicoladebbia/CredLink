@@ -743,13 +743,13 @@ compatibility_date = "2024-01-01"
 [env.production]
 name = "c2-demo"
 routes = [
-  "demo.c2concierge.dev/*"
+  "demo.credlink.dev/*"
 ]
 
 [env.staging]
 name = "c2-demo-staging"
 routes = [
-  "demo-staging.c2concierge.dev/*"
+  "demo-staging.credlink.dev/*"
 ]
 ```
 

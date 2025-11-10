@@ -10,7 +10,7 @@
 
 ### ✅ **MONOPO STRUCTURE** (100% Complete)
 ```
-c2-concierge/gauntlet/
+credlink/gauntlet/
 ├─ providers/                    # ✅ 5 provider configurations
 │  ├─ cloudflare.yaml           # ✅ Resizing + Polish recipes
 │  ├─ imgix.yaml                # ✅ Image optimization recipes  

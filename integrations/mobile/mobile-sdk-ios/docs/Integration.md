@@ -4,17 +4,17 @@
 
 ### 1. Add Swift Package
 1. In Xcode, go to File → Add Package Dependencies
-2. Enter URL: `https://github.com/Nickiller04/c2-concierge`
-3. Select "C2ConciergeMobile" package
+2. Enter URL: `https://github.com/Nickiller04/credlink`
+3. Select "CredLinkMobile" package
 4. Add to your target
 
 ### 2. Import and Initialize
 ```swift
-import C2ConciergeMobile
+import CredLinkMobile
 
 class ViewController: UIViewController {
     private let config = C2CConfig(
-        relayBaseURL: URL(string: "https://verify.c2concierge.org")!,
+        relayBaseURL: URL(string: "https://verify.credlink.org")!,
         pinnedSPKIHashes: ["relay_spki_hash_here"],
         enableDebugLogging: true
     )
@@ -54,7 +54,7 @@ See `docs/ShareExtension.md` for detailed steps
 
 ### 2. Handle Shared Content
 ```swift
-import C2ConciergeMobile
+import CredLinkMobile
 
 class ShareViewController: SLComposeServiceViewController {
     private let config = C2CConfig()
@@ -117,7 +117,7 @@ struct ContentView: View {
 ### TLS Pinning
 ```swift
 let config = C2CConfig(
-    relayBaseURL: URL(string: "https://verify.c2concierge.org")!,
+    relayBaseURL: URL(string: "https://verify.credlink.org")!,
     pinnedSPKIHashes: [
         "base64_encoded_spki_hash_1",
         "base64_encoded_spki_hash_2"
@@ -139,7 +139,7 @@ let config = C2CConfig(
 import BackgroundTasks
 
 func scheduleBackgroundVerification() {
-    let request = BGProcessingTaskRequest(identifier: "com.c2concierge.verification")
+    let request = BGProcessingTaskRequest(identifier: "com.credlink.verification")
     request.requiresNetworkConnectivity = true
     request.requiresExternalPower = false
     
@@ -208,7 +208,7 @@ let config = C2CConfig(
 ### Unit Tests
 ```swift
 import XCTest
-@testable import C2ConciergeMobile
+@testable import CredLinkMobile
 
 class MobileSDKTests: XCTestCase {
     func testVerification() {

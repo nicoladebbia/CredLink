@@ -3,7 +3,7 @@
 **Timeline:** 3-5 days  
 **Owner:** Engineering Lead  
 **Score Impact:** 5.0/10 → 5.5/10  
-**Goal:** Remove ALL 325+ references to old "c2concierge" branding
+**Goal:** Remove ALL 325+ references to old "credlink" branding
 
 ---
 
@@ -17,9 +17,9 @@
 
 ```bash
 # What investors see when they clone your repo:
-git clone https://github.com/c2concierge/credlink.git
+git clone https://github.com/credlink/credlink.git
 cd credlink
-grep -r "c2concierge" . | head -10
+grep -r "credlink" . | head -10
 # Result: 325+ lines of old branding
 # Investor reaction: "They can't even finish a rebrand"
 # Funding outcome: REJECTED
@@ -31,8 +31,8 @@ grep -r "c2concierge" . | head -10
    ```bash
    # Your production deployment will show:
    docker ps
-   # c2concierge-api-1    Up    2 hours   node /app/index.js
-   # Result: Customers see "c2concierge" everywhere
+   # credlink-api-1    Up    2 hours   node /app/index.js
+   # Result: Customers see "credlink" everywhere
    # Outcome: Immediate trust destruction, support tickets flooding in
    ```
 
@@ -66,7 +66,7 @@ grep -r "c2concierge" . | head -10
 # What investors see after perfect execution:
 git clone https://github.com/credlink/credlink.git
 cd credlink
-grep -r "c2concierge" . | wc -l
+grep -r "credlink" . | wc -l
 # Result: 0
 # Investor reaction: "Professional team, attention to detail"
 # Funding outcome: TERM SHEET SIGNED
@@ -103,7 +103,7 @@ grep -r "c2concierge" . | wc -l
 **Hour 1: BRUTAL SETUP (9am-10am)**
 - ☐ Create `feature/branding-purge-or-death` branch (name matters)
 - ☐ Create `.phase2-branding/` directory with timestamp
-- ☐ Run discovery script with ALL variations (c2concierge, c2-concierge, C2Concierge, C2CONCIERGE)
+- ☐ Run discovery script with ALL variations (credlink, credlink, CredLink, CREDLINK)
 - ☐ Count references: **MUST be 300-400+** (if less, you missed something)
 - ☐ Take screenshot + save to `.phase2-branding/evidence-before/`
 - ☐ Create `BRANDING-CONTRACT.md` - sign it digitally (commit to your failure)
@@ -132,7 +132,7 @@ grep -r "c2concierge" . | wc -l
 **Hour 5: LUNCH & REALITY CHECK (1pm-2pm)**
 - ☐ Review Docker changes with ENTIRE team
 - ☐ Verify NO container name conflicts
-- ☐ Check for hardcoded paths (`/app/c2concierge`)
+- ☐ Check for hardcoded paths (`/app/credlink`)
 - ☐ Document ALL edge cases found
 - ☐ Update `BRANDING-CONTRACT.md` with progress
 - ☐ If team finds issues you missed, you're not detail-oriented enough
@@ -181,9 +181,9 @@ grep -r "c2concierge" . | wc -l
 - ☐ Manual review of `sdk/` directory (every file)
 - ☐ Manual review of `plugins/` directory (every file)
 - ☐ Manual review of `ui/` directory (every file)
-- ☐ Fix ALL import statements (`from 'c2concierge'` → `from 'credlink'`)
-- ☐ Fix ALL class/interface names (`C2ConciergeService` → `CredLinkService`)
-- ☐ Fix ALL variable names (`c2conciergeConfig` → `credlinkConfig`)
+- ☐ Fix ALL import statements (`from 'credlink'` → `from 'credlink'`)
+- ☐ Fix ALL class/interface names (`CredLinkService` → `CredLinkService`)
+- ☐ Fix ALL variable names (`credlinkConfig` → `credlinkConfig`)
 - ☐ **TEST:** `pnpm type-check` MUST pass
 - ☐ **TEST:** `pnpm build` MUST succeed
 - ☐ Commit with message: "fix: All TypeScript/JavaScript files branded"
@@ -223,20 +223,20 @@ grep -r "c2concierge" . | wc -l
 
 **Hour 21-22: EDGE CASE GENOCIDE (9am-11am)**
 - ☐ Manual grep for ALL case variations:
-  - `c2concierge`, `c2-concierge`, `C2Concierge`, `C2CONCIERGE`
+  - `credlink`, `credlink`, `CredLink`, `CREDLINK`
   - `c2c[^p]` (c2c but not c2pa)
   - `c2Concierge`, `C2concierge` (mixed case disasters)
-- ☐ Look for hardcoded URLs (`https://c2concierge.com`)
-- ☐ Check for environment variable names (`C2CONCIERGE_`)
-- ☐ Check for database names (`c2concierge_db`)
-- ☐ Check for table names (`c2concierge_proofs`)
+- ☐ Look for hardcoded URLs (`https://credlink.com`)
+- ☐ Check for environment variable names (`CREDLINK_`)
+- ☐ Check for database names (`credlink_db`)
+- ☐ Check for table names (`credlink_proofs`)
 - ☐ Check for namespace declarations
 - ☐ Create `EDGE-CASES-FOUND.md` with every single one
 - ☐ Fix EVERY edge case found
 - ☐ **FAILURE:** If you find >10 edge cases, you were not thorough enough
 
 **Hour 23-24: FINAL VERIFICATION OR DEATH (11am-1pm)**
-- ☐ Run COMPLETE audit script: `grep -r "c2concierge" . --exclude-dir=node_modules | wc -l`
+- ☐ Run COMPLETE audit script: `grep -r "credlink" . --exclude-dir=node_modules | wc -l`
 - ☐ **MUST return exactly 0** (not 1, not 2, exactly 0)
 - ☐ Run full test suite → ALL must pass
 - ☐ Build Docker images → ALL must succeed
@@ -274,8 +274,8 @@ grep -r "c2concierge" . | wc -l
 **If you miss ANY of these, your production deployment fails and customers leave within 24 hours.**
 
 1. **`Dockerfile.reproducible`** - COMPANY KILLER #1
-   - **Impact:** Production image shows `c2concierge` in `docker ps`
-   - **Death scenario:** Customer sees `c2concierge-api` in monitoring → "They're fake" → churn rate 80%
+   - **Impact:** Production image shows `credlink` in `docker ps`
+   - **Death scenario:** Customer sees `credlink-api` in monitoring → "They're fake" → churn rate 80%
    - **References:** 8+ (container names, labels, health checks, users)
    - **Time:** 30 min (no excuses)
    - **Owner:** DevOps Lead (takes full responsibility)
@@ -283,14 +283,14 @@ grep -r "c2concierge" . | wc -l
 
 2. **`docker-compose.yml`** - COMPANY KILLER #2
    - **Impact:** Container orchestration shows old names
-   - **Death scenario:** `docker-compose ps` shows `c2concierge-db` → DBA quits → outage 4 hours
+   - **Death scenario:** `docker-compose ps` shows `credlink-db` → DBA quits → outage 4 hours
    - **References:** Service names, network names, volume names
    - **Time:** 15 min (should be 5 but we're generous)
    - **Owner:** Infrastructure Lead
    - **Failure consequence:** Database connection failures, data corruption risk
 
 3. **`buildkit.toml`** - COMPANY KILLER #3
-   - **Impact:** Build process creates `c2concierge` tagged images
+   - **Impact:** Build process creates `credlink` tagged images
    - **Death scenario:** Production builds fail, deployment pipeline stops
    - **References:** Build target names, image tags
    - **Time:** 10 min (if you need longer, you're incompetent)
@@ -298,7 +298,7 @@ grep -r "c2concierge" . | wc -l
    - **Failure consequence:** Deployment pipeline stops for 6+ hours
 
 4. **`wrangler.jsonc`** - COMPANY KILLER #4
-   - **Impact:** Cloudflare Workers deployed with `c2concierge` names
+   - **Impact:** Cloudflare Workers deployed with `credlink` names
    - **Death scenario:** Edge functions show wrong brand, API calls fail
    - **References:** Worker names, KV namespaces, routes
    - **Time:** 15 min
@@ -355,7 +355,7 @@ grep -r "c2concierge" . | wc -l
 
 10. **`sdk/*/`** directories - REPUTATION KILLER #2
     - **Impact:** SDK functionality breaks, customer integration fails
-    - **Death scenario:** Customer tries to integrate SDK, sees `c2concierge`, abandons
+    - **Death scenario:** Customer tries to integrate SDK, sees `credlink`, abandons
     - **References:** Package names, class names, exports
     - **Time:** 1 hour total
     - **Owner:** SDK Team
@@ -471,7 +471,7 @@ SHAME_SCORE=0
 
 # Test 1: Zero old brand references (CRITICAL)
 echo "Test 1: Checking for old brand references..."
-COUNT=$(grep -r "c2concierge\|c2-concierge\|C2Concierge\|C2CONCIERGE" . \
+COUNT=$(grep -r "credlink\|credlink\|CredLink\|CREDLINK" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=.phase2-branding \
@@ -585,7 +585,7 @@ echo "Test 6: Checking for broken imports..."
 BROKEN=$(find . -name "*.ts" -o -name "*.js" \
   -not -path "*/node_modules/*" \
   -not -path "*/.git/*" \
-  -exec grep -l "from.*c2concierge" {} \; | wc -l | tr -d ' ')
+  -exec grep -l "from.*credlink" {} \; | wc -l | tr -d ' ')
 
 if [ "$BROKEN" -eq 0 ]; then
   echo "✅ PASS: No broken imports found"
@@ -610,7 +610,7 @@ echo ""
 echo "Test 7: Checking package name consistency..."
 INCONSISTENT=$(find . -name "package.json" \
   -not -path "*/node_modules/*" \
-  -exec grep -l "c2concierge" {} \; | wc -l | tr -d ' ')
+  -exec grep -l "credlink" {} \; | wc -l | tr -d ' ')
 
 if [ "$INCONSISTENT" -eq 0 ]; then
   echo "✅ PASS: All package names consistent"
@@ -723,7 +723,7 @@ while true; do
   clear
   
   # Count remaining references
-  REMAINING=$(grep -r "c2concierge" . --exclude-dir=node_modules --exclude-dir=.git | wc -l | tr -d ' ')
+  REMAINING=$(grep -r "credlink" . --exclude-dir=node_modules --exclude-dir=.git | wc -l | tr -d ' ')
   
   # Check if build works
   if docker build -t credlink:test . > /dev/null 2>&1; then
@@ -777,7 +777,7 @@ chmod +x .phase2-branding/MONITORING-DASHBOARD.sh
 **Time to fix: 30 minutes or career termination**
 
 1. **Stop everything** - Drop all other work
-2. **Check Docker files** - grep for any missed c2concierge references
+2. **Check Docker files** - grep for any missed credlink references
 3. **Check docker-compose.yml** - service names, networks, volumes
 4. **Check build scripts** - any references in build process
 5. **Test locally** - `docker build` must succeed
@@ -798,8 +798,8 @@ chmod +x .phase2-branding/MONITORING-DASHBOARD.sh
 #### Protocol 3: TypeScript Compilation Failure
 **Time to fix: 60 minutes or development stops**
 
-1. **Check all imports** - `from 'c2concierge'` must be fixed
-2. **Check class names** - any C2Concierge classes
+1. **Check all imports** - `from 'credlink'` must be fixed
+2. **Check class names** - any CredLink classes
 3. **Check interface names** - any old interfaces
 4. **Check type definitions** - any old types
 5. **Run type-check** - `pnpm type-check`
@@ -925,7 +925,7 @@ TROPHY
 **If ANY checkbox is unchecked, you failed Phase 2. Period.**
 
 #### 🔴 CRITICAL SURVIVAL CHECKLIST
-- [ ] **ZERO old brand references** - `grep -r "c2concierge" . | wc -l` returns EXACTLY 0
+- [ ] **ZERO old brand references** - `grep -r "credlink" . | wc -l` returns EXACTLY 0
 - [ ] **Docker build successful** - `docker build -t credlink:test .` succeeds without errors
 - [ ] **Docker compose works** - `docker-compose up -d` starts all services
 - [ ] **Package installation works** - `pnpm install` succeeds without warnings
@@ -971,7 +971,7 @@ echo "This determines if you continue at this company."
 echo ""
 
 # Check critical items
-REFERENCES=$(grep -r "c2concierge\|c2-concierge\|C2Concierge\|C2CONCIERGE" . \
+REFERENCES=$(grep -r "credlink\|credlink\|CredLink\|CREDLINK" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=.phase2-branding \
@@ -1198,23 +1198,23 @@ The choice is yours, but the clock is ticking.
 **❌ BEFORE (Old Branding):**
 ```dockerfile
 # Dockerfile.reproducible
-FROM node:18-alpine AS c2concierge-builder
-WORKDIR /app/c2concierge
+FROM node:18-alpine AS credlink-builder
+WORKDIR /app/credlink
 COPY package*.json ./
 RUN npm ci --only=production
 
-FROM node:18-alpine AS c2concierge-runtime
-WORKDIR /app/c2concierge
-COPY --from=c2concierge-builder /app/c2concierge/node_modules ./node_modules
+FROM node:18-alpine AS credlink-runtime
+WORKDIR /app/credlink
+COPY --from=credlink-builder /app/credlink/node_modules ./node_modules
 COPY . .
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/c2concierge/health || exit 1
+  CMD curl -f http://localhost:3000/credlink/health || exit 1
 
-USER c2concierge
+USER credlink
 EXPOSE 3000
-CMD ["node", "c2concierge-server.js"]
+CMD ["node", "credlink-server.js"]
 ```
 
 **✅ AFTER (New Branding):**
@@ -1244,18 +1244,18 @@ CMD ["node", "credlink-server.js"]
 **❌ BEFORE (Old Branding):**
 ```json
 {
-  "name": "@c2concierge/core",
+  "name": "@credlink/core",
   "version": "0.1.0",
-  "description": "C2Concierge core authentication service",
-  "main": "dist/c2concierge-server.js",
+  "description": "CredLink core authentication service",
+  "main": "dist/credlink-server.js",
   "scripts": {
-    "start": "node dist/c2concierge-server.js",
-    "dev": "nodemon src/c2concierge-server.ts",
+    "start": "node dist/credlink-server.js",
+    "dev": "nodemon src/credlink-server.ts",
     "build": "tsc",
-    "test": "jest --testPathPattern=c2concierge"
+    "test": "jest --testPathPattern=credlink"
   },
   "dependencies": {
-    "@c2concierge/shared": "^0.1.0"
+    "@credlink/shared": "^0.1.0"
   }
 }
 ```
@@ -1283,27 +1283,27 @@ CMD ["node", "credlink-server.js"]
 
 **❌ BEFORE (Old Branding):**
 ```typescript
-// src/c2concierge-server.ts
-import { C2ConciergeConfig } from './types/c2concierge-config';
-import { C2ConciergeAuth } from './auth/c2concierge-auth';
+// src/credlink-server.ts
+import { CredLinkConfig } from './types/credlink-config';
+import { CredLinkAuth } from './auth/credlink-auth';
 
-export class C2ConciergeServer {
-  private config: C2ConciergeConfig;
-  private auth: C2ConciergeAuth;
+export class CredLinkServer {
+  private config: CredLinkConfig;
+  private auth: CredLinkAuth;
 
-  constructor(config: C2ConciergeConfig) {
+  constructor(config: CredLinkConfig) {
     this.config = config;
-    this.auth = new C2ConciergeAuth(config);
+    this.auth = new CredLinkAuth(config);
   }
 
   start() {
-    console.log('Starting C2Concierge server...');
+    console.log('Starting CredLink server...');
     // ... implementation
   }
 }
 
-const server = new C2ConciergeServer({
-  serviceName: 'c2concierge-api',
+const server = new CredLinkServer({
+  serviceName: 'credlink-api',
   version: '1.0.0'
 });
 
@@ -1346,19 +1346,19 @@ server.start();
 # docker-compose.yml
 version: '3.8'
 services:
-  c2concierge-api:
-    image: c2concierge:latest
-    container_name: c2concierge-prod
+  credlink-api:
+    image: credlink:latest
+    container_name: credlink-prod
     environment:
-      - SERVICE_NAME=c2concierge-api
-      - C2CONCIERGE_ENV=production
+      - SERVICE_NAME=credlink-api
+      - CREDLINK_ENV=production
     ports:
       - "3000:3000"
     networks:
-      - c2concierge-network
+      - credlink-network
 
 networks:
-  c2concierge-network:
+  credlink-network:
     driver: bridge
 ```
 
@@ -1388,11 +1388,11 @@ networks:
 **❌ BEFORE (Old Branding):**
 ```yaml
 # .github/workflows/ci.yml
-name: C2Concierge CI/CD
+name: CredLink CI/CD
 
 on:
   push:
-    branches: [main, c2concierge-dev]
+    branches: [main, credlink-dev]
 
 jobs:
   build-and-test:
@@ -1407,16 +1407,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Build C2Concierge
+      - name: Build CredLink
         run: npm run build
       
-      - name: Test C2Concierge
+      - name: Test CredLink
         run: npm test
       
       - name: Build Docker image
         run: |
-          docker build -t c2concierge:${{ github.sha }} .
-          docker tag c2concierge:${{ github.sha }} c2concierge:latest
+          docker build -t credlink:${{ github.sha }} .
+          docker tag credlink:${{ github.sha }} credlink:latest
 ```
 
 **✅ AFTER (New Branding):**
@@ -1457,13 +1457,13 @@ jobs:
 
 ## 🎯 THE CRITICAL PROBLEM
 
-**Current state:** 325+ references to "c2concierge" remain in codebase
+**Current state:** 325+ references to "credlink" remain in codebase
 
 **Impact:**
 ```bash
 # When deployed, production will show:
 ps aux | grep c2
-c2concierge   1234  0.1  2.3  ...  node /app/index.js  # ❌ WRONG
+credlink   1234  0.1  2.3  ...  node /app/index.js  # ❌ WRONG
 
 # Signals to customers/investors:
 "They didn't care enough to finish the rebrand"
@@ -1484,7 +1484,7 @@ c2concierge   1234  0.1  2.3  ...  node /app/index.js  # ❌ WRONG
 
 ```bash
 # 51-54: Run comprehensive grep
-grep -r "c2concierge\|c2-concierge\|c2Concierge\|C2Concierge\|C2CONCIERGE" . \
+grep -r "credlink\|credlink\|c2Concierge\|CredLink\|CREDLINK" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --include="*.ts" \
@@ -1545,17 +1545,17 @@ set -e
 echo "🔧 Fixing Docker files..."
 
 # Dockerfile.reproducible (CRITICAL)
-sed -i '' 's/c2concierge/credlink/g' ../Dockerfile.reproducible
-sed -i '' 's/c2-concierge/credlink/g' ../Dockerfile.reproducible
+sed -i '' 's/credlink/credlink/g' ../Dockerfile.reproducible
+sed -i '' 's/credlink/credlink/g' ../Dockerfile.reproducible
 
 # Regular Dockerfile
 if [ -f ../Dockerfile ]; then
-  sed -i '' 's/c2concierge/credlink/g' ../Dockerfile
+  sed -i '' 's/credlink/credlink/g' ../Dockerfile
 fi
 
 # docker-compose.yml
 if [ -f ../docker-compose.yml ]; then
-  sed -i '' 's/c2concierge/credlink/g' ../docker-compose.yml
+  sed -i '' 's/credlink/credlink/g' ../docker-compose.yml
 fi
 
 echo "✅ Docker files fixed"
@@ -1570,10 +1570,10 @@ echo "🔧 Fixing TypeScript/JavaScript..."
 find .. -type f \( -name "*.ts" -o -name "*.js" \) \
   -not -path "*/node_modules/*" \
   -not -path "*/.git/*" \
-  -exec sed -i '' 's/c2concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/c2-concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/C2Concierge/CredLink/g' {} \; \
-  -exec sed -i '' 's/C2CONCIERGE/CREDLINK/g' {} \;
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/CredLink/CredLink/g' {} \; \
+  -exec sed -i '' 's/CREDLINK/CREDLINK/g' {} \;
 
 echo "✅ TypeScript/JavaScript fixed"
 SCRIPT
@@ -1586,9 +1586,9 @@ echo "🔧 Fixing config files..."
 
 find .. -type f \( -name "*.json" -o -name "*.yml" -o -name "*.yaml" \) \
   -not -path "*/node_modules/*" \
-  -exec sed -i '' 's/c2concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/c2-concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/@c2concierge/@credlink/g' {} \;
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/@credlink/@credlink/g' {} \;
 
 echo "✅ Config files fixed"
 SCRIPT
@@ -1601,8 +1601,8 @@ echo "🔧 Fixing test files..."
 
 find .. -type f \( -name "*.test.ts" -o -name "*.spec.ts" -o -name "*.test.js" \) \
   -not -path "*/node_modules/*" \
-  -exec sed -i '' 's/c2concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/c2-concierge/credlink/g' {} \;
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/credlink/credlink/g' {} \;
 
 echo "✅ Test files fixed"
 SCRIPT
@@ -1616,9 +1616,9 @@ echo "🔧 Fixing documentation..."
 find .. -type f -name "*.md" \
   -not -path "*/node_modules/*" \
   -not -path "*/.git/*" \
-  -exec sed -i '' 's/c2concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/c2-concierge/credlink/g' {} \; \
-  -exec sed -i '' 's/C2Concierge/CredLink/g' {} \;
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/credlink/credlink/g' {} \; \
+  -exec sed -i '' 's/CredLink/CredLink/g' {} \;
 
 echo "✅ Documentation fixed"
 SCRIPT
@@ -1626,7 +1626,7 @@ SCRIPT
 # Script 6: Verification
 cat > verify.sh << 'SCRIPT'
 #!/bin/bash
-COUNT=$(grep -r "c2concierge\|c2-concierge" .. \
+COUNT=$(grep -r "credlink\|credlink" .. \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=branding-fixes \
@@ -1637,7 +1637,7 @@ if [ "$COUNT" -eq 0 ]; then
   exit 0
 else
   echo "❌ FAILURE: $COUNT old brand references still exist:"
-  grep -r "c2concierge\|c2-concierge" .. \
+  grep -r "credlink\|credlink" .. \
     --exclude-dir=node_modules \
     --exclude-dir=.git \
     --exclude-dir=branding-fixes
@@ -1659,11 +1659,11 @@ chmod +x *.sh
 ```dockerfile
 # BEFORE (WRONG):
 FROM node:18-alpine
-RUN adduser -S c2concierge:nodejs  ❌
+RUN adduser -S credlink:nodejs  ❌
 WORKDIR /app
 COPY . .
-RUN chown c2concierge /app  ❌
-USER c2concierge  ❌
+RUN chown credlink /app  ❌
+USER credlink  ❌
 CMD ["node", "index.js"]
 
 # AFTER (CORRECT):
@@ -1679,7 +1679,7 @@ CMD ["node", "index.js"]
 **73-80: Other infrastructure**
 - [ ] Dockerfile (regular)
 - [ ] docker-compose.yml service names
-- [ ] All package.json "name" fields: `@c2concierge/*` → `@credlink/*`
+- [ ] All package.json "name" fields: `@credlink/*` → `@credlink/*`
 - [ ] pnpm-workspace.yaml references
 - [ ] turbo.json task names
 - [ ] Makefile targets
@@ -1689,14 +1689,14 @@ CMD ["node", "index.js"]
 ### Code Files (HIGH PRIORITY)
 
 **81-90: Folders and imports**
-- [ ] Rename `/plugins/wp-c2concierge/` → `/plugins/wp-credlink/`
-- [ ] Remove or rename `/c2-concierge/` folder
+- [ ] Rename `/plugins/wp-credlink/` → `/plugins/wp-credlink/`
+- [ ] Remove or rename `/credlink/` folder
 - [ ] Fix `/core/c2pa-audit/phase33-reverse-lab/config/providers.ts` (5 refs)
 - [ ] Fix `/plugins/shopify-app/src/sign-worker.ts` (1 ref)
 - [ ] Fix `/tests/acceptance/tests/dr-acceptance-tests.ts` (3 refs)
-- [ ] All imports: `from '@c2concierge/*'` → `from '@credlink/*'`
-- [ ] All namespaces: `namespace C2Concierge` → `namespace CredLink`
-- [ ] All class names: `class C2ConciergeService` → `class CredLinkService`
+- [ ] All imports: `from '@credlink/*'` → `from '@credlink/*'`
+- [ ] All namespaces: `namespace CredLink` → `namespace CredLink`
+- [ ] All class names: `class CredLinkService` → `class CredLinkService`
 - [ ] All constants: `C2C_API_KEY` → `CREDLINK_API_KEY`
 - [ ] All function names with old brand
 
@@ -1725,7 +1725,7 @@ cd branding-fixes
 # 1. Docker (CRITICAL)
 ./01-docker.sh
 git add ../Dockerfile* ../docker-compose.yml
-git commit -m "fix(docker): Rebrand from c2concierge to credlink in Docker files"
+git commit -m "fix(docker): Rebrand from credlink to credlink in Docker files"
 
 # 2. TypeScript/JavaScript (HIGH)
 ./02-typescript.sh
@@ -1766,7 +1766,7 @@ docker build -t credlink:test -f Dockerfile.reproducible .
 
 # Verify Docker user
 docker run --rm credlink:test ps aux | grep credlink
-# Should show credlink user, not c2concierge
+# Should show credlink user, not credlink
 ```
 
 ### Documentation
@@ -1784,7 +1784,7 @@ cat > ../REBRANDING-COMPLETE.md << 'EOF'
 
 ## Verification Command
 ```bash
-grep -r "c2concierge\|c2-concierge" . \
+grep -r "credlink\|credlink" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   | wc -l
@@ -1819,7 +1819,7 @@ cat >> ../CHANGELOG.md << 'EOF'
 ## [Unreleased]
 
 ### Fixed
-- Complete rebrand from c2concierge to CredLink
+- Complete rebrand from credlink to CredLink
 - Fixed 325+ references across codebase
 - Updated production Docker images to use correct branding
 - Fixed all package names, imports, and namespaces
@@ -1834,7 +1834,7 @@ git add branding-fixes/
 git add REBRANDING-COMPLETE.md CHANGELOG.md
 git commit -m "docs: Complete rebranding documentation
 
-All 325+ references to c2concierge fixed.
+All 325+ references to credlink fixed.
 Verification: 0 old brand references remain.
 All tests passing."
 
@@ -1857,7 +1857,7 @@ git push origin feature/complete-rebrand
 
 # Create PR
 gh pr create \
-  --title "Complete rebrand: Fix all 325+ c2concierge references" \
+  --title "Complete rebrand: Fix all 325+ credlink references" \
   --body "Closes #XXX
 
 ## Changes
@@ -1869,7 +1869,7 @@ gh pr create \
 
 ## Verification
 \`\`\`bash
-grep -r 'c2concierge' . --exclude-dir=node_modules | wc -l
+grep -r 'credlink' . --exclude-dir=node_modules | wc -l
 # Output: 0
 \`\`\`
 
@@ -1888,7 +1888,7 @@ grep -r 'c2concierge' . --exclude-dir=node_modules | wc -l
 
 **Zero Old Brand References**
 ```bash
-grep -r "c2concierge\|c2-concierge" . \
+grep -r "credlink\|credlink" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   | wc -l
@@ -1959,8 +1959,8 @@ cat > .phase2-branding/01-env-vars.sh << 'ENV'
 #!/bin/bash
 echo "🔍 Finding environment variable references..."
 
-# Check for c2concierge in env files
-grep -r "C2CONCIERGE\|c2concierge" . \
+# Check for credlink in env files
+grep -r "CREDLINK\|credlink" . \
   --include="*.env*" \
   --exclude-dir=node_modules \
   > .phase2-branding/env-vars-found.txt
@@ -1980,9 +1980,9 @@ chmod +x .phase2-branding/01-env-vars.sh
 ```
 
 **Common environment variables to fix:**
-- `C2CONCIERGE_ENV` → `CREDLINK_ENV`
-- `C2CONCIERGE_API_KEY` → `CREDLINK_API_KEY`
-- `C2CONCIERGE_DB_URL` → `CREDLINK_DB_URL`
+- `CREDLINK_ENV` → `CREDLINK_ENV`
+- `CREDLINK_API_KEY` → `CREDLINK_API_KEY`
+- `CREDLINK_DB_URL` → `CREDLINK_DB_URL`
 - `C2C_SERVICE_PORT` → `CREDLINK_SERVICE_PORT`
 
 ### Step 106-110: Hardcoded URLs and Endpoints
@@ -1993,8 +1993,8 @@ cat > .phase2-branding/02-urls.sh << 'URLS'
 #!/bin/bash
 echo "🔍 Finding hardcoded URLs..."
 
-# Search for c2concierge in URLs
-grep -r "c2concierge\|c2-concierge" . \
+# Search for credlink in URLs
+grep -r "credlink\|credlink" . \
   --include="*.ts" \
   --include="*.js" \
   --include="*.json" \
@@ -2004,7 +2004,7 @@ grep -r "c2concierge\|c2-concierge" . \
   > .phase2-branding/urls-found.txt
 
 # Check for API endpoints
-grep -r "/c2concierge\|/c2-concierge" . \
+grep -r "/credlink\|/credlink" . \
   --include="*.ts" \
   --include="*.js" \
   --exclude-dir=node_modules \
@@ -2019,9 +2019,9 @@ chmod +x .phase2-branding/02-urls.sh
 ```
 
 **Example fixes:**
-- `https://api.c2concierge.com` → `https://api.credlink.com`
-- `/c2concierge/v1/sign` → `/credlink/v1/sign`
-- `c2concierge-prod.example.com` → `credlink-prod.example.com`
+- `https://api.credlink.com` → `https://api.credlink.com`
+- `/credlink/v1/sign` → `/credlink/v1/sign`
+- `credlink-prod.example.com` → `credlink-prod.example.com`
 
 ### Step 111-115: Database and Storage References
 
@@ -2032,7 +2032,7 @@ cat > .phase2-branding/03-database.sh << 'DB'
 echo "🔍 Finding database references..."
 
 # Check for database names
-grep -r "c2concierge\|c2-concierge" . \
+grep -r "credlink\|credlink" . \
   --include="*.sql" \
   --include="*.json" \
   --include="*.ts" \
@@ -2041,7 +2041,7 @@ grep -r "c2concierge\|c2-concierge" . \
   > .phase2-branding/database-found.txt
 
 # Check for table names
-grep -r "c2concierge_\|c2_concierge_" . \
+grep -r "credlink_\|c2_concierge_" . \
   --include="*.sql" \
   --exclude-dir=node_modules \
   >> .phase2-branding/database-found.txt
@@ -2054,8 +2054,8 @@ chmod +x .phase2-branding/03-database.sh
 ```
 
 **Example fixes:**
-- `c2concierge_db` → `credlink_db`
-- `c2concierge_proofs` → `credlink_proofs`
+- `credlink_db` → `credlink_db`
+- `credlink_proofs` → `credlink_proofs`
 - `c2_concierge_manifests` → `credlink_manifests`
 
 ### Step 116-120: Import/Export Namespaces
@@ -2067,14 +2067,14 @@ cat > .phase2-branding/04-namespaces.sh << 'NS'
 echo "🔍 Finding namespace references..."
 
 # Check for import/export namespaces
-grep -r "namespace.*c2concierge\|export.*c2concierge" . \
+grep -r "namespace.*credlink\|export.*credlink" . \
   --include="*.ts" \
   --include="*.js" \
   --exclude-dir=node_modules \
   > .phase2-branding/namespaces-found.txt
 
 # Check for module declarations
-grep -r "declare module.*c2concierge" . \
+grep -r "declare module.*credlink" . \
   --include="*.d.ts" \
   --exclude-dir=node_modules \
   >> .phase2-branding/namespaces-found.txt
@@ -2109,7 +2109,7 @@ FAILED=0
 
 # Test 1: Zero old brand references
 echo "Test 1: Checking for old brand references..."
-COUNT=$(grep -r "c2concierge\|c2-concierge\|C2Concierge\|C2CONCIERGE" . \
+COUNT=$(grep -r "credlink\|credlink\|CredLink\|CREDLINK" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=.phase2-branding \
@@ -2120,7 +2120,7 @@ if [ "$COUNT" -eq 0 ]; then
   PASSED=$((PASSED + 1))
 else
   echo "❌ FAIL: Found $COUNT old brand references"
-  echo "Run: grep -r 'c2concierge' . --exclude-dir=node_modules"
+  echo "Run: grep -r 'credlink' . --exclude-dir=node_modules"
   FAILED=$((FAILED + 1))
 fi
 
@@ -2172,7 +2172,7 @@ echo "Test 6: Checking for broken imports..."
 BROKEN=$(find . -name "*.ts" -o -name "*.js" \
   -not -path "*/node_modules/*" \
   -not -path "*/.git/*" \
-  -exec grep -l "from.*c2concierge" {} \; | wc -l | tr -d ' ')
+  -exec grep -l "from.*credlink" {} \; | wc -l | tr -d ' ')
 
 if [ "$BROKEN" -eq 0 ]; then
   echo "✅ PASS: No broken imports found"
@@ -2187,7 +2187,7 @@ echo ""
 echo "Test 7: Checking package name consistency..."
 INCONSISTENT=$(find . -name "package.json" \
   -not -path "*/node_modules/*" \
-  -exec grep -l "c2concierge" {} \; | wc -l | tr -d ' ')
+  -exec grep -l "credlink" {} \; | wc -l | tr -d ' ')
 
 if [ "$INCONSISTENT" -eq 0 ]; then
   echo "✅ PASS: All package names consistent"
@@ -2337,7 +2337,7 @@ echo ""
 
 # Check for mixed case variations
 echo "1. Mixed case variations:"
-grep -r "C2Concierge\|c2Concierge\|C2concierge" . \
+grep -r "CredLink\|c2Concierge\|C2concierge" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=.phase2-branding \
@@ -2355,7 +2355,7 @@ grep -r "c2c[^p]" . \
 # Check for comments
 echo ""
 echo "3. Comments containing old brand:"
-grep -r "//.*c2concierge\|#.*c2concierge" . \
+grep -r "//.*credlink\|#.*credlink" . \
   --include="*.ts" \
   --include="*.js" \
   --include="*.sh" \
@@ -2365,7 +2365,7 @@ grep -r "//.*c2concierge\|#.*c2concierge" . \
 # Check for URLs in documentation
 echo ""
 echo "4. URLs in documentation:"
-grep -r "c2concierge" . \
+grep -r "credlink" . \
   --include="*.md" \
   --exclude-dir=node_modules \
   | head -3 || echo "✅ No old brand URLs in documentation"
@@ -2397,7 +2397,7 @@ cat > REBRANDING-COMPLETE.md << 'REBRAND'
 
 ## Summary
 
-Successfully removed all references to the old "c2concierge" branding and 
+Successfully removed all references to the old "credlink" branding and 
 replaced with "credlink" throughout the entire codebase.
 
 ## Changes Made
@@ -2434,7 +2434,7 @@ replaced with "credlink" throughout the entire codebase.
 
 ```bash
 # Zero old brand references
-grep -r "c2concierge" . --exclude-dir=node_modules | wc -l
+grep -r "credlink" . --exclude-dir=node_modules | wc -l
 # Result: 0
 
 # Docker build successful
@@ -2487,7 +2487,7 @@ cat >> CHANGELOG.md << 'CHANGELOG'
 ## [$(date +%Y-%m-%d)] - Phase 2: Complete Branding Purge
 
 ### Changed
-- 🔄 Replaced all 325+ "c2concierge" references with "credlink"
+- 🔄 Replaced all 325+ "credlink" references with "credlink"
 - 🔄 Updated Docker container names and labels
 - 🔄 Updated all package.json names and dependencies
 - 🔄 Updated all TypeScript/JavaScript class names and imports
@@ -2510,7 +2510,7 @@ cat >> CHANGELOG.md << 'CHANGELOG'
 - Overall: 5.0/10 → 5.5/10 (+0.5 points)
 
 ### Verification
-- ✅ Zero old brand references: `grep -r "c2concierge" . | wc -l` → 0
+- ✅ Zero old brand references: `grep -r "credlink" . | wc -l` → 0
 - ✅ Docker build successful: `docker build -t credlink:test .`
 - ✅ All tests passing: `pnpm test`
 - ✅ TypeScript compilation: `pnpm type-check`
@@ -2532,11 +2532,11 @@ cp .phase2-branding/*.sh .phase2-branding/archive/$(date +%Y-%m-%d)/
 
 # Step 148: Commit all changes
 git add .
-git commit -m "feat: Complete Phase 2 branding purge - c2concierge → credlink
+git commit -m "feat: Complete Phase 2 branding purge - credlink → credlink
 
 BREAKING CHANGE: All old brand references removed
 
-✅ Fixed all 325+ c2concierge references
+✅ Fixed all 325+ credlink references
 ✅ Updated Docker containers and labels
 ✅ Updated all package names and dependencies  
 ✅ Updated all TypeScript/JavaScript imports
@@ -2555,7 +2555,7 @@ Closes #branding-issue"
 
 # Step 149: Create pull request
 gh pr create \
-  --title "Complete Phase 2: Branding purge (c2concierge → credlink)" \
+  --title "Complete Phase 2: Branding purge (credlink → credlink)" \
   --body "## Phase 2 Complete: Branding Purge
 
 ### Changes
@@ -2565,7 +2565,7 @@ gh pr create \
 - Verified zero old brand references remain
 
 ### Verification
-- ✅ \`grep -r 'c2concierge' . | wc -l\` → 0
+- ✅ \`grep -r 'credlink' . | wc -l\` → 0
 - ✅ Docker build successful
 - ✅ All tests passing
 - ✅ TypeScript compilation successful
@@ -2584,7 +2584,7 @@ git push origin main
 git branch -d feature/complete-rebrand
 
 echo "🎉 PHASE 2 COMPLETE! 🎉"
-echo "Branding purge: c2concierge → credlink"
+echo "Branding purge: credlink → credlink"
 echo "Score: 5.0/10 → 5.5/10"
 echo ""
 echo "Ready for Phase 3: Backend Implementation"
@@ -2600,10 +2600,10 @@ echo "Start Phase 3 NOW!"
 ### Core Branding Requirements (MUST ALL PASS)
 
 #### 1. Zero Old Brand References
-- [ ] Zero "c2concierge" references (verified by grep)
-- [ ] Zero "c2-concierge" references
-- [ ] Zero "C2Concierge" references  
-- [ ] Zero "C2CONCIERGE" references
+- [ ] Zero "credlink" references (verified by grep)
+- [ ] Zero "credlink" references
+- [ ] Zero "CredLink" references  
+- [ ] Zero "CREDLINK" references
 - [ ] Zero problematic "c2c" references (not c2pa)
 
 #### 2. Docker & Container Fixes
@@ -2649,7 +2649,7 @@ Run these commands. They MUST all pass:
 # Expected: ALL TESTS PASSED
 
 # Test 2: Manual verification
-grep -r "c2concierge\|c2-concierge" . \
+grep -r "credlink\|credlink" . \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   | wc -l
@@ -2751,7 +2751,7 @@ pnpm type-check
 ```
 🎉 PHASE 2 COMPLETE 🎉
 
-Branding Purge: c2concierge → credlink
+Branding Purge: credlink → credlink
 Score: 5.0/10 → 5.5/10
 
 You now have:

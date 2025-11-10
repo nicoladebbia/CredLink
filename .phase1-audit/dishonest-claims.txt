@@ -33,10 +33,10 @@
 ./core/c2pa-audit/phase34-spec-watch/PHASE34-IMPLEMENTATION-SUMMARY.md:140:2. **Impact Analysis** - Effects on embed vs remote survival, discovery order
 ./windsurfrules.md:20:- Remote survival rate must be ≥ 99.9%
 ./windsurfrules.md:21:- Embed survival rate must be ≥ 95% in preserve-embed sandbox
-./plugins/wp-c2concierge/readme.txt:18:* Remote manifest storage for maximum survival
-./plugins/wp-c2concierge/readme.txt:61:When C2 Concierge detects image optimizers or transformations, it automatically switches to "remote-only" mode. This ensures provenance survival by storing manifests remotely and preventing embed mutations.
-./plugins/wp-c2concierge/readme.txt:80:4. Theme survival test results
-./plugins/wp-c2concierge/readme.txt:90:* Theme survival testing
+./plugins/wp-credlink/readme.txt:18:* Remote manifest storage for maximum survival
+./plugins/wp-credlink/readme.txt:61:When C2 Concierge detects image optimizers or transformations, it automatically switches to "remote-only" mode. This ensures provenance survival by storing manifests remotely and preventing embed mutations.
+./plugins/wp-credlink/readme.txt:80:4. Theme survival test results
+./plugins/wp-credlink/readme.txt:90:* Theme survival testing
 ./tests/gauntlet/recipes.md:8:This document provides detailed recipes for testing C2PA Content Credentials survival across major CDN providers. Each recipe includes specific URL patterns, configuration requirements, and expected behavior based on provider documentation and testing.
 ./tests/gauntlet/recipes.md:20:https://cf.survival.test/cdn-cgi/image/<OPTIONS>/<ORIGIN_URL>
 ./tests/gauntlet/recipes.md:83:https://imgix.survival.test/<path>?<parameters>
@@ -388,7 +388,7 @@
 ./docs/archived/PHASE-47-IMPLEMENTATION-COMPLETE.md:103:- ✅ Backend API with survival testing logic
 ./docs/archived/PHASE-47-IMPLEMENTATION-COMPLETE.md:117:- `/api/survival-check` - 60-second survival testing
 ./docs/archived/PHASE-47-IMPLEMENTATION-COMPLETE.md:126:- Pilot tracking with survival metrics
-./docs/archived/PHASE-47-IMPLEMENTATION-COMPLETE.md:151:- [x] Survival check form (survival-check.c2concierge.dev)
+./docs/archived/PHASE-47-IMPLEMENTATION-COMPLETE.md:151:- [x] Survival check form (survival-check.credlink.dev)
 ./docs/archived/PHASE-47-IMPLEMENTATION-COMPLETE.md:202:2. Activate survival check form
 ./docs/archived/CURRENT-STATE-ASSESSMENT.md:110:├── survival-artifacts.zip (what is this?)
 ./docs/archived/CURRENT-STATE-ASSESSMENT.md:210:| **Remote-first survival** | ✅ Designed for it | ❌ Embed-focused |
@@ -1093,7 +1093,7 @@
 ./pricing/phase50-pricing-experiments/experiments/60-day-calendar.md:416:We're writing to inform you about upcoming pricing experiments designed to better serve your needs. 
 ./pricing/phase50-pricing-experiments/experiments/60-day-calendar.md:417:Over the next 60 days, we may be testing different pricing options to find the best value for our customers.
 ./pricing/phase50-pricing-experiments/experiments/60-day-calendar.md:419:Your current pricing and service will remain unchanged unless you choose to participate in new options.
-./pricing/phase50-pricing-experiments/experiments/60-day-calendar.md:422:Questions? Contact us at pricing@c2concierge.com
+./pricing/phase50-pricing-experiments/experiments/60-day-calendar.md:422:Questions? Contact us at pricing@credlink.com
 ./pricing/phase50-pricing-experiments/experiments/60-day-calendar.md:431:Based on recent customer feedback and testing, we're updating our pricing to better align with value delivered.
 ./pricing/phase50-pricing-experiments/experiments/test-definitions.md:94:| Price | $199/month | $199/month (identical) |
 ./pricing/phase50-pricing-experiments/experiments/test-definitions.md:207:| Overage Revenue/Customer | $45/month | ≥$52/month | +15% increase |
@@ -1146,7 +1146,7 @@
 ./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:431:      expect(subscription.latest_invoice).toBeDefined();
 ./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:571:        eventName: 'purchase_completed',
 ./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:606:      // Navigate to pricing page
-./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:607:      await page.goto('https://app.c2concierge.com/pricing');
+./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:607:      await page.goto('https://app.credlink.com/pricing');
 ./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:642:      await expect(page.locator('[data-testid="subscription-active"]')).toBeVisible();
 ./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:787:    const response = await fetch(`${API_BASE_URL}/pricing/plans`, {
 ./pricing/phase50-pricing-experiments/testing/acceptance-tests-exit-criteria.md:796:    const response = await fetch(`${API_BASE_URL}/pricing/plans`);
@@ -3753,7 +3753,7 @@
 ./docs/roadmap/README.md:283:- Backend Status: % implemented
 ./docs/roadmap/README.md:340:1. ✅ You're reading this (good start!)
 ./docs/roadmap/PHASE-5-CUSTOMER-VALIDATION.md:340:## ✅ PHASE 5 COMPLETION CRITERIA
-./docs/roadmap/ROADMAP-OVERVIEW.md:20:3. **Incomplete rebrand**: 325+ "c2concierge" references remain in production code
+./docs/roadmap/ROADMAP-OVERVIEW.md:20:3. **Incomplete rebrand**: 325+ "credlink" references remain in production code
 ./docs/roadmap/ROADMAP-OVERVIEW.md:216:- ✅ 99.99%+ uptime over 12 months
 ./docs/roadmap/ROADMAP-OVERVIEW.md:217:- ✅ < 100ms p95 latency globally
 ./docs/roadmap/ROADMAP-OVERVIEW.md:218:- ✅ Handles 10M+ requests/day
@@ -7365,9 +7365,9 @@
 ./sdk/js/README.md:122:    console.log(`✅ ${result.asset.url}`);
 ./sdk/js/README.md:307:    console.log(`✅ ${url}: ${verifiedCount}/${totalCount} assets verified`);
 ./sdk/js/README.md:341:  console.log(`Batch verification complete: ${verified}/${results.length} verified`);
-./sdk/README.md:95:| JavaScript/TypeScript | `@c2concierge/sdk` | 1.3.0 | ✅ Stable |
-./sdk/README.md:96:| Python | `c2concierge` | 1.3.0 | ✅ Stable |
-./sdk/README.md:97:| Go | `github.com/c2concierge/sdk-go/v2` | v2 | ✅ Stable |
+./sdk/README.md:95:| JavaScript/TypeScript | `@credlink/sdk` | 1.3.0 | ✅ Stable |
+./sdk/README.md:96:| Python | `credlink` | 1.3.0 | ✅ Stable |
+./sdk/README.md:97:| Go | `github.com/credlink/sdk-go/v2` | v2 | ✅ Stable |
 ./sdk/README.md:133:- ✅ **Asset Verification**: Verify single assets by URL or content
 ./sdk/README.md:134:- ✅ **Page Verification**: Verify all assets on a web page
 ./sdk/README.md:135:- ✅ **Batch Verification**: Verify multiple assets efficiently
@@ -7426,7 +7426,7 @@
 ./DOCUMENTATION-HONESTY-FIXES.md:259:- ✅ All emails point to @credlink.com
 ./DOCUMENTATION-HONESTY-FIXES.md:260:- ✅ Security vulnerabilities will reach the right inbox
 ./DOCUMENTATION-HONESTY-FIXES.md:263:- ✅ All headers, domains, and identifiers use "credlink" branding
-./DOCUMENTATION-HONESTY-FIXES.md:264:- ✅ No lingering "c2c" or "c2concierge" in source code
+./DOCUMENTATION-HONESTY-FIXES.md:264:- ✅ No lingering "c2c" or "credlink" in source code
 ./DOCUMENTATION-HONESTY-FIXES.md:293:   - ✅ "TRY IT NOW: https://demo.credlink.com"
 ./DOCUMENTATION-HONESTY-FIXES.md:294:   - ✅ Link to live deployed system
 ./DOCUMENTATION-HONESTY-FIXES.md:295:   - ✅ Real production endpoints

@@ -13,10 +13,10 @@
 **Status:** ✅ MASSIVE SCOPE (nearly 4x expected)
 
 **Breakdown by variation:**
-- `c2concierge` (lowercase): ~1,200+
-- `c2-concierge` (hyphenated): ~150+
-- `C2Concierge` (PascalCase): ~50+
-- `C2CONCIERGE` (uppercase): ~16+
+- `credlink` (lowercase): ~1,200+
+- `credlink` (hyphenated): ~150+
+- `CredLink` (PascalCase): ~50+
+- `CREDLINK` (uppercase): ~16+
 
 **Evidence:**
 - Discovery script: `.phase2-branding/01-discover-all-branding.sh`
@@ -28,10 +28,10 @@
 ## Commitment
 
 I commit to removing **ALL 1,416 references** and replacing them with `credlink` variants:
-- `c2concierge` → `credlink`
-- `c2-concierge` → `credlink`
-- `C2Concierge` → `CredLink`
-- `C2CONCIERGE` → `CREDLINK`
+- `credlink` → `credlink`
+- `credlink` → `credlink`
+- `CredLink` → `CredLink`
+- `CREDLINK` → `CREDLINK`
 
 **No excuses. No shortcuts. No failures.**
 

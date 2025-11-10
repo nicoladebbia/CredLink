@@ -8,7 +8,7 @@ This share extension allows users to verify content credentials from any app tha
 ### 1. Add Share Extension Target
 1. In Xcode, go to File → New → Target
 2. Choose "Share Extension"
-3. Name it "C2ConciergeShare"
+3. Name it "CredLinkShare"
 4. Ensure it's embedded in your main app
 
 ### 2. Configure Info.plist
@@ -48,12 +48,12 @@ This share extension allows users to verify content credentials from any app tha
 import UIKit
 import Social
 import Photos
-import C2ConciergeMobile
+import CredLinkMobile
 
 class ShareViewController: SLComposeServiceViewController {
     
     private let config = C2CConfig(
-        relayBaseURL: URL(string: "https://verify.c2concierge.org")!,
+        relayBaseURL: URL(string: "https://verify.credlink.org")!,
         enableDebugLogging: false
     )
     
@@ -102,7 +102,7 @@ class ShareViewController: SLComposeServiceViewController {
 <dict>
     <key>com.apple.security.application-groups</key>
     <array>
-        <string>group.com.c2concierge.mobile</string>
+        <string>group.com.credlink.mobile</string>
     </array>
 </dict>
 </plist>

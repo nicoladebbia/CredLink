@@ -4,7 +4,7 @@
 ### Structure
 - **3 Interactive Tiles**: Strip | Preserve | Remote
 - **Deep Links**: Each tile links to CAI Verify for that variant
-- **Live URL**: demo.c2concierge.dev (or similar)
+- **Live URL**: demo.credlink.dev (or similar)
 - **Mobile Optimized**: 30-second viewing experience
 
 ### Technical Implementation

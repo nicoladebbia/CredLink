@@ -208,18 +208,18 @@ For material changes to privacy practices:
 
 ### Privacy Questions
 
-- **Email**: privacy@c2concierge.org
-- **Website**: https://c2concierge.org/privacy
-- **GitHub**: https://github.com/Nickiller04/c2-concierge/issues
+- **Email**: privacy@credlink.org
+- **Website**: https://credlink.org/privacy
+- **GitHub**: https://github.com/Nickiller04/credlink/issues
 
 ### Data Protection Officer
 
-- **Email**: dpo@c2concierge.org
+- **Email**: dpo@credlink.org
 - **Address**: CredLink Privacy Team, 123 Tech Street, San Francisco, CA 94105
 
 ### Complaints
 
-- **Internal**: privacy@c2concierge.org
+- **Internal**: privacy@credlink.org
 - **Regulatory**: Relevant data protection authority
 - **Arbitration**: Independent arbitration for disputes
 
@@ -258,4 +258,4 @@ This privacy policy is reviewed annually and updated as needed to reflect:
 
 We are committed to earning and maintaining your trust through transparent privacy practices, minimal data collection, and strong security protections. Your privacy is not an afterthought—it's fundamental to our design and development process.
 
-If you have any questions or concerns about this privacy policy or our privacy practices, please contact us at privacy@c2concierge.org.
+If you have any questions or concerns about this privacy policy or our privacy practices, please contact us at privacy@credlink.org.

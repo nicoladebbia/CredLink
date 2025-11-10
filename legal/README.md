@@ -63,4 +63,4 @@
 
 ## Support
 
-For legal questions or template customization, contact legal@c2concierge.com
+For legal questions or template customization, contact legal@credlink.com

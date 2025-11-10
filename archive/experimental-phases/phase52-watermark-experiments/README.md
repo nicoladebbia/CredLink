@@ -360,8 +360,8 @@ npm run security:scan
 
 ### Issues & Questions
 - **Bug Reports**: Create issue in GitHub repository
-- **Security Issues**: Report to security@c2concierge.com
-- **General Questions**: Contact support@c2concierge.com
+- **Security Issues**: Report to security@credlink.com
+- **General Questions**: Contact support@credlink.com
 
 ### Training & Education
 - **Internal Training**: Schedule through learning management system

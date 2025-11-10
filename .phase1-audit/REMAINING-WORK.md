@@ -43,7 +43,7 @@ These files contain technical claims about "survival rates" and performance metr
 **Recommendation:** Add status warnings to top-level READMEs in each directory (DONE for tests/gauntlet and enterprise-architecture).
 
 ### Category 2: Plugin Documentation
-- `plugins/wp-c2concierge/readme.txt` (4 claims)
+- `plugins/wp-credlink/readme.txt` (4 claims)
 
 **Recommendation:** Add status warning and rename plugin in Phase 2 (branding).
 

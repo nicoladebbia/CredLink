@@ -77,6 +77,6 @@ Day 730+: Automatic expiration (unless legal hold)
 
 ---
 
-**Questions?** compliance@c2concierge.com  
+**Questions?** compliance@credlink.com  
 **Technical Details**: AWS S3 Object Lock Documentation  
 **Last Updated**: November 5, 2025

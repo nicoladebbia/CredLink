@@ -16,7 +16,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 DEPLOY_ENV="${DEPLOY_ENV:-production}"
-NAMESPACE="c2-concierge"
+NAMESPACE="credlink"
 BACKUP_DIR="/tmp/keyctl-backup-$(date +%Y%m%d-%H%M%S)"
 LOG_FILE="/tmp/keyctl-deploy-$(date +%Y%m%d-%H%M%S).log"
 
@@ -150,7 +150,7 @@ create_backup() {
 build_and_push() {
     info "Building and pushing Docker image..."
     
-    local image_tag="c2-concierge/keyctl:$(date +%Y%m%d-%H%M%S)"
+    local image_tag="credlink/keyctl:$(date +%Y%m%d-%H%M%S)"
     local registry="${DOCKER_REGISTRY:-docker.io}"
     
     # Build image
@@ -161,7 +161,7 @@ build_and_push() {
     docker push "$registry/$image_tag" || error_exit "Failed to push Docker image"
     
     # Update deployment with new image
-    sed -i.bak "s|c2-concierge/keyctl:.*|$registry/$image_tag|g" "$PROJECT_ROOT/deploy/k8s/keyctl-deployment.yaml"
+    sed -i.bak "s|credlink/keyctl:.*|$registry/$image_tag|g" "$PROJECT_ROOT/deploy/k8s/keyctl-deployment.yaml"
     
     success "Docker image built and pushed: $image_tag"
 }
@@ -313,8 +313,8 @@ main() {
     generate_report
     
     success "🎉 C2-Concierge deployment completed successfully!"
-    info "Access the application at: https://keyctl.c2-concierge.com"
-    info "Access Grafana at: https://grafana.c2-concierge.com"
+    info "Access the application at: https://keyctl.credlink.com"
+    info "Access Grafana at: https://grafana.credlink.com"
     info "Backup location: $BACKUP_DIR"
     info "Log file: $LOG_FILE"
 }

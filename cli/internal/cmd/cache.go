@@ -236,9 +236,9 @@ func getCacheDir() string {
 	// Follow XDG Base Directory specification
 	if runtime.GOOS == "windows" {
 		if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
-			return filepath.Join(localAppData, "C2Concierge", "Cache")
+			return filepath.Join(localAppData, "CredLink", "Cache")
 		}
-		return filepath.Join(os.Getenv("USERPROFILE"), "AppData", "Local", "C2Concierge", "Cache")
+		return filepath.Join(os.Getenv("USERPROFILE"), "AppData", "Local", "CredLink", "Cache")
 	}
 
 	// Unix-like systems (Linux, macOS)

@@ -1,198 +1,198 @@
-=== SEARCHING: c2concierge (lowercase) ===
-./enterprise-architecture/istio/authorization-policy.yaml:225:  - issuer: "https://c2concierge.com"
-./enterprise-architecture/istio/authorization-policy.yaml:226:    jwksUri: "https://c2concierge.com/.well-known/jwks.json"
-./enterprise-architecture/istio/authorization-policy.yaml:415:  - api.c2concierge.com
-./enterprise-architecture/k8s/auth-service-deployment.yaml:48:        image: ghcr.io/c2concierge/auth-service:latest
-./enterprise-architecture/k8s/auth-service-deployment.yaml:498:          "origin": ["https://c2concierge.com", "https://admin.c2concierge.com"],
-./enterprise-architecture/README.md:72:git clone https://github.com/c2concierge/enterprise-architecture.git
-./enterprise-architecture/.github/workflows/enterprise-ci-cd.yml:253:          environment-url: https://staging.c2concierge.com
-./enterprise-architecture/.github/workflows/enterprise-ci-cd.yml:323:          environment-url: https://c2concierge.com
-./enterprise-architecture/.github/workflows/enterprise-ci-cd.yml:342:          curl -X POST "https://grafana.c2concierge.com/api/dashboards/db" \
-./enterprise-architecture/monitoring/alert_rules.yml:15:          runbook_url: "https://runbooks.c2concierge.com/service-down"
-./enterprise-architecture/monitoring/alert_rules.yml:16:          dashboard_url: "https://grafana.c2concierge.com/d/service-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:28:          runbook_url: "https://runbooks.c2concierge.com/database-down"
-./enterprise-architecture/monitoring/alert_rules.yml:29:          dashboard_url: "https://grafana.c2concierge.com/d/database-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:41:          runbook_url: "https://runbooks.c2concierge.com/high-error-rate"
-./enterprise-architecture/monitoring/alert_rules.yml:42:          dashboard_url: "https://grafana.c2concierge.com/d/service-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:54:          runbook_url: "https://runbooks.c2concierge.com/high-latency"
-./enterprise-architecture/monitoring/alert_rules.yml:55:          dashboard_url: "https://grafana.c2concierge.com/d/service-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:67:          runbook_url: "https://runbooks.c2concierge.com/high-memory"
-./enterprise-architecture/monitoring/alert_rules.yml:68:          dashboard_url: "https://grafana.c2concierge.com/d/system-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:80:          runbook_url: "https://runbooks.c2concierge.com/high-cpu"
-./enterprise-architecture/monitoring/alert_rules.yml:81:          dashboard_url: "https://grafana.c2concierge.com/d/system-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:93:          runbook_url: "https://runbooks.c2concierge.com/low-disk-space"
-./enterprise-architecture/monitoring/alert_rules.yml:94:          dashboard_url: "https://grafana.c2concierge.com/d/system-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:106:          runbook_url: "https://runbooks.c2concierge.com/redis-down"
-./enterprise-architecture/monitoring/alert_rules.yml:107:          dashboard_url: "https://grafana.c2concierge.com/d/redis-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:119:          runbook_url: "https://runbooks.c2concierge.com/kafka-down"
-./enterprise-architecture/monitoring/alert_rules.yml:120:          dashboard_url: "https://grafana.c2concierge.com/d/kafka-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:132:          runbook_url: "https://runbooks.c2concierge.com/high-db-connections"
-./enterprise-architecture/monitoring/alert_rules.yml:133:          dashboard_url: "https://grafana.c2concierge.com/d/database-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:145:          runbook_url: "https://runbooks.c2concierge.com/queue-backlog"
-./enterprise-architecture/monitoring/alert_rules.yml:146:          dashboard_url: "https://grafana.c2concierge.com/d/kafka-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:158:          runbook_url: "https://runbooks.c2concierge.com/high-failed-logins"
-./enterprise-architecture/monitoring/alert_rules.yml:159:          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:171:          runbook_url: "https://runbooks.c2concierge.com/unusual-traffic"
-./enterprise-architecture/monitoring/alert_rules.yml:172:          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:184:          runbook_url: "https://runbooks.c2concierge.com/ssl-expiring"
-./enterprise-architecture/monitoring/alert_rules.yml:185:          dashboard_url: "https://grafana.c2concierge.com/d/ssl-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:197:          runbook_url: "https://runbooks.c2concierge.com/pod-crash-looping"
-./enterprise-architecture/monitoring/alert_rules.yml:198:          dashboard_url: "https://grafana.c2concierge.com/d/kubernetes-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:210:          runbook_url: "https://runbooks.c2concierge.com/pod-not-ready"
-./enterprise-architecture/monitoring/alert_rules.yml:211:          dashboard_url: "https://grafana.c2concierge.com/d/kubernetes-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:223:          runbook_url: "https://runbooks.c2concierge.com/node-not-ready"
-./enterprise-architecture/monitoring/alert_rules.yml:224:          dashboard_url: "https://grafana.c2concierge.com/d/kubernetes-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:236:          runbook_url: "https://runbooks.c2concierge.com/elasticsearch-red"
-./enterprise-architecture/monitoring/alert_rules.yml:237:          dashboard_url: "https://grafana.c2concierge.com/d/elasticsearch-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:249:          runbook_url: "https://runbooks.c2concierge.com/elasticsearch-yellow"
-./enterprise-architecture/monitoring/alert_rules.yml:250:          dashboard_url: "https://grafana.c2concierge.com/d/elasticsearch-overview"
-./enterprise-architecture/monitoring/alert_rules.yml:262:          runbook_url: "https://runbooks.c2concierge.com/high-sessions"
-./enterprise-architecture/monitoring/alert_rules.yml:263:          dashboard_url: "https://grafana.c2concierge.com/d/auth-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:275:          runbook_url: "https://runbooks.c2concierge.com/signing-queue-backlog"
-./enterprise-architecture/monitoring/alert_rules.yml:276:          dashboard_url: "https://grafana.c2concierge.com/d/signing-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:288:          runbook_url: "https://runbooks.c2concierge.com/slow-webhook-processing"
-./enterprise-architecture/monitoring/alert_rules.yml:289:          dashboard_url: "https://grafana.c2concierge.com/d/webhook-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:301:          runbook_url: "https://runbooks.c2concierge.com/external-api-failure"
-./enterprise-architecture/monitoring/alert_rules.yml:302:          dashboard_url: "https://grafana.c2concierge.com/d/external-apis"
-./enterprise-architecture/monitoring/alert_rules.yml:316:          runbook_url: "https://runbooks.c2concierge.com/low-signing-success"
-./enterprise-architecture/monitoring/alert_rules.yml:317:          dashboard_url: "https://grafana.c2concierge.com/d/business-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:329:          runbook_url: "https://runbooks.c2concierge.com/high-churn"
-./enterprise-architecture/monitoring/alert_rules.yml:330:          dashboard_url: "https://grafana.c2concierge.com/d/business-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:342:          runbook_url: "https://runbooks.c2concierge.com/revenue-drop"
-./enterprise-architecture/monitoring/alert_rules.yml:343:          dashboard_url: "https://grafana.c2concierge.com/d/business-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:357:          runbook_url: "https://runbooks.c2concierge.com/brute-force-attack"
-./enterprise-architecture/monitoring/alert_rules.yml:358:          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:370:          runbook_url: "https://runbooks.c2concierge.com/suspicious-activity"
-./enterprise-architecture/monitoring/alert_rules.yml:371:          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
-./enterprise-architecture/monitoring/alert_rules.yml:383:          runbook_url: "https://runbooks.c2concierge.com/data-breach"
-./enterprise-architecture/monitoring/alert_rules.yml:384:          dashboard_url: "https://grafana.c2concierge.com/d/security-metrics"
-./enterprise-architecture/monitoring/prometheus.yml:206:        - https://api.c2concierge.com/health
-./enterprise-architecture/monitoring/prometheus.yml:207:        - https://shopify.c2concierge.com/health
-./enterprise-architecture/monitoring/prometheus.yml:208:        - https://admin.c2concierge.com/health
-./enterprise-architecture/monitoring/prometheus.yml:289:  - url: "https://prometheus-remote-write.c2concierge.com/api/v1/write"
-./infra/terraform/examples/complete-deployment.tf:67:    "${var.env}.c2concierge.com/manifest/*",
-./infra/terraform/examples/complete-deployment.tf:68:    "${var.env}.c2concierge.com/api/*"
-./infra/terraform/examples/complete-deployment.tf:121:    "https://${var.env}.c2concierge.com/health/cache",
-./infra/terraform/examples/complete-deployment.tf:122:    "https://${var.env}.c2concierge.com/health/rehydration",
-./infra/terraform/examples/complete-deployment.tf:123:    "https://${var.env}.c2concierge.com/health/worker"
-./infra/terraform/examples/complete-deployment.tf:129:      target = "alerts@c2concierge.com"
-./infra/terraform/examples/complete-deployment.tf:297:    "https://c2concierge.com/health/cache",
-./infra/terraform/examples/complete-deployment.tf:298:    "https://c2concierge.com/health/rehydration",
-./infra/terraform/examples/complete-deployment.tf:299:    "https://c2concierge.com/health/worker",
-./infra/terraform/examples/complete-deployment.tf:300:    "https://api.c2concierge.com/health"
-./infra/terraform/examples/complete-deployment.tf:306:      target = "alerts@c2concierge.com"
-./infra/terraform/examples/complete-deployment.tf:321:      url    = "https://c2concierge.com/api/manifest"
-./infra/terraform/examples/complete-deployment.tf:332:      url                    = "https://c2concierge.com/api/verify/status"
-./infra/terraform/modules/storage/main.tf:538:      "https://c2concierge.com",
-./infra/terraform/modules/storage/main.tf:539:      "https://*.c2concierge.com",
-./infra/terraform/modules/storage/main.tf:540:      "https://app.c2concierge.com"
-./infra/terraform/modules/storage/main.tf:573:      "https://c2concierge.com",
-./infra/terraform/modules/storage/main.tf:574:      "https://*.c2concierge.com",
-./infra/terraform/modules/storage/main.tf:575:      "https://app.c2concierge.com"
-./infra/terraform/envs/demo/variables.tf:72:    "demo.c2concierge.com/manifest/*",
-./infra/terraform/envs/demo/variables.tf:73:    "demo.c2concierge.com/api/*"
-./infra/terraform/envs/demo/variables.tf:103:    "https://demo.c2concierge.com/health/cache",
-./infra/terraform/envs/demo/variables.tf:104:    "https://demo.c2concierge.com/health/rehydration"
-./infra/terraform/envs/demo/variables.tf:117:      target = "alerts@c2concierge.com"
-./infra/terraform/envs/demo/terraform.tfvars.example:19:  "demo.c2concierge.com/manifest/*",
-./infra/terraform/envs/demo/terraform.tfvars.example:20:  "demo.c2concierge.com/api/*"
-./infra/terraform/envs/demo/terraform.tfvars.example:26:  "https://demo.c2concierge.com/health/cache",
-./infra/terraform/envs/demo/terraform.tfvars.example:27:  "https://demo.c2concierge.com/health/rehydration"
-./infra/terraform/envs/demo/terraform.tfvars.example:34:    target = "alerts@c2concierge.com"
-./infra/terraform/envs/demo/terraform.tfvars.example:50:otlp_endpoint = "https://otel-collector.demo.c2concierge.com:4317"
-./infra/terraform/envs/demo/terraform.tfvars.example:57:alert_email = "demo-alerts@c2concierge.com"
-./infra/terraform/envs/demo/terraform.tfvars.example:71:vault_address = "https://vault.demo.c2concierge.com"
-./infra/terraform/envs/prod/main.tf:11:    organization = "c2concierge"
-./infra/terraform/envs/prod/variables.tf:82:    "c2concierge.com/manifest/*",
-./infra/terraform/envs/prod/variables.tf:83:    "c2concierge.com/api/*",
-./infra/terraform/envs/prod/variables.tf:84:    "api.c2concierge.com/*"
-./infra/terraform/envs/prod/variables.tf:126:    "https://c2concierge.com/health/cache",
-./infra/terraform/envs/prod/variables.tf:127:    "https://c2concierge.com/health/rehydration",
-./infra/terraform/envs/prod/variables.tf:128:    "https://c2concierge.com/health/worker",
-./infra/terraform/envs/prod/variables.tf:129:    "https://api.c2concierge.com/health"
-./infra/terraform/envs/prod/variables.tf:142:      target = "alerts@c2concierge.com"
-./infra/terraform/envs/prod/variables.tf:195:  default     = "https://otel-collector.c2concierge.com:4317"
-./infra/terraform/envs/prod/terraform.tfvars.example:19:  "c2concierge.com/manifest/*",
-./infra/terraform/envs/prod/terraform.tfvars.example:20:  "c2concierge.com/api/*",
-./infra/terraform/envs/prod/terraform.tfvars.example:21:  "api.c2concierge.com/*"
-./infra/terraform/envs/prod/terraform.tfvars.example:27:  "https://c2concierge.com/health/cache",
-./infra/terraform/envs/prod/terraform.tfvars.example:28:  "https://c2concierge.com/health/rehydration",
-./infra/terraform/envs/prod/terraform.tfvars.example:29:  "https://c2concierge.com/health/worker",
-./infra/terraform/envs/prod/terraform.tfvars.example:30:  "https://api.c2concierge.com/health"
-./infra/terraform/envs/prod/terraform.tfvars.example:37:    target = "alerts@c2concierge.com"
-./infra/terraform/envs/prod/terraform.tfvars.example:61:otlp_endpoint = "https://otel-collector.c2concierge.com:4317"
-./infra/terraform/envs/prod/terraform.tfvars.example:68:alert_email = "security-alerts@c2concierge.com"
-./infra/terraform/envs/prod/terraform.tfvars.example:82:vault_address = "https://vault.c2concierge.com"
-./infra/terraform/envs/prod/terraform.tfvars.example:90:log_aggregation_endpoint = "https://log-aggregator.c2concierge.com"
-./infra/terraform/envs/staging/variables.tf:72:    "staging.c2concierge.com/manifest/*",
-./infra/terraform/envs/staging/variables.tf:73:    "staging.c2concierge.com/api/*"
-./infra/terraform/envs/staging/variables.tf:107:    "https://staging.c2concierge.com/health/cache",
-./infra/terraform/envs/staging/variables.tf:108:    "https://staging.c2concierge.com/health/rehydration",
-./infra/terraform/envs/staging/variables.tf:109:    "https://staging.c2concierge.com/health/worker"
-./infra/terraform/envs/staging/variables.tf:122:      target = "alerts@c2concierge.com"
-./infra/terraform/envs/staging/variables.tf:171:  default     = "https://otel-collector.staging.c2concierge.com:4317"
-./infra/terraform/envs/staging/terraform.tfvars.example:19:  "staging.c2concierge.com/manifest/*",
-./infra/terraform/envs/staging/terraform.tfvars.example:20:  "staging.c2concierge.com/api/*"
-./infra/terraform/envs/staging/terraform.tfvars.example:26:  "https://staging.c2concierge.com/health/cache",
-./infra/terraform/envs/staging/terraform.tfvars.example:27:  "https://staging.c2concierge.com/health/rehydration",
-./infra/terraform/envs/staging/terraform.tfvars.example:28:  "https://staging.c2concierge.com/health/worker"
-./infra/terraform/envs/staging/terraform.tfvars.example:35:    target = "alerts@c2concierge.com"
-./infra/terraform/envs/staging/terraform.tfvars.example:55:otlp_endpoint = "https://otel-collector.staging.c2concierge.com:4317"
-./infra/terraform/envs/staging/terraform.tfvars.example:62:alert_email = "security-alerts@c2concierge.com"
-./infra/terraform/envs/staging/terraform.tfvars.example:76:vault_address = "https://vault.staging.c2concierge.com"
-./infra/db/liquibase.properties:6:url=jdbc:postgresql://localhost:5432/c2concierge
-./core/compliance/openapi.yaml:16:    email: support@c2concierge.com
-./core/compliance/openapi.yaml:17:    url: https://docs.c2concierge.com
-./core/compliance/openapi.yaml:23:  - url: https://api.c2concierge.com/v1
-./core/compliance/openapi.yaml:25:  - url: https://staging-api.c2concierge.com/v1
-./core/compliance/openapi.yaml:85:                pack_url_pdf: "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf"
-./core/compliance/openapi.yaml:86:                pack_url_json: "https://storage.c2concierge.com/packs/acme-news/2025-10.json"
-./core/compliance/openapi.yaml:371:          example: "https://storage.c2concierge.com/packs/acme-news/2025-10.pdf"
-./core/compliance/openapi.yaml:376:          example: "https://storage.c2concierge.com/packs/acme-news/2025-10.json"
-./core/c2pa-audit/docs/phase32-licensed-enforcement.md:366:- Documentation: https://docs.c2concierge.org
-./core/c2pa-audit/docs/phase32-licensed-enforcement.md:368:- Security: security@c2concierge.org
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:69:**Live Demo**: [Demo Asset - Remote Manifest](https://demo.c2concierge.com/remote-survival)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:154:**Stack Demos**: [WordPress](https://demo.c2concierge.com/wp) | [Shopify](https://demo.c2concierge.com/shopify) | [Cloudflare](https://demo.c2concierge.com/cf)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:176:  body: JSON.stringify({ assetUrl: 'https://demo.c2concierge.com/sample.jpg' })
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:185:    const response = await fetch('https://api.c2concierge.com/verify', {
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:219:**API Demo**: [Live /verify Demo](https://demo.c2concierge.com/verify)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:297:**Optimizer Demo**: [Optimizer Survival Test](https://demo.c2concierge.com/optimizers)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:452:**Compliance Demo**: [Live Compliance Test](https://demo.c2concierge.com/compliance)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:466:- Join our [Discourse Forum](https://community.c2concierge.com)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:467:- Attend [Monthly Office Hours](https://c2concierge.com/office-hours)
-./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:468:- Submit your [15-minute to green demo](https://c2concierge.com/submit-demo)
-./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:39:    const apiEndpoint = process.env.C2PA_API_ENDPOINT || 'https://api.c2concierge.com/verify';
-./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:126:**Live Demo**: [Interactive /verify Demo](https://docs.c2concierge.com/verify-demo)
-./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:169:    const apiEndpoint = process.env.C2PA_SIGN_ENDPOINT || 'https://api.c2concierge.com/sign';
-./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:232:**Live Demo**: [Interactive /sign Demo](https://docs.c2concierge.com/sign-demo)
-./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:282:[Verify Sample Image →](https://contentauthenticity.org/verify?url=https://demo.c2concierge.com/wp-sample.jpg)
-./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:81:  authentication_domains: ["c2concierge.com"]
-./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:534:    const imageUrl = `https://demo.c2concierge.com/embedded-${Date.now()}.jpg`;
-./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:550:    const imageUrl = `https://demo.c2concierge.com/${assetId}.jpg`;
-./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:551:    const manifestUrl = `https://cdn.c2concierge.com/manifests/${assetId}.json`;
-./archive/experimental-phases/phase55-education-community/risk-mitigations/contingency-planning.md:627:      supportContact: 'support@c2concierge.com'
-./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:997:      { name: 'Documentation Site', url: 'https://docs.c2concierge.com', type: 'website' },
-./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:998:      { name: 'Community Forum', url: 'https://community.c2concierge.com', type: 'forum' },
-./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:999:      { name: 'Demo Sites', url: 'https://demo.c2concierge.com', type: 'website' },
-./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:1000:      { name: 'Analytics API', url: 'https://api.c2concierge.com/health', type: 'api' },
-./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:1001:      { name: 'Course Platform', url: 'https://learn.c2concierge.com/health', type: 'api' },
-./archive/experimental-phases/phase55-education-community/community/forum-setup.md:19:    hostname: discourse.c2concierge.com
-./archive/experimental-phases/phase55-education-community/community/forum-setup.md:494:      forumLink: 'https://community.c2concierge.com/t/wordpress-manifest-troubleshooting/123',
-./archive/experimental-phases/phase55-education-community/community/forum-setup.md:507:      forumLink: 'https://community.c2concierge.com/t/cai-verify-troubleshooting/456',
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:40:- [ ] Live Discourse forum at community.c2concierge.com
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:188:curl -f https://docs.c2concierge.com/module-1 | grep -q "Why Embeds Break"
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:189:curl -f https://demo.c2concierge.com/module-1-demo | grep -q "Interactive Demo"
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:194:  "https://contentauthenticity.org/verify?url=https://demo.c2concierge.com/wp-sample.jpg"
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:195:  "https://contentauthenticity.org/verify?url=https://demo.c2concierge.com/shopify-sample.jpg"
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:252:1. 🎓 Start with Module 1: https://docs.c2concierge.com/module-1
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:253:2. 🛠️ Try your stack: https://docs.c2concierge.com/stack-guides
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:254:3. 💬 Join community: https://community.c2concierge.com
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:255:4. 🏆 Submit 15-minute demo: https://c2concierge.com/submit-demo
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:290:./scripts/update-dns.sh docs.c2concierge.com
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:291:./scripts/update-ssl.sh docs.c2concierge.com
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:294:curl -X POST https://community.c2concierge.com/admin/enable \
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:305:- [ ] Education platform live at docs.c2concierge.com
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:394:    wordpress_demo_url: 'https://demo.c2concierge.com/wordpress-live',
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:523:DISCOURSE_URL="https://community.c2concierge.com"
-./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:601:  const response = await fetch('https://api.c2concierge.com/verify', {
+=== SEARCHING: credlink (lowercase) ===
+./enterprise-architecture/istio/authorization-policy.yaml:225:  - issuer: "https://credlink.com"
+./enterprise-architecture/istio/authorization-policy.yaml:226:    jwksUri: "https://credlink.com/.well-known/jwks.json"
+./enterprise-architecture/istio/authorization-policy.yaml:415:  - api.credlink.com
+./enterprise-architecture/k8s/auth-service-deployment.yaml:48:        image: ghcr.io/credlink/auth-service:latest
+./enterprise-architecture/k8s/auth-service-deployment.yaml:498:          "origin": ["https://credlink.com", "https://admin.credlink.com"],
+./enterprise-architecture/README.md:72:git clone https://github.com/credlink/enterprise-architecture.git
+./enterprise-architecture/.github/workflows/enterprise-ci-cd.yml:253:          environment-url: https://staging.credlink.com
+./enterprise-architecture/.github/workflows/enterprise-ci-cd.yml:323:          environment-url: https://credlink.com
+./enterprise-architecture/.github/workflows/enterprise-ci-cd.yml:342:          curl -X POST "https://grafana.credlink.com/api/dashboards/db" \
+./enterprise-architecture/monitoring/alert_rules.yml:15:          runbook_url: "https://runbooks.credlink.com/service-down"
+./enterprise-architecture/monitoring/alert_rules.yml:16:          dashboard_url: "https://grafana.credlink.com/d/service-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:28:          runbook_url: "https://runbooks.credlink.com/database-down"
+./enterprise-architecture/monitoring/alert_rules.yml:29:          dashboard_url: "https://grafana.credlink.com/d/database-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:41:          runbook_url: "https://runbooks.credlink.com/high-error-rate"
+./enterprise-architecture/monitoring/alert_rules.yml:42:          dashboard_url: "https://grafana.credlink.com/d/service-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:54:          runbook_url: "https://runbooks.credlink.com/high-latency"
+./enterprise-architecture/monitoring/alert_rules.yml:55:          dashboard_url: "https://grafana.credlink.com/d/service-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:67:          runbook_url: "https://runbooks.credlink.com/high-memory"
+./enterprise-architecture/monitoring/alert_rules.yml:68:          dashboard_url: "https://grafana.credlink.com/d/system-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:80:          runbook_url: "https://runbooks.credlink.com/high-cpu"
+./enterprise-architecture/monitoring/alert_rules.yml:81:          dashboard_url: "https://grafana.credlink.com/d/system-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:93:          runbook_url: "https://runbooks.credlink.com/low-disk-space"
+./enterprise-architecture/monitoring/alert_rules.yml:94:          dashboard_url: "https://grafana.credlink.com/d/system-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:106:          runbook_url: "https://runbooks.credlink.com/redis-down"
+./enterprise-architecture/monitoring/alert_rules.yml:107:          dashboard_url: "https://grafana.credlink.com/d/redis-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:119:          runbook_url: "https://runbooks.credlink.com/kafka-down"
+./enterprise-architecture/monitoring/alert_rules.yml:120:          dashboard_url: "https://grafana.credlink.com/d/kafka-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:132:          runbook_url: "https://runbooks.credlink.com/high-db-connections"
+./enterprise-architecture/monitoring/alert_rules.yml:133:          dashboard_url: "https://grafana.credlink.com/d/database-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:145:          runbook_url: "https://runbooks.credlink.com/queue-backlog"
+./enterprise-architecture/monitoring/alert_rules.yml:146:          dashboard_url: "https://grafana.credlink.com/d/kafka-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:158:          runbook_url: "https://runbooks.credlink.com/high-failed-logins"
+./enterprise-architecture/monitoring/alert_rules.yml:159:          dashboard_url: "https://grafana.credlink.com/d/security-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:171:          runbook_url: "https://runbooks.credlink.com/unusual-traffic"
+./enterprise-architecture/monitoring/alert_rules.yml:172:          dashboard_url: "https://grafana.credlink.com/d/security-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:184:          runbook_url: "https://runbooks.credlink.com/ssl-expiring"
+./enterprise-architecture/monitoring/alert_rules.yml:185:          dashboard_url: "https://grafana.credlink.com/d/ssl-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:197:          runbook_url: "https://runbooks.credlink.com/pod-crash-looping"
+./enterprise-architecture/monitoring/alert_rules.yml:198:          dashboard_url: "https://grafana.credlink.com/d/kubernetes-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:210:          runbook_url: "https://runbooks.credlink.com/pod-not-ready"
+./enterprise-architecture/monitoring/alert_rules.yml:211:          dashboard_url: "https://grafana.credlink.com/d/kubernetes-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:223:          runbook_url: "https://runbooks.credlink.com/node-not-ready"
+./enterprise-architecture/monitoring/alert_rules.yml:224:          dashboard_url: "https://grafana.credlink.com/d/kubernetes-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:236:          runbook_url: "https://runbooks.credlink.com/elasticsearch-red"
+./enterprise-architecture/monitoring/alert_rules.yml:237:          dashboard_url: "https://grafana.credlink.com/d/elasticsearch-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:249:          runbook_url: "https://runbooks.credlink.com/elasticsearch-yellow"
+./enterprise-architecture/monitoring/alert_rules.yml:250:          dashboard_url: "https://grafana.credlink.com/d/elasticsearch-overview"
+./enterprise-architecture/monitoring/alert_rules.yml:262:          runbook_url: "https://runbooks.credlink.com/high-sessions"
+./enterprise-architecture/monitoring/alert_rules.yml:263:          dashboard_url: "https://grafana.credlink.com/d/auth-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:275:          runbook_url: "https://runbooks.credlink.com/signing-queue-backlog"
+./enterprise-architecture/monitoring/alert_rules.yml:276:          dashboard_url: "https://grafana.credlink.com/d/signing-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:288:          runbook_url: "https://runbooks.credlink.com/slow-webhook-processing"
+./enterprise-architecture/monitoring/alert_rules.yml:289:          dashboard_url: "https://grafana.credlink.com/d/webhook-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:301:          runbook_url: "https://runbooks.credlink.com/external-api-failure"
+./enterprise-architecture/monitoring/alert_rules.yml:302:          dashboard_url: "https://grafana.credlink.com/d/external-apis"
+./enterprise-architecture/monitoring/alert_rules.yml:316:          runbook_url: "https://runbooks.credlink.com/low-signing-success"
+./enterprise-architecture/monitoring/alert_rules.yml:317:          dashboard_url: "https://grafana.credlink.com/d/business-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:329:          runbook_url: "https://runbooks.credlink.com/high-churn"
+./enterprise-architecture/monitoring/alert_rules.yml:330:          dashboard_url: "https://grafana.credlink.com/d/business-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:342:          runbook_url: "https://runbooks.credlink.com/revenue-drop"
+./enterprise-architecture/monitoring/alert_rules.yml:343:          dashboard_url: "https://grafana.credlink.com/d/business-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:357:          runbook_url: "https://runbooks.credlink.com/brute-force-attack"
+./enterprise-architecture/monitoring/alert_rules.yml:358:          dashboard_url: "https://grafana.credlink.com/d/security-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:370:          runbook_url: "https://runbooks.credlink.com/suspicious-activity"
+./enterprise-architecture/monitoring/alert_rules.yml:371:          dashboard_url: "https://grafana.credlink.com/d/security-metrics"
+./enterprise-architecture/monitoring/alert_rules.yml:383:          runbook_url: "https://runbooks.credlink.com/data-breach"
+./enterprise-architecture/monitoring/alert_rules.yml:384:          dashboard_url: "https://grafana.credlink.com/d/security-metrics"
+./enterprise-architecture/monitoring/prometheus.yml:206:        - https://api.credlink.com/health
+./enterprise-architecture/monitoring/prometheus.yml:207:        - https://shopify.credlink.com/health
+./enterprise-architecture/monitoring/prometheus.yml:208:        - https://admin.credlink.com/health
+./enterprise-architecture/monitoring/prometheus.yml:289:  - url: "https://prometheus-remote-write.credlink.com/api/v1/write"
+./infra/terraform/examples/complete-deployment.tf:67:    "${var.env}.credlink.com/manifest/*",
+./infra/terraform/examples/complete-deployment.tf:68:    "${var.env}.credlink.com/api/*"
+./infra/terraform/examples/complete-deployment.tf:121:    "https://${var.env}.credlink.com/health/cache",
+./infra/terraform/examples/complete-deployment.tf:122:    "https://${var.env}.credlink.com/health/rehydration",
+./infra/terraform/examples/complete-deployment.tf:123:    "https://${var.env}.credlink.com/health/worker"
+./infra/terraform/examples/complete-deployment.tf:129:      target = "alerts@credlink.com"
+./infra/terraform/examples/complete-deployment.tf:297:    "https://credlink.com/health/cache",
+./infra/terraform/examples/complete-deployment.tf:298:    "https://credlink.com/health/rehydration",
+./infra/terraform/examples/complete-deployment.tf:299:    "https://credlink.com/health/worker",
+./infra/terraform/examples/complete-deployment.tf:300:    "https://api.credlink.com/health"
+./infra/terraform/examples/complete-deployment.tf:306:      target = "alerts@credlink.com"
+./infra/terraform/examples/complete-deployment.tf:321:      url    = "https://credlink.com/api/manifest"
+./infra/terraform/examples/complete-deployment.tf:332:      url                    = "https://credlink.com/api/verify/status"
+./infra/terraform/modules/storage/main.tf:538:      "https://credlink.com",
+./infra/terraform/modules/storage/main.tf:539:      "https://*.credlink.com",
+./infra/terraform/modules/storage/main.tf:540:      "https://app.credlink.com"
+./infra/terraform/modules/storage/main.tf:573:      "https://credlink.com",
+./infra/terraform/modules/storage/main.tf:574:      "https://*.credlink.com",
+./infra/terraform/modules/storage/main.tf:575:      "https://app.credlink.com"
+./infra/terraform/envs/demo/variables.tf:72:    "demo.credlink.com/manifest/*",
+./infra/terraform/envs/demo/variables.tf:73:    "demo.credlink.com/api/*"
+./infra/terraform/envs/demo/variables.tf:103:    "https://demo.credlink.com/health/cache",
+./infra/terraform/envs/demo/variables.tf:104:    "https://demo.credlink.com/health/rehydration"
+./infra/terraform/envs/demo/variables.tf:117:      target = "alerts@credlink.com"
+./infra/terraform/envs/demo/terraform.tfvars.example:19:  "demo.credlink.com/manifest/*",
+./infra/terraform/envs/demo/terraform.tfvars.example:20:  "demo.credlink.com/api/*"
+./infra/terraform/envs/demo/terraform.tfvars.example:26:  "https://demo.credlink.com/health/cache",
+./infra/terraform/envs/demo/terraform.tfvars.example:27:  "https://demo.credlink.com/health/rehydration"
+./infra/terraform/envs/demo/terraform.tfvars.example:34:    target = "alerts@credlink.com"
+./infra/terraform/envs/demo/terraform.tfvars.example:50:otlp_endpoint = "https://otel-collector.demo.credlink.com:4317"
+./infra/terraform/envs/demo/terraform.tfvars.example:57:alert_email = "demo-alerts@credlink.com"
+./infra/terraform/envs/demo/terraform.tfvars.example:71:vault_address = "https://vault.demo.credlink.com"
+./infra/terraform/envs/prod/main.tf:11:    organization = "credlink"
+./infra/terraform/envs/prod/variables.tf:82:    "credlink.com/manifest/*",
+./infra/terraform/envs/prod/variables.tf:83:    "credlink.com/api/*",
+./infra/terraform/envs/prod/variables.tf:84:    "api.credlink.com/*"
+./infra/terraform/envs/prod/variables.tf:126:    "https://credlink.com/health/cache",
+./infra/terraform/envs/prod/variables.tf:127:    "https://credlink.com/health/rehydration",
+./infra/terraform/envs/prod/variables.tf:128:    "https://credlink.com/health/worker",
+./infra/terraform/envs/prod/variables.tf:129:    "https://api.credlink.com/health"
+./infra/terraform/envs/prod/variables.tf:142:      target = "alerts@credlink.com"
+./infra/terraform/envs/prod/variables.tf:195:  default     = "https://otel-collector.credlink.com:4317"
+./infra/terraform/envs/prod/terraform.tfvars.example:19:  "credlink.com/manifest/*",
+./infra/terraform/envs/prod/terraform.tfvars.example:20:  "credlink.com/api/*",
+./infra/terraform/envs/prod/terraform.tfvars.example:21:  "api.credlink.com/*"
+./infra/terraform/envs/prod/terraform.tfvars.example:27:  "https://credlink.com/health/cache",
+./infra/terraform/envs/prod/terraform.tfvars.example:28:  "https://credlink.com/health/rehydration",
+./infra/terraform/envs/prod/terraform.tfvars.example:29:  "https://credlink.com/health/worker",
+./infra/terraform/envs/prod/terraform.tfvars.example:30:  "https://api.credlink.com/health"
+./infra/terraform/envs/prod/terraform.tfvars.example:37:    target = "alerts@credlink.com"
+./infra/terraform/envs/prod/terraform.tfvars.example:61:otlp_endpoint = "https://otel-collector.credlink.com:4317"
+./infra/terraform/envs/prod/terraform.tfvars.example:68:alert_email = "security-alerts@credlink.com"
+./infra/terraform/envs/prod/terraform.tfvars.example:82:vault_address = "https://vault.credlink.com"
+./infra/terraform/envs/prod/terraform.tfvars.example:90:log_aggregation_endpoint = "https://log-aggregator.credlink.com"
+./infra/terraform/envs/staging/variables.tf:72:    "staging.credlink.com/manifest/*",
+./infra/terraform/envs/staging/variables.tf:73:    "staging.credlink.com/api/*"
+./infra/terraform/envs/staging/variables.tf:107:    "https://staging.credlink.com/health/cache",
+./infra/terraform/envs/staging/variables.tf:108:    "https://staging.credlink.com/health/rehydration",
+./infra/terraform/envs/staging/variables.tf:109:    "https://staging.credlink.com/health/worker"
+./infra/terraform/envs/staging/variables.tf:122:      target = "alerts@credlink.com"
+./infra/terraform/envs/staging/variables.tf:171:  default     = "https://otel-collector.staging.credlink.com:4317"
+./infra/terraform/envs/staging/terraform.tfvars.example:19:  "staging.credlink.com/manifest/*",
+./infra/terraform/envs/staging/terraform.tfvars.example:20:  "staging.credlink.com/api/*"
+./infra/terraform/envs/staging/terraform.tfvars.example:26:  "https://staging.credlink.com/health/cache",
+./infra/terraform/envs/staging/terraform.tfvars.example:27:  "https://staging.credlink.com/health/rehydration",
+./infra/terraform/envs/staging/terraform.tfvars.example:28:  "https://staging.credlink.com/health/worker"
+./infra/terraform/envs/staging/terraform.tfvars.example:35:    target = "alerts@credlink.com"
+./infra/terraform/envs/staging/terraform.tfvars.example:55:otlp_endpoint = "https://otel-collector.staging.credlink.com:4317"
+./infra/terraform/envs/staging/terraform.tfvars.example:62:alert_email = "security-alerts@credlink.com"
+./infra/terraform/envs/staging/terraform.tfvars.example:76:vault_address = "https://vault.staging.credlink.com"
+./infra/db/liquibase.properties:6:url=jdbc:postgresql://localhost:5432/credlink
+./core/compliance/openapi.yaml:16:    email: support@credlink.com
+./core/compliance/openapi.yaml:17:    url: https://docs.credlink.com
+./core/compliance/openapi.yaml:23:  - url: https://api.credlink.com/v1
+./core/compliance/openapi.yaml:25:  - url: https://staging-api.credlink.com/v1
+./core/compliance/openapi.yaml:85:                pack_url_pdf: "https://storage.credlink.com/packs/acme-news/2025-10.pdf"
+./core/compliance/openapi.yaml:86:                pack_url_json: "https://storage.credlink.com/packs/acme-news/2025-10.json"
+./core/compliance/openapi.yaml:371:          example: "https://storage.credlink.com/packs/acme-news/2025-10.pdf"
+./core/compliance/openapi.yaml:376:          example: "https://storage.credlink.com/packs/acme-news/2025-10.json"
+./core/c2pa-audit/docs/phase32-licensed-enforcement.md:366:- Documentation: https://docs.credlink.org
+./core/c2pa-audit/docs/phase32-licensed-enforcement.md:368:- Security: security@credlink.org
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:69:**Live Demo**: [Demo Asset - Remote Manifest](https://demo.credlink.com/remote-survival)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:154:**Stack Demos**: [WordPress](https://demo.credlink.com/wp) | [Shopify](https://demo.credlink.com/shopify) | [Cloudflare](https://demo.credlink.com/cf)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:176:  body: JSON.stringify({ assetUrl: 'https://demo.credlink.com/sample.jpg' })
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:185:    const response = await fetch('https://api.credlink.com/verify', {
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:219:**API Demo**: [Live /verify Demo](https://demo.credlink.com/verify)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:297:**Optimizer Demo**: [Optimizer Survival Test](https://demo.credlink.com/optimizers)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:452:**Compliance Demo**: [Live Compliance Test](https://demo.credlink.com/compliance)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:466:- Join our [Discourse Forum](https://community.credlink.com)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:467:- Attend [Monthly Office Hours](https://credlink.com/office-hours)
+./archive/experimental-phases/phase55-education-community/curriculum/provenance-survival-101.md:468:- Submit your [15-minute to green demo](https://credlink.com/submit-demo)
+./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:39:    const apiEndpoint = process.env.C2PA_API_ENDPOINT || 'https://api.credlink.com/verify';
+./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:126:**Live Demo**: [Interactive /verify Demo](https://docs.credlink.com/verify-demo)
+./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:169:    const apiEndpoint = process.env.C2PA_SIGN_ENDPOINT || 'https://api.credlink.com/sign';
+./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:232:**Live Demo**: [Interactive /sign Demo](https://docs.credlink.com/sign-demo)
+./archive/experimental-phases/phase55-education-community/docs/interactive-docs.md:282:[Verify Sample Image →](https://contentauthenticity.org/verify?url=https://demo.credlink.com/wp-sample.jpg)
+./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:81:  authentication_domains: ["credlink.com"]
+./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:534:    const imageUrl = `https://demo.credlink.com/embedded-${Date.now()}.jpg`;
+./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:550:    const imageUrl = `https://demo.credlink.com/${assetId}.jpg`;
+./archive/experimental-phases/phase55-education-community/office-hours/monthly-office-hours.md:551:    const manifestUrl = `https://cdn.credlink.com/manifests/${assetId}.json`;
+./archive/experimental-phases/phase55-education-community/risk-mitigations/contingency-planning.md:627:      supportContact: 'support@credlink.com'
+./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:997:      { name: 'Documentation Site', url: 'https://docs.credlink.com', type: 'website' },
+./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:998:      { name: 'Community Forum', url: 'https://community.credlink.com', type: 'forum' },
+./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:999:      { name: 'Demo Sites', url: 'https://demo.credlink.com', type: 'website' },
+./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:1000:      { name: 'Analytics API', url: 'https://api.credlink.com/health', type: 'api' },
+./archive/experimental-phases/phase55-education-community/exit-tests/binary-validation.md:1001:      { name: 'Course Platform', url: 'https://learn.credlink.com/health', type: 'api' },
+./archive/experimental-phases/phase55-education-community/community/forum-setup.md:19:    hostname: discourse.credlink.com
+./archive/experimental-phases/phase55-education-community/community/forum-setup.md:494:      forumLink: 'https://community.credlink.com/t/wordpress-manifest-troubleshooting/123',
+./archive/experimental-phases/phase55-education-community/community/forum-setup.md:507:      forumLink: 'https://community.credlink.com/t/cai-verify-troubleshooting/456',
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:40:- [ ] Live Discourse forum at community.credlink.com
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:188:curl -f https://docs.credlink.com/module-1 | grep -q "Why Embeds Break"
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:189:curl -f https://demo.credlink.com/module-1-demo | grep -q "Interactive Demo"
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:194:  "https://contentauthenticity.org/verify?url=https://demo.credlink.com/wp-sample.jpg"
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:195:  "https://contentauthenticity.org/verify?url=https://demo.credlink.com/shopify-sample.jpg"
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:252:1. 🎓 Start with Module 1: https://docs.credlink.com/module-1
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:253:2. 🛠️ Try your stack: https://docs.credlink.com/stack-guides
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:254:3. 💬 Join community: https://community.credlink.com
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:255:4. 🏆 Submit 15-minute demo: https://credlink.com/submit-demo
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:290:./scripts/update-dns.sh docs.credlink.com
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:291:./scripts/update-ssl.sh docs.credlink.com
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:294:curl -X POST https://community.credlink.com/admin/enable \
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:305:- [ ] Education platform live at docs.credlink.com
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:394:    wordpress_demo_url: 'https://demo.credlink.com/wordpress-live',
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:523:DISCOURSE_URL="https://community.credlink.com"
+./archive/experimental-phases/phase55-education-community/ops-calendar/first-60-days.md:601:  const response = await fetch('https://api.credlink.com/verify', {
 ./archive/experimen

@@ -78,7 +78,7 @@ settings:
   enable_co_host: true
   enable_authentication: true
   authentication_option: "sign_in_to_zoom"
-  authentication_domains: ["c2concierge.com"]
+  authentication_domains: ["credlink.com"]
 ```
 
 ### 2. Registration System
@@ -531,7 +531,7 @@ class LiveDemoManager {
   
   async uploadImageWithEmbeddedManifest() {
     // Simulate upload with embedded manifest
-    const imageUrl = `https://demo.c2concierge.com/embedded-${Date.now()}.jpg`;
+    const imageUrl = `https://demo.credlink.com/embedded-${Date.now()}.jpg`;
     
     return {
       step: 'Upload with Embedded Manifest',
@@ -547,8 +547,8 @@ class LiveDemoManager {
   async uploadWithRemoteManifest() {
     // Simulate upload with remote manifest
     const assetId = `remote-${Date.now()}`;
-    const imageUrl = `https://demo.c2concierge.com/${assetId}.jpg`;
-    const manifestUrl = `https://cdn.c2concierge.com/manifests/${assetId}.json`;
+    const imageUrl = `https://demo.credlink.com/${assetId}.jpg`;
+    const manifestUrl = `https://cdn.credlink.com/manifests/${assetId}.json`;
     
     return {
       step: 'Upload with Remote Manifest',

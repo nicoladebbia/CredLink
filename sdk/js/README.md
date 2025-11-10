@@ -1,6 +1,6 @@
 # CredLink SDK - JavaScript/TypeScript v1.3.0
 
-[![npm version](https://badge.fury.io/js/%40c2concierge%2Fsdk.svg)](https://badge.fury.io/js/%40c2concierge%2Fsdk)
+[![npm version](https://badge.fury.io/js/%40credlink%2Fsdk.svg)](https://badge.fury.io/js/%40credlink%2Fsdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-blue.svg)](https://www.typescriptlang.org/)
 
@@ -55,7 +55,7 @@ for await (const asset of client.verifyPage('https://site.example/article')) {
 ```typescript
 const client = new Client({
   apiKey: 'your-api-key',
-  baseUrl: 'https://api.c2concierge.com/v1',     // Optional
+  baseUrl: 'https://api.credlink.com/v1',     // Optional
   timeoutMs: 30000,                              // Optional
   telemetry: {                                   // Optional
     enabled: true,
@@ -175,7 +175,7 @@ The SDK provides comprehensive error handling with actionable hints:
 
 ```typescript
 import { 
-  C2ConciergeError, 
+  CredLinkError, 
   RateLimitError, 
   ValidationError,
   AuthError 
@@ -190,7 +190,7 @@ try {
     console.log(error.getNextSteps()); // ["Implement exponential backoff with jitter", ...]
   } else if (error instanceof ValidationError) {
     console.log(error.hint); // "Check required fields and data formats"
-  } else if (error instanceof C2ConciergeError) {
+  } else if (error instanceof CredLinkError) {
     console.log(error.requestId); // Request ID for debugging
     console.log(error.docsUrl);   // Link to documentation
   }
@@ -375,8 +375,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🔗 Links
 
-- [Documentation](https://docs.c2concierge.com)
-- [API Reference](https://docs.c2concierge.com/api)
+- [Documentation](https://docs.credlink.com)
+- [API Reference](https://docs.credlink.com/api)
 - [Examples](../../examples/)
 - [GitHub Repository](https://github.com/Nickiller04/CredLink)
 - [Bug Reports](https://github.com/Nickiller04/CredLink/issues)

@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Configuration
-REPO="Nickiller04/c2-concierge"
+REPO="Nickiller04/credlink"
 IMAGE="ghcr.io/${REPO}:latest"
 NAMESPACE="cosign-system"
 TEMP_DIR="./temp-verification"

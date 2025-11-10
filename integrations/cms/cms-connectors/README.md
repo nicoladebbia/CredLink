@@ -8,14 +8,14 @@ CredLink provides seamless Content Authenticity Initiative (C2PA) integration fo
 
 ```bash
 # Install the universal connector
-npm install @c2concierge/cms-connectors
+npm install @credlink/cms-connectors
 
 # Or use platform-specific packages
-npm install @c2concierge/drupal-connector
-npm install @c2concierge/webflow-connector
-npm install @c2concierge/squarespace-connector
-npm install @c2concierge/ghost-connector
-npm install @c2concierge/ssg-connector
+npm install @credlink/drupal-connector
+npm install @credlink/webflow-connector
+npm install @credlink/squarespace-connector
+npm install @credlink/ghost-connector
+npm install @credlink/ssg-connector
 ```
 
 ## 📋 Supported Platforms
@@ -82,7 +82,7 @@ packages/cms-connectors/
 2. **Install via Drush**
    ```bash
    drush en c2c_c2pa -y
-   drush config:set c2c_c2pa.settings sign_url "https://verify.c2concierge.org/sign"
+   drush config:set c2c_c2pa.settings sign_url "https://verify.credlink.org/sign"
    ```
 
 3. **Configure permissions**
@@ -103,22 +103,22 @@ packages/cms-connectors/
    <script>
      window.C2C_WEBFLOW_CONFIG = {
        platform: 'webflow',
-       manifestHost: 'https://manifests.c2concierge.org',
-       webhookUrl: 'https://verify.c2concierge.org/webflow-hook'
+       manifestHost: 'https://manifests.credlink.org',
+       webhookUrl: 'https://verify.credlink.org/webflow-hook'
      };
    </script>
-   <script src="https://cdn.c2concierge.org/webflow-connector.js" async></script>
+   <script src="https://cdn.credlink.org/webflow-connector.js" async></script>
    ```
 
 2. **Add Footer Code**
    ```html
    <!-- Webflow Settings → SEO → Footer Code -->
-   <script src="https://cdn.c2concierge.org/c2-badge.js" async></script>
+   <script src="https://cdn.credlink.org/c2-badge.js" async></script>
    ```
 
 3. **Configure Webhooks**
    - Site Settings → Integrations → Webhooks
-   - Add webhook: `https://verify.c2concierge.org/webflow-hook`
+   - Add webhook: `https://verify.credlink.org/webflow-hook`
    - Events: Site Published, Collection Item Created
 
 ### Squarespace Integration
@@ -129,7 +129,7 @@ packages/cms-connectors/
    <script>
      window.C2C_SQUARESPACE_CONFIG = {
        platform: 'squarespace',
-       manifestHost: 'https://manifests.c2concierge.org',
+       manifestHost: 'https://manifests.credlink.org',
        enableTelemetry: true
      };
    </script>
@@ -138,13 +138,13 @@ packages/cms-connectors/
 2. **Add Footer Code**
    ```html
    <!-- Settings → Advanced → Code Injection → Footer -->
-   <script src="https://cdn.c2concierge.org/squarespace-connector.js" async></script>
-   <script src="https://cdn.c2concierge.org/c2-badge.js" async></script>
+   <script src="https://cdn.credlink.org/squarespace-connector.js" async></script>
+   <script src="https://cdn.credlink.org/c2-badge.js" async></script>
    ```
 
 3. **Commerce Webhooks** (Commerce plans only)
    - Commerce Settings → API & Webhooks
-   - Add webhook: `https://verify.c2concierge.org/squarespace-hook`
+   - Add webhook: `https://verify.credlink.org/squarespace-hook`
 
 ### Ghost Integration
 
@@ -174,23 +174,23 @@ packages/cms-connectors/
    <script>
      window.C2C_GHOST_CONFIG = {
        platform: 'ghost',
-       manifestHost: 'https://manifests.c2concierge.org',
+       manifestHost: 'https://manifests.credlink.org',
        siteUrl: '{{@site.url}}'
      };
    </script>
-   <script src="https://cdn.c2concierge.org/ghost-connector.js" async></script>
+   <script src="https://cdn.credlink.org/ghost-connector.js" async></script>
    ```
 
 2. **Site Footer**
    ```html
-   <script src="https://cdn.c2concierge.org/c2-badge.js" async></script>
+   <script src="https://cdn.credlink.org/c2-badge.js" async></script>
    ```
 
 ### Static Site Generators
 
 1. **Install CLI tool**
    ```bash
-   npm install -g @c2concierge/ssg-connector
+   npm install -g @credlink/ssg-connector
    ```
 
 2. **Add to build process**
@@ -208,11 +208,11 @@ packages/cms-connectors/
 3. **Edge deployment**
    ```javascript
    // Vercel (middleware.js)
-   import { middleware } from '@c2concierge/edge-connectors';
+   import { middleware } from '@credlink/edge-connectors';
    export { middleware, config };
    
    // Cloudflare (worker.js)
-   import C2CWorker from '@c2concierge/edge-connectors/cloudflare-worker';
+   import C2CWorker from '@credlink/edge-connectors/cloudflare-worker';
    export default C2CWorker;
    ```
 
@@ -222,9 +222,9 @@ packages/cms-connectors/
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `signUrl` | `https://verify.c2concierge.org/sign` | Asset signing service |
-| `manifestHost` | `https://manifests.c2concierge.org` | Manifest storage host |
-| `analyticsUrl` | `https://analytics.c2concierge.org/telemetry` | Telemetry endpoint |
+| `signUrl` | `https://verify.credlink.org/sign` | Asset signing service |
+| `manifestHost` | `https://manifests.credlink.org` | Manifest storage host |
+| `analyticsUrl` | `https://analytics.credlink.org/telemetry` | Telemetry endpoint |
 | `enableTelemetry` | `true` | Enable usage analytics |
 | `badgePosition` | `bottom-right` | Badge positioning |
 | `badgeStyle` | `default` | Badge appearance |
@@ -234,7 +234,7 @@ packages/cms-connectors/
 #### Drupal
 ```php
 // settings.php or configuration UI
-$config['c2c_c2pa.settings']['sign_url'] = 'https://verify.c2concierge.org/sign';
+$config['c2c_c2pa.settings']['sign_url'] = 'https://verify.credlink.org/sign';
 $config['c2c_c2pa.settings']['webhook_secret'] = 'your-webhook-secret';
 $config['c2c_c2pa.settings']['enable_telemetry'] = true;
 ```
@@ -243,8 +243,8 @@ $config['c2c_c2pa.settings']['enable_telemetry'] = true;
 ```javascript
 window.C2C_WEBFLOW_CONFIG = {
   platform: 'webflow',
-  signUrl: 'https://verify.c2concierge.org/sign',
-  manifestHost: 'https://manifests.c2concierge.org',
+  signUrl: 'https://verify.credlink.org/sign',
+  manifestHost: 'https://manifests.credlink.org',
   badgePosition: 'bottom-right',
   enableTelemetry: true
 };
@@ -254,17 +254,17 @@ window.C2C_WEBFLOW_CONFIG = {
 
 ### HTTP Link Headers (Preferred)
 ```http
-Link: <https://manifests.c2concierge.org/drupal/abc123.c2pa>; rel="c2pa-manifest"
+Link: <https://manifests.credlink.org/drupal/abc123.c2pa>; rel="c2pa-manifest"
 ```
 
 ### HTML Link Elements (Fallback)
 ```html
-<link rel="c2pa-manifest" href="https://manifests.c2concierge.org/webflow/def456.c2pa">
+<link rel="c2pa-manifest" href="https://manifests.credlink.org/webflow/def456.c2pa">
 ```
 
 ### Data Attributes (Client-side)
 ```html
-<img src="image.jpg" data-c2pa-manifest="https://manifests.c2concierge.org/ghi789.c2pa">
+<img src="image.jpg" data-c2pa-manifest="https://manifests.credlink.org/ghi789.c2pa">
 ```
 
 ### Sidecar Files (Static Sites)
@@ -437,11 +437,11 @@ npm run test:headed
 
 ```bash
 # Signing Service
-C2C_SIGN_URL=https://verify.c2concierge.org/sign
-C2C_MANIFEST_HOST=https://manifests.c2concierge.org
+C2C_SIGN_URL=https://verify.credlink.org/sign
+C2C_MANIFEST_HOST=https://manifests.credlink.org
 
 # Analytics
-C2C_ANALYTICS_URL=https://analytics.c2concierge.org/telemetry
+C2C_ANALYTICS_URL=https://analytics.credlink.org/telemetry
 C2C_ENABLE_TELEMETRY=true
 
 # Webhook Security
@@ -451,7 +451,7 @@ GHOST_WEBHOOK_SECRET=your-ghost-secret
 DRUPAL_WEBHOOK_SECRET=your-drupal-secret
 
 # Edge Configuration
-MANIFEST_HOST=https://manifests.c2concierge.org
+MANIFEST_HOST=https://manifests.credlink.org
 ENABLE_TELEMETRY=false
 DEBUG=false
 ```
@@ -461,7 +461,7 @@ DEBUG=false
 ### Base Connector Class
 
 ```javascript
-import BaseConnector from '@c2concierge/shared/base-connector';
+import BaseConnector from '@credlink/shared/base-connector';
 
 class MyConnector extends BaseConnector {
   constructor(config) {
@@ -483,7 +483,7 @@ class MyConnector extends BaseConnector {
 ### Badge System
 
 ```javascript
-import C2CBadge from '@c2concierge/shared/c2-badge';
+import C2CBadge from '@credlink/shared/c2-badge';
 
 // Initialize with custom config
 const badge = new C2CBadge({
@@ -556,10 +556,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- **Documentation**: [docs.c2concierge.org](https://docs.c2concierge.org)
+- **Documentation**: [docs.credlink.org](https://docs.credlink.org)
 - **Issues**: [GitHub Issues](https://github.com/Nickiller04/CredLink/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/Nickiller04/CredLink/discussions)
-- **Email**: support@c2concierge.org
+- **Email**: support@credlink.org
 
 ## 🔗 Related Projects
 

@@ -146,7 +146,7 @@ create_remote_uri_manifest() {
       "format": "image/jpeg",
       "instance_id": "xmp:iid:remote-uri-test-87654321",
       "claim_generator": "C2 Concierge Test Suite v1.0.0",
-      "remote_manifest": "https://verify.c2concierge.org/manifests/remote-uri-test-87654321.json"
+      "remote_manifest": "https://verify.credlink.org/manifests/remote-uri-test-87654321.json"
     }
   },
   "assertions": [
@@ -158,7 +158,7 @@ create_remote_uri_manifest() {
             "action": "c2pa.created",
             "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/compositeAlgorithmicallyGenerated",
             "parameters": {
-              "remote_ingredient": "https://storage.c2concierge.org/ingredients/base-image.jpg"
+              "remote_ingredient": "https://storage.credlink.org/ingredients/base-image.jpg"
             }
           }
         ]
@@ -169,7 +169,7 @@ create_remote_uri_manifest() {
       "data": {
         "ingredients": [
           {
-            "uri": "https://storage.c2concierge.org/ingredients/base-image.jpg",
+            "uri": "https://storage.credlink.org/ingredients/base-image.jpg",
             "hash": "0x" + "b".repeat(64),
             "algorithm": "sha256"
           }

@@ -18,9 +18,9 @@ validate_input() {
     local source_date_epoch="$3"
     
     # Enhanced image format validation (prevent injection and restrict scope)
-    if [[ ! "$image" =~ ^ghcr\.io/nickiller04/c2-concierge:[a-f0-9]{40,64}$ ]]; then
+    if [[ ! "$image" =~ ^ghcr\.io/nickiller04/credlink:[a-f0-9]{40,64}$ ]]; then
         echo "❌ Invalid image format or scope: $image"
-        echo "   Expected format: ghcr.io/nickiller04/c2-concierge:<sha256-digest>"
+        echo "   Expected format: ghcr.io/nickiller04/credlink:<sha256-digest>"
         exit 1
     fi
     
@@ -498,7 +498,7 @@ final_integrity_verification() {
 # Main execution with maximum security
 main() {
     # Configuration with validation
-    local image="${1:-ghcr.io/nickiller04/c2-concierge:latest}"
+    local image="${1:-ghcr.io/nickiller04/credlink:latest}"
     local output_dir="${2:-./sboms}"
     local source_date_epoch="${3:-0}"
     

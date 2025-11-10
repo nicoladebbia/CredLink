@@ -11,11 +11,11 @@ Ship-ready SDKs for cryptographic provenance verification and signing with the C
 ### JavaScript/TypeScript
 
 ```bash
-npm install @c2concierge/sdk
+npm install @credlink/sdk
 ```
 
 ```typescript
-import { Client } from '@c2concierge/sdk';
+import { Client } from '@credlink/sdk';
 
 const client = new Client({ apiKey: process.env.C2_API_KEY });
 const result = await client.verify('https://example.com/image.jpg', {
@@ -27,12 +27,12 @@ console.log('Verified:', result.data.verified);
 ### Python
 
 ```bash
-pip install c2concierge
+pip install credlink
 ```
 
 ```python
 import asyncio
-from c2concierge import Client
+from credlink import Client
 
 async def main():
     client = Client(api_key="your-api-key")
@@ -48,7 +48,7 @@ asyncio.run(main())
 ### Go
 
 ```bash
-go get github.com/c2concierge/sdk-go/v2
+go get github.com/credlink/sdk-go/v2
 ```
 
 ```go
@@ -57,7 +57,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/c2concierge/sdk-go/v2/c2c"
+    "github.com/credlink/sdk-go/v2/c2c"
 )
 
 func main() {
@@ -92,9 +92,9 @@ All SDKs include:
 
 | Language | Package | Version | Status |
 |----------|---------|---------|--------|
-| JavaScript/TypeScript | `@c2concierge/sdk` | 1.3.0 | ✅ Stable |
-| Python | `c2concierge` | 1.3.0 | ✅ Stable |
-| Go | `github.com/c2concierge/sdk-go/v2` | v2 | ✅ Stable |
+| JavaScript/TypeScript | `@credlink/sdk` | 1.3.0 | ✅ Stable |
+| Python | `credlink` | 1.3.0 | ✅ Stable |
+| Go | `github.com/credlink/sdk-go/v2` | v2 | ✅ Stable |
 
 ## 🏗️ Architecture
 
@@ -154,7 +154,7 @@ All SDKs support similar configuration options:
 // JavaScript/TypeScript
 const client = new Client({
   apiKey: 'your-api-key',
-  baseUrl: 'https://api.c2concierge.com/v1',
+  baseUrl: 'https://api.credlink.com/v1',
   timeoutMs: 30000,
   retries: {
     maxAttempts: 5,
@@ -176,7 +176,7 @@ const client = new Client({
 # Python
 config = ClientConfig(
     api_key="your-api-key",
-    base_url="https://api.c2concierge.com/v1",
+    base_url="https://api.credlink.com/v1",
     timeout_ms=30000,
     retries=RetryConfig(
         max_attempts=5,
@@ -199,7 +199,7 @@ client = Client(config)
 // Go
 config := &c2c.Config{
     APIKey:    "your-api-key",
-    BaseURL:   "https://api.c2concierge.com/v1",
+    BaseURL:   "https://api.credlink.com/v1",
     TimeoutMs: 30 * time.Second,
     Retries: &c2c.RetryConfig{
         MaxAttempts: 5,
@@ -316,7 +316,7 @@ npm run test:coverage
 # Python
 cd sdk/python
 pytest
-pytest --cov=c2concierge
+pytest --cov=credlink
 
 # Go
 cd sdk/go
@@ -330,19 +330,19 @@ go test -race -coverprofile=coverage.out ./...
 
 ```bash
 # npm (JavaScript/TypeScript)
-npm install @c2concierge/sdk
+npm install @credlink/sdk
 
 # yarn
-yarn add @c2concierge/sdk
+yarn add @credlink/sdk
 
 # pip (Python)
-pip install c2concierge
+pip install credlink
 
 # pipenv
-pipenv install c2concierge
+pipenv install credlink
 
 # go (Go)
-go get github.com/c2concierge/sdk-go/v2
+go get github.com/credlink/sdk-go/v2
 ```
 
 ### Docker
@@ -351,13 +351,13 @@ All SDKs are available in Docker images:
 
 ```bash
 # JavaScript/TypeScript
-docker pull c2concierge/sdk-js:1.3.0
+docker pull credlink/sdk-js:1.3.0
 
 # Python
-docker pull c2concierge/sdk-python:1.3.0
+docker pull credlink/sdk-python:1.3.0
 
 # Go
-docker pull c2concierge/sdk-go:v2
+docker pull credlink/sdk-go:v2
 ```
 
 ## 📋 Versioning
@@ -376,8 +376,8 @@ All SDKs follow [Semantic Versioning 2.0.0](https://semver.org/):
 
 ## 🔗 Links
 
-- **Documentation**: https://docs.c2concierge.com
-- **API Reference**: https://docs.c2concierge.com/api
+- **Documentation**: https://docs.credlink.com
+- **API Reference**: https://docs.credlink.com/api
 - **OpenAPI Spec**: [./sdk/openapi/openapi.yaml](./sdk/openapi/openapi.yaml)
 - **Examples**: [./examples/](./examples/)
 - **GitHub Repository**: https://github.com/Nickiller04/CredLink
@@ -394,7 +394,7 @@ For enterprise deployments, we offer:
 - **On-premises installation**
 - **Custom integrations**
 
-Contact enterprise@c2concierge.com for more information.
+Contact enterprise@credlink.com for more information.
 
 ## 🤝 Contributing
 

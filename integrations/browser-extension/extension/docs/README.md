@@ -40,8 +40,8 @@ A privacy-first browser extension that discovers and verifies C2PA content crede
 
 ```bash
 # Clone repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/packages/extension
+git clone https://github.com/Nickiller04/credlink.git
+cd credlink/packages/extension
 
 # Install dependencies
 npm install
@@ -258,23 +258,23 @@ All changes undergo security review:
 - [User Guide](./user-guide.md)
 - [Developer Guide](./developer-guide.md)
 - [Security Model](./security.md)
-- [Privacy Policy](https://github.com/Nickiller04/c2-concierge/blob/main/PRIVACY.md)
+- [Privacy Policy](https://github.com/Nickiller04/credlink/blob/main/PRIVACY.md)
 
 ### Issues
 
-- [Bug Reports](https://github.com/Nickiller04/c2-concierge/issues)
-- [Feature Requests](https://github.com/Nickiller04/c2-concierge/issues)
-- [Security Issues](security@c2concierge.org)
+- [Bug Reports](https://github.com/Nickiller04/credlink/issues)
+- [Feature Requests](https://github.com/Nickiller04/credlink/issues)
+- [Security Issues](security@credlink.org)
 
 ### Community
 
-- [Discussions](https://github.com/Nickiller04/c2-concierge/discussions)
-- [Discord](https://discord.gg/c2concierge)
-- [Twitter](https://twitter.com/c2concierge)
+- [Discussions](https://github.com/Nickiller04/credlink/discussions)
+- [Discord](https://discord.gg/credlink)
+- [Twitter](https://twitter.com/credlink)
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/Nickiller04/c2-concierge/blob/main/LICENSE) for details.
+MIT License - see [LICENSE](https://github.com/Nickiller04/credlink/blob/main/LICENSE) for details.
 
 ## Acknowledgments
 

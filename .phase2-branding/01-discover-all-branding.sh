@@ -1,6 +1,6 @@
 #!/bin/bash
 # Complete branding discovery script
-# Finds ALL variations of c2concierge branding
+# Finds ALL variations of credlink branding
 
 set -e
 
@@ -12,12 +12,12 @@ echo ""
 OUTPUT=".phase2-branding/branding-references.txt"
 > "$OUTPUT"
 
-echo "Searching for ALL c2concierge variations..."
+echo "Searching for ALL credlink variations..."
 echo ""
 
-# Variation 1: c2concierge (lowercase)
-echo "=== SEARCHING: c2concierge (lowercase) ===" | tee -a "$OUTPUT"
-grep -rn "c2concierge" \
+# Variation 1: credlink (lowercase)
+echo "=== SEARCHING: credlink (lowercase) ===" | tee -a "$OUTPUT"
+grep -rn "credlink" \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=dist \
@@ -28,9 +28,9 @@ grep -rn "c2concierge" \
 
 echo "" | tee -a "$OUTPUT"
 
-# Variation 2: c2-concierge (with hyphen)
-echo "=== SEARCHING: c2-concierge (with hyphen) ===" | tee -a "$OUTPUT"
-grep -rn "c2-concierge" \
+# Variation 2: credlink (with hyphen)
+echo "=== SEARCHING: credlink (with hyphen) ===" | tee -a "$OUTPUT"
+grep -rn "credlink" \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=dist \
@@ -39,9 +39,9 @@ grep -rn "c2-concierge" \
 
 echo "" | tee -a "$OUTPUT"
 
-# Variation 3: C2Concierge (PascalCase)
-echo "=== SEARCHING: C2Concierge (PascalCase) ===" | tee -a "$OUTPUT"
-grep -rn "C2Concierge" \
+# Variation 3: CredLink (PascalCase)
+echo "=== SEARCHING: CredLink (PascalCase) ===" | tee -a "$OUTPUT"
+grep -rn "CredLink" \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=dist \
@@ -49,9 +49,9 @@ grep -rn "C2Concierge" \
 
 echo "" | tee -a "$OUTPUT"
 
-# Variation 4: C2CONCIERGE (UPPERCASE)
-echo "=== SEARCHING: C2CONCIERGE (UPPERCASE) ===" | tee -a "$OUTPUT"
-grep -rn "C2CONCIERGE" \
+# Variation 4: CREDLINK (UPPERCASE)
+echo "=== SEARCHING: CREDLINK (UPPERCASE) ===" | tee -a "$OUTPUT"
+grep -rn "CREDLINK" \
   --exclude-dir=node_modules \
   --exclude-dir=.git \
   --exclude-dir=dist \

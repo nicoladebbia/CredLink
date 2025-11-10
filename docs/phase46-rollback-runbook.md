@@ -39,7 +39,7 @@ liquibase rollback phase46-complete
 
 **Verification**:
 ```bash
-curl -f https://c2concierge.dev/health
+curl -f https://credlink.dev/health
 ./scripts/survival_harness.sh
 ```
 
@@ -106,13 +106,13 @@ wrangler versions deploy v2024-000 --env prod --percentage 100
 **Verification**:
 ```bash
 # Check version
-curl -s https://c2concierge.dev/api/version
+curl -s https://credlink.dev/api/version
 
 # Health check
-curl -f https://c2concierge.dev/health || echo "FAILED"
+curl -f https://credlink.dev/health || echo "FAILED"
 
 # Quick survival test
-curl -s https://c2concierge.dev/api/verify/test.jpg | jq .
+curl -s https://credlink.dev/api/verify/test.jpg | jq .
 ```
 
 ### 2. Cloudflare Pages Rollback (UI/Badge)
@@ -274,7 +274,7 @@ node canary_rollback.js
 node ops/canary_route.js --percentage 0
 
 # 2. Verify control version is handling 100%
-curl -s https://c2concierge.dev/api/version | jq .
+curl -s https://credlink.dev/api/version | jq .
 
 # 3. Delete canary version
 wrangler versions delete CANARY_VERSION_ID --env prod
@@ -291,8 +291,8 @@ wrangler versions delete CANARY_VERSION_ID --env prod
 
 ```bash
 # 1. Health checks
-curl -f https://c2concierge.dev/health || exit 1
-curl -f https://staging.c2concierge.dev/health || exit 1
+curl -f https://credlink.dev/health || exit 1
+curl -f https://staging.credlink.dev/health || exit 1
 
 # 2. Survival harness (critical)
 ./scripts/survival_harness.sh
@@ -330,11 +330,11 @@ echo "🔍 Verifying rollback..."
 
 # Health checks
 echo "1. Health checks..."
-curl -f https://c2concierge.dev/health
+curl -f https://credlink.dev/health
 
 # Version check
 echo "2. Version check..."
-CURRENT_VERSION=$(curl -s https://c2concierge.dev/api/version | jq -r .sha)
+CURRENT_VERSION=$(curl -s https://credlink.dev/api/version | jq -r .sha)
 echo "Current version: $CURRENT_VERSION"
 
 # Survival harness

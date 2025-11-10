@@ -670,7 +670,7 @@ Next Steps:
 3. Monitor survival rates and cost reductions
 4. Scale to full implementation based on pilot results
 
-For questions or to schedule your pilot, contact: sales@c2concierge.dev
+For questions or to schedule your pilot, contact: sales@credlink.dev
         `.trim();
     }
 

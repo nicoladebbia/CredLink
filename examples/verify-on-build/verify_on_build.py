@@ -8,7 +8,7 @@ import os
 import sys
 from typing import Dict, List, Optional
 
-from c2concierge import Client, ValidationError
+from credlink import Client, ValidationError
 
 
 async def verify_page_assets(

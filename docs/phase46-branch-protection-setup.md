@@ -80,7 +80,7 @@ Required environments for CD pipeline with manual approvals.
 - Wait timer: 0 minutes (auto-deploy)
 - Required reviewers: None
 
-**Environment URL**: `https://staging.c2concierge.dev`
+**Environment URL**: `https://staging.credlink.dev`
 
 ### Environment 2: `prod-canary`
 
@@ -97,7 +97,7 @@ Required environments for CD pipeline with manual approvals.
 - Wait timer: 10 minutes (bake period)
 - Required reviewers: **1 reviewer from ops team**
 
-**Environment URL**: `https://c2concierge.dev`
+**Environment URL**: `https://credlink.dev`
 
 ### Environment 3: `prod`
 
@@ -116,7 +116,7 @@ Required environments for CD pipeline with manual approvals.
 - Wait timer: 0 minutes
 - Required reviewers: **2 reviewers from [ops team, engineering leads]**
 
-**Environment URL**: `https://c2concierge.dev`
+**Environment URL**: `https://credlink.dev`
 
 ## 3. GitHub Teams & CODEOWNERS
 

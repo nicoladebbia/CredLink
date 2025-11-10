@@ -18,7 +18,7 @@ You have built an **impressive planning and documentation system** for a content
 
 ### The Harsh Reality ❌
 - **No end-to-end flow works** - can't sign + verify + display badge for a real image
-- **Name confusion** - "CredLink" vs "c2-concierge" vs "c2c" throughout codebase
+- **Name confusion** - "CredLink" vs "credlink" vs "c2c" throughout codebase
 - **Folder chaos** - 60 phase folders, unclear what's implemented
 - **Missing core functionality** - no actual C2PA signing, no R2 storage working
 - **Not deployable** - no production infrastructure, no CI/CD
@@ -78,7 +78,7 @@ Size: 3.6GB
 
 #### 4. **Branding Inconsistency**
 ```bash
-$ grep -r "c2-concierge" --include="*.json" | wc -l
+$ grep -r "credlink" --include="*.json" | wc -l
 42 files
 
 $ grep -r "CredLink" --include="*.md" | wc -l

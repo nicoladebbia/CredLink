@@ -6,7 +6,7 @@
 Add to your app's `build.gradle`:
 ```gradle
 dependencies {
-    implementation 'com.c2concierge:mobile:0.1.0'
+    implementation 'com.credlink:mobile:0.1.0'
 }
 ```
 
@@ -36,7 +36,7 @@ Add to `src/main/res/xml/network_security_config.xml`:
 
 ### 4. Basic Usage
 ```kotlin
-import com.c2concierge.mobile.*
+import com.credlink.mobile.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var verifier: C2CMobileVerifier
@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         
         // Initialize SDK
         val config = SdkConfig(
-            relayBaseUrl = HttpUrl.parse("https://verify.c2concierge.org"),
+            relayBaseUrl = HttpUrl.parse("https://verify.credlink.org"),
             enableDebugLogging = BuildConfig.DEBUG
         )
         verifier = C2CMobileVerifier.create(this, config)
@@ -111,7 +111,7 @@ class ShareActivity : AppCompatActivity() {
 ### TLS Pinning
 ```kotlin
 val config = SdkConfig(
-    relayBaseUrl = HttpUrl.parse("https://verify.c2concierge.org"),
+    relayBaseUrl = HttpUrl.parse("https://verify.credlink.org"),
     pinnedSpki = listOf(
         "base64_encoded_spki_hash_1",
         "base64_encoded_spki_hash_2"
@@ -141,7 +141,7 @@ backgroundWorkManager.scheduleManifestPrefetch(urls)
 ## ProGuard/R8 Rules
 Add to `proguard-rules.pro`:
 ```proguard
--keep public class com.c2concierge.mobile.** { *; }
+-keep public class com.credlink.mobile.** { *; }
 -keepclassmembers class * {
     native <methods>;
 }

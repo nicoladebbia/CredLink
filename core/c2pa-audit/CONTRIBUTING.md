@@ -20,8 +20,8 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ```bash
 # Clone the repository
-git clone https://github.com/Nickiller04/c2-concierge.git
-cd c2-concierge/apps/c2pa-audit
+git clone https://github.com/Nickiller04/credlink.git
+cd credlink/apps/c2pa-audit
 
 # Install dependencies
 pnpm install

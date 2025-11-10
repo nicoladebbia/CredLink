@@ -98,7 +98,7 @@
 ### iOS Tests
 ```bash
 # Run unit tests
-xcodebuild test -scheme C2ConciergeMobile -destination 'platform=iOS Simulator,name=iPhone 14'
+xcodebuild test -scheme CredLinkMobile -destination 'platform=iOS Simulator,name=iPhone 14'
 
 # Run UI tests
 xcodebuild test -scheme SampleApp -destination 'platform=iOS Simulator,name=iPhone 14'
@@ -116,7 +116,7 @@ xcodebuild test -scheme PerformanceTests -destination 'platform=iOS Simulator,na
 ./gradlew connectedDebugAndroidTest
 
 # Performance tests
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.c2concierge.mobile.PerformanceTest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.credlink.mobile.PerformanceTest
 ```
 
 ## Continuous Integration

@@ -27,7 +27,7 @@ from .types import (
     AsyncPageVerificationResult,
     AsyncBatchVerificationResult,
     JobStatus,
-    C2ConciergeError,
+    CredLinkError,
     ValidationError,
 )
 from .transport import HttpTransport, TelemetryManager

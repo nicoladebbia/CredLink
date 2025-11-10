@@ -46,5 +46,5 @@
 
 ---
 
-**Questions?** security@c2concierge.com  
+**Questions?** security@credlink.com  
 **Last Updated**: November 5, 2025

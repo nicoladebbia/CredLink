@@ -248,7 +248,7 @@ impl ReportGenerator {
                                             "This will provide current revocation status and resolve any remote references."
                                         }
                                         p class="qr-url mono" {
-                                            (format!("https://verify.c2concierge.org/asset/{}", result.asset_id))
+                                            (format!("https://verify.credlink.org/asset/{}", result.asset_id))
                                         }
                                     }
                                 }
@@ -288,7 +288,7 @@ impl ReportGenerator {
                     let qr_data = self.generate_qr_code_data(&result.asset_id)?;
                     serde_json::json!({
                         "data_url": format!("data:image/png;base64,{}", qr_data),
-                        "verify_url": format!("https://verify.c2concierge.org/asset/{}", result.asset_id)
+                        "verify_url": format!("https://verify.credlink.org/asset/{}", result.asset_id)
                     })
                 })
             } else {
@@ -370,7 +370,7 @@ impl ReportGenerator {
         if self.include_qr {
             content.push_str(&format!(
                 "\nONLINE RE-CHECK URL:\n{}",
-                format!("https://verify.c2concierge.org/asset/{}", result.asset_id)
+                format!("https://verify.credlink.org/asset/{}", result.asset_id)
             ));
         }
         
@@ -379,7 +379,7 @@ impl ReportGenerator {
     
     /// Generate QR code data URL
     fn generate_qr_code_data(&self, asset_id: &str) -> Result<String> {
-        let verify_url = format!("https://verify.c2concierge.org/asset/{}", asset_id);
+        let verify_url = format!("https://verify.credlink.org/asset/{}", asset_id);
         
         let qr_code = QrCode::new(&verify_url)
             .context("Failed to create QR code")?;

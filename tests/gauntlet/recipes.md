@@ -349,7 +349,7 @@ https://akamai.survival.test/<path>?im=<transform>
 ### Escalation Contacts
 - **On-call Engineer**: @c2c-on-call
 - **Provider Support**: Direct contacts established
-- **Status Page**: https://status.c2concierge.com
+- **Status Page**: https://status.credlink.com
 - **Incident Channel**: #cdn-gauntlet-incidents
 
 ---

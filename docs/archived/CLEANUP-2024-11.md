@@ -7,12 +7,12 @@ Major cleanup operation to remove noise and fix naming inconsistencies across th
 
 ### 1. Fixed Naming Rot ✅
 **Problem**: Codebase had three different names in use:
-- `c2-concierge` in package.json
+- `credlink` in package.json
 - `CredLink` in documentation  
 - `@c2/` in code imports
 
 **Solution**: Global renaming across entire codebase
-- Changed `"c2-concierge"` → `"credlink"` in all package.json files
+- Changed `"credlink"` → `"credlink"` in all package.json files
 - Changed `@c2/*` → `@credlink/*` in all TypeScript/JavaScript files
 - Changed `C2 Concierge` → `CredLink` in all markdown files
 - Updated main package.json description

@@ -250,7 +250,7 @@ func main() {
             }
         case *credlink.ValidationError:
             fmt.Printf("Validation error: %s\n", e.Hint)
-        case *credlink.C2ConciergeError:
+        case *credlink.CredLinkError:
             fmt.Printf("Request ID: %s\n", e.RequestID())
             fmt.Printf("Documentation: %s\n", e.DocsURL())
         default:

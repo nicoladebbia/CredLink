@@ -17,7 +17,7 @@ You're presenting a non-existent product as if it's real:
 
 1. **99.9% survival claim**: Fabricated. Not measured. Zero proof.
 2. **Broken demo**: Frontend exists, backend doesn't. Click "Sign Image" → 404 error
-3. **Incomplete rebrand**: 325+ "c2concierge" references remain in production code
+3. **Incomplete rebrand**: 325+ "credlink" references remain in production code
 4. **"10 minute deployment"**: For infrastructure that doesn't exist
 5. **Comparison tables**: Comparing vaporware to shipping products
 6. **"$199/mo pricing"**: Made up, no billing system exists
@@ -78,7 +78,7 @@ Remove all dishonest claims, mark demo as broken, choose project identity (resea
 **Timeline:** 3-5 days  
 **Score Impact:** 5.0/10 → 5.5/10
 
-Fix all 325+ references to old "c2concierge" branding. Critical for production credibility.
+Fix all 325+ references to old "credlink" branding. Critical for production credibility.
 
 **Key Actions:**
 - Fix Dockerfile.reproducible (production user account)

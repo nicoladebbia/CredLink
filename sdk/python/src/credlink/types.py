@@ -56,7 +56,7 @@ class RequestOptions(BaseModel):
 # Error Types
 # ============================================================================
 
-class C2ConciergeError(Exception):
+class CredLinkError(Exception):
     """Base class for all CredLink errors"""
     
     def __init__(
@@ -90,7 +90,7 @@ class C2ConciergeError(Exception):
         return ["Check the API documentation", "Contact support if the issue persists"]
 
 
-class AuthError(C2ConciergeError):
+class AuthError(CredLinkError):
     """Authentication error (401/403)"""
     
     def __init__(self, message: str = "Authentication failed", **kwargs):
@@ -112,7 +112,7 @@ class AuthError(C2ConciergeError):
         ]
 
 
-class RateLimitError(C2ConciergeError):
+class RateLimitError(CredLinkError):
     """Rate limit error (429)"""
     
     def __init__(
@@ -151,7 +151,7 @@ class RateLimitError(C2ConciergeError):
         return steps
 
 
-class ConflictError(C2ConciergeError):
+class ConflictError(CredLinkError):
     """Conflict error (409)"""
     
     def __init__(self, message: str = "Request conflicts with current state", **kwargs):
@@ -177,7 +177,7 @@ class ConflictError(C2ConciergeError):
         ]
 
 
-class ValidationError(C2ConciergeError):
+class ValidationError(CredLinkError):
     """Validation error (422)"""
     
     def __init__(self, message: str = "Request data failed validation", **kwargs):
@@ -199,7 +199,7 @@ class ValidationError(C2ConciergeError):
         ]
 
 
-class ServerError(C2ConciergeError):
+class ServerError(CredLinkError):
     """Server error (5xx)"""
     
     def __init__(self, message: str = "Server encountered an unexpected error", **kwargs):
@@ -221,7 +221,7 @@ class ServerError(C2ConciergeError):
         ]
 
 
-class NetworkError(C2ConciergeError):
+class NetworkError(CredLinkError):
     """Network error"""
     
     def __init__(self, message: str = "Network connectivity issue encountered", **kwargs):

@@ -363,9 +363,9 @@ This will output detailed verification information to the browser console.
 ## Support
 
 For technical support and questions:
-- Documentation: https://docs.c2concierge.org
+- Documentation: https://docs.credlink.org
 - Issues: https://github.com/Nickiller04/CredLink/issues
-- Security: security@c2concierge.org
+- Security: security@credlink.org
 
 ## License
 

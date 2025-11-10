@@ -258,7 +258,7 @@ const testAnnual = {
       "Refund prorated for any usage beyond monthly equivalent",
       "Support tickets reviewed for legitimate service issues"
     ],
-    "process": "Email support@c2concierge.com with refund request"
+    "process": "Email support@credlink.com with refund request"
   }
 }
 ```

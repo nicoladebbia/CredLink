@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 
-from c2concierge import Client
+from credlink import Client
 
 
 async def inject_links_in_file(

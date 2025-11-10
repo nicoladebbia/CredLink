@@ -211,7 +211,7 @@ The SDK provides comprehensive error handling with actionable hints:
 import asyncio
 from credlink import Client
 from credlink.types import (
-    C2ConciergeError,
+    CredLinkError,
     RateLimitError,
     ValidationError,
     AuthError
@@ -231,7 +231,7 @@ async def main():
         print(e.get_next_steps())  # ["Implement exponential backoff with jitter", ...]
     except ValidationError as e:
         print(e.hint)  # "Check required fields and data formats"
-    except C2ConciergeError as e:
+    except CredLinkError as e:
         print(e.request_id)  # Request ID for debugging
         print(e.docs_url)    # Link to documentation
 

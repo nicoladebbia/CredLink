@@ -24,7 +24,7 @@ By end of Week 1, you MUST have:
 **Verification Command:**
 ```bash
 # This should return 0:
-grep -r "CredLink\|c2concierge\|@c2/" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=archive | wc -l
+grep -r "CredLink\|credlink\|@c2/" --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=archive | wc -l
 ```
 
 ### ✅ Metric 2: Folder Structure Reorganized
@@ -235,10 +235,10 @@ import { X } from '@credlink/utils';
 ```bash
 cd cli
 # Update go.mod:
-module github.com/credlink/cli  // was github.com/c2concierge/cli
+module github.com/credlink/cli  // was github.com/credlink/cli
 
 # Update all Go files:
-find . -name "*.go" -exec sed -i '' 's/c2concierge/credlink/g' {} \;
+find . -name "*.go" -exec sed -i '' 's/credlink/credlink/g' {} \;
 
 # Tidy dependencies:
 go mod tidy

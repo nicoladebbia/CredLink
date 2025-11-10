@@ -36,7 +36,7 @@ const verifyAsset = async () => {
   
   try {
     // SECURITY: Use environment variable for API endpoint
-    const apiEndpoint = process.env.C2PA_API_ENDPOINT || 'https://api.c2concierge.com/verify';
+    const apiEndpoint = process.env.C2PA_API_ENDPOINT || 'https://api.credlink.com/verify';
     const apiKey = process.env.C2PA_DE_API_KEY; // Never expose in client code
     
     const response = await fetch(apiEndpoint, {
@@ -123,7 +123,7 @@ function sanitizeVerificationResult(result) {
 }
 ```
 
-**Live Demo**: [Interactive /verify Demo](https://docs.c2concierge.com/verify-demo)
+**Live Demo**: [Interactive /verify Demo](https://docs.credlink.com/verify-demo)
 
 ### /sign Endpoint - Live Demo
 
@@ -166,7 +166,7 @@ const signContent = async () => {
   
   try {
     // SECURITY: Use environment variables for API configuration
-    const apiEndpoint = process.env.C2PA_SIGN_ENDPOINT || 'https://api.c2concierge.com/sign';
+    const apiEndpoint = process.env.C2PA_SIGN_ENDPOINT || 'https://api.credlink.com/sign';
     const apiKey = process.env.C2PA_SIGN_API_KEY;
     
     const response = await fetch(apiEndpoint, {
@@ -229,7 +229,7 @@ function sanitizeContent(content) {
 }
 ```
 
-**Live Demo**: [Interactive /sign Demo](https://docs.c2concierge.com/sign-demo)
+**Live Demo**: [Interactive /sign Demo](https://docs.credlink.com/sign-demo)
 
 ---
 
@@ -279,7 +279,7 @@ curl -I "https://yoursite.com/wp-content/uploads/2024/01/sample.jpg"
 ```
 
 ### 3. Verify with CAI
-[Verify Sample Image →](https://contentauthenticity.org/verify?url=https://demo.c2concierge.com/wp-sample.jpg)
+[Verify Sample Image →](https://contentauthenticity.org/verify?url=https://demo.credlink.com/wp-sample.jpg)
 
 ## How It Works
 1. **Hook Detection**: WordPress `send_headers` action runs before asset delivery

@@ -15,7 +15,7 @@ import httpx
 from .types import (
     ClientConfig,
     RequestOptions,
-    C2ConciergeError,
+    CredLinkError,
     AuthError,
     RateLimitError,
     ConflictError,

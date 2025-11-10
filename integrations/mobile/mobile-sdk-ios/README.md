@@ -4,8 +4,8 @@
 ```
 packages/
 ├── mobile-sdk-ios/          # Swift Package with XCFramework
-│   ├── Sources/C2ConciergeMobile/
-│   ├── C2ConciergeMobile.xcframework/
+│   ├── Sources/CredLinkMobile/
+│   ├── CredLinkMobile.xcframework/
 │   ├── Package.swift
 │   └── Tests/
 └── mobile-sdk-android/      # Android AAR

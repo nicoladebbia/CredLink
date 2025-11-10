@@ -37,7 +37,7 @@ Testing Pyramid
 const testEnvironments = {
   development: {
     name: 'Development',
-    url: 'https://dev-api.c2concierge.com',
+    url: 'https://dev-api.credlink.com',
     database: 'dev_pricing_db',
     stripe_key: process.env.STRIPE_DEV_KEY,
     optimizely_sdk_key: process.env.OPTIMIZELY_DEV_KEY,
@@ -46,7 +46,7 @@ const testEnvironments = {
   
   staging: {
     name: 'Staging',
-    url: 'https://staging-api.c2concierge.com',
+    url: 'https://staging-api.credlink.com',
     database: 'staging_pricing_db',
     stripe_key: process.env.STRIPE_STAGING_KEY,
     optimizely_sdk_key: process.env.OPTIMIZELY_STAGING_KEY,
@@ -56,7 +56,7 @@ const testEnvironments = {
   
   production: {
     name: 'Production',
-    url: process.env.API_BASE_URL || 'https://api.c2concierge.com',
+    url: process.env.API_BASE_URL || 'https://api.credlink.com',
     database: 'prod_pricing_db',
     stripe_key: process.env.STRIPE_PROD_KEY,
     optimizely_sdk_key: process.env.OPTIMIZELY_PROD_KEY,
@@ -604,7 +604,7 @@ describe('Customer Journey E2E', () => {
   describe('Trial to Paid Conversion', () => {
     test('Complete trial signup and conversion flow', async () => {
       // Navigate to pricing page
-      await page.goto('https://app.c2concierge.com/pricing');
+      await page.goto('https://app.credlink.com/pricing');
       
       // Start trial
       await page.click('[data-testid="start-trial-growth"]');
@@ -623,7 +623,7 @@ describe('Customer Journey E2E', () => {
       await page.click('[data-testid="continue"]');
       
       // Use the product (simulate verification)
-      await page.goto('https://app.c2concierge.com/verify');
+      await page.goto('https://app.credlink.com/verify');
       await page.setInputFiles('[data-testid="file-input"]', 'test-assets/sample.pdf');
       await page.click('[data-testid="verify-button"]');
       
@@ -631,7 +631,7 @@ describe('Customer Journey E2E', () => {
       await expect(page.locator('[data-testid="verification-complete"]')).toBeVisible();
       
       // Convert to paid
-      await page.goto('https://app.c2concierge.com/billing');
+      await page.goto('https://app.credlink.com/billing');
       await page.click('[data-testid="convert-to-paid"]');
       await page.fill('[data-testid="card-number"]', '4242424242424244242');
       await page.fill('[data-testid="card-expiry"]', '12/25');
@@ -645,14 +645,14 @@ describe('Customer Journey E2E', () => {
     
     test('Should handle usage limits during trial', async () => {
       // Sign in as trial user
-      await page.goto('https://app.c2concierge.com/login');
+      await page.goto('https://app.credlink.com/login');
       await page.fill('[data-testid="email"]', customerEmail);
       await page.fill('[data-testid="password"]', 'TestPassword123!');
       await page.click('[data-testid="login"]');
       
       // Exceed usage limits
       for (let i = 0; i < 100; i++) {
-        await page.goto('https://app.c2concierge.com/verify');
+        await page.goto('https://app.credlink.com/verify');
         await page.setInputFiles('[data-testid="file-input"]', 'test-assets/sample.pdf');
         await page.click('[data-testid="verify-button"]');
         await page.waitForTimeout(1000);
@@ -667,7 +667,7 @@ describe('Customer Journey E2E', () => {
   describe('Plan Upgrade Flow', () => {
     test('Should handle plan upgrade with proration', async () => {
       // Navigate to billing page
-      await page.goto('https://app.c2concierge.com/billing');
+      await page.goto('https://app.credlink.com/billing');
       
       // Click upgrade button
       await page.click('[data-testid="upgrade-to-scale"]');
@@ -692,7 +692,7 @@ describe('Customer Journey E2E', () => {
   describe('Overage Handling', () => {
     test('Should handle overage gracefully', async () => {
       // Simulate high usage
-      await page.goto('https://app.c2concierge.com/billing');
+      await page.goto('https://app.credlink.com/billing');
       
       // Check usage dashboard
       await page.click('[data-testid="usage-dashboard"]');
@@ -821,7 +821,7 @@ describe('Security Headers', () => {
 
 ```javascript
 // performance.test.js
-const API_BASE_URL = process.env.API_BASE_URL || 'https://api.c2concierge.com';
+const API_BASE_URL = process.env.API_BASE_URL || 'https://api.credlink.com';
 
 describe('Performance Tests', () => {
   describe('API Response Times', () => {

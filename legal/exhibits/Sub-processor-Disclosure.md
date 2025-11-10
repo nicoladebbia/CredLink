@@ -67,5 +67,5 @@ Customers may object to new sub-processors on reasonable data protection grounds
 
 ---
 
-**Subscribe to Updates**: legal-updates@c2concierge.com  
-**RSS Feed**: https://c2concierge.com/legal/sub-processors.rss
+**Subscribe to Updates**: legal-updates@credlink.com  
+**RSS Feed**: https://credlink.com/legal/sub-processors.rss

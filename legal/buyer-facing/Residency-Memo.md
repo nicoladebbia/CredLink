@@ -59,5 +59,5 @@ When processing data across multiple jurisdictions, we apply the strictest reten
 
 ---
 
-**Questions?** legal@c2concierge.com  
+**Questions?** legal@credlink.com  
 **Last Updated**: November 5, 2025

@@ -42,7 +42,7 @@ from .types import (
     RequestOptions,
     
     # Error types
-    C2ConciergeError,
+    CredLinkError,
     AuthError,
     RateLimitError,
     ConflictError,
@@ -86,7 +86,7 @@ __all__ = [
     "RequestOptions",
     
     # Error types
-    "C2ConciergeError",
+    "CredLinkError",
     "AuthError",
     "RateLimitError",
     "ConflictError",

@@ -31,8 +31,8 @@ cd CredLink && ./start-simple.sh
 **Files**: `CONTRIBUTING.md`, `SECURITY.md`
 
 **Before**:
-- security@c2concierge.com
-- engineering@c2concierge.com
+- security@credlink.com
+- engineering@credlink.com
 
 **After**:
 - security@credlink.com
@@ -162,8 +162,8 @@ cd CredLink && ./start-simple.sh
 **Files**: Multiple TypeScript/JavaScript files in `core/`
 
 **Before** (in actual code):
-- `c2concierge.example` domain references
-- `C2Concierge` generator names
+- `credlink.example` domain references
+- `CredLink` generator names
 - `c2-edge-relay` service names
 - `X-C2-Relay-*` headers
 - `X-C2C-Sign` headers
@@ -261,7 +261,7 @@ CredLink/
 
 ### **Code**
 - ✅ All headers, domains, and identifiers use "credlink" branding
-- ✅ No lingering "c2c" or "c2concierge" in source code
+- ✅ No lingering "c2c" or "credlink" in source code
 
 ---
 
@@ -326,7 +326,7 @@ grep -r "January 2025\|December 2024" *.md
 # Expected: No results (all removed)
 
 # 2. Check for old email domains
-grep -r "c2concierge\.com" *.md
+grep -r "credlink\.com" *.md
 # Expected: No results (all changed to credlink.com)
 
 # 3. Check for broken file references
@@ -334,7 +334,7 @@ grep -r "MVP-FINAL-SUMMARY\|MVP-CHECKLIST\|PRODUCTION-DEPLOYMENT-GUIDE\.md" *.md
 # Expected: No results (all removed or archived)
 
 # 4. Check for old branding in code
-grep -r "c2concierge" core --include="*.ts" --include="*.js" --exclude-dir=node_modules
+grep -r "credlink" core --include="*.ts" --include="*.js" --exclude-dir=node_modules
 # Expected: Minimal results (only in comments/strings where appropriate)
 
 # 5. Check START-HERE for personal paths
