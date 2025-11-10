@@ -1,0 +1,50 @@
+# CredLink Infrastructure Configuration
+# Copy this file to terraform.tfvars and customize for your environment
+
+# AWS Configuration
+aws_region = "us-east-1"
+environment = "production"  # development, staging, or production
+project_name = "credlink"
+
+# Network Configuration
+vpc_cidr = "10.0.0.0/16"
+availability_zones_count = 2  # Use 2 for cost efficiency, 3 for maximum HA
+
+# Application Configuration
+app_port = 3001
+health_check_path = "/health"
+
+# ECS Configuration
+ecs_task_cpu = 256        # 256 = 0.25 vCPU
+ecs_task_memory = 512     # MB
+ecs_desired_count = 2     # Minimum for HA
+ecs_max_count = 10        # Maximum for auto-scaling
+
+# Database Configuration
+db_instance_class = "db.t3.micro"          # Upgrade to db.t3.small for production
+db_allocated_storage = 20                   # GB
+db_backup_retention_days = 30              # Days to keep backups
+db_multi_az = true                         # true for production, false for dev
+
+# Redis Configuration
+redis_node_type = "cache.t3.micro"
+redis_num_cache_nodes = 2
+
+# S3 Configuration
+s3_lifecycle_glacier_days = 90             # Move to Glacier after 90 days
+s3_lifecycle_expiration_days = 365         # Delete after 1 year (0 = never)
+
+# Monitoring
+enable_enhanced_monitoring = true
+alarm_email = "ops@credlink.com"           # Email for CloudWatch alarms
+
+# Cost Management
+cost_alert_threshold = 200                 # Monthly budget alert threshold (USD)
+
+# Additional Tags
+tags = {
+  ManagedBy   = "Terraform"
+  Owner       = "Engineering"
+  CostCenter  = "Infrastructure"
+  Compliance  = "None"
+}
