@@ -1,119 +1,58 @@
-# 🎯 START HERE - CredLink MVP
+# ⚠️ THE DEMO DOES NOT WORK - START HERE
 
-## Super Simple 3-Step Guide
+**CRITICAL:** Backend signing service is NOT implemented. The demo WILL FAIL.
 
-### Step 1: Open Terminal
+## What Actually Works Right Now:
 
-**On Mac:**
-1. Press `Cmd + Space`
-2. Type "Terminal"
-3. Press Enter
-
-**On Windows:**
-1. Press `Windows + R`
-2. Type "cmd"
-3. Press Enter
-
----
-
-### Step 2: Run This Command
-
-Copy and paste this into your terminal:
-
+✅ **Policy Engine Tests:**
 ```bash
-cd /Users/nicoladebbia/Code_Ideas/CredLink && ./start-simple.sh
+pnpm install
+pnpm test:acceptance
 ```
+These pass because they're testing architecture, not actual signing.
 
-Then press **Enter**.
-
----
-
-### Step 3: Use Your Browser
-
-The script will automatically:
-- ✅ Install everything needed
-- ✅ Start the servers
-- ✅ Open your browser
-
-**You'll see two pages:**
-
-1. **Upload Page** - Sign new images
-   - http://localhost:8000/demo/upload.html
-
-2. **Gallery Page** - View signed images
-   - http://localhost:8000/demo/gallery-enhanced.html
-
----
-
-## 📸 How to Sign an Image
-
-1. Go to the **Upload Page**
-2. Click the upload area (or drag & drop an image)
-3. Fill in:
-   - Your email
-   - Image title
-   - Description (optional)
-4. Click **"Sign Image"**
-5. Wait a few seconds
-6. ✅ Done! Your image is cryptographically signed!
-
----
-
-## 🖼️ How to View Signed Images
-
-1. Go to the **Gallery Page**
-2. See all your signed images
-3. Click **"Verify Provenance"** on any image
-4. See the cryptographic proof!
-
----
-
-## 🛑 How to Stop
-
-In the terminal where the script is running:
-- Press `Ctrl + C`
-
----
-
-## ❓ Problems?
-
-### "Command not found"
-Make sure you're in the right folder:
+✅ **Frontend UI (Visual Only):**
 ```bash
-cd /Users/nicoladebbia/Code_Ideas/CredLink
+cd demo
+open gallery.html  # Open in browser
 ```
+You'll see a UI. It's a MOCKUP. Clicking "Sign Image" returns 404.
 
-### "Permission denied"
-Make the script executable:
-```bash
-chmod +x start-simple.sh
-```
+✅ **Documentation:**
+- Architecture docs in `/docs/`
+- Roadmap in `/docs/roadmap/`
+- Code structure is sound
 
-### "Port already in use"
-Kill existing processes:
-```bash
-lsof -ti:3001 | xargs kill -9
-lsof -ti:8000 | xargs kill -9
-```
+## What DOESN'T Work:
 
-Then run the script again.
+❌ **POST /sign endpoint** - Returns 404 (not implemented)  
+❌ **POST /verify endpoint** - Returns 404 (not implemented)  
+❌ **Image signing** - Backend doesn't exist  
+❌ **Signature verification** - Backend doesn't exist  
+❌ **Demo functionality** - Will fail when you click buttons  
+❌ **CLI commands** - No backend to connect to  
+❌ **Production deployment** - Nothing to deploy
+
+## Honest Timeline:
+
+- **Phase 1 (Honesty Audit):** 2-3 days ← YOU ARE HERE
+- **Phase 2 (Rebrand Cleanup):** 3-5 days
+- **Phase 3 (Backend Build):** 4-8 weeks  
+- **Phase 4 (Infrastructure):** 4-8 weeks
+- **Phase 5 (Customer Validation):** 12-16 weeks
+
+**Earliest working demo:** 2-3 months from now (after Phase 3)
+**Production ready:** 6-12 months from now
+
+## How to Contribute:
+
+1. **Phase 1-2:** Help fix dishonest docs and rebranding
+2. **Phase 3:** Backend engineering (TypeScript/Node.js)
+3. **Phase 4:** Infrastructure/DevOps
+4. **Phase 5:** Customer development/sales
+
+See [docs/roadmap/ROADMAP-OVERVIEW.md](docs/roadmap/ROADMAP-OVERVIEW.md).
 
 ---
 
-## 🎉 That's It!
-
-You now have a working image signing system with:
-- ✅ Real cryptographic signatures (RSA-SHA256)
-- ✅ Immutable storage
-- ✅ One-click verification
-- ✅ Beautiful interface
-
-**Just run the script and start signing images!** 🚀
-
----
-
-## 📖 More Information
-
-- **Full Guide**: See `SIMPLE-USER-GUIDE.md`
-- **Technical Docs**: See `MVP-FINAL-SUMMARY.md`
-- **Deployment**: See `PRODUCTION-DEPLOYMENT-GUIDE.md`
+**Questions?** Open an issue. Be patient. We're rebuilding with honesty.
