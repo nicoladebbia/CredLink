@@ -9,7 +9,10 @@
     "start": "node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:survival": "jest survival-rates.test.ts",
+    "test:unit": "jest --testPathPattern=unit",
+    "test:integration": "jest --testPathPattern=integration"
   },
   "keywords": ["c2pa", "signing", "credlink", "provenance"],
   "author": "CredLink",

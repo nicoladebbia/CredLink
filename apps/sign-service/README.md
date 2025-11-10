@@ -147,7 +147,8 @@ src/
 │   └── index.ts             # TypeScript types
 └── tests/
     ├── unit/                # Unit tests
-    └── integration/         # Integration tests
+    ├── integration/         # Integration tests
+    └── survival/            # Survival rate tests (framework)
 ```
 
 ## Development
@@ -158,12 +159,23 @@ src/
 # All tests
 pnpm test
 
+# Unit tests only
+pnpm test:unit
+
+# Integration tests only
+pnpm test:integration
+
+# Survival rate tests (mock implementation)
+pnpm test:survival
+
 # With coverage
-pnpm test -- --coverage
+pnpm test:coverage
 
 # Watch mode
 pnpm test:watch
 ```
+
+**Note:** Survival rate tests use mock transformations. See `src/tests/survival/README.md` for production implementation guide.
 
 ### Build
 
@@ -202,9 +214,12 @@ Output: `dist/`
    - Update `proof-storage.ts`
 
 5. **Survival Rate Testing**
-   - Measure real survival rates (1,000+ operations)
-   - Test against actual image optimizers
-   - Document measured metrics
+   - Framework implemented in `src/tests/survival/`
+   - Currently uses mock transformations
+   - Replace with real image processing (Sharp, ImageMagick)
+   - Measure against 10 scenarios (1,000+ iterations each)
+   - Document actual measured rates (not theoretical)
+   - See `src/tests/survival/README.md` for full guide
 
 ## License
 
