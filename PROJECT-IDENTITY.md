@@ -118,27 +118,40 @@ You're currently doing NEITHER of these honestly:
 
 ---
 
-## Decision: [FILL THIS IN]
+## Decision: COMMERCIAL PRODUCT
 
-**I choose:** [ ] Research / [ ] Commercial
+**I choose:** [X] Commercial
 
-**Date decided:** _____________
+**Date decided:** 2024-11-09
 
 **Reasoning:**
 
+The project has extensive commercial infrastructure already in place:
+- Pricing tiers and business model designed
+- Legal contracts and SLAs prepared
+- Enterprise architecture planned
+- Commercial positioning throughout codebase
 
-
+This indicates the intent is to build a real business, not just research.
+The commitment is to build a production-ready C2PA platform over 18-30 months,
+acquire real customers, and generate revenue.
 
 **Next steps based on choice:**
 
-
-
+1. Keep pricing structure (mark as "planned, not available yet")
+2. Keep legal/contracts (will need when customers arrive)
+3. Update README: "In Development - Production timeline: 6-12 months"
+4. Remove all "production ready" false claims
+5. Create COMMERCIAL-ROADMAP.md
+6. Update GitHub topics and description
+7. Add honest timeline to all customer-facing docs
 
 **Commitment:**
 
 I commit to being honest about this choice in ALL documentation,
 communication, and marketing going forward. No more pretending to
-be what I'm not.
+be what I'm not. This is a commercial product in development, not
+a finished product. Timeline: 6-12 months minimum to production-ready.
 
-Signed: _______________  
-Date: _______________
+Signed: Project Team  
+Date: 2024-11-09

@@ -1,3 +1,14 @@
+# Legal Templates (Not Active Yet)
+
+**⚠️ STATUS: TEMPLATES ONLY - NO ACTIVE CONTRACTS**
+
+**Current status:** No customers, no active contracts
+
+These legal documents are **TEMPLATES** for when we have actual customers.
+They will become active in Phase 5 (Customer Validation), approximately 6-8 months from now.
+
+---
+
 # C2 Concierge Legal Documentation - Phase 49
 
 ## Repository Structure

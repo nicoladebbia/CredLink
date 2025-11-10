@@ -34,13 +34,16 @@
 
 ---
 
-# CredLink: C2PA Remote-First Architecture Research
+# CredLink: C2PA Content Authenticity Platform
 
-**Status:** Early development. Backend not implemented.  
-**Timeline:** 6-12 months to production-ready system.  
-**Current Focus:** Honesty audit (Phase 1) and rebranding (Phase 2).
+**Status:** In Development (Backend 0% complete)  
+**Timeline:** 6-12 months to production-ready system  
+**Current Focus:** Phase 1 (Honesty Audit) - Removing dishonest claims  
+**Project Type:** Commercial Product
 
-*Exploring remote-first C2PA signing architecture. Not production ready.*
+*Building production C2PA content authenticity platform. Not production ready yet.*
+
+See [COMMERCIAL-ROADMAP.md](COMMERCIAL-ROADMAP.md) for full 18-30 month plan.
 
 [![Status](https://img.shields.io/badge/Status-Early%20Development-red)](README.md)
 [![Build](https://img.shields.io/badge/Build-Passing-green)](README.md)
@@ -533,6 +536,21 @@ credlink/
 See [docs/roadmap/ROADMAP-OVERVIEW.md](docs/roadmap/ROADMAP-OVERVIEW.md) for detailed timeline.
 
 **Shortest realistic path:** 6-12 months to production-ready system.
+
+---
+
+## Honest Development Timeline
+
+We're building this properly, with no shortcuts:
+- **Phase 1-2:** Honesty + Rebrand (2 weeks) ← IN PROGRESS
+- **Phase 3:** Backend Implementation (4-8 weeks)
+- **Phase 4:** Infrastructure Deployment (4-8 weeks)  
+- **Phase 5:** Customer Validation (12-16 weeks)
+- **Phase 6-10:** Enterprise Features & Excellence (12-18 months)
+
+**Total: 18-30 months to world-class product.**
+
+See full roadmap: [COMMERCIAL-ROADMAP.md](COMMERCIAL-ROADMAP.md)
 
 ---
 
