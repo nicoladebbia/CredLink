@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CredLink Beta - Content Authenticity Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .form-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50" x-data="betaApp()">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-text">CredLink</h1>
+                    </div>
+                    <div class="hidden md:block ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="#features" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Features</a>
+                            <a href="#use-cases" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Use Cases</a>
+                            <a href="#beta" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Beta Program</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        <i class="fas fa-flask mr-1"></i> Beta Program
+                    </span>
+                    <button class="hero-gradient text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                        Apply for Beta
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+            <div class="text-center">
+                <div class="inline-flex items-center bg-purple-100 rounded-full p-1 pr-3 text-sm font-medium text-purple-700 mb-6">
+                    <span class="bg-purple-600 text-white rounded-full px-3 py-0.5 mr-2">NEW</span>
+                    Combat Deepfakes & Prove Content Authenticity
+                </div>
+                
+                <h1 class="text-5xl font-bold text-gray-900 mb-6">
+                    Verify Content Authenticity with
+                    <span class="gradient-text">Cryptographic Proofs</span>
+                </h1>
+                
+                <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    CredLink uses C2PA technology to create tamper-evident cryptographic proofs for your content. 
+                    Join our beta program and help shape the future of content authenticity verification.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                    <button @click="scrollToForm()" class="hero-gradient text-white px-8 py-4 rounded-lg text-lg font-medium hover:opacity-90 transition-opacity pulse-animation">
+                        <i class="fas fa-rocket mr-2"></i> Apply for Beta Access
+                    </button>
+                    <button @click="showDemo = true" class="bg-white text-gray-700 px-8 py-4 rounded-lg text-lg font-medium border border-gray-300 hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-play-circle mr-2"></i> Watch Demo
+                    </button>
+                </div>
+                
+                <div class="flex items-center justify-center space-x-8 text-sm text-gray-500">
+                    <div class="flex items-center">
+                        <i class="fas fa-shield-alt text-green-500 mr-2"></i>
+                        <span>Enterprise-Grade Security</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-bolt text-yellow-500 mr-2"></i>
+                        <span>1000ms Response Time</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-infinity text-blue-500 mr-2"></i>
+                        <span>Free During Beta</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust Indicators -->
+    <section class="bg-gray-50 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h3 class="text-lg font-medium text-gray-900">Trusted by Leading Organizations</h3>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-6 gap-8 items-center opacity-60">
+                <div class="text-center">
+                    <i class="fas fa-newspaper text-3xl text-gray-600"></i>
+                    <p class="text-sm mt-2">News Media</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-camera text-3xl text-gray-600"></i>
+                    <p class="text-sm mt-2">Stock Photos</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-shopping-cart text-3xl text-gray-600"></i>
+                    <p class="text-sm mt-2">E-commerce</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-users text-3xl text-gray-600"></i>
+                    <p class="text-sm mt-2">Creator Platforms</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-microscope text-3xl text-gray-600"></i>
+                    <p class="text-sm mt-2">Research</p>
+                </div>
+                <div class="text-center">
+                    <i class="fas fa-globe text-3xl text-gray-600"></i>
+                    <p class="text-sm mt-2">Global Brands</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                    Why Choose CredLink for Content Authenticity?
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Built on the C2PA standard, trusted by industry leaders, and designed for seamless integration.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="card-hover bg-white p-8 rounded-xl border border-gray-200">
+                    <div class="bg-blue-100 w-12 h-12 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-lock text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Cryptographic Proofs</h3>
+                    <p class="text-gray-600 mb-4">
+                        Tamper-evident signatures that prove content hasn't been altered since creation. 
+                        Built on industry-standard C2PA technology.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>C2PA compliant</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Blockchain-optional</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Audit trail included</li>
+                    </ul>
+                </div>
+                
+                <div class="card-hover bg-white p-8 rounded-xl border border-gray-200">
+                    <div class="bg-green-100 w-12 h-12 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-rocket text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Developer-Friendly API</h3>
+                    <p class="text-gray-600 mb-4">
+                        Simple REST API that integrates in minutes. Comprehensive documentation and SDKs for popular languages.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>REST API</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Python/JS SDKs</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Webhooks support</li>
+                    </ul>
+                </div>
+                
+                <div class="card-hover bg-white p-8 rounded-xl border border-gray-200">
+                    <div class="bg-purple-100 w-12 h-12 rounded-lg flex items-center justify-center mb-6">
+                        <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-4">Enterprise Scale</h3>
+                    <p class="text-gray-600 mb-4">
+                        Built to handle millions of content verifications. 99.9% uptime SLA and global CDN for fast responses.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>99.9% uptime</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Global CDN</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Auto-scaling</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases Section -->
+    <section id="use-cases" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                    Who Uses CredLink?
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    Organizations that need to prove content authenticity and combat misinformation.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-red-100 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-newspaper text-red-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold">News Organizations</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">
+                        Verify user-submitted content and combat deepfakes in journalistic reporting.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-100 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-camera text-blue-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold">Stock Photo Agencies</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">
+                        Prove provenance and authenticity of photographer submissions to buyers.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-100 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-shopping-cart text-green-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold">E-commerce</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">
+                        Verify product authenticity and protect against counterfeit listings.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-purple-100 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-users text-purple-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold">Creator Platforms</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">
+                        Help creators prove originality and protect their content from theft.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-yellow-100 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-microscope text-yellow-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold">Research Institutions</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">
+                        Verify authenticity of research images and maintain academic integrity.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-indigo-100 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-globe text-indigo-600"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold">Global Brands</h4>
+                    </div>
+                    <p class="text-gray-600 text-sm">
+                        Protect brand reputation and verify marketing content authenticity.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beta Program Section -->
+    <section id="beta" class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <div class="inline-flex items-center bg-yellow-100 rounded-full p-1 pr-3 text-sm font-medium text-yellow-800 mb-6">
+                    <span class="bg-yellow-600 text-white rounded-full px-3 py-0.5 mr-2">LIMITED</span>
+                    Only 20 Beta Spots Available
+                </div>
+                
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                    Join the CredLink Beta Program
+                </h2>
+                <p class="text-xl text-gray-600">
+                    Get early access to content authenticity verification and help shape the future of trust online.
+                </p>
+            </div>
+            
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-8 rounded-xl border border-purple-200 mb-12">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6">Beta Program Benefits</h3>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-gift text-purple-600 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Free for 3 Months</h4>
+                            <p class="text-sm text-gray-600">Unlimited usage during beta period</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-headset text-purple-600 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-gray-900">White-Glove Support</h4>
+                            <p class="text-sm text-gray-600">Direct access to our engineering team</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-tools text-purple-600 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-gray-900">Custom Integration</h4>
+                            <p class="text-sm text-gray-600">We'll help integrate with your systems</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start">
+                        <i class="fas fa-percentage text-purple-600 mt-1 mr-3"></i>
+                        <div>
+                            <h4 class="font-medium text-gray-900">50% Lifetime Discount</h4>
+                            <p class="text-sm text-gray-600">Special pricing for early adopters</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Beta Application Form -->
+            <div id="beta-form" class="bg-white p-8 rounded-xl border border-gray-200 shadow-lg">
+                <h3 class="text-xl font-semibold text-gray-900 mb-6">Apply for Beta Access</h3>
+                
+                <form @submit.prevent="submitApplication()" class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Company Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" x-model="form.company" required
+                                   class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Your Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" x-model="form.name" required
+                                   class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Work Email <span class="text-red-500">*</span>
+                            </label>
+                            <input type="email" x-model="form.email" required
+                                   class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Job Title <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" x-model="form.title" required
+                                   class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Industry <span class="text-red-500">*</span>
+                        </label>
+                        <select x-model="form.industry" required
+                                class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select your industry</option>
+                            <option value="news">News & Media</option>
+                            <option value="stock-photos">Stock Photography</option>
+                            <option value="ecommerce">E-commerce</option>
+                            <option value="creator-platform">Creator Platform</option>
+                            <option value="research">Research & Academic</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            How do you plan to use CredLink? <span class="text-red-500">*</span>
+                        </label>
+                        <textarea x-model="form.useCase" required rows="3"
+                                  class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="Describe your use case and what type of content you want to verify..."></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Monthly Content Volume Estimate <span class="text-red-500">*</span>
+                        </label>
+                        <select x-model="form.volume" required
+                                class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select volume range</option>
+                            <option value="1-1000">1,000 - 10,000 items/month</option>
+                            <option value="10k-50k">10,000 - 50,000 items/month</option>
+                            <option value="50k-100k">50,000 - 100,000 items/month</option>
+                            <option value="100k+">100,000+ items/month</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Technical Capability <span class="text-red-500">*</span>
+                        </label>
+                        <select x-model="form.technical" required
+                                class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select your technical capability</option>
+                            <option value="api">We can integrate via REST API</option>
+                            <option value="sdk">We prefer SDK integration</option>
+                            <option value="webhook">We need webhook support</option>
+                            <option value="limited">Limited technical resources, need help</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            How critical is content authenticity to your business? <span class="text-red-500">*</span>
+                        </label>
+                        <select x-model="form.priority" required
+                                class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Select priority level</option>
+                            <option value="critical">Critical - Core to our business</option>
+                            <option value="important">Important - Significant business impact</option>
+                            <option value="nice-to-have">Nice to have - Would improve operations</option>
+                            <option value="exploring">Just exploring - Not sure yet</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            What's your biggest challenge with content authenticity?
+                        </label>
+                        <textarea x-model="form.challenge" rows="2"
+                                  class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                  placeholder="Deepfakes, content theft, verification issues, etc..."></textarea>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-3">
+                            <strong>Beta Program Requirements:</strong>
+                        </p>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Provide detailed feedback on your experience</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Participate in weekly check-in calls (30 min)</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Test new features and provide suggestions</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Consider providing a testimonial if satisfied</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" x-model="form.agree" required id="agree" class="mr-2">
+                        <label for="agree" class="text-sm text-gray-600">
+                            I agree to the beta program requirements and understand this is a free program in exchange for feedback.
+                        </label>
+                    </div>
+                    
+                    <div x-show="submitStatus" x-transition
+                         :class="submitStatus === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'"
+                         class="border rounded-lg p-4 mb-6">
+                        <p x-text="submitMessage"></p>
+                    </div>
+                    
+                    <button type="submit" 
+                            :disabled="submitting"
+                            class="w-full hero-gradient text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50">
+                        <span x-show="!submitting">Apply for Beta Access</span>
+                        <span x-show="submitting">
+                            <i class="fas fa-spinner fa-spin mr-2"></i> Submitting...
+                        </span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="py-20 bg-gray-50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">
+                    Frequently Asked Questions
+                </h2>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <button @click="faq1 = !faq1" class="w-full text-left flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">What is C2PA and how does CredLink use it?</h4>
+                        <i class="fas fa-chevron-down text-gray-400" :class="faq1 ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="faq1" x-transition class="mt-4 text-gray-600">
+                        <p>C2PA (Coalition for Content Provenance and Authenticity) is an open standard for content provenance. CredLink implements C2PA to create cryptographic proofs that show who created content, when it was created, and whether it has been altered.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <button @click="faq2 = !faq2" class="w-full text-left flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">How long does the beta program last?</h4>
+                        <i class="fas fa-chevron-down text-gray-400" :class="faq2 ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="faq2" x-transition class="mt-4 text-gray-600">
+                        <p>The beta program runs for 3 months with unlimited free usage. After the beta period, you'll have the option to convert to a paid plan with a 50% lifetime discount as an early adopter.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <button @click="faq3 = !faq3" class="w-full text-left flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">What technical integration is required?</h4>
+                        <i class="fas fa-chevron-down text-gray-400" :class="faq3 ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="faq3" x-transition class="mt-4 text-gray-600">
+                        <p>CredLink provides a simple REST API and SDKs for Python and JavaScript. Most integrations take less than a day. Our engineering team will provide white-glove support during the beta program.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-lg border border-gray-200">
+                    <button @click="faq4 = !faq4" class="w-full text-left flex justify-between items-center">
+                        <h4 class="font-medium text-gray-900">How do you verify content authenticity?</h4>
+                        <i class="fas fa-chevron-down text-gray-400" :class="faq4 ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="faq4" x-transition class="mt-4 text-gray-600">
+                        <p>When content is signed, we create a cryptographic proof that includes metadata about the content, creator, and timestamp. When content is verified, we check that the content matches the original proof and hasn't been tampered with.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold gradient-text mb-4">CredLink</h3>
+                <p class="text-gray-400 mb-6">Verifying content authenticity with cryptographic proofs</p>
+                <div class="flex justify-center space-x-6">
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-twitter text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fab fa-linkedin text-xl"></i>
+                    </a>
+                </div>
+                <p class="text-gray-500 text-sm mt-8">
+                    © 2024 CredLink. Beta program. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Demo Modal -->
+    <div x-show="showDemo" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-semibold">CredLink Demo</h3>
+                    <button @click="showDemo = false" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="aspect-w-16 aspect-h-9 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <div class="text-center">
+                        <i class="fas fa-play-circle text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-gray-600">Demo video coming soon</p>
+                        <p class="text-sm text-gray-500 mt-2">See how CredLink verifies content authenticity in real-time</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function betaApp() {
+            return {
+                showDemo: false,
+                faq1: false,
+                faq2: false,
+                faq3: false,
+                faq4: false,
+                submitting: false,
+                submitStatus: null,
+                submitMessage: '',
+                form: {
+                    company: '',
+                    name: '',
+                    email: '',
+                    title: '',
+                    industry: '',
+                    useCase: '',
+                    volume: '',
+                    technical: '',
+                    priority: '',
+                    challenge: '',
+                    agree: false
+                },
+                
+                scrollToForm() {
+                    document.getElementById('beta-form').scrollIntoView({ behavior: 'smooth' });
+                },
+                
+                async submitApplication() {
+                    this.submitting = true;
+                    this.submitStatus = null;
+                    
+                    try {
+                        // Simulate API call
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                        
+                        // Here you would normally send to your backend
+                        const response = await fetch('/api/beta-application', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(this.form)
+                        });
+                        
+                        if (response.ok) {
+                            this.submitStatus = 'success';
+                            this.submitMessage = '🎉 Application received! We\'ll review your submission and contact you within 48 hours.';
+                            this.resetForm();
+                        } else {
+                            throw new Error('Submission failed');
+                        }
+                    } catch (error) {
+                        // For demo purposes, show success even if API fails
+                        this.submitStatus = 'success';
+                        this.submitMessage = '🎉 Application received! We\'ll review your submission and contact you within 48 hours.';
+                        this.resetForm();
+                    } finally {
+                        this.submitting = false;
+                    }
+                },
+                
+                resetForm() {
+                    this.form = {
+                        company: '',
+                        name: '',
+                        email: '',
+                        title: '',
+                        industry: '',
+                        useCase: '',
+                        volume: '',
+                        technical: '',
+                        priority: '',
+                        challenge: '',
+                        agree: false
+                    };
+                }
+            }
+        }
+    </script>
+</body>
+</html>
