@@ -25,34 +25,54 @@ output "database_subnet_ids" {
 # Load Balancer Outputs
 output "alb_dns_name" {
   description = "DNS name of the Application Load Balancer"
-  value       = try(module.alb[0].dns_name, "not_created")
+  value       = aws_lb.main.dns_name
 }
 
 output "alb_arn" {
   description = "ARN of the Application Load Balancer"
-  value       = try(module.alb[0].arn, "not_created")
+  value       = aws_lb.main.arn
 }
 
 output "alb_zone_id" {
   description = "Zone ID of the ALB (for Route 53)"
-  value       = try(module.alb[0].zone_id, "not_created")
+  value       = aws_lb.main.zone_id
 }
 
-# ECS Outputs (Week 3)
+output "alb_url" {
+  description = "URL of the Application Load Balancer"
+  value       = "http://${aws_lb.main.dns_name}"
+}
+
+# ECS Outputs
 output "ecs_cluster_name" {
   description = "Name of the ECS cluster"
-  value       = "pending_week_3"
+  value       = aws_ecs_cluster.main.name
+}
+
+output "ecs_cluster_arn" {
+  description = "ARN of the ECS cluster"
+  value       = aws_ecs_cluster.main.arn
 }
 
 output "ecs_service_name" {
   description = "Name of the ECS service"
-  value       = "pending_week_3"
+  value       = aws_ecs_service.app.name
 }
 
-# ECR Outputs (Week 3)
+output "ecs_task_definition_arn" {
+  description = "ARN of the ECS task definition"
+  value       = aws_ecs_task_definition.app.arn
+}
+
+# ECR Outputs
 output "ecr_repository_url" {
   description = "URL of the ECR repository"
-  value       = "pending_week_3"
+  value       = aws_ecr_repository.app.repository_url
+}
+
+output "ecr_repository_name" {
+  description = "Name of the ECR repository"
+  value       = aws_ecr_repository.app.name
 }
 
 # Database Outputs
@@ -126,8 +146,8 @@ output "rds_log_group_name" {
 
 # Cost Tracking
 output "monthly_estimated_cost_usd" {
-  description = "Estimated monthly infrastructure cost in USD (Week 1+2)"
-  value       = "~$100-135 (Network: $70 + Database: $15 + Redis: $12 + S3: $3)"
+  description = "Estimated monthly infrastructure cost in USD (Week 1+2+3)"
+  value       = "~$165 (Network: $70 + Database: $30 + Redis: $24 + S3: $6 + ECS: $15 + ALB: $20)"
 }
 
 # Deployment Information
@@ -155,19 +175,32 @@ output "redis_url" {
 }
 
 # Infrastructure Status
-output "infrastructure_ready_for_app" {
-  description = "Whether infrastructure is ready for application deployment (Week 3)"
-  value       = "Database layer ready. Application layer pending Week 3."
+output "infrastructure_ready_for_deployment" {
+  description = "Whether infrastructure is ready for application deployment"
+  value       = "Week 1-3 complete. Ready for Docker image push and deployment."
 }
 
-output "week_2_complete" {
-  description = "Status of Week 2 infrastructure"
+output "week_3_complete" {
+  description = "Status of Week 1-3 infrastructure"
   value = {
     vpc          = module.vpc.vpc_id != null
     rds          = aws_db_instance.main.arn != null
     redis        = aws_elasticache_replication_group.main.arn != null
     s3           = aws_s3_bucket.proofs.arn != null
     secrets      = aws_secretsmanager_secret.db_credentials.arn != null
+    ecr          = aws_ecr_repository.app.arn != null
+    ecs_cluster  = aws_ecs_cluster.main.arn != null
+    alb          = aws_lb.main.arn != null
     all_ready    = true
   }
+}
+
+output "application_url" {
+  description = "Application URL (after Docker image is pushed)"
+  value       = "http://${aws_lb.main.dns_name}"
+}
+
+output "docker_push_command" {
+  description = "Command to push Docker image to ECR"
+  value       = "aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${aws_ecr_repository.app.repository_url} && docker push ${aws_ecr_repository.app.repository_url}:latest"
 }
