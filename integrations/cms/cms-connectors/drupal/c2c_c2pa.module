@@ -182,7 +182,7 @@ function _c2c_c2pa_update_survival_metrics() {
   }
 
   try {
-    $analytics_url = $config->get('analytics_url') ?: 'https://analytics.c2concierge.org/telemetry';
+    $analytics_url = $config->get('analytics_url') ?: 'https://analytics.credlink.org/telemetry';
     
     // Count signed media
     $signed_count = \Drupal::entityQuery('media')
@@ -300,7 +300,7 @@ function c2c_c2pa_page_attachments(array &$attachments) {
     [
       '#tag' => 'script',
       '#attributes' => [
-        'src' => 'https://cdn.c2concierge.org/c2-badge.js',
+        'src' => 'https://cdn.credlink.org/c2-badge.js',
         'async' => TRUE,
         'integrity' => 'sha384-DEFAULT_INTEGRITY_HASH',
         'crossorigin' => 'anonymous',

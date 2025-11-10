@@ -26,7 +26,7 @@ try {
     
     // SECURITY: Validate plugin file path
     $plugin_file = plugin_basename(__FILE__);
-    if (strpos($plugin_file, 'wp-c2concierge') === false) {
+    if (strpos($plugin_file, 'wp-credlink') === false) {
         throw new Exception('Invalid plugin context for uninstall');
     }
     

@@ -1,4 +1,4 @@
-package com.c2concierge.mobile.ui
+package com.credlink.mobile.ui
 
 import android.app.Activity
 import android.content.Intent
@@ -13,9 +13,9 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentActivity
-import com.c2concierge.mobile.VerifyResult
-import com.c2concierge.mobile.VerifyState
-import com.c2concierge.mobile.HttpUrl
+import com.credlink.mobile.VerifyResult
+import com.credlink.mobile.VerifyState
+import com.credlink.mobile.HttpUrl
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -139,7 +139,7 @@ class ResultsModalFragment : DialogFragment() {
         if (result.manifestUrl != null) {
             view.findViewById<Button>(R.id.verifyInBrowserButton).visibility = View.VISIBLE
             view.findViewById<Button>(R.id.verifyInBrowserButton).setOnClickListener {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://verify.c2concierge.org"))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://verify.credlink.org"))
                 startActivity(intent)
             }
         }

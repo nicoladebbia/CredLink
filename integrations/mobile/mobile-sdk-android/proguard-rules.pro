@@ -2,7 +2,7 @@
 # MINIMAL exposure to prevent reverse engineering
 
 # Keep ONLY essential native library methods - RESTRICTED
--keep class com.c2concierge.mobile.CoreVerifier {
+-keep class com.credlink.mobile.CoreVerifier {
     public boolean verifyEmbedded(byte[], java.lang.String);
     public boolean verifyWithManifest(byte[], java.lang.String);
 }
@@ -13,9 +13,9 @@
 }
 
 # Keep MINIMAL public API surface - NO internal exposure
--keep public class com.c2concierge.mobile.VerifyResult {
+-keep public class com.credlink.mobile.VerifyResult {
     public <init>(...);
-    public com.c2concierge.mobile.VerifyState getState();
+    public com.credlink.mobile.VerifyState getState();
     public java.lang.String getIssuerDisplayName();
     public java.lang.String getKeyId();
     public java.lang.Long getTimestamp();
@@ -25,34 +25,34 @@
     public java.lang.String getVerificationTime();
 }
 
--keep public class com.c2concierge.mobile.VerifyState { *; }
+-keep public class com.credlink.mobile.VerifyState { *; }
 
--keep public class com.c2concierge.mobile.SdkConfig {
-    public static com.c2concierge.mobile.SdkConfig create(...);
-    public static com.c2concierge.mobile.SdkConfig Default;
+-keep public class com.credlink.mobile.SdkConfig {
+    public static com.credlink.mobile.SdkConfig create(...);
+    public static com.credlink.mobile.SdkConfig Default;
 }
 
--keep public interface com.c2concierge.mobile.MobileVerifier {
-    public com.c2concierge.mobile.VerifyResult verify(...);
+-keep public interface com.credlink.mobile.MobileVerifier {
+    public com.credlink.mobile.VerifyResult verify(...);
 }
 
 # Keep ONLY public constructor for main class
--keep public class com.c2concierge.mobile.C2CMobileVerifier {
-    public static com.c2concierge.mobile.C2CMobileVerifier create(...);
+-keep public class com.credlink.mobile.C2CMobileVerifier {
+    public static com.credlink.mobile.C2CMobileVerifier create(...);
 }
 
 # RESTRICTED UI class keeping - MINIMAL
--keep public class com.c2concierge.mobile.ui.ResultsModalFragment {
-    public static com.c2concierge.mobile.ui.ResultsModalFragment create(...);
+-keep public class com.credlink.mobile.ui.ResultsModalFragment {
+    public static com.credlink.mobile.ui.ResultsModalFragment create(...);
 }
 
--keep public class com.c2concierge.mobile.share.ShareActivity {
+-keep public class com.credlink.mobile.share.ShareActivity {
     public void onCreate(...);
 }
 
 # STRICT: Do NOT keep all data classes - only public API
--keep class com.c2concierge.mobile.VerifyResult { *; }
--keep class com.c2concierge.mobile.SdkConfig { *; }
+-keep class com.credlink.mobile.VerifyResult { *; }
+-keep class com.credlink.mobile.SdkConfig { *; }
 
 # OkHttp classes - they handle their own obfuscation
 -keep class okhttp3.** { *; }

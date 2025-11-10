@@ -195,7 +195,7 @@ class C2PAMediaSubscriber {
    */
   protected function callSigningService(array $assetData, array $metadata): array {
     $config = $this->configFactory->get('c2c_c2pa.settings');
-    $signUrl = $config->get('sign_url') ?: 'https://verify.c2concierge.org/sign';
+    $signUrl = $config->get('sign_url') ?: 'https://verify.credlink.org/sign';
     $apiKey = $config->get('api_key');
 
     $payload = [
@@ -265,7 +265,7 @@ class C2PAMediaSubscriber {
       return;
     }
 
-    $analyticsUrl = $config->get('analytics_url') ?: 'https://analytics.c2concierge.org/telemetry';
+    $analyticsUrl = $config->get('analytics_url') ?: 'https://analytics.credlink.org/telemetry';
 
     try {
       $this->httpClient->post($analyticsUrl, [

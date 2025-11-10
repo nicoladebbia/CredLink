@@ -250,7 +250,7 @@ jobs:
         uses: chrnorm/deployment-status@v2
         with:
           token: '${{ github.token }}'
-          environment-url: https://staging.c2concierge.com
+          environment-url: https://staging.credlink.com
           deployment-status: 'success'
 
   # DEPLOY: Production Environment
@@ -320,7 +320,7 @@ jobs:
         uses: chrnorm/deployment-status@v2
         with:
           token: '${{ github.token }}'
-          environment-url: https://c2concierge.com
+          environment-url: https://credlink.com
           deployment-status: 'success'
 
   # POST-DEPLOY: Monitoring and Alerting
@@ -339,7 +339,7 @@ jobs:
 
       - name: Update monitoring dashboards
         run: |
-          curl -X POST "https://grafana.c2concierge.com/api/dashboards/db" \
+          curl -X POST "https://grafana.credlink.com/api/dashboards/db" \
             -H "Authorization: Bearer ${{ secrets.GRAFANA_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d @monitoring/dashboards/deployment.json

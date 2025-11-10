@@ -154,9 +154,9 @@ jobs:
             3. **60 minutes**: Publish hotfix note and ship emergency fix
             
             ### 📋 Runbook
-            - [Check live report](https://docs.c2concierge.com/survival-reports/${timestamp}/)
+            - [Check live report](https://docs.credlink.com/survival-reports/${timestamp}/)
             - [View detailed results](https://github.com/${owner}/${repo}/actions/runs/${{ github.run_id }})
-            - [Emergency rollback procedure](https://runbooks.c2concierge.com/cdn-gauntlet-emergency)
+            - [Emergency rollback procedure](https://runbooks.credlink.com/cdn-gauntlet-emergency)
             
             ### 🔍 Failed Tests
             <!-- Failed tests will be listed here by the next step -->
@@ -291,7 +291,7 @@ jobs:
           # Send to Slack (if webhook configured)
           if [ -n "$SLACK_WEBHOOK" ]; then
             curl -X POST -H 'Content-type: application/json' \
-              --data "{\"attachments\":[{\"color\":\"$COLOR\",\"title\":\"$TITLE\",\"text\":\"$TEXT\",\"title_link\":\"https://docs.c2concierge.com/survival-reports/$TIMESTAMP/\",\"fields\":[{\"title\":\"Run ID\",\"value\":\"${{ github.run_id }}\",\"short\":true},{\"title\":\"Total Tests\",\"value\":\"${{ steps.analyze.outputs.total_tests }}\",\"short\":true}]}]}" \
+              --data "{\"attachments\":[{\"color\":\"$COLOR\",\"title\":\"$TITLE\",\"text\":\"$TEXT\",\"title_link\":\"https://docs.credlink.com/survival-reports/$TIMESTAMP/\",\"fields\":[{\"title\":\"Run ID\",\"value\":\"${{ github.run_id }}\",\"short\":true},{\"title\":\"Total Tests\",\"value\":\"${{ steps.analyze.outputs.total_tests }}\",\"short\":true}]}]}" \
               "$SLACK_WEBHOOK" || true
           fi
         env:

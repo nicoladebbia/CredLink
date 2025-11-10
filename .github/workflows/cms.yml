@@ -171,8 +171,8 @@ jobs:
 
     - name: Build WordPress plugin
       run: |
-        cd plugins/wp-c2concierge
-        zip -r ../wp-c2concierge.zip .
+        cd plugins/wp-credlink
+        zip -r ../wp-credlink.zip .
 
     - name: Run WordPress matrix tests
       env:

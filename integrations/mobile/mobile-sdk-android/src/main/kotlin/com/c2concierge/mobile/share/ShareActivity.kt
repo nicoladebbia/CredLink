@@ -1,4 +1,4 @@
-package com.c2concierge.mobile.share
+package com.credlink.mobile.share
 
 import android.content.Intent
 import android.os.Bundle
@@ -6,10 +6,10 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.c2concierge.mobile.C2CMobileVerifier
-import com.c2concierge.mobile.SdkConfig
-import com.c2concierge.mobile.ui.ResultsModal
-import com.c2concierge.mobile.HttpUrl
+import com.credlink.mobile.C2CMobileVerifier
+import com.credlink.mobile.SdkConfig
+import com.credlink.mobile.ui.ResultsModal
+import com.credlink.mobile.HttpUrl
 import kotlinx.coroutines.launch
 
 /**
@@ -31,7 +31,7 @@ class ShareActivity : AppCompatActivity() {
         
         // Initialize verifier
         val config = SdkConfig(
-            relayBaseUrl = HttpUrl.parse("https://verify.c2concierge.org"),
+            relayBaseUrl = HttpUrl.parse("https://verify.credlink.org"),
             enableDebugLogging = BuildConfig.DEBUG
         )
         verifier = C2CMobileVerifier.create(this, config)

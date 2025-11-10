@@ -11,7 +11,7 @@
     
     <!-- STRICT SECURITY: Pin certificates for relay - MANDATORY -->
     <domain-config>
-        <domain includeSubdomains="true">verify.c2concierge.org</domain>
+        <domain includeSubdomains="true">verify.credlink.org</domain>
         <pin-set expiration="2025-12-31">
             <!-- Production SPKI hashes - these MUST be real certificates -->
             <pin digest="SHA-256">9lDwM0oT7cR1d8X5vK2sJ6hG4fY3nB2qZ7wP5rE1tA0=</pin>

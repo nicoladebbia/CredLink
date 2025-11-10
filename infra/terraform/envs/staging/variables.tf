@@ -69,8 +69,8 @@ variable "worker_routes" {
   description = "Worker routes configuration"
   type        = list(string)
   default = [
-    "staging.c2concierge.com/manifest/*",
-    "staging.c2concierge.com/api/*"
+    "staging.credlink.com/manifest/*",
+    "staging.credlink.com/api/*"
   ]
 }
 
@@ -104,9 +104,9 @@ variable "health_check_urls" {
   description = "Health check URLs"
   type        = list(string)
   default = [
-    "https://staging.c2concierge.com/health/cache",
-    "https://staging.c2concierge.com/health/rehydration",
-    "https://staging.c2concierge.com/health/worker"
+    "https://staging.credlink.com/health/cache",
+    "https://staging.credlink.com/health/rehydration",
+    "https://staging.credlink.com/health/worker"
   ]
 }
 
@@ -119,7 +119,7 @@ variable "alert_channels" {
   default = {
     "email" = {
       type   = "email"
-      target = "alerts@c2concierge.com"
+      target = "alerts@credlink.com"
     }
     "slack" = {
       type   = "webhook"
@@ -168,7 +168,7 @@ variable "otel_collector_config" {
 variable "otlp_endpoint" {
   description = "OTLP endpoint for telemetry export"
   type        = string
-  default     = "https://otel-collector.staging.c2concierge.com:4317"
+  default     = "https://otel-collector.staging.credlink.com:4317"
 }
 
 variable "otlp_api_key" {

@@ -41,7 +41,7 @@ class SettingsForm extends ConfigFormBase {
     $form['sign_service']['sign_url'] = [
       '#type' => 'url',
       '#title' => $this->t('Sign API URL'),
-      '#default_value' => $config->get('sign_url') ?: 'https://verify.c2concierge.org/sign',
+      '#default_value' => $config->get('sign_url') ?: 'https://verify.credlink.org/sign',
       '#required' => TRUE,
       '#description' => $this->t('The endpoint URL for signing media assets with C2PA manifests.'),
       '#element_validate' => [[static::class, 'validateHttpsUrl']],
@@ -50,7 +50,7 @@ class SettingsForm extends ConfigFormBase {
     $form['sign_service']['manifest_host'] = [
       '#type' => 'url',
       '#title' => $this->t('Manifest Host'),
-      '#default_value' => $config->get('manifest_host') ?: 'https://manifests.c2concierge.org',
+      '#default_value' => $config->get('manifest_host') ?: 'https://manifests.credlink.org',
       '#required' => TRUE,
       '#description' => $this->t('Base URL where signed manifests are stored.'),
       '#element_validate' => [[static::class, 'validateHttpsUrl']],
@@ -175,7 +175,7 @@ class SettingsForm extends ConfigFormBase {
     $form['analytics']['analytics_url'] = [
       '#type' => 'url',
       '#title' => $this->t('Analytics Endpoint'),
-      '#default_value' => $config->get('analytics_url') ?: 'https://analytics.c2concierge.org/telemetry',
+      '#default_value' => $config->get('analytics_url') ?: 'https://analytics.credlink.org/telemetry',
       '#states' => [
         'visible' => [
           ':input[name="enable_telemetry"]' => ['checked' => TRUE],
@@ -279,10 +279,10 @@ public static function validateHttpsUrl(array $element, FormStateInterface $form
   
   $host = parse_url($url, PHP_URL_HOST);
   $allowedDomains = [
-    'verify.c2concierge.org',
-    'manifests.c2concierge.org',
-    'cdn.c2concierge.org',
-    'analytics.c2concierge.org'
+    'verify.credlink.org',
+    'manifests.credlink.org',
+    'cdn.credlink.org',
+    'analytics.credlink.org'
   ];
   
   if (!in_array($host, $allowedDomains)) {

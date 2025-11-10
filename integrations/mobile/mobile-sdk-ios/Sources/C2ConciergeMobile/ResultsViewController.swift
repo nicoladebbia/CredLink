@@ -319,7 +319,7 @@ public class ResultsViewController: UIViewController {
         if let manifestURL = result.manifestURL {
             button.addAction(UIAction { _ in
                 // Open in public verifier
-                let verifierURL = URL(string: "https://verify.c2concierge.org")!
+                let verifierURL = URL(string: "https://verify.credlink.org")!
                 UIApplication.shared.open(verifierURL)
             }, for: .touchUpInside)
         }

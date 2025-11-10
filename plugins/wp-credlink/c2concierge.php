@@ -6,7 +6,7 @@
  * Author: C2 Concierge Team
  * License: MIT
  * Network: true
- * Text Domain: c2-concierge
+ * Text Domain: credlink
  * Domain Path: /languages
  * Requires at least: 5.0
  * Requires PHP: 7.4

@@ -16,23 +16,23 @@ storage_destroy_protect = true
 
 # Worker configuration
 worker_routes = [
-  "staging.c2concierge.com/manifest/*",
-  "staging.c2concierge.com/api/*"
+  "staging.credlink.com/manifest/*",
+  "staging.credlink.com/api/*"
 ]
 worker_static_assets_enabled = true
 
 # Health check configuration
 health_check_urls = [
-  "https://staging.c2concierge.com/health/cache",
-  "https://staging.c2concierge.com/health/rehydration",
-  "https://staging.c2concierge.com/health/worker"
+  "https://staging.credlink.com/health/cache",
+  "https://staging.credlink.com/health/rehydration",
+  "https://staging.credlink.com/health/worker"
 ]
 
 # Alert channels
 alert_channels = {
   "email" = {
     type   = "email"
-    target = "alerts@c2concierge.com"
+    target = "alerts@credlink.com"
   }
   "slack" = {
     type   = "webhook"
@@ -52,14 +52,14 @@ enable_cost_tags = true
 
 # OpenTelemetry configuration
 enable_otel_collector = true
-otlp_endpoint = "https://otel-collector.staging.c2concierge.com:4317"
+otlp_endpoint = "https://otel-collector.staging.credlink.com:4317"
 otlp_api_key = "your-otlp-api-key-here"  # Required for secure telemetry export
 
 # Security configuration
 enable_audit_logging = true
 alert_severity_threshold = "MEDIUM"
 enable_real_time_alerts = true
-alert_email = "security-alerts@c2concierge.com"
+alert_email = "security-alerts@credlink.com"
 alert_webhook = "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
 
 # Rate limiting and security headers
@@ -73,7 +73,7 @@ security_headers_enabled = true
 
 # Vault secrets management (optional but recommended)
 use_vault_secrets = true
-vault_address = "https://vault.staging.c2concierge.com"
+vault_address = "https://vault.staging.credlink.com"
 vault_token = "your-vault-token"
 
 # VPC endpoint configuration (for enhanced security)

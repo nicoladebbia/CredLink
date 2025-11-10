@@ -1,4 +1,4 @@
-package com.c2concierge.mobile
+package com.credlink.mobile
 
 import android.content.Context
 import android.net.Uri
@@ -405,7 +405,7 @@ private class CoreVerifier {
     
     init {
         // Load native library
-        System.loadLibrary("c2concierge_core")
+        System.loadLibrary("credlink_core")
     }
     
     fun verifyEmbedded(data: ByteArray, sourceUrl: String): VerifyResult {

@@ -106,7 +106,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest tests/ -v --cov=c2concierge --cov-report=xml
+          pytest tests/ -v --cov=credlink --cov-report=xml
 
       - name: Run linting
         run: |
@@ -258,7 +258,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
-          scope: '@c2concierge'
+          scope: '@credlink'
 
       - name: Install dependencies
         run: npm ci
@@ -283,12 +283,12 @@ jobs:
             
             ### Installation
             ```bash
-            npm install @c2concierge/sdk
+            npm install @credlink/sdk
             ```
             
             ### Quick Start
             ```typescript
-            import { Client } from '@c2concierge/sdk';
+            import { Client } from '@credlink/sdk';
             
             const client = new Client({ apiKey: process.env.C2_API_KEY });
             const result = await client.verify('https://example.com/image.jpg', {
@@ -338,8 +338,8 @@ jobs:
 
       - name: Smoke test from Test PyPI
         run: |
-          pip install --index-url https://test.pypi.org/simple/ c2concierge
-          python -c "import c2concierge; print(c2concierge.__version__)"
+          pip install --index-url https://test.pypi.org/simple/ credlink
+          python -c "import credlink; print(credlink.__version__)"
 
       - name: Publish to PyPI
         run: |
@@ -387,7 +387,7 @@ jobs:
             
             ### Installation
             ```bash
-            go get github.com/c2concierge/sdk-go/v2@v${{ github.ref_name || github.event.inputs.version }}
+            go get github.com/credlink/sdk-go/v2@v${{ github.ref_name || github.event.inputs.version }}
             ```
             
             ### Quick Start
@@ -397,7 +397,7 @@ jobs:
             import (
                 "context"
                 "fmt"
-                "github.com/c2concierge/sdk-go/v2/c2c"
+                "github.com/credlink/sdk-go/v2/c2c"
             )
             
             func main() {
@@ -426,15 +426,15 @@ jobs:
       - name: Checkout docs
         uses: actions/checkout@v4
         with:
-          repository: Nickiller04/c2-concierge-docs
+          repository: Nickiller04/credlink-docs
           token: ${{ secrets.DOCS_TOKEN }}
 
       - name: Update version references
         run: |
           VERSION="${{ github.ref_name || github.event.inputs.version }}"
-          sed -i "s/@c2concierge/sdk@[^\"]*/@c2concierge/sdk@$VERSION/g" **/*.md
-          sed -i "s/c2concierge==[^\"]*/c2concierge==$VERSION/g" **/*.md
-          sed -i "s/github.com\/c2concierge\/sdk-go\/v[0-9]*/github.com\/c2concierge\/sdk-go\/v2/g" **/*.md
+          sed -i "s/@credlink/sdk@[^\"]*/@credlink/sdk@$VERSION/g" **/*.md
+          sed -i "s/credlink==[^\"]*/credlink==$VERSION/g" **/*.md
+          sed -i "s/github.com\/credlink\/sdk-go\/v[0-9]*/github.com\/credlink\/sdk-go\/v2/g" **/*.md
 
       - name: Commit and push
         run: |
@@ -457,9 +457,9 @@ jobs:
           echo "### Version: ${{ github.ref_name || github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Published Packages:" >> $GITHUB_STEP_SUMMARY
-          echo "- **JavaScript/TypeScript**: \`@c2concierge/sdk@${{ github.ref_name || github.event.inputs.version }}\` on npm" >> $GITHUB_STEP_SUMMARY
-          echo "- **Python**: \`c2concierge==${{ github.ref_name || github.event.inputs.version }}\` on PyPI" >> $GITHUB_STEP_SUMMARY
-          echo "- **Go**: \`github.com/c2concierge/sdk-go/v2@v${{ github.ref_name || github.event.inputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **JavaScript/TypeScript**: \`@credlink/sdk@${{ github.ref_name || github.event.inputs.version }}\` on npm" >> $GITHUB_STEP_SUMMARY
+          echo "- **Python**: \`credlink==${{ github.ref_name || github.event.inputs.version }}\` on PyPI" >> $GITHUB_STEP_SUMMARY
+          echo "- **Go**: \`github.com/credlink/sdk-go/v2@v${{ github.ref_name || github.event.inputs.version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Quick Start Links:" >> $GITHUB_STEP_SUMMARY
           echo "- [JavaScript Examples](../examples/verify-on-build/)" >> $GITHUB_STEP_SUMMARY
@@ -469,11 +469,11 @@ jobs:
           echo "### Installation:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo '# JavaScript/TypeScript' >> $GITHUB_STEP_SUMMARY
-          echo 'npm install @c2concierge/sdk' >> $GITHUB_STEP_SUMMARY
+          echo 'npm install @credlink/sdk' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
           echo '# Python' >> $GITHUB_STEP_SUMMARY
-          echo 'pip install c2concierge' >> $GITHUB_STEP_SUMMARY
+          echo 'pip install credlink' >> $GITHUB_STEP_SUMMARY
           echo '' >> $GITHUB_STEP_SUMMARY
           echo '# Go' >> $GITHUB_STEP_SUMMARY
-          echo 'go get github.com/c2concierge/sdk-go/v2' >> $GITHUB_STEP_SUMMARY
+          echo 'go get github.com/credlink/sdk-go/v2' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

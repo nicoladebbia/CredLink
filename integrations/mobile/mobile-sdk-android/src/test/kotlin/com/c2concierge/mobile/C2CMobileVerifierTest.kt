@@ -1,12 +1,12 @@
-package com.c2concierge.mobile
+package com.credlink.mobile
 
 import android.content.Context
 import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.c2concierge.mobile.ui.ResultsModal
+import com.credlink.mobile.ui.ResultsModal
 import kotlinx.coroutines.runBlocking
-import com.c2concierge.mobile.HttpUrl
+import com.credlink.mobile.HttpUrl
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.Mock
@@ -34,7 +34,7 @@ class C2CMobileVerifierTest {
         context = ApplicationProvider.getApplicationContext()
         
         config = SdkConfig(
-            relayBaseUrl = HttpUrl.parse("https://verify.c2concierge.org")!!,
+            relayBaseUrl = HttpUrl.parse("https://verify.credlink.org")!!,
             pinnedSpki = listOf("test_spki_hash"),
             enableDebugLogging = true
         )
@@ -216,7 +216,7 @@ class C2CMobileVerifierTest {
         try {
             // This would typically be called from an Activity
             // For testing, we just verify the fragment can be created
-            val fragment = com.c2concierge.mobile.ui.ResultsModalFragment.create(result)
+            val fragment = com.credlink.mobile.ui.ResultsModalFragment.create(result)
             assertNotNull(fragment)
             
             // Verify arguments were set correctly
@@ -232,7 +232,7 @@ class C2CMobileVerifierTest {
     
     @Test
     fun testBackgroundWorkManager() {
-        val backgroundWorkManager = com.c2concierge.mobile.BackgroundWorkManager.create(context)
+        val backgroundWorkManager = com.credlink.mobile.BackgroundWorkManager.create(context)
         
         assertNotNull(backgroundWorkManager)
         

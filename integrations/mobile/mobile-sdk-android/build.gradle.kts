@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.c2concierge.mobile"
+    namespace = "com.credlink.mobile"
     compileSdk = 34
     buildConfig = true
 
@@ -108,14 +108,14 @@ afterEvaluate {
             create<MavenPublication>("release") {
                 from(components["release"])
                 
-                groupId = "com.c2concierge"
+                groupId = "com.credlink"
                 artifactId = "mobile"
                 version = "0.1.0"
                 
                 pom {
                     name.set("C2 Concierge Mobile SDK")
                     description.set("Android SDK for C2PA content credentials verification")
-                    url.set("https://github.com/Nickiller04/c2-concierge")
+                    url.set("https://github.com/Nickiller04/credlink")
                     
                     licenses {
                         license {
@@ -126,16 +126,16 @@ afterEvaluate {
                     
                     developers {
                         developer {
-                            id.set("c2concierge")
+                            id.set("credlink")
                             name.set("C2 Concierge Team")
-                            email.set("team@c2concierge.org")
+                            email.set("team@credlink.org")
                         }
                     }
                     
                     scm {
-                        connection.set("scm:git:github.com:Nickiller04/c2-concierge.git")
-                        developerConnection.set("scm:git:ssh://github.com:Nickiller04/c2-concierge.git")
-                        url.set("https://github.com/Nickiller04/c2-concierge/tree/main")
+                        connection.set("scm:git:github.com:Nickiller04/credlink.git")
+                        developerConnection.set("scm:git:ssh://github.com:Nickiller04/credlink.git")
+                        url.set("https://github.com/Nickiller04/credlink/tree/main")
                     }
                 }
             }

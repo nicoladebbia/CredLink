@@ -296,7 +296,7 @@ class Uninstall {
                  WHERE post_content LIKE %s 
                  OR post_content LIKE %s",
                 '%[c2-badge%',
-                '%[c2-concierge%'
+                '%[credlink%'
             ));
             
             if ($broken_posts_result !== null) {

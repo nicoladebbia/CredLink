@@ -178,7 +178,7 @@ final class C2PALinkSubscriber implements EventSubscriberInterface {
       }
       
       // Must be C2 Concierge domain
-      if (!str_contains($parsed['host'], 'c2concierge.org')) {
+      if (!str_contains($parsed['host'], 'credlink.org')) {
         return false;
       }
       

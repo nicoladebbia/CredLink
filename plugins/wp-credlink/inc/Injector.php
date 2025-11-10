@@ -36,7 +36,7 @@ class Injector {
             
             // SECURITY: Get sign endpoint from environment
             self::$sign_endpoint = self::validateSignEndpoint(
-                getenv('C2_SIGN_ENDPOINT') ?: 'https://api.c2concierge.com/sign'
+                getenv('C2_SIGN_ENDPOINT') ?: 'https://api.credlink.com/sign'
             );
             
             // SECURITY: Get API key from environment

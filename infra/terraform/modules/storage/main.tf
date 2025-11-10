@@ -535,9 +535,9 @@ resource "aws_s3_bucket_cors_configuration" "r2_cors" {
     ]
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
     allowed_origins = [
-      "https://c2concierge.com",
-      "https://*.c2concierge.com",
-      "https://app.c2concierge.com"
+      "https://credlink.com",
+      "https://*.credlink.com",
+      "https://app.credlink.com"
     ]
     expose_headers = [
       "ETag",
@@ -570,9 +570,9 @@ resource "aws_s3_bucket_cors_configuration" "s3_cors" {
     ]
     allowed_methods = ["GET", "HEAD", "OPTIONS"]
     allowed_origins = [
-      "https://c2concierge.com",
-      "https://*.c2concierge.com",
-      "https://app.c2concierge.com"
+      "https://credlink.com",
+      "https://*.credlink.com",
+      "https://app.credlink.com"
     ]
     expose_headers = [
       "ETag",

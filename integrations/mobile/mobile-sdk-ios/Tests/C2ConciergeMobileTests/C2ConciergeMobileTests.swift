@@ -1,8 +1,8 @@
 import XCTest
-@testable import C2ConciergeMobile
+@testable import CredLinkMobile
 import Photos
 
-final class C2ConciergeMobileTests: XCTestCase {
+final class CredLinkMobileTests: XCTestCase {
     
     private var config: C2CConfig!
     private var verifier: C2CMobileVerifier!
@@ -10,7 +10,7 @@ final class C2ConciergeMobileTests: XCTestCase {
     override func setUp() {
         super.setUp()
         config = C2CConfig(
-            relayBaseURL: URL(string: "https://verify.c2concierge.org")!,
+            relayBaseURL: URL(string: "https://verify.credlink.org")!,
             pinnedSPKIHashes: ["test_spki_hash"],
             enableDebugLogging: true
         )

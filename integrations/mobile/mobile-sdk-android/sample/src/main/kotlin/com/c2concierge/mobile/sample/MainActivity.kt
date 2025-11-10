@@ -1,4 +1,4 @@
-package com.c2concierge.mobile.sample
+package com.credlink.mobile.sample
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -11,10 +11,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.c2concierge.mobile.C2CMobileVerifier
-import com.c2concierge.mobile.SdkConfig
-import com.c2concierge.mobile.ui.ResultsModal
-import com.c2concierge.mobile.HttpUrl
+import com.credlink.mobile.C2CMobileVerifier
+import com.credlink.mobile.SdkConfig
+import com.credlink.mobile.ui.ResultsModal
+import com.credlink.mobile.HttpUrl
 import kotlinx.coroutines.launch
 
 /**
@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
     
     private fun initializeSDK() {
         val config = SdkConfig(
-            relayBaseUrl = HttpUrl.parse("https://verify.c2concierge.org"),
+            relayBaseUrl = HttpUrl.parse("https://verify.credlink.org"),
             pinnedSpki = listOf("relay_spki_hash_here"),
             enableDebugLogging = BuildConfig.DEBUG
         )
@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
     }
     
     private fun verifySampleImage() {
-        val sampleUrl = "https://verify.c2concierge.org/sample/c2pa-image.jpg"
+        val sampleUrl = "https://verify.credlink.org/sample/c2pa-image.jpg"
         verifyUrl(sampleUrl)
     }
     
@@ -136,7 +136,7 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, ShareActivity::class.java).apply {
             action = Intent.ACTION_SEND
             type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, "https://verify.c2concierge.org/sample/c2pa-image.jpg")
+            putExtra(Intent.EXTRA_TEXT, "https://verify.credlink.org/sample/c2pa-image.jpg")
         }
         
         startActivity(intent)

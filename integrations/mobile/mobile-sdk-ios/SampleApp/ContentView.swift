@@ -3,7 +3,7 @@
 import SwiftUI
 import Photos
 import UIKit
-import C2ConciergeMobile
+import CredLinkMobile
 
 @main
 struct SampleApp: App {
@@ -22,7 +22,7 @@ struct ContentView: View {
     @State private var isLoading = false
     
     private let config = C2CConfig(
-        relayBaseURL: URL(string: "https://verify.c2concierge.org")!,
+        relayBaseURL: URL(string: "https://verify.credlink.org")!,
         pinnedSPKIHashes: [
             "9lDwM0oT7cR1d8X5vK2sJ6hG4fY3nB2qZ7wP5rE1tA0=",
             "Y7eH3kL9mN2qJ8rW5vX1sD4fG6hB9pZ3nC2tA0oP7eR="

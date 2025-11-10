@@ -8,7 +8,7 @@ terraform {
   }
 
   backend "remote" {
-    organization = "c2concierge"
+    organization = "credlink"
     workspaces = {
       name = "c2c-prod"
     }
