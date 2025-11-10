@@ -53,15 +53,10 @@ app.get('/ready', (req, res) => {
 
 // Routes
 import signRouter from './routes/sign';
-app.use('/sign', signRouter);
+import verifyRouter from './routes/verify';
 
-// Placeholder for verify (will be implemented in Steps 201-260)
-app.post('/verify', (req, res) => {
-  res.status(501).json({
-    error: 'Verify endpoint not yet implemented',
-    message: 'This endpoint will be implemented in Steps 201-260',
-  });
-});
+app.use('/sign', signRouter);
+app.use('/verify', verifyRouter);
 
 // 404 handler
 app.use((req, res) => {
