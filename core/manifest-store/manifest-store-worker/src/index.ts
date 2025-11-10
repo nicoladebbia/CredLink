@@ -1,5 +1,5 @@
-import { ManifestStore } from '../../../packages/manifest-store/dist/manifest-store.js';
-import type { ManifestStoreConfig, SignedUrlRequest, ListObjectsOptions } from '../../../packages/manifest-store/dist/types.js';
+import { ManifestStore } from '../../src/manifest-store.js';
+import type { ManifestStoreConfig, SignedUrlRequest, ListObjectsOptions } from '../../src/types.js';
 
 interface ExecutionContext {
   waitUntil(promise: Promise<unknown>): void;

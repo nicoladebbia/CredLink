@@ -12,7 +12,7 @@
   "exclude": ["node_modules", "dist"],
   "references": [
     {
-      "path": "../manifest-store"
+      "path": "../../core/manifest-store"
     }
   ]
 }

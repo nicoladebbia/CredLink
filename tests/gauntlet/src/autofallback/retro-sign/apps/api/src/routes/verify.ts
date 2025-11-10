@@ -338,6 +338,15 @@ export async function verifyRoutes(fastify: FastifyInstance) {
   } catch (error) {
     fastify.log.error('Video verification failed:', error);
     return reply.status(500).send({
+      error: 'Internal verification error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+/**
+ * Load manifest from URL
+ */
 async function loadManifest(manifestUrl: string): Promise<any> {
   const response = await fetch(manifestUrl, {
     headers: { 'Accept': 'application/c2pa+json' }
