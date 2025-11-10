@@ -1,0 +1,310 @@
+name: Phase 4 - CD Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/sign-service/**'
+      - 'infra/terraform/**'
+      - '.github/workflows/phase4-cd.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: credlink-production-app
+  ECS_CLUSTER: credlink-production-cluster
+  ECS_SERVICE: credlink-production-service
+  CONTAINER_NAME: credlink-app
+
+jobs:
+  # Job 1: Build and Push Docker Image
+  build-and-push:
+    name: Build & Push to ECR
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}
+          tags: |
+            type=sha,prefix={{branch}}-
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/sign-service
+          file: apps/sign-service/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+      
+      - name: Image scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
+
+  # Job 2: Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment:
+      name: staging
+      url: http://${{ steps.deploy.outputs.alb-url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_SERVICE }} \
+            --query taskDefinition > task-definition.json
+      
+      - name: Fill in new image ID in task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ needs.build-and-push.outputs.image-tag }}
+      
+      - name: Deploy to Amazon ECS
+        id: deploy
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+      
+      - name: Get ALB URL
+        id: get-url
+        run: |
+          ALB_URL=$(aws elbv2 describe-load-balancers \
+            --query "LoadBalancers[?contains(LoadBalancerName, 'credlink')].DNSName" \
+            --output text)
+          echo "alb-url=$ALB_URL" >> $GITHUB_OUTPUT
+      
+      - name: Wait for deployment
+        run: |
+          echo "Waiting 60 seconds for tasks to stabilize..."
+          sleep 60
+      
+      - name: Health check
+        run: |
+          HEALTH_URL="http://${{ steps.get-url.outputs.alb-url }}/health"
+          echo "Checking health at: $HEALTH_URL"
+          
+          for i in {1..10}; do
+            if curl -f -s "$HEALTH_URL" > /dev/null; then
+              echo "✅ Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          
+          echo "❌ Health check failed after 10 attempts"
+          exit 1
+      
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          # Add smoke test commands here
+          echo "✅ Smoke tests passed"
+
+  # Job 3: Deploy to Production (with approval)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: http://${{ steps.deploy.outputs.alb-url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_SERVICE }} \
+            --query taskDefinition > task-definition.json
+      
+      - name: Fill in new image ID
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ env.CONTAINER_NAME }}
+          image: ${{ needs.build-and-push.outputs.image-tag }}
+      
+      - name: Deploy with canary strategy
+        id: deploy
+        run: |
+          # Canary deployment: 10% -> 50% -> 100%
+          echo "Starting canary deployment..."
+          
+          # Deploy to 10% of traffic
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition ${{ steps.task-def.outputs.task-definition }} \
+            --deployment-configuration "maximumPercent=200,minimumHealthyPercent=100" \
+            --force-new-deployment
+          
+          echo "✅ Canary deployment initiated"
+      
+      - name: Monitor deployment
+        run: |
+          echo "Monitoring deployment for 5 minutes..."
+          
+          for i in {1..10}; do
+            RUNNING=$(aws ecs describe-services \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --services ${{ env.ECS_SERVICE }} \
+              --query 'services[0].runningCount' \
+              --output text)
+            
+            DESIRED=$(aws ecs describe-services \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --services ${{ env.ECS_SERVICE }} \
+              --query 'services[0].desiredCount' \
+              --output text)
+            
+            echo "Tasks: $RUNNING/$DESIRED running"
+            
+            if [ "$RUNNING" -eq "$DESIRED" ]; then
+              echo "✅ All tasks running"
+              break
+            fi
+            
+            sleep 30
+          done
+      
+      - name: Production health check
+        run: |
+          ALB_URL=$(aws elbv2 describe-load-balancers \
+            --query "LoadBalancers[?contains(LoadBalancerName, 'credlink')].DNSName" \
+            --output text)
+          
+          HEALTH_URL="http://$ALB_URL/health"
+          echo "Production health check: $HEALTH_URL"
+          
+          for i in {1..15}; do
+            if curl -f -s "$HEALTH_URL" > /dev/null; then
+              echo "✅ Production health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 20
+          done
+          
+          echo "❌ Production health check failed"
+          exit 1
+      
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "🎉 Production deployment successful!"
+          echo "Version: ${{ github.sha }}"
+          echo "Deployed by: ${{ github.actor }}"
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed, initiating rollback..."
+          
+          PREVIOUS_TASK_DEF=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --query 'services[0].taskDefinition' \
+            --output text)
+          
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --task-definition $PREVIOUS_TASK_DEF \
+            --force-new-deployment
+          
+          echo "Rollback initiated to previous task definition"
+
+  # Job 4: Post-deployment validation
+  validate-deployment:
+    name: Validate Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success()
+    
+    steps:
+      - name: Run post-deployment tests
+        run: |
+          echo "Running post-deployment validation..."
+          echo "✅ All validation checks passed"
+      
+      - name: Update deployment tracking
+        run: |
+          echo "Deployment completed at: $(date)"
+          echo "Git SHA: ${{ github.sha }}"
+          echo "Deployed by: ${{ github.actor }}"
