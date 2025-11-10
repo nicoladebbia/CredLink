@@ -32,6 +32,8 @@
 
 **We are committed to radical transparency. All claims will be measured and proven before stated.**
 
+**See [APOLOGY.md](APOLOGY.md) for our honesty commitment and what we fixed.**
+
 ---
 
 # CredLink: C2PA Content Authenticity Platform
