@@ -2,6 +2,37 @@
 
 Thank you for your interest in contributing to CredLink! This document provides guidelines and information for contributors.
 
+## 🎯 Honesty Principles (READ FIRST)
+
+**We are committed to radical transparency. Every contribution must follow these principles:**
+
+### 1. Never Make Unmeasured Claims
+- ❌ Don't claim "99.9% survival" without measurement
+- ❌ Don't claim "fast" without benchmarks
+- ❌ Don't claim "production ready" without deployment
+- ✅ Use "target", "goal", or "planned" for future features
+- ✅ Mark all claims with evidence or "unmeasured"
+
+### 2. Be Honest About What Doesn't Work
+- ❌ Don't hide broken features
+- ❌ Don't write docs as if features exist when they don't
+- ✅ Add warnings to broken features
+- ✅ Clearly separate "works" from "planned"
+
+### 3. No Vaporware Comparisons
+- ❌ Don't compare our architecture to competitors' shipping products
+- ❌ Don't claim we're "better" without proof
+- ✅ Wait until we ship to make comparisons
+- ✅ Compare fairly with measured data only
+
+### 4. Report Dishonest Claims
+If you find a dishonest claim:
+1. Open an issue using `.github/ISSUE_TEMPLATE/honesty-report.md`
+2. We'll fix it within 48 hours
+3. See [APOLOGY.md](APOLOGY.md) for our commitment
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -81,18 +112,25 @@ docs(readme): update installation instructions
 
 ```
 CredLink/
-├── packages/           # Shared libraries
-│   ├── acceptance/     # Test harness
-│   ├── policy/         # Policy engine
-│   └── utils/          # Utilities
-├── apps/               # Applications
-│   ├── edge-worker/    # Cloudflare Worker
-│   └── reportgen/      # Report generator
-├── sandboxes/          # Test sandboxes
-│   ├── strip-happy/    # Stripping CDN
-│   ├── preserve-embed/ # Preserving CDN
-│   └── remote-only/    # Remote-only CDN
-├── scripts/            # Build/deployment scripts
+├── core/               # Core services
+│   ├── api-gw/         # API Gateway
+│   ├── manifest-store/ # Manifest storage
+│   ├── verify/         # Verification service
+│   └── utils/          # Shared utilities
+├── integrations/       # External integrations
+│   ├── cms/            # CMS connectors
+│   └── browser-extension/ # Browser extension
+├── ui/                 # User interfaces
+│   ├── admin/          # Admin dashboard
+│   └── badge/          # Verification badge
+├── tests/              # Test suites
+│   ├── acceptance/     # Acceptance tests
+│   └── gauntlet/       # CDN survival tests
+├── sdk/                # SDKs
+│   ├── python/         # Python SDK
+│   ├── go/             # Go SDK
+│   └── js/             # JavaScript SDK
+├── cli/                # Command-line tool
 ├── docs/               # Documentation
 └── .github/            # GitHub workflows
 ```
@@ -192,7 +230,7 @@ pnpm audit
 If you discover a security vulnerability:
 
 1. **Do not** open a public issue
-2. Email security@c2concierge.com
+2. Email security@credlink.com
 3. Include detailed reproduction steps
 4. Allow time for remediation
 
@@ -236,7 +274,7 @@ Contributors are recognized in:
 - **Issues**: Search existing GitHub issues
 - **Discussions**: Ask questions in GitHub Discussions
 - **Discord**: Join our community server
-- **Email**: engineering@c2concierge.com
+- **Email**: engineering@credlink.com
 
 ## License
 
