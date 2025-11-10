@@ -32,20 +32,18 @@
 
 **We are committed to radical transparency. All claims will be measured and proven before stated.**
 
-**See [APOLOGY.md](APOLOGY.md) for our honesty commitment and what we fixed.**
-
 ---
 
-# CredLink: C2PA Content Authenticity Platform
+# CredLink: C2PA Remote-First Architecture
 
-**Status:** In Development (Backend 0% complete)  
+**Project Type:** Commercial Product (In Development)  
+**Status:** Backend not implemented (0% complete)  
 **Timeline:** 6-12 months to production-ready system  
-**Current Focus:** Phase 1 (Honesty Audit) - Removing dishonest claims  
-**Project Type:** Commercial Product
+**Current Phase:** Phase 1 - Honesty Audit (In Progress)
 
 *Building production C2PA content authenticity platform. Not production ready yet.*
 
-See [COMMERCIAL-ROADMAP.md](COMMERCIAL-ROADMAP.md) for full 18-30 month plan.
+See [COMMERCIAL-ROADMAP.md](COMMERCIAL-ROADMAP.md) for full 18-30 month roadmap.
 
 [![Status](https://img.shields.io/badge/Status-Early%20Development-red)](README.md)
 [![Build](https://img.shields.io/badge/Build-Passing-green)](README.md)
@@ -544,7 +542,7 @@ See [docs/roadmap/ROADMAP-OVERVIEW.md](docs/roadmap/ROADMAP-OVERVIEW.md) for det
 ## Honest Development Timeline
 
 We're building this properly, with no shortcuts:
-- **Phase 1-2:** Honesty + Rebrand (2 weeks) ← IN PROGRESS
+- **Phase 1-2:** Honesty + Rebrand (2 weeks) ← **IN PROGRESS**
 - **Phase 3:** Backend Implementation (4-8 weeks)
 - **Phase 4:** Infrastructure Deployment (4-8 weeks)  
 - **Phase 5:** Customer Validation (12-16 weeks)

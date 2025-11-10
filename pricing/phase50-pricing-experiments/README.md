@@ -1,10 +1,23 @@
 # Phase 50: Pricing Experiments & SKUs
 
+**⚠️ STATUS: PLANNED - NOT AVAILABLE YET**
+
+**Current Reality:** No customers, no product to price. This is Phase 50 planning.
+
+**Timeline:** Available in Phase 5 (6-8 months minimum) after:
+1. ✅ Phase 3: Backend implementation (4-8 weeks)
+2. ✅ Phase 4: Infrastructure deployment (4-8 weeks)
+3. ✅ Phase 5: Customer validation (12-16 weeks)
+
+**What this directory contains:** Future pricing experiments and SKU planning for when we have actual customers and measured costs.
+
+---
+
 **Margin-First Playbook - 90-Day Test Window**
 
 **Purpose**: Converge on >70% gross margin and low churn using controlled, pre-registered pricing experiments: caps, verify allotments, overage math, annual discounts; plus two add-ons: Retro-Sign Pack (stepwise volume) and Analytics-Only Viewer for pipelines that can't change yet.
 
-**Execution Date**: November 5, 2025  
+**Planned Execution Date**: After Phase 5 completion
 **Test Window**: 90 days  
 **Target Gross Margin**: ≥70%  
 **Key Metrics**: Trial→Paid, 90-day retention, NDR, overage complaints per 100 customers
