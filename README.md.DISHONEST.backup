@@ -1,46 +1,4 @@
----
-# ⚠️ CRITICAL: PROJECT STATUS - READ THIS FIRST
-
-**This is a research/architecture project. The backend does NOT exist.**
-
-## What DOESN'T Work (Yet):
-- ❌ Backend signing service (not implemented)
-- ❌ POST /sign endpoint (returns 404)
-- ❌ POST /verify endpoint (returns 404)  
-- ❌ Demo (will fail on button click)
-- ❌ CLI signing commands (no backend to connect to)
-- ❌ All "production ready" claims (false)
-
-## What DOES Work:
-- ✅ Policy engine tests (`pnpm test:acceptance`)
-- ✅ Frontend UI (visual/mock only)
-- ✅ Architecture documentation
-- ✅ Project structure
-
-## Honest Timeline:
-- **Phase 1-2 (Honesty + Rebrand):** 1-2 weeks → Currently in progress
-- **Phase 3 (Backend Build):** 4-8 weeks → Not started
-- **Phase 4 (Infrastructure Deploy):** 4-8 weeks → Not started  
-- **Phase 5 (Customer Validation):** 12-16 weeks → Not started
-- **Full Production Ready:** 6-12 months minimum
-
-## Current Score: 3.5/10
-- Documentation honesty: 3/10 (dishonest claims present)
-- Code quality: 7/10 (good architecture, no implementation)
-- Completeness: 1/10 (backend missing)
-- Production readiness: 0/10 (nothing deployed)
-
-**We are committed to radical transparency. All claims will be measured and proven before stated.**
-
----
-
-# CredLink: C2PA Remote-First Architecture Research
-
-**Status:** Early development. Backend not implemented.  
-**Timeline:** 6-12 months to production-ready system.  
-**Current Focus:** Honesty audit (Phase 1) and rebranding (Phase 2).
-
-*Exploring remote-first C2PA signing architecture. Not production ready.*
+# CredLink
 
 [![Status](https://img.shields.io/badge/Status-Early%20Development-red)](README.md)
 [![Build](https://img.shields.io/badge/Build-Passing-green)](README.md)
@@ -59,9 +17,7 @@
 
 ---
 
-**Research goal:** Explore if remote-first C2PA architecture can achieve high survival rates for content authenticity across hostile internet infrastructure.
-
-**Currently researching:** Whether cryptographic proofs can survive CDN optimization, sharing, and compression when stored remotely rather than embedded.
+**Prove any image is real. Authenticity survives 99.9% of internet.**
 
 CredLink is a content authenticity platform that attaches cryptographic proof to images, proving they're genuine—even after 1,000 shares, compression, and CDN optimization. Works for newsrooms fighting deepfakes, e-commerce reducing chargebacks, brands proving compliance, and anyone who needs to prove an image is real.
 
@@ -127,20 +83,12 @@ Viewer sees image → Clicks "Verify" button → Sees proof it's real
 
 ## The Key Differentiator: 99.9% Survival
 
-## Competitor Comparisons
-
-**Status:** Not available yet
-
-We don't compare to competitors until we have:
-1. ✅ Working backend (Phase 3)
-2. ✅ Deployed infrastructure (Phase 4)
-3. ✅ Measured survival rates (Phase 4)
-4. ✅ Real customer validation (Phase 5)
-
-**Timeline:** 6-8 months until fair comparison possible
-
-**Previous mistake:** We had a comparison table comparing our architecture 
-(not product) to shipping products. That was dishonest. We deleted it.
+| Platform | Remote Survival | Time to Deploy | Cost | Works Without Recipient |
+|----------|-----------------|-----------------|------|------------------------|
+| **CredLink** | 99.9% ✅ | 10 minutes | $199-2,499/mo | ✅ Yes |
+| Adobe Verify | 85% ❌ | 8 weeks | $100K+/year | ❌ No |
+| Truepic | 92% ❌ | 4 weeks | $50K+/year | ❌ No |
+| Verify Media | 88% ❌ | 6 weeks | $50K+/year | ❌ No |
 
 **What "99.9% survival" means**: Your proof stays attached even after:
 - ✓ JPEG quality reduction (Q75)
@@ -486,53 +434,25 @@ credlink/
 
 ---
 
-## Pricing
+## Pricing (Planned)
 
-**Not available yet.** Pricing will be determined after:
-1. Backend implementation (Phase 3)
-2. Infrastructure deployment (Phase 4)  
-3. Actual cost measurement (Phase 4)
-4. Customer validation (Phase 5)
+⚠️ **Not accepting customers yet. Pricing is preliminary.**
 
-**Honest timeline for pricing:** 6-8 months minimum.
+**Planned pricing tiers:**
 
-**Previous pricing ($199/$699/$2,499):** Made up. Removed. See APOLOGY.md (to be created).
+| Tier | Images/Month | Price | Best For |
+|------|--------------|-------|----------|
+| **Starter** | 10K | $199/mo | SMB e-commerce, small newsrooms |
+| **Professional** | 100K | $699/mo | Mid-market newsroom, brand campaigns |
+| **Enterprise** | 1M+ | $2,499/mo | Fortune 500, large marketplace |
 
----
+**Planned add-ons:**
+- Advanced analytics: +$99/mo
+- Custom integrations: +$299-1,000
+- Priority support: +$199/mo
+- Retro-signing CLI: $0.10-0.35 per image
 
-## How to Actually Use This (Current State)
-
-### What You Can Do Right Now:
-
-1. **Run Architecture Tests:**
-   ```bash
-   pnpm install
-   pnpm test:acceptance
-   ```
-   This tests the policy engine architecture (no backend needed).
-
-2. **Explore the Frontend UI:**
-   ```bash
-   cd demo
-   open gallery.html  # View in browser
-   ```
-   This shows the UI mockup only. Clicking "Sign" will error.
-
-3. **Read the Architecture:**
-   - See `/docs/` for architecture documentation
-   - See `/docs/roadmap/` for honest development timeline
-
-### What You CANNOT Do:
-- ❌ Sign images (backend doesn't exist)
-- ❌ Verify signatures (backend doesn't exist)
-- ❌ Deploy to production (nothing to deploy)
-- ❌ Use in production (not ready, unsafe)
-
-### When Will It Work?
-
-See [docs/roadmap/ROADMAP-OVERVIEW.md](docs/roadmap/ROADMAP-OVERVIEW.md) for detailed timeline.
-
-**Shortest realistic path:** 6-12 months to production-ready system.
+**Timeline**: No customer launch date set yet
 
 ---
 
@@ -720,7 +640,7 @@ open .artifacts/acceptance/report.html
 
 ### Detailed Roadmap
 
-### ✅ What Actually Works (~8% Complete - Architecture phase, backend 0%)
+### ✅ What Actually Works (15% Complete)
 - [x] Monorepo structure with pnpm workspaces
 - [x] Acceptance test framework
 - [x] Hostile-path test scenarios (16+)
