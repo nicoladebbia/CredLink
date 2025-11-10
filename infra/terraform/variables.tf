@@ -173,12 +173,23 @@ variable "tags" {
 }
 
 variable "alert_email" {
-  description = "Email address for alert notifications"
+  description = "Email address for CloudWatch alarm notifications"
   type        = string
   default     = "alerts@credlink.com"
-  
+
   validation {
     condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.alert_email))
     error_message = "The alert_email must be a valid email address."
+  }
+}
+
+variable "backup_region" {
+  description = "AWS region for disaster recovery backup"
+  type        = string
+  default     = "us-west-2"
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.backup_region))
+    error_message = "The backup_region must be a valid AWS region name."
   }
 }

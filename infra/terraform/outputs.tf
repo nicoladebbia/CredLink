@@ -277,3 +277,34 @@ output "ecs_service_name" {
   description = "Name of the ECS service"
   value       = aws_ecs_service.main.name
 }
+
+# Disaster Recovery Outputs (Week 8)
+output "backup_vault_arn" {
+  description = "ARN of the backup vault"
+  value       = aws_backup_vault.disaster_recovery.arn
+}
+
+output "backup_role_arn" {
+  description = "ARN of the backup service role"
+  value       = aws_iam_role.backup.arn
+}
+
+output "dr_backup_bucket_name" {
+  description = "Name of the disaster recovery backup bucket"
+  value       = aws_s3_bucket.dr_backup.id
+}
+
+output "chaos_lambda_arn" {
+  description = "ARN of the chaos engineering Lambda function"
+  value       = aws_lambda_function.chaos_engineering.arn
+}
+
+output "production_launch_topic_arn" {
+  description = "ARN of the production launch SNS topic"
+  value       = aws_sns_topic.production_launch.arn
+}
+
+output "ecs_cluster_name" {
+  description = "Name of the ECS cluster"
+  value       = aws_ecs_cluster.main.name
+}
