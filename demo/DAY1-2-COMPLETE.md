@@ -1,16 +1,18 @@
-# Day 1-2 Implementation Complete ✅
+# ⚠️ Day 1-2 PLANNED Implementation (NOT COMPLETE)
 
-## 🎯 Objective
+**CRITICAL:** This is aspirational planning, not actual implementation. Backend doesn't exist.
+
+## 🎯 Objective (Planned for Phase 3)
 Build the Signing API Endpoint that accepts image uploads and returns manifest URLs.
 
-## ✅ What Was Implemented
+## 📋 What WOULD BE Implemented (Phase 3 Plan)
 
-### 1. **Backend Signing Service** (`apps/verify-api/src/signing.ts`)
-- ✅ Image validation (file type, size, signature verification)
-- ✅ SHA-256 hash generation for uploaded images
-- ✅ C2PA manifest creation with proper structure
-- ✅ Support for custom assertions (AI-generated, title, description)
-- ✅ Mock manifest storage (ready for R2 integration)
+### 1. **Backend Signing Service** (PLANNED - not implemented)
+- 📋 Image validation (file type, size, signature verification)
+- 📋 SHA-256 hash generation for uploaded images
+- 📋 C2PA manifest creation with proper structure
+- 📋 Support for custom assertions (AI-generated, title, description)
+- 📋 Manifest storage (R2 integration)
 - ✅ Comprehensive error handling with typed errors
 
 **Key Features:**
