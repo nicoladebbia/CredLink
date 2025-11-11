@@ -67,8 +67,8 @@ resource "aws_cloudfront_distribution" "main" {
       }
     }
 
-    min_ttl     = 86400  # 1 day
-    default_ttl = 604800 # 1 week
+    min_ttl     = 86400    # 1 day
+    default_ttl = 604800   # 1 week
     max_ttl     = 31536000 # 1 year
   }
 
@@ -174,8 +174,8 @@ resource "aws_s3_bucket_policy" "cloudfront_access" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowCloudFrontServicePrincipal"
-        Effect    = "Allow"
+        Sid    = "AllowCloudFrontServicePrincipal"
+        Effect = "Allow"
         Principal = {
           Service = "cloudfront.amazonaws.com"
         }
@@ -253,7 +253,7 @@ resource "aws_appautoscaling_policy" "ecs_scale_out_requests" {
       predefined_metric_type = "ALBRequestCountPerTarget"
       resource_label         = "${aws_lb.main.arn_suffix}/${aws_lb_target_group.main.arn_suffix}"
     }
-    target_value       = 1000.0  # 1000 requests per target
+    target_value       = 1000.0 # 1000 requests per target
     scale_in_cooldown  = 300
     scale_out_cooldown = 30
   }
@@ -297,7 +297,7 @@ resource "aws_cloudwatch_metric_alarm" "high_response_time" {
   namespace           = "CredLinkPerformance"
   period              = "300"
   statistic           = "Average"
-  threshold           = "500"  # 500ms
+  threshold           = "500" # 500ms
   alarm_description   = "High response time detected"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   treat_missing_data  = "notBreaching"
@@ -313,7 +313,7 @@ resource "aws_cloudwatch_metric_alarm" "high_request_rate" {
   namespace           = "CredLink"
   period              = "300"
   statistic           = "Sum"
-  threshold           = "10000"  # 10K requests per 5 min
+  threshold           = "10000" # 10K requests per 5 min
   alarm_description   = "High request rate detected"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   treat_missing_data  = "notBreaching"
@@ -327,9 +327,9 @@ resource "aws_cloudwatch_metric_alarm" "high_request_rate" {
 
 # Enhanced monitoring for RDS
 resource "aws_rds_enhanced_monitoring" "main" {
-  identifier = aws_db_instance.main.id
-  role_arn   = aws_iam_role.rds_enhanced_monitoring.arn
-  granularity = "1"  # 1 second granularity
+  identifier  = aws_db_instance.main.id
+  role_arn    = aws_iam_role.rds_enhanced_monitoring.arn
+  granularity = "1" # 1 second granularity
 }
 
 # IAM role for RDS enhanced monitoring
@@ -359,9 +359,9 @@ resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
 
 # Performance Insights for RDS
 resource "aws_db_instance_performance_insights" "main" {
-  identifier = aws_db_instance.main.id
-  enabled    = true
-  retention_period = 7  # days
+  identifier       = aws_db_instance.main.id
+  enabled          = true
+  retention_period = 7 # days
 }
 
 #---------------------------------------------------

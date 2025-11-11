@@ -99,10 +99,10 @@ resource "aws_cloudwatch_dashboard" "main" {
         height = 6
 
         properties = {
-          query   = "fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 100"
-          region  = var.aws_region
-          title   = "Application Error Logs"
-          view    = "table"
+          query  = "fields @timestamp, @message | filter @message like /ERROR/ | sort @timestamp desc | limit 100"
+          region = var.aws_region
+          title  = "Application Error Logs"
+          view   = "table"
         }
       }
     ]

@@ -10,6 +10,8 @@
 import { C2PAService } from '../../services/c2pa-service';
 import { extractManifest } from '../../services/metadata-extractor';
 import { logger } from '../../utils/logger';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface SurvivalScenario {
   name: string;
@@ -173,10 +175,10 @@ export async function testSurvivalScenario(
 
     try {
       // 1. Sign the image
-      const { imageBuffer: signedImage } = await c2paService.signImage(testImage, {
-        issuer: 'SurvivalTest',
-        softwareAgent: 'Survival Rate Tester/1.0'
+      const result = await c2paService.signImage(testImage, {
+        creator: 'SurvivalTest'
       });
+      const signedImage = result.signedBuffer || testImage;
 
       // 2. Apply transformation
       const transformedImage = await scenario.transform(signedImage);
@@ -340,8 +342,6 @@ export async function measureSurvivalRates(
  * Save survival report to file
  */
 export function saveSurvivalReport(report: SurvivalReport, filename: string): void {
-  const fs = require('fs');
-  const path = require('path');
   
   const reportPath = path.join(__dirname, '../../../survival-reports', filename);
   const dir = path.dirname(reportPath);

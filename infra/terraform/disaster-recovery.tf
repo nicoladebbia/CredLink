@@ -4,8 +4,8 @@
 
 # Backup Vault for cross-region backup
 resource "aws_backup_vault" "disaster_recovery" {
-  name          = "${var.project_name}-${var.environment}-dr-vault"
-  kms_key_arn   = aws_kms_key.backup.arn
+  name               = "${var.project_name}-${var.environment}-dr-vault"
+  kms_key_arn        = aws_kms_key.backup.arn
   encryption_key_arn = aws_kms_key.backup.arn
 
   tags = var.tags
@@ -60,12 +60,12 @@ resource "aws_backup_plan" "rds" {
   name = "${var.project_name}-${var.environment}-rds-backup-plan"
 
   rule {
-    name              = "daily_backups"
-    target_vault_arn  = aws_backup_vault.disaster_recovery.arn
-    schedule          = "cron(0 2 ? * * *)"  # Daily at 2 AM UTC
+    name             = "daily_backups"
+    target_vault_arn = aws_backup_vault.disaster_recovery.arn
+    schedule         = "cron(0 2 ? * * *)" # Daily at 2 AM UTC
 
     lifecycle {
-      delete_after = 30  # Keep for 30 days
+      delete_after = 30 # Keep for 30 days
     }
 
     recovery_point_tags = {
@@ -76,12 +76,12 @@ resource "aws_backup_plan" "rds" {
   }
 
   rule {
-    name              = "weekly_backups"
-    target_vault_arn  = aws_backup_vault.disaster_recovery.arn
-    schedule          = "cron(0 3 ? * 1 *)"  # Weekly on Sunday at 3 AM UTC
+    name             = "weekly_backups"
+    target_vault_arn = aws_backup_vault.disaster_recovery.arn
+    schedule         = "cron(0 3 ? * 1 *)" # Weekly on Sunday at 3 AM UTC
 
     lifecycle {
-      delete_after = 90  # Keep for 90 days
+      delete_after = 90 # Keep for 90 days
     }
 
     recovery_point_tags = {
@@ -92,12 +92,12 @@ resource "aws_backup_plan" "rds" {
   }
 
   rule {
-    name              = "monthly_backups"
-    target_vault_arn  = aws_backup_vault.disaster_recovery.arn
-    schedule          = "cron(0 4 1 * ? *)"  # Monthly on 1st at 4 AM UTC
+    name             = "monthly_backups"
+    target_vault_arn = aws_backup_vault.disaster_recovery.arn
+    schedule         = "cron(0 4 1 * ? *)" # Monthly on 1st at 4 AM UTC
 
     lifecycle {
-      delete_after = 365  # Keep for 1 year
+      delete_after = 365 # Keep for 1 year
     }
 
     recovery_point_tags = {
@@ -132,12 +132,12 @@ resource "aws_backup_plan" "s3" {
   name = "${var.project_name}-${var.environment}-s3-backup-plan"
 
   rule {
-    name              = "daily_s3_backups"
-    target_vault_arn  = aws_backup_vault.disaster_recovery.arn
-    schedule          = "cron(0 1 ? * * *)"  # Daily at 1 AM UTC
+    name             = "daily_s3_backups"
+    target_vault_arn = aws_backup_vault.disaster_recovery.arn
+    schedule         = "cron(0 1 ? * * *)" # Daily at 1 AM UTC
 
     lifecycle {
-      delete_after = 30  # Keep for 30 days
+      delete_after = 30 # Keep for 30 days
     }
 
     recovery_point_tags = {
@@ -242,7 +242,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
     }
 
     expiration {
-      days = 2555  # 7 years
+      days = 2555 # 7 years
     }
   }
 }
@@ -392,12 +392,12 @@ resource "aws_iam_role_policy" "chaos_lambda" {
 }
 
 resource "aws_lambda_function" "chaos_engineering" {
-  filename         = "chaos_engineering.zip"
-  function_name    = "${var.project_name}-${var.environment}-chaos-engineering"
-  role            = aws_iam_role.chaos_lambda.arn
-  handler         = "chaos_engineering.lambda_handler"
-  runtime         = "python3.9"
-  timeout         = 300
+  filename      = "chaos_engineering.zip"
+  function_name = "${var.project_name}-${var.environment}-chaos-engineering"
+  role          = aws_iam_role.chaos_lambda.arn
+  handler       = "chaos_engineering.lambda_handler"
+  runtime       = "python3.9"
+  timeout       = 300
 
   source_code_hash = data.archive_file.chaos_engineering.output_base64sha256
 

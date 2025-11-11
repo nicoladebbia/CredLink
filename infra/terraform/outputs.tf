@@ -183,15 +183,15 @@ output "infrastructure_ready_for_deployment" {
 output "week_3_complete" {
   description = "Status of Week 1-3 infrastructure"
   value = {
-    vpc          = module.vpc.vpc_id != null
-    rds          = aws_db_instance.main.arn != null
-    redis        = aws_elasticache_replication_group.main.arn != null
-    s3           = aws_s3_bucket.proofs.arn != null
-    secrets      = aws_secretsmanager_secret.db_credentials.arn != null
-    ecr          = aws_ecr_repository.app.arn != null
-    ecs_cluster  = aws_ecs_cluster.main.arn != null
-    alb          = aws_lb.main.arn != null
-    all_ready    = true
+    vpc         = module.vpc.vpc_id != null
+    rds         = aws_db_instance.main.arn != null
+    redis       = aws_elasticache_replication_group.main.arn != null
+    s3          = aws_s3_bucket.proofs.arn != null
+    secrets     = aws_secretsmanager_secret.db_credentials.arn != null
+    ecr         = aws_ecr_repository.app.arn != null
+    ecs_cluster = aws_ecs_cluster.main.arn != null
+    alb         = aws_lb.main.arn != null
+    all_ready   = true
   }
 }
 

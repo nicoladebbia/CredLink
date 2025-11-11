@@ -83,7 +83,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     statement {
       rate_based_statement {
-        limit              = 2000  # 2000 requests per 5 minutes
+        limit              = 2000 # 2000 requests per 5 minutes
         aggregate_key_type = "IP"
       }
     }
@@ -282,12 +282,12 @@ resource "aws_iam_role_policy" "secret_rotation" {
 
 # Lambda function for database secret rotation
 resource "aws_lambda_function" "secret_rotation" {
-  filename         = "secret_rotation.zip"
-  function_name    = "${var.project_name}-${var.environment}-secret-rotation"
-  role            = aws_iam_role.secret_rotation.arn
-  handler         = "secret_rotation.lambda_handler"
-  runtime         = "python3.9"
-  timeout         = 300
+  filename      = "secret_rotation.zip"
+  function_name = "${var.project_name}-${var.environment}-secret-rotation"
+  role          = aws_iam_role.secret_rotation.arn
+  handler       = "secret_rotation.lambda_handler"
+  runtime       = "python3.9"
+  timeout       = 300
 
   source_code_hash = data.archive_file.secret_rotation.output_base64sha256
 

@@ -79,11 +79,11 @@ resource "aws_security_group" "rds" {
 
   # Allow PostgreSQL from ECS tasks (will be created in Week 3)
   ingress {
-    description     = "PostgreSQL from private subnets"
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    cidr_blocks     = [for subnet in module.vpc.private_subnet_ids : data.aws_subnet.private[subnet].cidr_block]
+    description = "PostgreSQL from private subnets"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = [for subnet in module.vpc.private_subnet_ids : data.aws_subnet.private[subnet].cidr_block]
   }
 
   egress {
@@ -114,11 +114,11 @@ resource "aws_security_group" "redis" {
 
   # Allow Redis from ECS tasks
   ingress {
-    description     = "Redis from private subnets"
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    cidr_blocks     = [for subnet in module.vpc.private_subnet_ids : data.aws_subnet.private[subnet].cidr_block]
+    description = "Redis from private subnets"
+    from_port   = 6379
+    to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = [for subnet in module.vpc.private_subnet_ids : data.aws_subnet.private[subnet].cidr_block]
   }
 
   egress {
@@ -183,13 +183,13 @@ resource "aws_db_instance" "main" {
   identifier = "${var.project_name}-${var.environment}-db"
 
   # Engine Configuration
-  engine               = "postgres"
-  engine_version       = "15.4"
-  instance_class       = var.db_instance_class
-  allocated_storage    = var.db_allocated_storage
+  engine                = "postgres"
+  engine_version        = "15.4"
+  instance_class        = var.db_instance_class
+  allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_allocated_storage * 5
-  storage_type         = "gp3"
-  storage_encrypted    = true
+  storage_type          = "gp3"
+  storage_encrypted     = true
 
   # Database Configuration
   db_name  = "credlink"
@@ -203,10 +203,10 @@ resource "aws_db_instance" "main" {
   multi_az               = var.db_multi_az
 
   # Backup Configuration
-  backup_retention_period = var.db_backup_retention_days
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "mon:04:00-mon:05:00"
-  skip_final_snapshot    = var.environment != "production"
+  backup_retention_period   = var.db_backup_retention_days
+  backup_window             = "03:00-04:00"
+  maintenance_window        = "mon:04:00-mon:05:00"
+  skip_final_snapshot       = var.environment != "production"
   final_snapshot_identifier = var.environment == "production" ? "${var.project_name}-${var.environment}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
 
   # Monitoring
@@ -306,14 +306,14 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 
 # ElastiCache Redis Cluster
 resource "aws_elasticache_replication_group" "main" {
-  replication_group_id       = "${var.project_name}-${var.environment}-redis"
+  replication_group_id          = "${var.project_name}-${var.environment}-redis"
   replication_group_description = "Redis cluster for CredLink"
 
-  engine               = "redis"
-  engine_version       = "7.0"
-  node_type            = var.redis_node_type
-  num_cache_clusters   = var.redis_num_cache_nodes
-  port                 = 6379
+  engine             = "redis"
+  engine_version     = "7.0"
+  node_type          = var.redis_node_type
+  num_cache_clusters = var.redis_num_cache_nodes
+  port               = 6379
 
   # Network Configuration
   subnet_group_name  = module.vpc.elasticache_subnet_group_name
@@ -321,12 +321,12 @@ resource "aws_elasticache_replication_group" "main" {
 
   # High Availability
   automatic_failover_enabled = var.redis_num_cache_nodes > 1
-  multi_az_enabled          = var.redis_num_cache_nodes > 1
+  multi_az_enabled           = var.redis_num_cache_nodes > 1
 
   # Backup Configuration
   snapshot_retention_limit = 5
-  snapshot_window         = "03:00-05:00"
-  maintenance_window      = "mon:05:00-mon:07:00"
+  snapshot_window          = "03:00-05:00"
+  maintenance_window       = "mon:05:00-mon:07:00"
 
   # Encryption
   at_rest_encryption_enabled = true
@@ -498,9 +498,9 @@ resource "aws_ecr_lifecycle_policy" "app" {
         rulePriority = 1
         description  = "Keep last 10 images"
         selection = {
-          tagStatus     = "any"
-          countType     = "imageCountMoreThan"
-          countNumber   = 10
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = 10
         }
         action = {
           type = "expire"
@@ -534,8 +534,8 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 
   default_capacity_provider_strategy {
     capacity_provider = "FARGATE"
-    weight           = 1
-    base             = 1
+    weight            = 1
+    base              = 1
   }
 }
 
@@ -666,8 +666,8 @@ resource "aws_lb" "main" {
   security_groups    = [aws_security_group.alb.id]
   subnets            = module.vpc.public_subnet_ids
 
-  enable_deletion_protection = var.environment == "production"
-  enable_http2              = true
+  enable_deletion_protection       = var.environment == "production"
+  enable_http2                     = true
   enable_cross_zone_load_balancing = true
 
   tags = var.tags
@@ -703,7 +703,7 @@ resource "aws_lb_listener" "http" {
   protocol          = "HTTP"
 
   default_action {
-    type = "forward"
+    type             = "forward"
     target_group_arn = aws_lb_target_group.app.arn
   }
 

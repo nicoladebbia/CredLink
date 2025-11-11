@@ -1,0 +1,79 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'credlink-prod'
+    environment: 'production'
+
+scrape_configs:
+  # CredLink API
+  - job_name: 'credlink-api'
+    static_configs:
+      - targets: ['api.credlink.com:443']
+    metrics_path: '/metrics'
+    scheme: 'https'
+    tls_config:
+      cert_file: /etc/ssl/certs/api.credlink.com.crt
+      key_file: /etc/ssl/private/api.credlink.com.key
+      insecure_skip_verify: false
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'credlink-api'
+
+  # Redis Exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis.production.internal:9121']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'redis-primary'
+
+  # PostgreSQL Exporter
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres.production.internal:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'postgres-primary'
+
+  # Node Exporter (for system metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets:
+          - 'node-exporter-1.production.internal:9100'
+          - 'node-exporter-2.production.internal:9100'
+          - 'node-exporter-3.production.internal:9100'
+
+  # CloudWatch Exporter
+  - job_name: 'cloudwatch'
+    static_configs:
+      - targets: ['cloudwatch-exporter.production.internal:9106']
+    metrics_path: '/metrics'
+
+rule_files:
+  - "alert_rules.yml"
+  - "recording_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+      timeout: 10s
+
+# Remote write for long-term storage
+remote_write:
+  - url: 'https://prometheus-remote-storage.credlink.com/api/v1/write'
+    basic_auth:
+      username: 'prometheus'
+      password_file: /etc/prometheus/remote_write_password
+
+# Remote read for querying historical data
+remote_read:
+  - url: 'https://prometheus-remote-storage.credlink.com/api/v1/read'
+    basic_auth:
+      username: 'prometheus'
+      password_file: /etc/prometheus/remote_read_password
