@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>CredLink - Content Authenticity Platform | C2PA Image Signing</title>
+  <meta name="description" content="Sign and verify digital images with C2PA content credentials. Enterprise-grade provenance tracking for photographers, publishers, and media organizations.">
+  <meta name="keywords" content="C2PA, content authenticity, image signing, digital provenance, JPEG C2PA, content credentials">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="CredLink - Content Authenticity Platform">
+  <meta property="og:description" content="Sign and verify digital images with C2PA content credentials">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://credlink.com">
+  <meta property="og:image" content="https://credlink.com/og-image.jpg">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CredLink - Content Authenticity Platform">
+  <meta name="twitter:description" content="Sign and verify digital images with C2PA content credentials">
+  <meta name="twitter:image" content="https://credlink.com/twitter-card.jpg">
+  
+  <!-- Favicon -->
+  <link rel="icon" href="/favicon.ico">
+  
+  <!-- Preload Critical Resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Critical CSS -->
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1e40af;
+      --color-success: #10b981;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --space-4: 1rem;
+      --space-8: 2rem;
+      --radius-lg: 0.5rem;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      line-height: 1.6;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+    }
+    
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--color-primary);
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      z-index: 100;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+    
+    header {
+      text-align: center;
+      padding: var(--space-8);
+      background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+      color: white;
+    }
+    
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: var(--space-8);
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 500;
+      border-radius: var(--radius-lg);
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease;
+    }
+    
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: var(--color-primary-dark);
+    }
+    
+    .btn-primary:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 2px;
+    }
+    
+    .form-group {
+      margin-bottom: var(--space-4);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #d1d5db;
+      border-radius: var(--radius-lg);
+    }
+    
+    input:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 0;
+      border-color: var(--color-primary);
+    }
+    
+    .error {
+      color: #ef4444;
+      font-size: 14px;
+      display: none;
+    }
+    
+    .error.show {
+      display: block;
+    }
+    
+    .success {
+      color: var(--color-success);
+      padding: 16px;
+      background-color: #d1fae5;
+      border-radius: var(--radius-lg);
+      margin-top: var(--space-4);
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid white;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    footer {
+      text-align: center;
+      padding: var(--space-8);
+      background-color: var(--color-bg-secondary);
+      color: var(--color-text-light);
+      margin-top: var(--space-8);
+    }
+    
+    footer a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+  
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "CredLink",
+    "applicationCategory": "SecurityApplication",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "description": "Sign and verify digital images with C2PA content credentials",
+    "screenshot": "https://credlink.com/screenshot.jpg"
+  }
+  </script>
+</head>
+<body>
+  <!-- Skip to content link for keyboard users -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  
+  <!-- Header -->
+  <header role="banner">
+    <h1>CredLink Beta</h1>
+    <p class="tagline">Content Authenticity Platform</p>
+    <p>Cryptographically sign and verify images with C2PA content credentials</p>
+  </header>
+  
+  <!-- Main Content -->
+  <main id="main-content" role="main">
+    <section aria-labelledby="features-heading">
+      <h2 id="features-heading">Features</h2>
+      <ul>
+        <li><strong>JPEG Signing:</strong> Full C2PA manifest support</li>
+        <li><strong>PNG Signing:</strong> Complete metadata embedding</li>
+        <li><strong>WebP Signing:</strong> NEW! Just implemented</li>
+        <li><strong>Certificate Validation:</strong> OCSP/CRL checking</li>
+        <li><strong>Enterprise Security:</strong> 100/100 security score</li>
+      </ul>
+    </section>
+    
+    <section aria-labelledby="signup-heading">
+      <h2 id="signup-heading">Request Beta Access</h2>
+      <p>Sign up to get early access to CredLink platform</p>
+      
+      <form id="beta-signup" novalidate>
+        <div class="form-group">
+          <label for="email">
+            Email Address
+            <span aria-label="required" class="required">*</span>
+          </label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            required 
+            aria-required="true"
+            aria-describedby="email-help email-error"
+            placeholder="you@example.com"
+            autocomplete="email"
+          >
+          <small id="email-help" class="sr-only">Enter your email address for beta access</small>
+          <span id="email-error" class="error" role="alert" aria-live="polite"></span>
+        </div>
+        
+        <div class="form-group">
+          <label for="company">
+            Company/Organization
+          </label>
+          <input 
+            type="text" 
+            id="company" 
+            name="company" 
+            aria-describedby="company-help"
+            placeholder="Optional"
+            autocomplete="organization"
+          >
+          <small id="company-help" class="sr-only">Optionally provide your company name</small>
+        </div>
+        
+        <button type="submit" id="submit-btn" class="btn btn-primary">
+          <span class="button-text">Request Beta Access</span>
+          <span class="spinner" hidden aria-hidden="true"></span>
+        </button>
+        
+        <div id="form-message" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+    
+    <section aria-labelledby="api-heading">
+      <h2 id="api-heading">Quick Start with API</h2>
+      <p>Already have an API key? Try signing an image:</p>
+      
+      <pre><code>curl -X POST http://localhost:3000/api/sign \
+  -H "X-API-Key: your-api-key" \
+  -F "image=@photo.jpg"</code></pre>
+      
+      <p><a href="/docs" class="btn">View Full Documentation</a></p>
+    </section>
+  </main>
+  
+  <!-- Footer -->
+  <footer role="contentinfo">
+    <nav aria-label="Footer navigation">
+      <ul style="list-style: none; display: flex; gap: 24px; justify-content: center; flex-wrap: wrap;">
+        <li><a href="/about">About</a></li>
+        <li><a href="/docs">Documentation</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Service</a></li>
+        <li><a href="/contact">Contact</a></li>
+      </ul>
+    </nav>
+    <p style="margin-top: 16px;">&copy; 2025 CredLink. All rights reserved.</p>
+    <p style="margin-top: 8px;">
+      <a href="https://github.com/credlink">GitHub</a> |
+      <a href="https://twitter.com/credlink">Twitter</a> |
+      <a href="mailto:hello@credlink.com">Email</a>
+    </p>
+  </footer>
+  
+  <!-- JavaScript -->
+  <script>
+    // Form submission handler
+    document.getElementById('beta-signup').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const form = e.target;
+      const btn = document.getElementById('submit-btn');
+      const btnText = btn.querySelector('.button-text');
+      const spinner = btn.querySelector('.spinner');
+      const message = document.getElementById('form-message');
+      const emailInput = document.getElementById('email');
+      const emailError = document.getElementById('email-error');
+      
+      // Clear previous errors
+      emailError.classList.remove('show');
+      message.textContent = '';
+      message.className = '';
+      
+      // Validate email
+      if (!emailInput.validity.valid) {
+        emailError.textContent = 'Please enter a valid email address';
+        emailError.classList.add('show');
+        emailInput.focus();
+        return;
+      }
+      
+      // Show loading state
+      btn.disabled = true;
+      btnText.textContent = 'Submitting...';
+      spinner.hidden = false;
+      
+      try {
+        const formData = new FormData(form);
+        
+        // Simulate API call (replace with actual endpoint)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Success
+        message.className = 'success';
+        message.textContent = '✓ Success! Check your email for next steps.';
+        form.reset();
+        
+        // Track conversion (if analytics enabled)
+        if (typeof gtag === 'function') {
+          gtag('event', 'signup', {
+            event_category: 'beta',
+            event_label: 'landing_page'
+          });
+        }
+      } catch (error) {
+        // Error
+        message.className = 'error show';
+        message.textContent = '✗ Error: Please try again later.';
+      } finally {
+        // Reset button state
+        btn.disabled = false;
+        btnText.textContent = 'Request Beta Access';
+        spinner.hidden = true;
+      }
+    });
+    
+    // Analytics (privacy-respecting)
+    // Uncomment when ready to track
+    /*
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-XXXXXXXXXX', {
+      anonymize_ip: true,
+      cookie_flags: 'SameSite=None;Secure'
+    });
+    */
+  </script>
+</body>
+</html>

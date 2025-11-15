@@ -1,28 +1,8 @@
 # CredLink Infrastructure Variables
 # Configure these based on your environment
 
-variable "aws_region" {
-  description = "AWS region for infrastructure deployment"
-  type        = string
-  default     = "us-east-1"
-}
-
-variable "environment" {
-  description = "Environment name (development, staging, production)"
-  type        = string
-  default     = "production"
-
-  validation {
-    condition     = contains(["development", "staging", "production"], var.environment)
-    error_message = "Environment must be development, staging, or production."
-  }
-}
-
-variable "project_name" {
-  description = "Project name for resource naming"
-  type        = string
-  default     = "credlink"
-}
+# Core variables are now in ecs-variables.tf to avoid duplicates
+# aws_region, environment, and project_name are defined there
 
 # Network Configuration
 variable "vpc_cidr" {
@@ -191,5 +171,24 @@ variable "backup_region" {
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.backup_region))
     error_message = "The backup_region must be a valid AWS region name."
+  }
+}
+
+# CORS Configuration
+variable "cors_allowed_origins" {
+  description = "List of allowed origins for S3 CORS configuration. Use specific domains for security."
+  type        = list(string)
+  default = [
+    "https://credlink.com",
+    "https://www.credlink.com",
+    "https://api.credlink.com"
+  ]
+
+  validation {
+    condition = alltrue([
+      for origin in var.cors_allowed_origins :
+      can(regex("^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", origin))
+    ])
+    error_message = "All CORS origins must be valid HTTPS URLs with domains (e.g., https://example.com). Do NOT use wildcard '*' for security."
   }
 }

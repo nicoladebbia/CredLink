@@ -1,0 +1,143 @@
+# Pod Security Standards (PSS) for CredLink
+#
+# Enforces Kubernetes Pod Security Standards at the namespace level
+# Reference: https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: credlink-production
+  labels:
+    # Enforce "restricted" Pod Security Standard
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    
+    # Audit violations without blocking
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    
+    # Warn about violations
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+
+---
+# Pod Security Policy (deprecated in K8s 1.25+, use PSS above instead)
+# This is kept for backwards compatibility with older clusters
+
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: restricted-psp
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: true
+
+---
+# ServiceAccount for CredLink API
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: credlink-api
+  namespace: credlink-production
+
+---
+# Role for CredLink API (minimal permissions)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: credlink-api-role
+  namespace: credlink-production
+rules:
+  # Allow reading config maps and secrets (for configuration)
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+  # Allow pod self-introspection (for health checks)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get"]
+    resourceNames: ["credlink-api"]
+
+---
+# RoleBinding for CredLink API
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: credlink-api-rolebinding
+  namespace: credlink-production
+subjects:
+  - kind: ServiceAccount
+    name: credlink-api
+    namespace: credlink-production
+roleRef:
+  kind: Role
+  name: credlink-api-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Security Context Constraints Example (for OpenShift)
+# This demonstrates proper security constraints for the application
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: credlink-scc
+allowPrivilegedContainer: false
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+readOnlyRootFilesystem: true
+runAsUser:
+  type: MustRunAsNonRoot
+seLinuxContext:
+  type: RunAsAny
+fsGroup:
+  type: MustRunAs
+  ranges:
+    - min: 1
+      max: 65535
+supplementalGroups:
+  type: MustRunAs
+  ranges:
+    - min: 1
+      max: 65535
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
+requiredDropCapabilities:
+  - ALL

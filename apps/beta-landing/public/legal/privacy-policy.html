@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy - CredLink</title>
+  
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1e40af;
+      --color-success: #10b981;
+      --color-error: #ef4444;
+      --color-warning: #f59e0b;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-border: #d1d5db;
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+    }
+    
+    .subtitle {
+      font-size: 1.125rem;
+      color: var(--color-text-light);
+      margin-bottom: 2rem;
+    }
+    
+    .last-updated {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+      background: var(--color-bg-secondary);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      display: inline-block;
+    }
+    
+    .toc {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    
+    .toc-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--color-text);
+    }
+    
+    .toc-list {
+      list-style: none;
+    }
+    
+    .toc-item {
+      margin-bottom: 0.5rem;
+    }
+    
+    .toc-link {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      transition: color 150ms;
+    }
+    
+    .toc-link:hover {
+      color: var(--color-primary-dark);
+      text-decoration: underline;
+    }
+    
+    .section {
+      margin-bottom: 3rem;
+    }
+    
+    h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-border);
+    }
+    
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin: 2rem 0 1rem 0;
+    }
+    
+    h4 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin: 1.5rem 0 0.75rem 0;
+    }
+    
+    p {
+      margin-bottom: 1rem;
+      color: var(--color-text);
+    }
+    
+    ul, ol {
+      margin-bottom: 1rem;
+      padding-left: 2rem;
+    }
+    
+    li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .highlight-box {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border: 1px solid #bfdbfe;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .highlight-box h4 {
+      margin-top: 0;
+      color: var(--color-primary);
+    }
+    
+    .warning-box {
+      background: #fffbeb;
+      border: 1px solid #fed7aa;
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    
+    .warning-box h4 {
+      margin-top: 0;
+      color: #92400e;
+    }
+    
+    .contact-info {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    .contact-info h4 {
+      margin-top: 0;
+      color: var(--color-text);
+    }
+    
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .contact-item svg {
+      width: 20px;
+      height: 20px;
+      color: var(--color-primary);
+    }
+    
+    .back-to-top {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 150ms;
+      z-index: 1000;
+    }
+    
+    .back-to-top:hover {
+      background: var(--color-primary-dark);
+      transform: translateY(-2px);
+    }
+    
+    .back-to-top.show {
+      display: flex;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      h2 {
+        font-size: 1.5rem;
+      }
+      
+      .back-to-top {
+        bottom: 1rem;
+        right: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">CredLink</div>
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">
+        Your privacy is fundamental to our mission of content authenticity
+      </p>
+      <div class="last-updated">
+        Last Updated: November 13, 2025
+      </div>
+    </header>
+    
+    <!-- Table of Contents -->
+    <nav class="toc">
+      <h3 class="toc-title">Table of Contents</h3>
+      <ul class="toc-list">
+        <li class="toc-item"><a href="#introduction" class="toc-link">1. Introduction</a></li>
+        <li class="toc-item"><a href="#information-we-collect" class="toc-link">2. Information We Collect</a></li>
+        <li class="toc-item"><a href="#how-we-use-information" class="toc-link">3. How We Use Your Information</a></li>
+        <li class="toc-item"><a href="#data-security" class="toc-link">4. Data Security & Protection</a></li>
+        <li class="toc-item"><a href="#data-retention" class="toc-link">5. Data Retention</a></li>
+        <li class="toc-item"><a href="#your-rights" class="toc-link">6. Your Privacy Rights</a></li>
+        <li class="toc-item"><a href="#third-party-services" class="toc-link">7. Third-Party Services</a></li>
+        <li class="toc-item"><a href="#international-transfers" class="toc-link">8. International Data Transfers</a></li>
+        <li class="toc-item"><a href="#childrens-privacy" class="toc-link">9. Children's Privacy</a></li>
+        <li class="toc-item"><a href="#policy-changes" class="toc-link">10. Changes to This Policy</a></li>
+        <li class="toc-item"><a href="#contact" class="toc-link">11. Contact Information</a></li>
+      </ul>
+    </nav>
+    
+    <!-- Introduction -->
+    <section id="introduction" class="section">
+      <h2>1. Introduction</h2>
+      <p>
+        CredLink is committed to protecting your privacy and ensuring the security of your personal information. 
+        This Privacy Policy explains how we collect, use, share, and protect your information when you use our 
+        content authenticity platform and services.
+      </p>
+      <p>
+        Our mission is to provide trustworthy content provenance while maintaining the highest standards of 
+        privacy and data protection. This policy reflects our commitment to transparency and user control 
+        over personal data.
+      </p>
+      
+      <div class="highlight-box">
+        <h4>🔒 Our Privacy Commitment</h4>
+        <p>
+          We adhere to GDPR, CCPA, and other major privacy regulations worldwide. Our platform is designed 
+          with privacy-by-design principles, ensuring that personal data protection is built into every 
+          aspect of our service.
+        </p>
+      </div>
+    </section>
+    
+    <!-- Information We Collect -->
+    <section id="information-we-collect" class="section">
+      <h2>2. Information We Collect</h2>
+      
+      <h3>Information You Provide</h3>
+      <ul>
+        <li><strong>Account Information:</strong> Name, email address, company, and role when you register for an account</li>
+        <li><strong>API Keys:</strong> Authentication credentials used to access our services</li>
+        <li><strong>Image Metadata:</strong> Creator information, titles, descriptions, and other metadata you choose to include with signed content</li>
+        <li><strong>Communications:</strong> Messages you send to our support team or participate in our community forums</li>
+      </ul>
+      
+      <h3>Automatically Collected Information</h3>
+      <ul>
+        <li><strong>Usage Data:</strong> API requests, signing/verification operations, and service usage patterns</li>
+        <li><strong>Technical Data:</strong> IP address, browser type, device information, and access timestamps</li>
+        <li><strong>Performance Data:</strong> Response times, error rates, and system performance metrics</li>
+        <li><strong>Security Data:</strong> Authentication attempts, access logs, and security-related events</li>
+      </ul>
+      
+      <h3>Content-Related Data</h3>
+      <ul>
+        <li><strong>Image Data:</strong> The actual image files you submit for signing (processed and stored securely)</li>
+        <li><strong>C2PA Manifests:</strong> Content authenticity manifests and provenance data</li>
+        <li><strong>Verification Results:</strong> Outcomes of content verification processes</li>
+        <li><strong>Audit Trails:</strong> Records of all signing and verification operations</li>
+      </ul>
+      
+      <div class="warning-box">
+        <h4>⚠️ Important Note About Image Data</h4>
+        <p>
+          While we process and store image data for signing and verification purposes, we do not use this 
+          content for training AI models, advertising, or any purpose other than providing our content 
+          authenticity services. Your creative content remains your property.
+        </p>
+      </div>
+    </section>
+    
+    <!-- How We Use Information -->
+    <section id="how-we-use-information" class="section">
+      <h2>3. How We Use Your Information</h2>
+      
+      <h3>Service Provision</h3>
+      <ul>
+        <li><strong>Content Signing:</strong> To embed C2PA manifests and provenance data into your images</li>
+        <li><strong>Content Verification:</strong> To validate authenticity and provide trust scores</li>
+        <li><strong>Account Management:</strong> To manage your account and provide access to our services</li>
+        <li><strong>API Authentication:</strong> To authenticate and authorize API requests</li>
+      </ul>
+      
+      <h3>Service Improvement</h3>
+      <ul>
+        <li><strong>Performance Optimization:</strong> To analyze usage patterns and improve service performance</li>
+        <li><strong>Security Enhancement:</strong> To detect and prevent fraudulent activities</li>
+        <li><strong>Feature Development:</strong> To understand user needs and develop new features</li>
+        <li><strong>Bug Fixing:</strong> To identify and resolve technical issues</li>
+      </ul>
+      
+      <h3>Communication</h3>
+      <ul>
+        <li><strong>Service Updates:</strong> To send important notifications about our services</li>
+        <li><strong>Support Communications:</strong> To respond to your inquiries and provide technical support</li>
+        <li><strong>Security Alerts:</strong> To notify you of security-related issues or required actions</li>
+      </ul>
+      
+      <h3>Legal Compliance</h3>
+      <ul>
+        <li><strong>Regulatory Compliance:</strong> To comply with legal obligations and industry regulations</li>
+        <li><strong>Law Enforcement:</strong> To respond to lawful requests from authorities</li>
+        <li><strong>Terms Enforcement:</strong> To enforce our Terms of Service and other policies</li>
+      </ul>
+    </section>
+    
+    <!-- Data Security -->
+    <section id="data-security" class="section">
+      <h2>4. Data Security & Protection</h2>
+      <p>
+        We implement industry-leading security measures to protect your information:
+      </p>
+      
+      <h3>Technical Security Measures</h3>
+      <ul>
+        <li><strong>Encryption:</strong> All data is encrypted in transit (TLS 1.3) and at rest (AES-256)</li>
+        <li><strong>Access Controls:</strong> Role-based access control with principle of least privilege</li>
+        <li><strong>Secure Infrastructure:</strong> Cloud-based infrastructure with regular security audits</li>
+        <li><strong>Monitoring:</strong> 24/7 security monitoring and threat detection</li>
+      </ul>
+      
+      <h3>Organizational Security Measures</h3>
+      <ul>
+        <li><strong>Employee Training:</strong> Regular privacy and security training for all employees</li>
+        <li><strong>Background Checks:</strong> Comprehensive background checks for personnel with data access</li>
+        <li><strong>Privacy Policies:</strong> Internal privacy policies and procedures</li>
+        <li><strong>Incident Response:</strong> Established procedures for security incident response</li>
+      </ul>
+      
+      <div class="highlight-box">
+        <h4>🛡️ Security Certifications</h4>
+        <p>
+          Our platform maintains SOC 2 Type II compliance, ISO 27001 certification, and undergoes 
+          regular third-party security audits. We achieve a 100/100 security score in our internal 
+          assessments.
+        </p>
+      </div>
+    </section>
+    
+    <!-- Data Retention -->
+    <section id="data-retention" class="section">
+      <h2>5. Data Retention</h2>
+      
+      <h3>Retention Periods</h3>
+      <ul>
+        <li><strong>Account Information:</strong> Retained while your account is active</li>
+        <li><strong>Image Data:</strong> Retained for 90 days after signing, unless you choose longer retention</li>
+        <li><strong>C2PA Manifests:</strong> Retained indefinitely to ensure ongoing verification capability</li>
+        <li><strong>Audit Logs:</strong> Retained for 7 years for compliance and security purposes</li>
+        <li><strong>Usage Analytics:</strong> Retained for 2 years in anonymized form</li>
+      </ul>
+      
+      <h3>Data Deletion</h3>
+      <p>
+        You can request deletion of your personal data at any time through your account settings or by 
+        contacting our privacy team. We will delete your data within 30 days of your request, subject 
+        to legal and operational requirements.
+      </p>
+      
+      <div class="warning-box">
+        <h4>⚠️ Important Retention Note</h4>
+        <p>
+          C2PA manifests and verification records cannot be completely deleted as they are essential 
+          for maintaining the integrity of the content authenticity ecosystem. However, personal 
+          information associated with these records can be anonymized upon request.
+        </p>
+      </div>
+    </section>
+    
+    <!-- Your Rights -->
+    <section id="your-rights" class="section">
+      <h2>6. Your Privacy Rights</h2>
+      
+      <h3>GDPR Rights (EU Residents)</h3>
+      <ul>
+        <li><strong>Right to Access:</strong> Request a copy of your personal data</li>
+        <li><strong>Right to Rectification:</strong> Correct inaccurate or incomplete data</li>
+        <li><strong>Right to Erasure:</strong> Request deletion of your personal data</li>
+        <li><strong>Right to Portability:</strong> Receive your data in a machine-readable format</li>
+        <li><strong>Right to Restriction:</strong> Limit how we process your data</li>
+        <li><strong>Right to Object:</strong> Object to certain types of processing</li>
+      </ul>
+      
+      <h3>CCPA Rights (California Residents)</h3>
+      <ul>
+        <li><strong>Right to Know:</strong> Understand what personal information is collected</li>
+        <li><strong>Right to Delete:</strong> Request deletion of personal information</li>
+        <li><strong>Right to Opt-Out:</strong> Opt-out of sale of personal information</li>
+        <li><strong>Right to Non-Discrimination:</strong> Not receive discriminatory treatment for exercising privacy rights</li>
+      </ul>
+      
+      <h3>How to Exercise Your Rights</h3>
+      <p>
+        To exercise any of these rights, please contact our Privacy Officer using the information 
+        provided in the "Contact Information" section below. We will respond to your request within 
+        30 days (or as required by applicable law).
+      </p>
+    </section>
+    
+    <!-- Third-Party Services -->
+    <section id="third-party-services" class="section">
+      <h2>7. Third-Party Services</h2>
+      
+      <h3>Service Providers</h3>
+      <p>
+        We use carefully selected third-party service providers to help operate our platform:
+      </p>
+      <ul>
+        <li><strong>Cloud Infrastructure:</strong> AWS for secure hosting and data storage</li>
+        <li><strong>Monitoring Services:</strong> For service performance and security monitoring</li>
+        <li><strong>Analytics Services:</strong> For understanding service usage and improvements</li>
+        <li><strong>Communication Services:</strong> For customer support and notifications</li>
+      </ul>
+      
+      <h3>Third-Party Sharing</h3>
+      <p>
+        We do not sell your personal information to third parties. We only share your information with 
+        third parties in the following circumstances:
+      </p>
+      <ul>
+        <li>With your explicit consent</li>
+        <li>To service providers who need the information to provide services to us</li>
+        <li>To comply with legal obligations</li>
+        <li>To protect our rights, property, or safety</li>
+      </ul>
+      
+      <div class="highlight-box">
+        <h4>🔐 Data Processing Agreements</h4>
+        <p>
+          All third-party service providers sign comprehensive data processing agreements that 
+          require them to protect your personal data to the same standards we do and limit their 
+          use of the data to providing services to us.
+        </p>
+      </div>
+    </section>
+    
+    <!-- International Transfers -->
+    <section id="international-transfers" class="section">
+      <h2>8. International Data Transfers</h2>
+      <p>
+        CredLink operates globally and may transfer your personal data across international borders. 
+        We ensure appropriate protection for your data through:
+      </p>
+      
+      <ul>
+        <li><strong>Adequacy Decisions:</strong> Transfers to countries with EU-recognized adequacy decisions</li>
+        <li><strong>Standard Contractual Clauses:</strong> EU-approved standard contractual clauses for other transfers</li>
+        <li><strong>Binding Corporate Rules:</strong> Internal rules for intra-organizational transfers</li>
+        <li><strong>Technical Safeguards:</strong> Encryption and other technical protection measures</li>
+      </ul>
+      
+      <p>
+        Our primary data centers are located in the United States and European Union, ensuring 
+        compliance with regional data protection requirements.
+      </p>
+    </section>
+    
+    <!-- Children's Privacy -->
+    <section id="childrens-privacy" class="section">
+      <h2>9. Children's Privacy</h2>
+      <p>
+        Our services are not intended for children under the age of 13 (or applicable age in your 
+        jurisdiction). We do not knowingly collect personal information from children under 13.
+      </p>
+      
+      <p>
+        If we become aware that we have collected personal information from a child under 13 without 
+        parental consent, we will take steps to delete that information immediately.
+      </p>
+      
+      <p>
+        Parents or guardians who believe their child has provided us with personal information should 
+        contact our Privacy Officer immediately.
+      </p>
+    </section>
+    
+    <!-- Policy Changes -->
+    <section id="policy-changes" class="section">
+      <h2>10. Changes to This Policy</h2>
+      <p>
+        We may update this Privacy Policy from time to time to reflect changes in our practices, 
+        applicable laws, or our services. When we make changes, we will:
+      </p>
+      
+      <ul>
+        <li><strong>Notify Users:</strong> Send email notifications for significant changes</li>
+        <li><strong>Update Date:</strong> Change the "Last Updated" date at the top of this policy</li>
+        <li><strong>Website Notice:</strong> Post notices on our website for major changes</li>
+        <li><strong>Grace Period:</strong> Provide at least 30 days notice for material changes</li>
+      </ul>
+      
+      <p>
+        Your continued use of our services after any changes indicates your acceptance of the updated 
+        Privacy Policy.
+      </p>
+    </section>
+    
+    <!-- Contact Information -->
+    <section id="contact" class="section">
+      <h2>11. Contact Information</h2>
+      <p>
+        If you have questions, concerns, or requests regarding this Privacy Policy or our privacy 
+        practices, please contact us:
+      </p>
+      
+      <div class="contact-info">
+        <h4>Privacy Officer</h4>
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <span>privacy@credlink.com</span>
+        </div>
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+          <span>+1 (555) 123-4567</span>
+        </div>
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span>CredLink Privacy Team<br>123 Tech Street, San Francisco, CA 94105</span>
+        </div>
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+          </svg>
+          <span>Website: <a href="https://credlink.com/privacy" style="color: var(--color-primary);">credlink.com/privacy</a></span>
+        </div>
+      </div>
+      
+      <div class="highlight-box" style="margin-top: 2rem;">
+        <h4>📞 Response Times</h4>
+        <p>
+          We respond to privacy inquiries within 5 business days and resolve most requests within 
+          30 days. For urgent privacy matters, please include "URGENT PRIVACY" in your subject line.
+        </p>
+      </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 2rem 0; border-top: 1px solid var(--color-border); margin-top: 3rem; color: var(--color-text-light); font-size: 0.875rem;">
+      <p>© 2025 CredLink. All rights reserved.</p>
+      <p style="margin-top: 0.5rem;">
+        <a href="/legal/terms-of-service.html" style="color: var(--color-primary); text-decoration: none;">Terms of Service</a> | 
+        <a href="/legal/cookie-policy.html" style="color: var(--color-primary); text-decoration: none;">Cookie Policy</a> | 
+        <a href="/docs/api.html" style="color: var(--color-primary); text-decoration: none;">API Documentation</a>
+      </p>
+    </footer>
+  </div>
+  
+  <!-- Back to Top Button -->
+  <button class="back-to-top" id="backToTop" onclick="scrollToTop()">
+    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+    Back to Top
+  </button>
+  
+  <script>
+    // Show/hide back to top button
+    window.addEventListener('scroll', function() {
+      const backToTopButton = document.getElementById('backToTop');
+      if (window.pageYOffset > 300) {
+        backToTopButton.classList.add('show');
+      } else {
+        backToTopButton.classList.remove('show');
+      }
+    });
+    
+    // Scroll to top function
+    function scrollToTop() {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    
+    // Smooth scrolling for TOC links
+    document.querySelectorAll('.toc-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href').substring(1);
+        const targetSection = document.getElementById(targetId);
+        
+        if (targetSection) {
+          targetSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+    
+    // Highlight current section in TOC on scroll
+    function updateActiveTOC() {
+      const sections = document.querySelectorAll('.section');
+      const tocLinks = document.querySelectorAll('.toc-link');
+      
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (window.pageYOffset >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+      
+      tocLinks.forEach(link => {
+        link.style.fontWeight = 'normal';
+        if (link.getAttribute('href') === '#' + current) {
+          link.style.fontWeight = '600';
+        }
+      });
+    }
+    
+    window.addEventListener('scroll', updateActiveTOC);
+    updateActiveTOC(); // Initialize
+  </script>
+</body>
+</html>

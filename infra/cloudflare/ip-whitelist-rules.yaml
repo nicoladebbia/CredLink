@@ -1,0 +1,170 @@
+# Cloudflare WAF IP Whitelist Rules
+# 
+# This file defines IP whitelist rules for admin and sensitive endpoints.
+# These rules are enforced at the edge (Cloudflare) before requests reach the application.
+#
+# SECURITY: Dual-layer protection
+# 1. Cloudflare WAF (edge) - blocks at CDN level
+# 2. Application middleware - validates after Cloudflare
+#
+# Deploy these rules using Terraform cloudflare_ruleset resource or via API
+
+waf_ip_whitelist_rules:
+  # Admin endpoints - most restrictive
+  - name: "Block admin endpoints from non-whitelisted IPs"
+    description: "Restrict /admin, /debug endpoints to specific IP addresses"
+    expression: |
+      (http.request.uri.path contains "/admin" or 
+       http.request.uri.path contains "/debug") and 
+      not ip.src in {
+        127.0.0.1
+        ::1
+        # Add your office/VPN IPs here
+        # Example: 203.0.113.0/24
+      }
+    action: block
+    enabled: true
+    priority: 1
+    
+  # Metrics endpoint - monitoring services only
+  - name: "Restrict metrics endpoint"
+    description: "Allow /metrics only from monitoring service IPs and internal network"
+    expression: |
+      http.request.uri.path eq "/metrics" and
+      not (
+        ip.src in {
+          127.0.0.1
+          ::1
+          # Add Grafana Cloud IPs
+          # Add Prometheus server IPs
+          # Add Datadog agent IPs
+        } or
+        # Allow from private IP ranges (if monitoring is internal)
+        ip.src in {10.0.0.0/8 172.16.0.0/12 192.168.0.0/16}
+      )
+    action: block
+    enabled: true
+    priority: 2
+    
+  # Health check endpoint - load balancers and monitoring
+  - name: "Restrict health check to infrastructure"
+    description: "Allow /health from load balancers, monitoring, and internal IPs"
+    expression: |
+      http.request.uri.path matches "^/(health|ready|live)$" and
+      not (
+        ip.src in {
+          127.0.0.1
+          ::1
+          # AWS ALB/NLB IP ranges (use AWS IP ranges)
+          # Cloudflare health check IPs
+          # Your monitoring service IPs
+        } or
+        # Allow from AWS/GCP/Azure private ranges
+        ip.src in {10.0.0.0/8 172.16.0.0/12 192.168.0.0/16}
+      )
+    action: log  # Log-only mode initially, change to 'block' after testing
+    enabled: true
+    priority: 3
+
+# Configuration for different environments
+environments:
+  production:
+    # Production IPs - very restrictive
+    admin_allowed_ips:
+      - "203.0.113.0/24"  # Office network (replace with actual)
+      - "198.51.100.5"    # VPN gateway (replace with actual)
+    
+    metrics_allowed_ips:
+      - "203.0.113.0/24"  # Office network
+      - "192.0.2.10"      # Grafana Cloud (replace with actual)
+      - "192.0.2.20"      # Prometheus server (replace with actual)
+    
+    health_allowed_ips:
+      - "10.0.0.0/8"      # AWS VPC
+      - "172.16.0.0/12"   # Internal networks
+      
+  staging:
+    # Staging IPs - slightly more permissive
+    admin_allowed_ips:
+      - "203.0.113.0/24"  # Office network
+      - "198.51.100.0/24" # Wider VPN range
+      - "0.0.0.0/0"       # TEMPORARY: Allow all (remove after testing)
+    
+    metrics_allowed_ips:
+      - "0.0.0.0/0"       # Allow all in staging
+    
+    health_allowed_ips:
+      - "0.0.0.0/0"       # Allow all in staging
+      
+  development:
+    # Development - permissive for testing
+    admin_allowed_ips:
+      - "0.0.0.0/0"       # Allow all
+    
+    metrics_allowed_ips:
+      - "0.0.0.0/0"       # Allow all
+    
+    health_allowed_ips:
+      - "0.0.0.0/0"       # Allow all
+
+# Deployment instructions:
+# 
+# 1. Via Cloudflare Dashboard:
+#    - Go to Security > WAF > Custom rules
+#    - Create new rule with the expression and action
+# 
+# 2. Via Terraform:
+#    resource "cloudflare_ruleset" "ip_whitelist" {
+#      zone_id     = var.cloudflare_zone_id
+#      name        = "IP Whitelist Rules"
+#      description = "Restrict access to admin and monitoring endpoints"
+#      kind        = "zone"
+#      phase       = "http_request_firewall_custom"
+#      
+#      rules {
+#        action      = "block"
+#        expression  = "(http.request.uri.path contains \"/admin\") and not ip.src in {127.0.0.1 YOUR_IP}"
+#        description = "Block admin from non-whitelisted IPs"
+#        enabled     = true
+#      }
+#    }
+# 
+# 3. Via Cloudflare API:
+#    curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/rulesets/phases/http_request_firewall_custom/entrypoint" \
+#      -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+#      -H "Content-Type: application/json" \
+#      --data '{...rule definition...}'
+#
+# 4. Testing:
+#    # Test from allowed IP
+#    curl https://api.credlink.com/metrics
+#    
+#    # Test from blocked IP (should return 403)
+#    curl -x proxy-server:port https://api.credlink.com/metrics
+#
+# 5. Monitoring:
+#    - Check Cloudflare Analytics > Security Events
+#    - Filter by "IP Whitelist Rules"
+#    - Review blocked requests
+#    - Adjust IP ranges as needed
+
+# Common IP ranges for reference:
+# 
+# AWS IP Ranges:
+# - Download from: https://ip-ranges.amazonaws.com/ip-ranges.json
+# - Filter by region and service
+# 
+# Cloudflare IP Ranges:
+# - IPv4: https://www.cloudflare.com/ips-v4
+# - IPv6: https://www.cloudflare.com/ips-v6
+# 
+# Google Cloud IP Ranges:
+# - Download from: https://www.gstatic.com/ipranges/cloud.json
+# 
+# Grafana Cloud IPs:
+# - Check documentation: https://grafana.com/docs/grafana-cloud/
+#
+# Private IP Ranges (RFC 1918):
+# - 10.0.0.0/8        (Class A)
+# - 172.16.0.0/12     (Class B)
+# - 192.168.0.0/16    (Class C)

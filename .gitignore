@@ -18,6 +18,14 @@ build/
 
 # Artifacts and logs
 .artifacts/
+
+# Certificates and private keys (SECURITY CRITICAL)
+*.pem
+*.key
+*.crt
+certs/
+apps/*/certs/
+packages/*/certs/
 logs/
 *.log
 
@@ -69,3 +77,22 @@ fixtures/mapping.csv
 *.magick
 *.tmp.png
 *.tmp.jpg
+
+# Test artifacts
+signed-*.png
+signed-*.jpg
+test-*.png
+test-*.jpg
+*.bak
+
+# Build artifacts
+dist-backup/
+*.tsbuildinfo
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

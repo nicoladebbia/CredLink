@@ -1,0 +1,25 @@
+{
+  "name": "@credlink/batch-sign",
+  "version": "1.0.0",
+  "description": "CredLink Batch Signing CLI Tool",
+  "bin": {
+    "credlink-batch-sign": "./batch-sign.ts"
+  },
+  "scripts": {
+    "start": "ts-node batch-sign.ts"
+  },
+  "dependencies": {
+    "@credlink/c2pa-sdk": "workspace:*",
+    "commander": "^11.1.0",
+    "glob": "^10.3.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.4",
+    "@types/glob": "^8.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

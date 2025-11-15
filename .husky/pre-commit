@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run linting
+echo "Running linter..."
+npm run lint --workspaces --if-present || exit 1
+
+# Run type checking
+echo "Running type check..."
+npm run build --workspaces --if-present || exit 1
+
+# Run tests (fast ones only)
+echo "Running tests..."
+npm test -- --bail --findRelatedTests --passWithNoTests || exit 1
+
+echo "✅ Pre-commit checks passed"

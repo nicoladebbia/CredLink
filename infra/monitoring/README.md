@@ -2,13 +2,44 @@
 
 Comprehensive monitoring and alerting infrastructure for CredLink production environment.
 
+## 🚀 Quick Start
+
+### Production (Grafana Cloud)
+
+**Grafana Cloud Instance:** https://nicolagiovannidebbia.grafana.net
+
+Access your dashboards at the Grafana Cloud URL above. Prometheus is configured to send metrics via remote_write.
+
+```bash
+# Set up Grafana Cloud credentials
+export GRAFANA_CLOUD_INSTANCE_ID="your-instance-id"
+export GRAFANA_CLOUD_API_KEY="your-api-key"
+
+# Start monitoring stack (without local Grafana)
+docker-compose up prometheus alertmanager node-exporter
+```
+
+### Local Development
+
+```bash
+# Set required secrets
+export GRAFANA_ADMIN_PASSWORD="$(openssl rand -base64 32)"
+export GRAFANA_SECRET_KEY="$(openssl rand -base64 32)"
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+export SMTP_PASSWORD="your-smtp-password"
+
+# Start full stack with local Grafana
+docker-compose --profile local-grafana up
+```
+
 ## Overview
 
 This directory contains monitoring configurations for:
 
+- **Grafana Cloud**: https://nicolagiovannidebbia.grafana.net (Production)
 - **CloudWatch**: AWS native monitoring and dashboards
 - **Prometheus**: Metrics collection and alerting
-- **Grafana**: Visualization and dashboards
+- **Grafana**: Local visualization (development only)
 - **Alertmanager**: Alert routing and notification
 
 ## Components

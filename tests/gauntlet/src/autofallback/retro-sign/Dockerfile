@@ -2,7 +2,7 @@
 # Phase 10 Video & Audio v1 Implementation
 
 # Node.js build stage for TypeScript packages
-FROM node:18-alpine AS node-builder
+FROM node:18.20.5-alpine3.20 AS node-builder
 
 WORKDIR /app
 
@@ -51,7 +51,7 @@ COPY src ./src
 RUN touch src/main.rs && cargo build --release
 
 # Production runtime stage
-FROM node:18-alpine AS production
+FROM node:18.20.5-alpine3.20 AS production
 
 # Install runtime dependencies
 RUN apk add --no-cache \

@@ -1,0 +1,22 @@
+# Cloudflare Permission Group IDs
+# 
+# IMPORTANT: These are EXAMPLE IDs and MUST be replaced with your actual Cloudflare permission group IDs
+# 
+# To get your actual permission group IDs:
+# 1. Get API token: https://dash.cloudflare.com/profile/api-tokens
+# 2. Run: curl -H "Authorization: Bearer YOUR_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/permission_groups | jq '.result[] | {id, name}'
+# 
+# Copy this file to cloudflare-permission-groups.auto.tfvars and update with your real IDs
+
+cloudflare_permission_groups = {
+  # R2 Storage permissions
+  r2_read_write = "REPLACE_WITH_YOUR_R2_READ_WRITE_PERMISSION_GROUP_ID"  # Example: c8fed203ed3043cba015a93ad1616f1f
+  
+  # Workers permissions
+  worker_edit   = "REPLACE_WITH_YOUR_WORKER_EDIT_PERMISSION_GROUP_ID"    # Example: 82e64a83756745bbbb1c9c2701bf816b
+  worker_routes = "REPLACE_WITH_YOUR_WORKER_ROUTES_PERMISSION_GROUP_ID"  # Example: e086da7e2179491d91ee5f35b3ca210a
+  
+  # Queue permissions
+  queue_read    = "REPLACE_WITH_YOUR_QUEUE_READ_PERMISSION_GROUP_ID"     # Example: f1234567890abcdef1234567890abcd
+  queue_write   = "REPLACE_WITH_YOUR_QUEUE_WRITE_PERMISSION_GROUP_ID"    # Example: f234567890abcdef234567890abcdef
+}

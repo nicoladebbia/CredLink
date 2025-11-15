@@ -14,8 +14,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@credlink/utils": "file:../../core/utils",
-    "@credlink/manifest-store": "file:../../core/manifest-store",
+    "@credlink/manifest-store": "workspace:*",
     "yaml": "^2.3.4",
     "js-yaml": "^4.1.0",
     "node-fetch": "^3.3.2",

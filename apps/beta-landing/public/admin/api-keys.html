@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Keys - CredLink Admin</title>
+  
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-success: #10b981;
+      --color-error: #ef4444;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-border: #d1d5db;
+      --color-bg: #f9fafb;
+      --sidebar-width: 250px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+    }
+    
+    .dashboard {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Reuse sidebar styles */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: white;
+      border-right: 1px solid var(--color-border);
+      padding: 1.5rem;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 2rem;
+    }
+    
+    .nav-menu {
+      list-style: none;
+    }
+    
+    .nav-item {
+      margin-bottom: 0.5rem;
+    }
+    
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      color: var(--color-text);
+      text-decoration: none;
+      border-radius: 0.5rem;
+      transition: all 150ms;
+    }
+    
+    .nav-link:hover,
+    .nav-link.active {
+      background-color: #eff6ff;
+      color: var(--color-primary);
+    }
+    
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+    }
+    
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 2rem;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      color: var(--color-text);
+    }
+    
+    /* API Keys Table */
+    .card {
+      background: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .card-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    
+    .table-container {
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 1rem 1.5rem;
+      text-align: left;
+    }
+    
+    th {
+      background: var(--color-bg);
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    tr {
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    tr:last-child {
+      border-bottom: none;
+    }
+    
+    .key-display {
+      font-family: monospace;
+      font-size: 0.875rem;
+      background: var(--color-bg);
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .badge-active {
+      background: #d1fae5;
+      color: #047857;
+    }
+    
+    .badge-revoked {
+      background: #fee;
+      color: #b91c1c;
+    }
+    
+    .badge-free {
+      background: var(--color-bg);
+      color: var(--color-text-light);
+    }
+    
+    .badge-pro {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .badge-enterprise {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .usage-bar {
+      width: 100%;
+      height: 4px;
+      background: var(--color-border);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+    
+    .usage-fill {
+      height: 100%;
+      background: var(--color-primary);
+      transition: width 300ms;
+    }
+    
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: all 150ms;
+    }
+    
+    .btn-primary {
+      background: var(--color-primary);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #1e40af;
+    }
+    
+    .btn-sm {
+      padding: 0.375rem 0.75rem;
+      font-size: 0.8125rem;
+    }
+    
+    .btn-outline {
+      background: transparent;
+      color: var(--color-text-light);
+      border: 1px solid var(--color-border);
+    }
+    
+    .btn-outline:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    
+    .btn-danger {
+      background: var(--color-error);
+      color: white;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .modal-header {
+      margin-bottom: 1.5rem;
+    }
+    
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--color-border);
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    
+    input:focus, select:focus {
+      outline: 2px solid var(--color-primary);
+      outline-offset: 0;
+    }
+    
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Sidebar (same as dashboard) -->
+    <aside class="sidebar">
+      <div class="logo">CredLink Admin</div>
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="dashboard.html" class="nav-link">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="api-keys.html" class="nav-link active">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+              </svg>
+              API Keys
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="users.html" class="nav-link">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+              Users
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="system.html" class="nav-link">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/>
+              </svg>
+              System Health
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="header">
+        <h1>API Keys</h1>
+        <button class="btn btn-primary" onclick="showCreateModal()">
+          <svg style="width: 16px; height: 16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 4v16m8-8H4"/>
+          </svg>
+          Create API Key
+        </button>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">API Keys</h2>
+          <span style="color: var(--color-text-light); font-size: 0.875rem;">12 active keys</span>
+        </div>
+        
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Name</th>
+                <th>Tier</th>
+                <th>Usage</th>
+                <th>Created</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="api-keys-table">
+              <!-- Keys will be inserted here -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Create API Key Modal -->
+  <div id="create-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Create API Key</h2>
+      </div>
+      
+      <form id="create-form">
+        <div class="form-group">
+          <label for="key-name">Key Name *</label>
+          <input 
+            type="text" 
+            id="key-name" 
+            placeholder="My App Key"
+            required
+          >
+        </div>
+        
+        <div class="form-group">
+          <label for="key-tier">Tier *</label>
+          <select id="key-tier" required>
+            <option value="free">Free (10 signs/min)</option>
+            <option value="pro">Pro (100 signs/min)</option>
+            <option value="enterprise">Enterprise (1000 signs/min)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="key-user">User Email</label>
+          <input 
+            type="email" 
+            id="key-user" 
+            placeholder="user@example.com"
+          >
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="hideCreateModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            Create Key
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <script>
+    // Sample data
+    const apiKeys = [
+      {
+        id: '1',
+        key: 'demo-admin-key',
+        name: 'Admin Demo Key',
+        tier: 'enterprise',
+        usage: { current: 542, limit: 1000 },
+        created: '2025-11-01',
+        status: 'active'
+      },
+      {
+        id: '2',
+        key: 'demo-user-key',
+        name: 'User Demo Key',
+        tier: 'pro',
+        usage: { current: 78, limit: 100 },
+        created: '2025-11-05',
+        status: 'active'
+      },
+      {
+        id: '3',
+        key: 'demo-readonly-key',
+        name: 'Readonly Demo Key',
+        tier: 'free',
+        usage: { current: 8, limit: 10 },
+        created: '2025-11-10',
+        status: 'active'
+      }
+    ];
+    
+    function renderAPIKeys() {
+      const tbody = document.getElementById('api-keys-table');
+      tbody.innerHTML = apiKeys.map(key => {
+        const usagePercent = (key.usage.current / key.usage.limit) * 100;
+        const tierBadgeClass = `badge-${key.tier}`;
+        const statusBadgeClass = key.status === 'active' ? 'badge-active' : 'badge-revoked';
+        
+        return `
+          <tr>
+            <td><span class="key-display">${key.key}</span></td>
+            <td>${key.name}</td>
+            <td><span class="badge ${tierBadgeClass}">${key.tier}</span></td>
+            <td>
+              <div>${key.usage.current}/${key.usage.limit}</div>
+              <div class="usage-bar">
+                <div class="usage-fill" style="width: ${usagePercent}%"></div>
+              </div>
+            </td>
+            <td>${new Date(key.created).toLocaleDateString()}</td>
+            <td><span class="badge ${statusBadgeClass}">${key.status}</span></td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-sm btn-outline" onclick="copyKey('${key.key}')">
+                  Copy
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="revokeKey('${key.id}')">
+                  Revoke
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function showCreateModal() {
+      document.getElementById('create-modal').classList.add('show');
+    }
+    
+    function hideCreateModal() {
+      document.getElementById('create-modal').classList.remove('show');
+      document.getElementById('create-form').reset();
+    }
+    
+    function copyKey(key) {
+      navigator.clipboard.writeText(key).then(() => {
+        alert('API key copied to clipboard!');
+      });
+    }
+    
+    function revokeKey(id) {
+      if (confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) {
+        const key = apiKeys.find(k => k.id === id);
+        if (key) {
+          key.status = 'revoked';
+          renderAPIKeys();
+          alert('API key revoked successfully');
+        }
+      }
+    }
+    
+    document.getElementById('create-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const newKey = {
+        id: String(apiKeys.length + 1),
+        key: `key-${Math.random().toString(36).substr(2, 16)}`,
+        name: document.getElementById('key-name').value,
+        tier: document.getElementById('key-tier').value,
+        usage: { current: 0, limit: 10 },
+        created: new Date().toISOString().split('T')[0],
+        status: 'active'
+      };
+      
+      apiKeys.push(newKey);
+      renderAPIKeys();
+      hideCreateModal();
+      
+      alert(`API Key created successfully!\n\nKey: ${newKey.key}\n\nPlease save this key securely. It will not be shown again.`);
+    });
+    
+    // Initial render
+    renderAPIKeys();
+  </script>
+</body>
+</html>

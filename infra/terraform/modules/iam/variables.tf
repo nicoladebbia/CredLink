@@ -85,7 +85,40 @@ variable "vault_token" {
 }
 
 variable "vpc_endpoint_id" {
-  description = "VPC endpoint ID for S3 access restriction"
+  description = "VPC endpoint ID for S3 access restriction (e.g., vpce-0abcd1234efgh5678). Must be a valid VPC endpoint ID if provided."
   type        = string
   default     = null
+  
+  validation {
+    condition = (
+      var.vpc_endpoint_id == null ||
+      can(regex("^vpce-[a-f0-9]{8}$", var.vpc_endpoint_id)) ||
+      can(regex("^vpce-[a-f0-9]{17}$", var.vpc_endpoint_id))
+    )
+    error_message = "VPC endpoint ID must be in format 'vpce-XXXXXXXX' or 'vpce-XXXXXXXXXXXXXXXXX' (8 or 17 hex characters). Do not use placeholder IDs like 'vpce-1a2b3c4d'."
+  }
+}
+
+variable "cloudflare_permission_groups" {
+  description = <<EOT
+Cloudflare permission group IDs for API tokens.
+IMPORTANT: These must be real IDs from your Cloudflare account.
+Get actual IDs: curl -H "Authorization: Bearer YOUR_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/permission_groups
+See cloudflare-permission-groups.auto.tfvars.example for details.
+EOT
+  type = object({
+    r2_read_write = string
+    worker_edit   = string
+    worker_routes = string
+    queue_read    = string
+    queue_write   = string
+  })
+  
+  validation {
+    condition = alltrue([
+      for k, v in var.cloudflare_permission_groups :
+      length(v) == 32 && can(regex("^[a-f0-9]{32}$", v))
+    ])
+    error_message = "All permission group IDs must be 32-character hexadecimal strings. Please replace placeholder IDs with real Cloudflare permission group IDs."
+  }
 }

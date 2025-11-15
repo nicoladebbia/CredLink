@@ -43,26 +43,7 @@ output "alb_url" {
   value       = "http://${aws_lb.main.dns_name}"
 }
 
-# ECS Outputs
-output "ecs_cluster_name" {
-  description = "Name of the ECS cluster"
-  value       = aws_ecs_cluster.main.name
-}
-
-output "ecs_cluster_arn" {
-  description = "ARN of the ECS cluster"
-  value       = aws_ecs_cluster.main.arn
-}
-
-output "ecs_service_name" {
-  description = "Name of the ECS service"
-  value       = aws_ecs_service.app.name
-}
-
-output "ecs_task_definition_arn" {
-  description = "ARN of the ECS task definition"
-  value       = aws_ecs_task_definition.app.arn
-}
+# ECS outputs are now in ecs-outputs.tf
 
 # ECR Outputs
 output "ecr_repository_url" {
@@ -247,10 +228,7 @@ output "secret_arn" {
   value       = aws_secretsmanager.main.arn
 }
 
-output "alb_arn" {
-  description = "ARN of the Application Load Balancer"
-  value       = aws_lb.main.arn
-}
+# ALB ARN output is already defined above
 
 # Performance Outputs (Week 7)
 output "cloudfront_distribution_id" {
@@ -273,10 +251,7 @@ output "rds_instance_id" {
   value       = aws_db_instance.main.id
 }
 
-output "ecs_service_name" {
-  description = "Name of the ECS service"
-  value       = aws_ecs_service.main.name
-}
+# ECS service output is now in ecs-outputs.tf
 
 # Disaster Recovery Outputs (Week 8)
 output "backup_vault_arn" {
@@ -304,7 +279,4 @@ output "production_launch_topic_arn" {
   value       = aws_sns_topic.production_launch.arn
 }
 
-output "ecs_cluster_name" {
-  description = "Name of the ECS cluster"
-  value       = aws_ecs_cluster.main.name
-}
+# ECS cluster output is now in ecs-outputs.tf

@@ -1,0 +1,401 @@
+/**
+ * Security Tests: Authentication & Authorization
+ * 
+ * Tests API key validation, JWT verification, brute force protection, RBAC
+ */
+
+import request from 'supertest';
+import { generateToken, getAuthStats, clearAuthStats } from '../../src/middleware/auth-enhanced';
+import { Role } from '../../src/middleware/auth-enhanced';
+import app from '../../src/index';
+
+describe('Authentication Security', () => {
+  beforeEach(() => {
+    clearAuthStats();
+  });
+
+  describe('API Key Authentication', () => {
+    it('should reject requests without API key', async () => {
+      const response = await request(app)
+        .post('/sign')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(401);
+
+      expect(response.body.error).toBe('Unauthorized');
+      expect(response.body.message).toContain('API key');
+    });
+
+    it('should reject requests with invalid API key', async () => {
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'invalid-key-12345')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(403);
+
+      expect(response.body.error).toBe('Forbidden');
+    });
+
+    it('should accept requests with valid API key', async () => {
+      process.env.API_KEYS_CONFIG = JSON.stringify({
+        'test-key-123': { role: 'user', name: 'Test User' }
+      });
+
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'test-key-123')
+        .attach('image', Buffer.from('test'), 'test.jpg');
+
+      expect(response.status).not.toBe(401);
+      expect(response.status).not.toBe(403);
+    });
+
+    it('should reject expired API keys', async () => {
+      // Mock expired key scenario
+      process.env.API_KEY_EXPIRY = new Date(Date.now() - 86400000).toISOString(); // Yesterday
+
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'expired-key')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(403);
+    });
+  });
+
+  describe('HMAC Authentication', () => {
+    it('should require all HMAC headers', async () => {
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'test-key')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(401);
+
+      expect(response.body.message).toContain('x-signature');
+    });
+
+    it('should reject expired timestamps', async () => {
+      const oldTimestamp = Date.now() - (10 * 60 * 1000); // 10 minutes ago
+
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'test-key')
+        .set('x-timestamp', oldTimestamp.toString())
+        .set('x-signature', 'fake-signature')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(401);
+
+      expect(response.body.message).toContain('expired');
+    });
+
+    it('should reject future timestamps (replay attack prevention)', async () => {
+      const futureTimestamp = Date.now() + (10 * 60 * 1000); // 10 minutes future
+
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'test-key')
+        .set('x-timestamp', futureTimestamp.toString())
+        .set('x-signature', 'fake-signature')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(401);
+    });
+
+    it('should verify HMAC signature correctly', async () => {
+      const crypto = require('crypto');
+      const timestamp = Date.now().toString();
+      const method = 'POST';
+      const path = '/sign';
+      const body = JSON.stringify({});
+      
+      const payload = `${method}${path}${timestamp}${body}`;
+      const secret = 'test-secret';
+      const signature = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+
+      process.env['API_SECRET_test-key'] = secret;
+
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'test-key')
+        .set('x-timestamp', timestamp)
+        .set('x-signature', signature)
+        .attach('image', Buffer.from('test'), 'test.jpg');
+
+      expect(response.status).not.toBe(403); // Signature should be valid
+    });
+
+    it('should reject tampered payloads', async () => {
+      const crypto = require('crypto');
+      const timestamp = Date.now().toString();
+      const payload = `POST/sign${timestamp}{}`;
+      const signature = crypto.createHmac('sha256', 'secret').update(payload).digest('hex');
+
+      // Send different body than what was signed
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'test-key')
+        .set('x-timestamp', timestamp)
+        .set('x-signature', signature)
+        .send({ tampered: 'data' })
+        .expect(403);
+
+      expect(response.body.message).toContain('signature');
+    });
+  });
+
+  describe('JWT Authentication', () => {
+    it('should reject requests without Bearer token', async () => {
+      const response = await request(app)
+        .get('/admin/stats')
+        .expect(401);
+
+      expect(response.body.message).toContain('Bearer token');
+    });
+
+    it('should reject malformed JWT', async () => {
+      const response = await request(app)
+        .get('/admin/stats')
+        .set('Authorization', 'Bearer invalid.jwt.token')
+        .expect(401);
+
+      expect(response.body.message).toContain('Invalid or expired token');
+    });
+
+    it('should accept valid JWT', async () => {
+      const token = generateToken('user-123', Role.USER);
+
+      const response = await request(app)
+        .get('/profile')
+        .set('Authorization', `Bearer ${token}`);
+
+      expect(response.status).not.toBe(401);
+    });
+
+    it('should reject expired JWT', async () => {
+      // Generate token with very short expiry
+      const jwt = require('jsonwebtoken');
+      const expiredToken = jwt.sign(
+        { sub: 'user-123', role: 'user' },
+        process.env.JWT_SECRET || 'test',
+        { expiresIn: '1ms' }
+      );
+
+      await new Promise(resolve => setTimeout(resolve, 10)); // Wait for expiry
+
+      const response = await request(app)
+        .get('/profile')
+        .set('Authorization', `Bearer ${expiredToken}`)
+        .expect(401);
+
+      expect(response.body.message).toContain('expired');
+    });
+
+    it('should verify JWT signature', async () => {
+      const jwt = require('jsonwebtoken');
+      const tamperedToken = jwt.sign(
+        { sub: 'user-123', role: 'admin' },
+        'wrong-secret',
+        { expiresIn: '1h' }
+      );
+
+      const response = await request(app)
+        .get('/admin/stats')
+        .set('Authorization', `Bearer ${tamperedToken}`)
+        .expect(401);
+    });
+  });
+
+  describe('Role-Based Access Control (RBAC)', () => {
+    it('should allow user to access user endpoints', async () => {
+      const userToken = generateToken('user-123', Role.USER);
+
+      const response = await request(app)
+        .post('/sign')
+        .set('Authorization', `Bearer ${userToken}`)
+        .attach('image', Buffer.from('test'), 'test.jpg');
+
+      expect(response.status).not.toBe(403); // Should have access
+    });
+
+    it('should deny user access to admin endpoints', async () => {
+      const userToken = generateToken('user-123', Role.USER);
+
+      const response = await request(app)
+        .delete('/admin/clear-cache')
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(403);
+
+      expect(response.body.message).toContain('Admin');
+    });
+
+    it('should allow admin to access admin endpoints', async () => {
+      const adminToken = generateToken('admin-123', Role.ADMIN);
+
+      const response = await request(app)
+        .get('/admin/stats')
+        .set('Authorization', `Bearer ${adminToken}`);
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it('should allow admin to access user endpoints', async () => {
+      const adminToken = generateToken('admin-123', Role.ADMIN);
+
+      const response = await request(app)
+        .post('/sign')
+        .set('Authorization', `Bearer ${adminToken}`)
+        .attach('image', Buffer.from('test'), 'test.jpg');
+
+      expect(response.status).not.toBe(403);
+    });
+
+    it('should deny anonymous access to protected endpoints', async () => {
+      const response = await request(app)
+        .post('/sign')
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(401);
+    });
+  });
+
+  describe('Brute Force Protection', () => {
+    it('should track failed authentication attempts', async () => {
+      const ip = '192.168.1.100';
+
+      // Make 3 failed attempts
+      for (let i = 0; i < 3; i++) {
+        await request(app)
+          .post('/sign')
+          .set('x-api-key', 'invalid-key')
+          .set('x-forwarded-for', ip)
+          .attach('image', Buffer.from('test'), 'test.jpg')
+          .expect(403);
+      }
+
+      const stats = getAuthStats();
+      expect(stats.totalFailedAttempts).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should lockout after 5 failed attempts', async () => {
+      const ip = '192.168.1.101';
+
+      // Make 5 failed attempts
+      for (let i = 0; i < 5; i++) {
+        await request(app)
+          .post('/sign')
+          .set('x-api-key', 'invalid-key')
+          .set('x-forwarded-for', ip)
+          .attach('image', Buffer.from('test'), 'test.jpg');
+      }
+
+      // 6th attempt should be locked out
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'invalid-key')
+        .set('x-forwarded-for', ip)
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(429);
+
+      expect(response.body.error).toBe('TooManyRequests');
+      expect(response.body.retryAfter).toBeDefined();
+    });
+
+    it('should clear failed attempts after successful auth', async () => {
+      const ip = '192.168.1.102';
+      
+      // Make 2 failed attempts
+      for (let i = 0; i < 2; i++) {
+        await request(app)
+          .post('/sign')
+          .set('x-api-key', 'invalid-key')
+          .set('x-forwarded-for', ip)
+          .attach('image', Buffer.from('test'), 'test.jpg');
+      }
+
+      // Successful auth
+      process.env.API_KEYS_CONFIG = JSON.stringify({
+        'valid-key': { role: 'user', name: 'Test' }
+      });
+
+      await request(app)
+        .post('/sign')
+        .set('x-api-key', 'valid-key')
+        .set('x-forwarded-for', ip)
+        .attach('image', Buffer.from('test'), 'test.jpg');
+
+      // Should be able to make failed attempts again (counter reset)
+      const stats = getAuthStats();
+      // Failed attempts for this IP should be cleared or low
+    });
+
+    it('should unlock after lockout duration expires', async () => {
+      jest.useFakeTimers();
+      
+      const ip = '192.168.1.103';
+
+      // Trigger lockout
+      for (let i = 0; i < 5; i++) {
+        await request(app)
+          .post('/sign')
+          .set('x-api-key', 'invalid-key')
+          .set('x-forwarded-for', ip)
+          .attach('image', Buffer.from('test'), 'test.jpg');
+      }
+
+      // Verify locked
+      await request(app)
+        .post('/sign')
+        .set('x-api-key', 'invalid-key')
+        .set('x-forwarded-for', ip)
+        .attach('image', Buffer.from('test'), 'test.jpg')
+        .expect(429);
+
+      // Fast forward 16 minutes (past 15 min lockout)
+      jest.advanceTimersByTime(16 * 60 * 1000);
+
+      // Should be unlocked now
+      const response = await request(app)
+        .post('/sign')
+        .set('x-api-key', 'invalid-key')
+        .set('x-forwarded-for', ip)
+        .attach('image', Buffer.from('test'), 'test.jpg');
+
+      expect(response.status).not.toBe(429);
+
+      jest.useRealTimers();
+    });
+  });
+
+  describe('Rate Limit Bypass Attempts', () => {
+    it('should track rate limits per API key', async () => {
+      const apiKey = 'rate-limited-key';
+      
+      // Make many rapid requests
+      const requests = Array(20).fill(null).map(() =>
+        request(app)
+          .post('/sign')
+          .set('x-api-key', apiKey)
+          .attach('image', Buffer.from('test'), 'test.jpg')
+      );
+
+      const responses = await Promise.all(requests);
+      
+      // Some should be rate limited
+      const rateLimited = responses.filter(r => r.status === 429);
+      expect(rateLimited.length).toBeGreaterThan(0);
+    });
+
+    it('should prevent header spoofing for rate limit bypass', async () => {
+      // Attempt to spoof different IPs
+      const requests = Array(10).fill(null).map((_, i) =>
+        request(app)
+          .post('/sign')
+          .set('x-api-key', 'test-key')
+          .set('x-forwarded-for', `192.168.1.${i}`)
+          .attach('image', Buffer.from('test'), 'test.jpg')
+      );
+
+      const responses = await Promise.all(requests);
+      
+      // Rate limiting should still apply (keyed by API key, not IP)
+      const rateLimited = responses.filter(r => r.status === 429);
+      expect(rateLimited.length).toBeGreaterThan(0);
+    });
+  });
+});

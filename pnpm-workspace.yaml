@@ -1,7 +1,6 @@
 packages:
   - 'apps/*'
-  - 'core/*'
-  - 'integrations/**'
+  - 'packages/*'
+  - 'tools/*'
   - 'ui/*'
   - 'tests/*'
-  - 'sandboxes/*'

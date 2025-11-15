@@ -1,0 +1,383 @@
+openapi: 3.0.3
+info:
+  title: CredLink Sign Service API
+  description: |
+    C2PA-compliant image signing and verification service.
+    
+    ## Features
+    - Sign images with cryptographic proofs
+    - Verify C2PA signatures
+    - Store proofs in S3 or local filesystem
+    - Prometheus metrics
+    - Sentry error tracking
+    
+    ## Authentication
+    Optional API key authentication via:
+    - `Authorization: Bearer <key>` header
+    - `X-API-Key: <key>` header
+  version: 1.0.0
+  contact:
+    name: CredLink Support
+    email: support@credlink.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://api.credlink.com
+    description: Production server
+
+tags:
+  - name: Signing
+    description: Image signing operations
+  - name: Verification
+    description: Signature verification
+  - name: Health
+    description: Health and readiness checks
+  - name: Metrics
+    description: Prometheus metrics
+
+paths:
+  /sign:
+    post:
+      tags:
+        - Signing
+      summary: Sign an image
+      description: |
+        Signs an image with a C2PA manifest and cryptographic signature.
+        Embeds metadata using EXIF, JUMBF (JPEG), or PNG chunks.
+      operationId: signImage
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Image file to sign (JPEG, PNG, or WebP)
+                creator:
+                  type: string
+                  example: John Doe
+                  description: Creator name
+                title:
+                  type: string
+                  example: My Signed Image
+                  description: Image title
+                description:
+                  type: string
+                  example: A beautiful landscape
+                  description: Image description
+      responses:
+        '200':
+          description: Successfully signed image
+          headers:
+            X-Proof-Uri:
+              schema:
+                type: string
+              description: URI where proof is stored
+              example: https://proofs.credlink.com/550e8400-e29b-41d4-a716-446655440000
+            X-Manifest-Hash:
+              schema:
+                type: string
+              description: Combined SHA-256 and perceptual hash
+              example: sha256:abc123:phash:def456
+            X-Processing-Time:
+              schema:
+                type: integer
+              description: Processing time in milliseconds
+              example: 234
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                noFile:
+                  summary: No file provided
+                  value:
+                    error: Bad Request
+                    message: No image file provided
+                invalidFormat:
+                  summary: Invalid format
+                  value:
+                    error: Bad Request
+                    message: Unable to detect image format
+        '401':
+          description: Unauthorized (API key required/invalid)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: File too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /verify:
+    post:
+      tags:
+        - Verification
+      summary: Verify a signed image
+      description: |
+        Verifies the C2PA signature in a signed image.
+        Extracts metadata, retrieves proof, and validates the signature.
+      operationId: verifyImage
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: Signed image file to verify
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns basic health status
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  uptime:
+                    type: number
+                    example: 12345
+                    description: Uptime in seconds
+                  timestamp:
+                    type: string
+                    format: date-time
+                  environment:
+                    type: string
+                    example: production
+
+  /ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness check
+      description: Returns readiness status for orchestration
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ready:
+                    type: boolean
+                    example: true
+                  checks:
+                    type: object
+                    properties:
+                      service:
+                        type: string
+                        example: ok
+
+  /metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Prometheus metrics
+      description: Returns Prometheus-formatted metrics
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Metrics in Prometheus format
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: |
+                # HELP http_request_duration_seconds HTTP request duration
+                # TYPE http_request_duration_seconds histogram
+                http_request_duration_seconds_bucket{method="POST",route="/sign",le="0.1"} 45
+                http_request_duration_seconds_bucket{method="POST",route="/sign",le="0.5"} 98
+                http_request_duration_seconds_count{method="POST",route="/sign"} 100
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: Bad Request
+        message:
+          type: string
+          example: No image file provided
+        details:
+          type: object
+
+    VerificationResult:
+      type: object
+      required:
+        - valid
+        - confidence
+        - timestamp
+        - processingTime
+      properties:
+        valid:
+          type: boolean
+          description: Overall validation result
+          example: true
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Confidence score (0-100)
+          example: 95
+        timestamp:
+          type: integer
+          description: Verification timestamp (Unix ms)
+          example: 1699888888000
+        processingTime:
+          type: integer
+          description: Processing duration in milliseconds
+          example: 156
+        details:
+          type: object
+          properties:
+            signature:
+              type: boolean
+              description: Signature validation result
+            certificate:
+              type: boolean
+              description: Certificate validation result
+            proofUri:
+              type: string
+              nullable: true
+              description: Extracted proof URI
+              example: https://proofs.credlink.com/550e8400-e29b-41d4-a716-446655440000
+            proofFound:
+              type: boolean
+              description: Whether proof was found
+            proofMatches:
+              type: boolean
+              description: Whether embedded and remote proofs match
+            manifestTimestamp:
+              type: string
+              format: date-time
+              description: Timestamp from manifest
+
+  examples:
+    SignSuccess:
+      summary: Successful signing
+      value:
+        (binary image data)
+
+    VerifySuccess:
+      summary: Valid signature
+      value:
+        valid: true
+        confidence: 95
+        timestamp: 1699888888000
+        processingTime: 156
+        details:
+          signature: true
+          certificate: true
+          proofUri: https://proofs.credlink.com/550e8400-e29b-41d4-a716-446655440000
+          proofFound: true
+          proofMatches: true
+          manifestTimestamp: "2025-11-12T14:00:00.000Z"
+
+    VerifyFailed:
+      summary: Invalid signature
+      value:
+        valid: false
+        confidence: 20
+        timestamp: 1699888888000
+        processingTime: 89
+        details:
+          signature: false
+          certificate: false
+          proofUri: null
+          proofFound: false
+          proofMatches: false
+          manifestTimestamp: "2025-11-12T14:00:00.000Z"

@@ -1,0 +1,11 @@
+/**
+ * Initialize Sharp optimizer at application startup
+ * P-1: Image Processing Optimizations
+ */
+
+import { initializeSharp } from '@credlink/c2pa-sdk/utils/sharp-optimizer';
+
+// Initialize Sharp with optimized settings
+initializeSharp();
+
+console.log('✅ Sharp optimizer initialized');

@@ -1,256 +1,399 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sign images with C2PA cryptographic proof. Verify authenticity even after 1,000 shares.">
-    <title>CredLink Beta - Image Authenticity API</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CredLink - Content authenticity platform with C2PA proof survival">
+  <meta name="theme-color" content="#4F46E5">
+  
+  <title>CredLink - Beta Access</title>
+  
+  <!-- Preload critical assets -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <style>
+    /* === WCAG 2.1 AA Compliant Styles === */
+    
+    :root {
+      --primary: #4F46E5;
+      --primary-hover: #4338CA;
+      --success: #10B981;
+      --error: #EF4444;
+      --text: #1F2937;
+      --text-light: #6B7280;
+      --bg: #FFFFFF;
+      --bg-alt: #F9FAFB;
+      --border: #E5E7EB;
+    }
+    
+    [data-theme="dark"] {
+      --text: #F9FAFB;
+      --text-light: #D1D5DB;
+      --bg: #111827;
+      --bg-alt: #1F2937;
+      --border: #374151;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      transition: background 0.3s, color 0.3s;
+    }
+    
+    /* Skip to main content (accessibility) */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      z-index: 100;
+    }
+    
+    .skip-link:focus {
+      top: 0;
+    }
+    
+    /* Header */
+    header {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+    
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    
+    .theme-toggle:hover {
+      background: var(--bg-alt);
+    }
+    
+    .theme-toggle:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    
+    /* Main */
+    main {
+      max-width: 600px;
+      margin: 4rem auto;
+      padding: 0 1.5rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+    
+    .subtitle {
+      font-size: 1.25rem;
+      color: var(--text-light);
+      margin-bottom: 2rem;
+    }
+    
+    /* Form */
+    form {
+      background: var(--bg-alt);
+      padding: 2rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    
+    input, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 0.375rem;
+      background: var(--bg);
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    input:invalid:not(:placeholder-shown) {
+      border-color: var(--error);
+    }
+    
+    .error-text {
+      color: var(--error);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+    
+    .form-group.error .error-text {
+      display: block;
+    }
+    
+    /* Button */
+    button[type="submit"] {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+    
+    button[type="submit"]:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    button[type="submit"]:focus {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    
+    button[type="submit"]:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    button[type="submit"].loading::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      top: 50%;
+      right: 1rem;
+      margin-top: -8px;
+      border: 2px solid white;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Alert messages */
+    .alert {
+      padding: 1rem;
+      border-radius: 0.375rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    
+    .alert.show {
+      display: block;
+    }
+    
+    .alert-success {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+    
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .subtitle {
+        font-size: 1.125rem;
+      }
+      
+      main {
+        margin: 2rem auto;
+      }
+      
+      form {
+        padding: 1.5rem;
+      }
+    }
+    
+    /* Focus visible for keyboard navigation */
+    *:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header>
-            <div class="logo">
-                <h1>CredLink</h1>
-                <span class="beta-badge">BETA</span>
-            </div>
-        </header>
-
-        <!-- Hero Section -->
-        <section class="hero">
-            <h2>Sign images with C2PA cryptographic proof</h2>
-            <p class="subtitle">Verify authenticity even after 1,000 shares</p>
-            
-            <div class="cta-container">
-                <a href="#apply" class="cta-button">Apply for Beta Access</a>
-                <p class="cta-note">Limited to 20 early customers</p>
-            </div>
-
-            <!-- Visual Demo -->
-            <div class="demo-visual">
-                <div class="demo-step">
-                    <div class="step-icon">📸</div>
-                    <p>Original Image</p>
-                </div>
-                <div class="arrow">→</div>
-                <div class="demo-step">
-                    <div class="step-icon">🔐</div>
-                    <p>C2PA Signed</p>
-                </div>
-                <div class="arrow">→</div>
-                <div class="demo-step">
-                    <div class="step-icon">🌐</div>
-                    <p>1,000+ Shares</p>
-                </div>
-                <div class="arrow">→</div>
-                <div class="demo-step">
-                    <div class="step-icon">✅</div>
-                    <p>Still Verifiable</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- What You Get Section -->
-        <section class="benefits">
-            <h3>What you get as a beta customer</h3>
-            <div class="benefits-grid">
-                <div class="benefit-card">
-                    <div class="benefit-icon">🚀</div>
-                    <h4>Early Access</h4>
-                    <p>Be among the first to use our signing API before public launch</p>
-                </div>
-                <div class="benefit-card">
-                    <div class="benefit-icon">💰</div>
-                    <h4>Unlimited Free Usage</h4>
-                    <p>No limits during beta period. Test with real production workloads</p>
-                </div>
-                <div class="benefit-card">
-                    <div class="benefit-icon">👥</div>
-                    <h4>Direct Founder Access</h4>
-                    <p>Slack channel with founders. Your feedback shapes the product</p>
-                </div>
-                <div class="benefit-card">
-                    <div class="benefit-icon">🎯</div>
-                    <h4>Lifetime Pricing</h4>
-                    <p>Lock in early adopter pricing for 2+ years</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Use Cases Section -->
-        <section class="use-cases">
-            <h3>Perfect for</h3>
-            <div class="use-case-list">
-                <div class="use-case">
-                    <strong>Newsrooms</strong> - Verify photo authenticity in breaking news
-                </div>
-                <div class="use-case">
-                    <strong>E-commerce</strong> - Prove product photos are authentic
-                </div>
-                <div class="use-case">
-                    <strong>Real Estate</strong> - Certify property photos haven't been manipulated
-                </div>
-                <div class="use-case">
-                    <strong>NFT/Crypto</strong> - Authenticate digital art provenance
-                </div>
-                <div class="use-case">
-                    <strong>Stock Photos</strong> - Protect against unauthorized modifications
-                </div>
-                <div class="use-case">
-                    <strong>Academic Research</strong> - Ensure image integrity in publications
-                </div>
-            </div>
-        </section>
-
-        <!-- How It Works Section -->
-        <section class="how-it-works">
-            <h3>How it works</h3>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>Sign your image</h4>
-                        <pre><code>POST /api/v1/sign
-{
-  "image": "base64_encoded_image",
-  "metadata": {
-    "creator": "Your Company",
-    "timestamp": "2025-01-01T00:00:00Z"
-  }
-}</code></pre>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>Get cryptographic proof</h4>
-                        <pre><code>{
-  "signedImage": "base64_encoded_signed_image",
-  "proofUrl": "https://proofs.credlink.com/abc123",
-  "manifestId": "abc123"
-}</code></pre>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Verify anywhere, anytime</h4>
-                        <pre><code>POST /api/v1/verify
-{
-  "image": "base64_encoded_image"
-}
-
-// Returns: authentic, creator, timestamp</code></pre>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Application Form -->
-        <section id="apply" class="application-form">
-            <h3>Apply for Beta Access</h3>
-            <p class="form-intro">Tell us about your use case. We'll respond within 24 hours.</p>
-            
-            <form id="betaForm" action="/api/beta/apply" method="POST">
-                <div class="form-group">
-                    <label for="name">Your Name *</label>
-                    <input type="text" id="name" name="name" required placeholder="John Doe">
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Work Email *</label>
-                    <input type="email" id="email" name="email" required placeholder="john@company.com">
-                </div>
-
-                <div class="form-group">
-                    <label for="company">Company</label>
-                    <input type="text" id="company" name="company" placeholder="Acme Corp">
-                </div>
-
-                <div class="form-group">
-                    <label for="role">Your Role</label>
-                    <input type="text" id="role" name="role" placeholder="CTO, Product Manager, etc.">
-                </div>
-
-                <div class="form-group">
-                    <label for="useCase">Use Case *</label>
-                    <textarea id="useCase" name="useCase" required rows="4" placeholder="Tell us how you plan to use CredLink. What problem are you solving?"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="volume">Expected Monthly Volume</label>
-                    <select id="volume" name="volume">
-                        <option value="">Select...</option>
-                        <option value="<1k">Less than 1,000 images/month</option>
-                        <option value="1k-10k">1,000 - 10,000 images/month</option>
-                        <option value="10k-100k">10,000 - 100,000 images/month</option>
-                        <option value=">100k">More than 100,000 images/month</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="submit-button">Submit Application</button>
-            </form>
-
-            <div id="formMessage" class="form-message"></div>
-        </section>
-
-        <!-- FAQ Section -->
-        <section class="faq">
-            <h3>Frequently Asked Questions</h3>
-            <div class="faq-list">
-                <div class="faq-item">
-                    <h4>What is C2PA?</h4>
-                    <p>C2PA (Coalition for Content Provenance and Authenticity) is an open standard for cryptographically signing digital content. It's backed by Adobe, Microsoft, BBC, and other major organizations.</p>
-                </div>
-                <div class="faq-item">
-                    <h4>How long does beta last?</h4>
-                    <p>Beta program runs for 3 months. You'll get 30 days notice before any pricing changes.</p>
-                </div>
-                <div class="faq-item">
-                    <h4>What happens to my data?</h4>
-                    <p>We store cryptographic proofs, not your images. Images are processed in-memory and immediately discarded. Proofs are stored for verification purposes.</p>
-                </div>
-                <div class="faq-item">
-                    <h4>Can I verify images signed by others?</h4>
-                    <p>Yes! Any C2PA-signed image can be verified, regardless of who signed it.</p>
-                </div>
-                <div class="faq-item">
-                    <h4>What's the API rate limit?</h4>
-                    <p>No limits during beta. Production will have generous limits based on your plan.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer>
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>CredLink</h4>
-                    <p>Image authenticity for the modern web</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Resources</h4>
-                    <ul>
-                        <li><a href="/docs">API Documentation</a></li>
-                        <li><a href="/blog">Blog</a></li>
-                        <li><a href="https://c2pa.org" target="_blank">C2PA Standard</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h4>Contact</h4>
-                    <ul>
-                        <li><a href="mailto:support@credlink.com">support@credlink.com</a></li>
-                        <li><a href="mailto:founders@credlink.com">founders@credlink.com</a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 CredLink. All rights reserved.</p>
-            </div>
-        </footer>
+  <!-- Skip to main content link (WCAG) -->
+  <a href="#main" class="skip-link">Skip to main content</a>
+  
+  <header role="banner">
+    <div class="header-container">
+      <div class="logo">CredLink</div>
+      <button 
+        type="button" 
+        class="theme-toggle" 
+        aria-label="Toggle dark mode"
+        id="theme-toggle"
+      >
+        <span aria-hidden="true">🌓</span>
+        <span class="sr-only">Toggle theme</span>
+      </button>
     </div>
-
-    <script src="app.js"></script>
+  </header>
+  
+  <main id="main" role="main">
+    <h1>Join the Beta</h1>
+    <p class="subtitle">
+      Get early access to CredLink - the content authenticity platform that keeps your proofs alive.
+    </p>
+    
+    <!-- Success/Error alerts -->
+    <div id="alert-success" class="alert alert-success" role="alert" aria-live="polite">
+      <strong>Success!</strong> You're on the waitlist. Check your email for next steps.
+    </div>
+    
+    <div id="alert-error" class="alert alert-error" role="alert" aria-live="assertive">
+      <strong>Error:</strong> <span id="error-message"></span>
+    </div>
+    
+    <!-- Signup form -->
+    <form id="signup-form" novalidate>
+      <div class="form-group">
+        <label for="name">
+          Name <span aria-label="required">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="name" 
+          name="name" 
+          required 
+          aria-required="true"
+          placeholder="Jane Doe"
+          autocomplete="name"
+        >
+        <span class="error-text" role="alert">Please enter your name</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="email">
+          Email <span aria-label="required">*</span>
+        </label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          required 
+          aria-required="true"
+          placeholder="jane@example.com"
+          autocomplete="email"
+        >
+        <span class="error-text" role="alert">Please enter a valid email address</span>
+      </div>
+      
+      <div class="form-group">
+        <label for="company">
+          Company
+        </label>
+        <input 
+          type="text" 
+          id="company" 
+          name="company" 
+          placeholder="Acme Inc"
+          autocomplete="organization"
+        >
+      </div>
+      
+      <div class="form-group">
+        <label for="use-case">
+          Tell us about your use case
+        </label>
+        <textarea 
+          id="use-case" 
+          name="useCase" 
+          rows="4"
+          placeholder="I want to use CredLink to..."
+        ></textarea>
+      </div>
+      
+      <button 
+        type="submit" 
+        id="submit-btn"
+        aria-label="Submit beta access request"
+      >
+        Request Beta Access
+      </button>
+    </form>
+  </main>
+  
+  <script src="app.js"></script>
 </body>
 </html>

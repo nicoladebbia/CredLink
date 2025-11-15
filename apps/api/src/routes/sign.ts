@@ -1,0 +1,200 @@
+import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
+import rateLimit from 'express-rate-limit';
+import { z } from 'zod';
+import { C2PAService } from '../services/c2pa-service';
+import { ProofStorage } from '../services/proof-storage';
+import { embedProofUri } from '../services/metadata-embedder';
+import { logger } from '../utils/logger';
+import { AppError } from '../middleware/error-handler';
+import { metricsCollector } from '../middleware/metrics';
+import { registerService } from '../index';
+
+const proofStorage = new ProofStorage();
+
+// Register for graceful shutdown
+if (typeof registerService === 'function') {
+  registerService('ProofStorage (sign route)', proofStorage);
+}
+
+const router: Router = Router();
+
+// Validation schema for custom assertions
+// Ensures safe, validated assertions to prevent injection attacks
+const customAssertionSchema = z.object({
+  label: z.string().max(100).regex(/^[a-zA-Z0-9._-]+$/, 'Assertion label must contain only alphanumeric characters, dots, underscores, and hyphens'),
+  data: z.union([
+    z.string().max(10000),
+    z.number(),
+    z.boolean(),
+    z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]))
+  ])
+}).strict();
+
+const customAssertionsSchema = z.array(customAssertionSchema).max(10); // Max 10 custom assertions
+
+/**
+ * Validate and parse custom assertions
+ */
+function parseCustomAssertions(customAssertionsString?: string): any[] | undefined {
+  if (!customAssertionsString) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(customAssertionsString);
+    
+    // Validate with Zod schema
+    const validated = customAssertionsSchema.parse(parsed);
+    
+    logger.debug('Custom assertions validated', { count: validated.length });
+    return validated;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new AppError(400, `Invalid custom assertions: ${error.errors.map(e => e.message).join(', ')}`);
+    }
+    throw new AppError(400, 'Invalid JSON in customAssertions');
+  }
+}
+
+// Rate limiting: 100 requests per minute per IP (development)
+const signLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: parseInt(process.env.SIGN_RATE_LIMIT_MAX || '100'), // 100 requests per minute in dev
+  message: 'Too many signing requests from this IP, please try again later',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Configure multer for file uploads
+const upload = multer({
+  limits: {
+    fileSize: parseInt(process.env.MAX_FILE_SIZE_MB || '50') * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Only image files are allowed'));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+const c2paService = new C2PAService();
+
+/**
+ * POST /sign
+ * 
+ * Sign an image with C2PA manifest
+ * 
+ * Request:
+ * - multipart/form-data with 'image' file
+ * - Optional: issuer, softwareAgent fields
+ * 
+ * Response:
+ * - Signed image buffer
+ * - Headers: X-Proof-Uri, X-Processing-Time
+ */
+router.post('/', signLimiter, upload.single('image'), async (req: Request, res: Response, next: NextFunction) => {
+  const startTime = Date.now();
+  
+  try {
+    // Validate file upload
+    if (!req.file) {
+      throw new AppError(400, 'No image file provided');
+    }
+    
+    logger.info('Sign request received', {
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      creator: req.body.creator || req.body.issuer
+    });
+
+    // 1. Validate and parse custom assertions (if provided)
+    const validatedAssertions = parseCustomAssertions(req.body.customAssertions);
+    
+    // 2. Sign image with C2PA
+    const signingResult = await c2paService.signImage(
+      req.file.buffer,
+      {
+        creator: req.body.creator || req.body.issuer || 'CredLink',
+        assertions: validatedAssertions
+      }
+    );
+
+    // 2. Proof is already stored by the service
+    const proofUri = signingResult.proofUri;
+    const manifestHash = signingResult.imageHash;
+
+    // 3. Return signed image with embedded C2PA proof
+    const finalImage = signingResult.signedBuffer;
+
+    // 4. Return signed image
+    const duration = Date.now() - startTime;
+    
+    // ✅ Track metrics
+    const format = req.file.mimetype.split('/')[1] || 'unknown';
+    metricsCollector.trackImageSigning(format, req.file.size, duration, true);
+    
+    logger.info('Sign completed successfully', {
+      duration,
+      proofUri,
+      manifestHash,
+      originalSize: req.file.size,
+      signedSize: finalImage.length
+    });
+
+    // Set response headers
+    res.set('Content-Type', req.file.mimetype);
+    res.set('Content-Disposition', `attachment; filename="signed-${req.file.originalname}"`);
+    res.set('X-Proof-Uri', proofUri);
+    res.set('X-Manifest-Hash', manifestHash);
+    res.set('X-Processing-Time', `${duration}ms`);
+    
+    // Send signed image
+    res.send(finalImage);
+
+  } catch (error) {
+    // ✅ Track error metrics
+    const duration = Date.now() - startTime;
+    if (req.file) {
+      const format = req.file.mimetype.split('/')[1] || 'unknown';
+      metricsCollector.trackImageSigning(format, req.file.size, duration, false);
+      
+      if (error instanceof AppError) {
+        metricsCollector.trackSigningError(error.message);
+      } else {
+        metricsCollector.trackSigningError('unexpected_error');
+      }
+    }
+    
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        next(new AppError(413, `File too large. Maximum size: ${process.env.MAX_FILE_SIZE_MB || 50}MB`));
+      } else {
+        next(new AppError(400, `Upload error: ${error.message}`));
+      }
+    } else {
+      next(error);
+    }
+  }
+});
+
+/**
+ * GET /sign/stats
+ * 
+ * Get signing statistics
+ */
+router.get('/stats', (req: Request, res: Response) => {
+  const stats = proofStorage.getStats();
+  
+  res.json({
+    service: 'sign',
+    ...stats,
+    timestamp: Date.now()
+  });
+});
+
+export default router;

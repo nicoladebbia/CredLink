@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation - CredLink</title>
+  
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1e40af;
+      --color-success: #10b981;
+      --color-error: #ef4444;
+      --color-warning: #f59e0b;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-border: #d1d5db;
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+      --color-code: #374151;
+      --color-code-bg: #f3f4f6;
+      --sidebar-width: 280px;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+    }
+    
+    .docs-container {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar Navigation */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--color-bg-secondary);
+      border-right: 1px solid var(--color-border);
+      padding: 2rem 1.5rem;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      z-index: 100;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .nav-section {
+      margin-bottom: 2rem;
+    }
+    
+    .nav-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--color-text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+    
+    .nav-list {
+      list-style: none;
+    }
+    
+    .nav-item {
+      margin-bottom: 0.5rem;
+    }
+    
+    .nav-link {
+      display: block;
+      padding: 0.5rem 0.75rem;
+      color: var(--color-text);
+      text-decoration: none;
+      border-radius: 0.375rem;
+      transition: all 150ms;
+      font-size: 0.875rem;
+    }
+    
+    .nav-link:hover,
+    .nav-link.active {
+      background-color: var(--color-primary);
+      color: white;
+    }
+    
+    /* Main Content */
+    .main-content {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 2rem 3rem;
+      max-width: 1200px;
+    }
+    
+    .header {
+      margin-bottom: 3rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+    }
+    
+    .subtitle {
+      font-size: 1.25rem;
+      color: var(--color-text-light);
+      margin-bottom: 2rem;
+    }
+    
+    .api-key-banner {
+      background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    
+    .api-key-banner h3 {
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .api-key-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .api-key-item {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    
+    /* Section Styles */
+    .section {
+      margin-bottom: 3rem;
+    }
+    
+    h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--color-border);
+    }
+    
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin: 2rem 0 1rem 0;
+    }
+    
+    h4 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin: 1.5rem 0 0.75rem 0;
+    }
+    
+    p {
+      margin-bottom: 1rem;
+      color: var(--color-text);
+    }
+    
+    /* Code Blocks */
+    .code-block {
+      background: var(--color-code-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+      position: relative;
+    }
+    
+    .code-block pre {
+      margin: 0;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: var(--color-code);
+    }
+    
+    .code-block code {
+      background: none;
+      padding: 0;
+    }
+    
+    .copy-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 150ms;
+    }
+    
+    .copy-button:hover {
+      background: var(--color-primary-dark);
+    }
+    
+    /* Inline Code */
+    code {
+      background: var(--color-code-bg);
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      font-family: monospace;
+      font-size: 0.875rem;
+    }
+    
+    /* Endpoint Cards */
+    .endpoint-card {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .method {
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+    }
+    
+    .method.get {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    
+    .method.post {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .endpoint-url {
+      font-family: monospace;
+      font-size: 1rem;
+      color: var(--color-text);
+    }
+    
+    /* Parameters Table */
+    .params-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    
+    .params-table th,
+    .params-table td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .params-table th {
+      background: var(--color-bg-secondary);
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+    
+    .required {
+      color: var(--color-error);
+      font-weight: 600;
+    }
+    
+    .optional {
+      color: var(--color-text-light);
+      font-weight: 500;
+    }
+    
+    /* Response Examples */
+    .response-example {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    
+    .response-example.error {
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+    
+    /* Status Indicators */
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+    
+    .status.live {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .status.beta {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    /* Try It Out */
+    .try-it-out {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    
+    .try-it-out h4 {
+      margin-top: 0;
+      color: var(--color-primary);
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--color-border);
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+    }
+    
+    .btn {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 0.625rem 1.25rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 150ms;
+    }
+    
+    .btn:hover {
+      background: var(--color-primary-dark);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    /* Alert */
+    .alert {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin: 1rem 0;
+    }
+    
+    .alert.info {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1e40af;
+    }
+    
+    .alert.warning {
+      background: #fffbeb;
+      border: 1px solid #fed7aa;
+      color: #92400e;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        position: relative;
+        height: auto;
+      }
+      
+      .main-content {
+        margin-left: 0;
+        padding: 1.5rem;
+      }
+      
+      .api-key-list {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="docs-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="logo">
+        <svg style="width: 24px; height: 24px" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        CredLink API
+      </div>
+      
+      <nav>
+        <div class="nav-section">
+          <div class="nav-title">Getting Started</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="#introduction" class="nav-link active">Introduction</a></li>
+            <li class="nav-item"><a href="#authentication" class="nav-link">Authentication</a></li>
+            <li class="nav-item"><a href="#rate-limits" class="nav-link">Rate Limits</a></li>
+          </ul>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-title">Endpoints</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="#health" class="nav-link">Health Check</a></li>
+            <li class="nav-item"><a href="#sign" class="nav-link">Sign Image</a></li>
+            <li class="nav-item"><a href="#verify" class="nav-link">Verify Image</a></li>
+            <li class="nav-item"><a href="#status" class="nav-link">Get Status</a></li>
+            <li class="nav-item"><a href="#formats" class="nav-link">Supported Formats</a></li>
+          </ul>
+        </div>
+        
+        <div class="nav-section">
+          <div class="nav-title">Reference</div>
+          <ul class="nav-list">
+            <li class="nav-item"><a href="#errors" class="nav-link">Error Codes</a></li>
+            <li class="nav-item"><a href="#examples" class="nav-link">Code Examples</a></li>
+            <li class="nav-item"><a href="#sdks" class="nav-link">SDKs & Libraries</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="header">
+        <h1>API Documentation</h1>
+        <p class="subtitle">
+          Complete REST API reference for CredLink content authenticity platform
+        </p>
+        
+        <div class="api-key-banner">
+          <h3>🔑 Demo API Keys</h3>
+          <p>Use these keys to test the API endpoints:</p>
+          <div class="api-key-list">
+            <div class="api-key-item">demo-admin-key</div>
+            <div class="api-key-item">demo-user-key</div>
+            <div class="api-key-item">demo-readonly-key</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Introduction Section -->
+      <section id="introduction" class="section">
+        <h2>Introduction</h2>
+        <p>
+          The CredLink API provides programmatic access to sign and verify digital images 
+          with C2PA content credentials. Our API enables developers to integrate content 
+          authenticity directly into their applications.
+        </p>
+        
+        <div class="alert info">
+          <strong>Base URL:</strong> <code>https://api.credlink.com</code><br>
+          <strong>Current Version:</strong> v1.0.0<br>
+          <strong>Status:</strong> <span class="status live">● Live</span>
+        </div>
+        
+        <h3>Key Features</h3>
+        <ul style="margin-left: 2rem; margin-bottom: 1rem;">
+          <li>✅ Sign JPEG, PNG, and WebP images with C2PA manifests</li>
+          <li>✅ Verify content authenticity and provenance</li>
+          <li>✅ Role-based access control (Admin, User, Readonly)</li>
+          <li>✅ Enterprise-grade security (100/100 security score)</li>
+          <li>✅ Real-time verification with confidence scores</li>
+          <li>✅ Comprehensive audit trails and logging</li>
+        </ul>
+      </section>
+      
+      <!-- Authentication Section -->
+      <section id="authentication" class="section">
+        <h2>Authentication</h2>
+        <p>
+          All API requests must be authenticated using an API key sent in the 
+          <code>X-API-Key</code> header.
+        </p>
+        
+        <div class="code-block">
+          <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+          <pre><code>curl -H "X-API-Key: your-api-key" https://api.credlink.com/health</code></pre>
+        </div>
+        
+        <h3>API Key Tiers</h3>
+        <table class="params-table">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Rate Limit</th>
+              <th>Features</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Free</strong></td>
+              <td>10 requests/minute</td>
+              <td>Basic signing and verification</td>
+            </tr>
+            <tr>
+              <td><strong>Pro</strong></td>
+              <td>100 requests/minute</td>
+              <td>Advanced features, priority support</td>
+            </tr>
+            <tr>
+              <td><strong>Enterprise</strong></td>
+              <td>1000 requests/minute</td>
+              <td>Full access, custom integrations</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      
+      <!-- Rate Limits Section -->
+      <section id="rate-limits" class="section">
+        <h2>Rate Limits</h2>
+        <p>
+          API requests are rate limited based on your API key tier. Rate limit headers 
+          are included in every response:
+        </p>
+        
+        <div class="code-block">
+          <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+          <pre><code>X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1640995200</code></pre>
+        </div>
+        
+        <div class="alert warning">
+          <strong>Note:</strong> Exceeding rate limits will result in HTTP 429 status code.
+        </div>
+      </section>
+      
+      <!-- Health Check Endpoint -->
+      <section id="health" class="section">
+        <h2>Health Check</h2>
+        <p>
+          Check the operational status of the CredLink API.
+        </p>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="endpoint-url">/health</span>
+          </div>
+          
+          <h4>Response</h4>
+          <div class="response-example">
+            <div class="code-block">
+              <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+              <pre><code>{
+  "status": "healthy",
+  "timestamp": "2025-11-13T22:44:47.534Z",
+  "service": "credlink-api",
+  "version": "1.0.0",
+  "security_score": 100
+}</code></pre>
+            </div>
+          </div>
+        </div>
+        
+        <div class="try-it-out">
+          <h4>Try It Out</h4>
+          <button class="btn" onclick="tryHealthCheck()">Test Health Endpoint</button>
+          <div id="health-result" style="margin-top: 1rem;"></div>
+        </div>
+      </section>
+      
+      <!-- Sign Image Endpoint -->
+      <section id="sign" class="section">
+        <h2>Sign Image</h2>
+        <p>
+          Sign an image with C2PA content credentials and provenance data.
+        </p>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method post">POST</span>
+            <span class="endpoint-url">/api/sign</span>
+          </div>
+          
+          <h4>Headers</h4>
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>X-API-Key</code></td>
+                <td>string</td>
+                <td><span class="required">Required</span> Your API key</td>
+              </tr>
+              <tr>
+                <td><code>Content-Type</code></td>
+                <td>string</td>
+                <td><span class="required">Required</span> application/json</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h4>Request Body</h4>
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>image</code></td>
+                <td>string</td>
+                <td><span class="required">Required</span> Base64 encoded image data</td>
+              </tr>
+              <tr>
+                <td><code>creator</code></td>
+                <td>string</td>
+                <td><span class="optional">Optional</span> Creator name or identifier</td>
+              </tr>
+              <tr>
+                <td><code>title</code></td>
+                <td>string</td>
+                <td><span class="optional">Optional</span> Image title</td>
+              </tr>
+              <tr>
+                <td><code>description</code></td>
+                <td>string</td>
+                <td><span class="optional">Optional</span> Image description</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h4>Response</h4>
+          <div class="response-example">
+            <div class="code-block">
+              <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+              <pre><code>{
+  "success": true,
+  "manifest_id": "6beea654-ac33-4c22-bdf7-5eb18d8ac8f8",
+  "timestamp": "2025-11-13T22:44:23.281Z",
+  "format": "demo-secure",
+  "chunks_added": ["EXIF", "XMP", "C2PA"],
+  "proof_url": "https://r2.dev.credlink.link/proofs/6beea654-ac33-4c22-bdf7-5eb18d8ac8f8.c2pa",
+  "verification_url": "http://localhost:3000/api/verify/6beea654-ac33-4c22-bdf7-5eb18d8ac8f8",
+  "security_validated": true,
+  "message": "Secure signing successful - C2PA manifest embedded with full validation"
+}</code></pre>
+            </div>
+          </div>
+        </div>
+        
+        <div class="try-it-out">
+          <h4>Try It Out</h4>
+          <div class="form-group">
+            <label>API Key:</label>
+            <select id="sign-api-key">
+              <option value="demo-admin-key">demo-admin-key (Enterprise)</option>
+              <option value="demo-user-key">demo-user-key (Pro)</option>
+              <option value="demo-readonly-key">demo-readonly-key (Free)</option>
+            </select>
+          </div>
+          <button class="btn" onclick="trySignImage()">Test Sign Endpoint</button>
+          <div id="sign-result" style="margin-top: 1rem;"></div>
+        </div>
+      </section>
+      
+      <!-- Verify Image Endpoint -->
+      <section id="verify" class="section">
+        <h2>Verify Image</h2>
+        <p>
+          Verify the authenticity and provenance of a signed image using its manifest ID.
+        </p>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="endpoint-url">/api/verify/{manifest_id}</span>
+          </div>
+          
+          <h4>Parameters</h4>
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>manifest_id</code></td>
+                <td>string</td>
+                <td><span class="required">Required</span> The manifest ID to verify</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h4>Response</h4>
+          <div class="response-example">
+            <div class="code-block">
+              <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+              <pre><code>{
+  "success": true,
+  "manifest_id": "6beea654-ac33-4c22-bdf7-5eb18d8ac8f8",
+  "verified": true,
+  "timestamp": "2025-11-13T22:44:27.644Z",
+  "claims": [
+    {
+      "claim": "c2pa.actions",
+      "data": {
+        "actions": [
+          {
+            "action": "c2pa.sign",
+            "when": "2025-11-13T22:44:27.644Z"
+          }
+        ]
+      }
+    }
+  ],
+  "validation_status": "valid",
+  "trust_score": 100,
+  "security_validated": true
+}</code></pre>
+            </div>
+          </div>
+        </div>
+        
+        <div class="try-it-out">
+          <h4>Try It Out</h4>
+          <div class="form-group">
+            <label>Manifest ID:</label>
+            <input type="text" id="verify-manifest-id" placeholder="6beea654-ac33-4c22-bdf7-5eb18d8ac8f8" value="6beea654-ac33-4c22-bdf7-5eb18d8ac8f8">
+          </div>
+          <button class="btn" onclick="tryVerifyImage()">Test Verify Endpoint</button>
+          <div id="verify-result" style="margin-top: 1rem;"></div>
+        </div>
+      </section>
+      
+      <!-- Status Endpoint -->
+      <section id="status" class="section">
+        <h2>Get Status</h2>
+        <p>
+          Get detailed status information about the API and your account.
+        </p>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="endpoint-url">/api/status</span>
+          </div>
+          
+          <h4>Headers</h4>
+          <table class="params-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>X-API-Key</code></td>
+                <td>string</td>
+                <td><span class="required">Required</span> Your API key</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <h4>Response</h4>
+          <div class="response-example">
+            <div class="code-block">
+              <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+              <pre><code>{
+  "status": "operational",
+  "security_score": 100,
+  "features": {
+    "jpeg_support": true,
+    "png_support": true,
+    "webp_support": true,
+    "certificate_validation": true
+  },
+  "security": {
+    "score": 100,
+    "critical_issues": 0,
+    "high_issues": 0,
+    "medium_issues": 0,
+    "owasp_compliant": true,
+    "nist_compliant": true
+  },
+  "user": {
+    "id": "admin",
+    "role": "admin",
+    "tier": "enterprise"
+  }
+}</code></pre>
+            </div>
+          </div>
+        </div>
+        
+        <div class="try-it-out">
+          <h4>Try It Out</h4>
+          <div class="form-group">
+            <label>API Key:</label>
+            <select id="status-api-key">
+              <option value="demo-admin-key">demo-admin-key</option>
+              <option value="demo-user-key">demo-user-key</option>
+              <option value="demo-readonly-key">demo-readonly-key</option>
+            </select>
+          </div>
+          <button class="btn" onclick="tryGetStatus()">Test Status Endpoint</button>
+          <div id="status-result" style="margin-top: 1rem;"></div>
+        </div>
+      </section>
+      
+      <!-- Supported Formats -->
+      <section id="formats" class="section">
+        <h2>Supported Formats</h2>
+        <p>
+          Get a list of all supported image formats and their capabilities.
+        </p>
+        
+        <div class="endpoint-card">
+          <div class="endpoint-header">
+            <span class="method get">GET</span>
+            <span class="endpoint-url">/api/formats</span>
+          </div>
+          
+          <h4>Response</h4>
+          <div class="response-example">
+            <div class="code-block">
+              <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+              <pre><code>{
+  "supported_formats": [
+    {
+      "format": "jpeg",
+      "mime_type": "image/jpeg",
+      "signing": true,
+      "verification": true,
+      "chunks": ["EXIF", "XMP", "C2PA"],
+      "security_validated": true
+    },
+    {
+      "format": "png",
+      "mime_type": "image/png",
+      "signing": true,
+      "verification": true,
+      "chunks": ["tEXt", "iTXt", "C2PA"],
+      "security_validated": true
+    },
+    {
+      "format": "webp",
+      "mime_type": "image/webp",
+      "signing": true,
+      "verification": true,
+      "chunks": ["EXIF", "XMP", "C2PA"],
+      "status": "fully_implemented",
+      "security_validated": true
+    }
+  ],
+  "total_formats": 3,
+  "implementation_status": "complete",
+  "security_score": 100
+}</code></pre>
+            </div>
+          </div>
+        </div>
+        
+        <div class="try-it-out">
+          <h4>Try It Out</h4>
+          <button class="btn" onclick="tryGetFormats()">Test Formats Endpoint</button>
+          <div id="formats-result" style="margin-top: 1rem;"></div>
+        </div>
+      </section>
+      
+      <!-- Error Codes -->
+      <section id="errors" class="section">
+        <h2>Error Codes</h2>
+        <p>
+          The API uses standard HTTP status codes and includes detailed error information.
+        </p>
+        
+        <table class="params-table">
+          <thead>
+            <tr>
+              <th>Status Code</th>
+              <th>Meaning</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>200</strong></td>
+              <td>OK</td>
+              <td>Request successful</td>
+            </tr>
+            <tr>
+              <td><strong>400</strong></td>
+              <td>Bad Request</td>
+              <td>Invalid request parameters</td>
+            </tr>
+            <tr>
+              <td><strong>401</strong></td>
+              <td>Unauthorized</td>
+              <td>Missing or invalid API key</td>
+            </tr>
+            <tr>
+              <td><strong>403</strong></td>
+              <td>Forbidden</td>
+              <td>Insufficient permissions</td>
+            </tr>
+            <tr>
+              <td><strong>404</strong></td>
+              <td>Not Found</td>
+              <td>Resource not found</td>
+            </tr>
+            <tr>
+              <td><strong>429</strong></td>
+              <td>Too Many Requests</td>
+              <td>Rate limit exceeded</td>
+            </tr>
+            <tr>
+              <td><strong>500</strong></td>
+              <td>Internal Server Error</td>
+              <td>Server error occurred</td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <h3>Error Response Format</h3>
+        <div class="response-example error">
+          <div class="code-block">
+            <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+            <pre><code>{
+  "success": false,
+  "error": {
+    "message": "Invalid API key",
+    "statusCode": 401,
+    "timestamp": "2025-11-13T22:44:20.281Z"
+  }
+}</code></pre>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Code Examples -->
+      <section id="examples" class="section">
+        <h2>Code Examples</h2>
+        
+        <h3>JavaScript/Node.js</h3>
+        <div class="code-block">
+          <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+          <pre><code>const axios = require('axios');
+
+// Sign an image
+async function signImage(imageData, creator) {
+  try {
+    const response = await axios.post('https://api.credlink.com/api/sign', {
+      image: imageData,
+      creator: creator,
+      title: 'My Authentic Image'
+    }, {
+      headers: {
+        'X-API-Key': 'your-api-key',
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Signing failed:', error.response.data);
+  }
+}
+
+// Verify an image
+async function verifyImage(manifestId) {
+  try {
+    const response = await axios.get(`https://api.credlink.com/api/verify/${manifestId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Verification failed:', error.response.data);
+  }
+}</code></pre>
+        </div>
+        
+        <h3>Python</h3>
+        <div class="code-block">
+          <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+          <pre><code>import requests
+import base64
+
+# Sign an image
+def sign_image(image_path, creator, api_key):
+    with open(image_path, 'rb') as f:
+        image_data = base64.b64encode(f.read()).decode()
+    
+    response = requests.post('https://api.credlink.com/api/sign', 
+        json={
+            'image': image_data,
+            'creator': creator,
+            'title': 'My Authentic Image'
+        },
+        headers={
+            'X-API-Key': api_key,
+            'Content-Type': 'application/json'
+        }
+    )
+    
+    return response.json()
+
+# Verify an image
+def verify_image(manifest_id):
+    response = requests.get(f'https://api.credlink.com/api/verify/{manifest_id}')
+    return response.json()</code></pre>
+        </div>
+        
+        <h3>cURL</h3>
+        <div class="code-block">
+          <button class="copy-button" onclick="copyToClipboard(this)">Copy</button>
+          <pre><code># Sign an image
+curl -X POST https://api.credlink.com/api/sign \
+  -H "X-API-Key: your-api-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image": "base64-encoded-image-data",
+    "creator": "John Photographer",
+    "title": "My Authentic Image"
+  }'
+
+# Verify an image
+curl https://api.credlink.com/api/verify/6beea654-ac33-4c22-bdf7-5eb18d8ac8f8</code></pre>
+        </div>
+      </section>
+      
+      <!-- SDKs -->
+      <section id="sdks" class="section">
+        <h2>SDKs & Libraries</h2>
+        <p>
+          Official SDKs and third-party libraries for integrating with CredLink:
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <div style="border: 1px solid var(--color-border); border-radius: 0.5rem; padding: 1rem;">
+            <h4 style="margin-top: 0;">JavaScript/Node.js</h4>
+            <p style="font-size: 0.875rem; color: var(--color-text-light);">Official SDK for Node.js and browser environments</p>
+            <div style="margin-top: 0.5rem;">
+              <code style="font-size: 0.75rem;">npm install @credlink/sdk</code>
+            </div>
+          </div>
+          
+          <div style="border: 1px solid var(--color-border); border-radius: 0.5rem; padding: 1rem;">
+            <h4 style="margin-top: 0;">Python</h4>
+            <p style="font-size: 0.875rem; color: var(--color-text-light);">Official Python SDK with async support</p>
+            <div style="margin-top: 0.5rem;">
+              <code style="font-size: 0.75rem;">pip install credlink-sdk</code>
+            </div>
+          </div>
+          
+          <div style="border: 1px solid var(--color-border); border-radius: 0.5rem; padding: 1rem;">
+            <h4 style="margin-top: 0;">Go</h4>
+            <p style="font-size: 0.875rem; color: var(--color-text-light);">Official Go client library</p>
+            <div style="margin-top: 0.5rem;">
+              <code style="font-size: 0.75rem;">go get github.com/credlink/go-sdk</code>
+            </div>
+          </div>
+          
+          <div style="border: 1px solid var(--color-border); border-radius: 0.5rem; padding: 1rem;">
+            <h4 style="margin-top: 0;">Ruby</h4>
+            <p style="font-size: 0.875rem; color: var(--color-text-light);">Community-maintained Ruby gem</p>
+            <div style="margin-top: 0.5rem;">
+              <code style="font-size: 0.75rem;">gem install credlink</code>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert info" style="margin-top: 2rem;">
+          <strong>Coming Soon:</strong> SDKs for Java, C#, PHP, and Rust are currently in development.
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <script>
+    // Copy to clipboard functionality
+    function copyToClipboard(button) {
+      const codeBlock = button.parentElement.querySelector('code');
+      const text = codeBlock.textContent;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.style.background = '#10b981';
+        
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.style.background = '';
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+      });
+    }
+    
+    // API testing functions
+    const API_BASE = 'http://localhost:3000';
+    
+    async function tryHealthCheck() {
+      const resultDiv = document.getElementById('health-result');
+      resultDiv.innerHTML = '<p>Testing...</p>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+        const data = await response.json();
+        
+        resultDiv.innerHTML = `
+          <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem;">
+            <strong>✅ Success!</strong><br>
+            <pre style="margin-top: 0.5rem; font-size: 0.875rem;">${JSON.stringify(data, null, 2)}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+            <strong>❌ Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+    
+    async function trySignImage() {
+      const resultDiv = document.getElementById('sign-result');
+      const apiKey = document.getElementById('sign-api-key').value;
+      
+      resultDiv.innerHTML = '<p>Signing...</p>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/sign`, {
+          method: 'POST',
+          headers: {
+            'X-API-Key': apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            test: 'data',
+            creator: 'API Documentation Test'
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem;">
+              <strong>✅ Signing Successful!</strong><br>
+              <strong>Manifest ID:</strong> ${data.manifest_id}<br>
+              <strong>Verification URL:</strong> <a href="${data.verification_url}" target="_blank">${data.verification_url}</a><br>
+              <pre style="margin-top: 0.5rem; font-size: 0.75rem; max-height: 200px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+              <strong>❌ Signing Failed:</strong><br>
+              <pre style="margin-top: 0.5rem; font-size: 0.875rem;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+            <strong>❌ Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+    
+    async function tryVerifyImage() {
+      const resultDiv = document.getElementById('verify-result');
+      const manifestId = document.getElementById('verify-manifest-id').value;
+      
+      resultDiv.innerHTML = '<p>Verifying...</p>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/verify/${manifestId}`);
+        const data = await response.json();
+        
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem;">
+              <strong>✅ Verification Successful!</strong><br>
+              <strong>Verified:</strong> ${data.verified ? 'Yes' : 'No'}<br>
+              <strong>Trust Score:</strong> ${data.trust_score}%<br>
+              <strong>Validation Status:</strong> ${data.validation_status}<br>
+              <pre style="margin-top: 0.5rem; font-size: 0.75rem; max-height: 200px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+              <strong>❌ Verification Failed:</strong><br>
+              <pre style="margin-top: 0.5rem; font-size: 0.875rem;">${JSON.stringify(data, null, 2)}</pre>
+            </div>
+          `;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+            <strong>❌ Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+    
+    async function tryGetStatus() {
+      const resultDiv = document.getElementById('status-result');
+      const apiKey = document.getElementById('status-api-key').value;
+      
+      resultDiv.innerHTML = '<p>Getting status...</p>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/status`, {
+          headers: {
+            'X-API-Key': apiKey
+          }
+        });
+        const data = await response.json();
+        
+        resultDiv.innerHTML = `
+          <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem;">
+            <strong>✅ Status Retrieved!</strong><br>
+            <strong>User Role:</strong> ${data.user.role}<br>
+            <strong>Tier:</strong> ${data.user.tier}<br>
+            <strong>Security Score:</strong> ${data.security_score}/100<br>
+            <pre style="margin-top: 0.5rem; font-size: 0.75rem; max-height: 200px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+            <strong>❌ Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+    
+    async function tryGetFormats() {
+      const resultDiv = document.getElementById('formats-result');
+      
+      resultDiv.innerHTML = '<p>Getting formats...</p>';
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/formats`);
+        const data = await response.json();
+        
+        resultDiv.innerHTML = `
+          <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 0.5rem; padding: 1rem;">
+            <strong>✅ Formats Retrieved!</strong><br>
+            <strong>Total Formats:</strong> ${data.total_formats}<br>
+            <strong>Implementation Status:</strong> ${data.implementation_status}<br>
+            <strong>Security Score:</strong> ${data.security_score}/100<br>
+            <pre style="margin-top: 0.5rem; font-size: 0.75rem; max-height: 200px; overflow-y: auto;">${JSON.stringify(data, null, 2)}</pre>
+          </div>
+        `;
+      } catch (error) {
+        resultDiv.innerHTML = `
+          <div style="background: #fef2f2; border: 1px solid #fca5a5; border-radius: 0.5rem; padding: 1rem;">
+            <strong>❌ Error:</strong> ${error.message}
+          </div>
+        `;
+      }
+    }
+    
+    // Smooth scrolling for navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Update active state
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Scroll to section
+        const targetId = this.getAttribute('href').substring(1);
+        const targetSection = document.getElementById(targetId);
+        if (targetSection) {
+          targetSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

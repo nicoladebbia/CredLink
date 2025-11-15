@@ -1,5 +1,5 @@
 # C2 Concierge Multi-Stage Docker Build
-FROM node:20-alpine AS base
+FROM node:20.11.1-alpine3.19 AS base
 
 # Install pnpm
 RUN npm install -g pnpm
@@ -30,13 +30,15 @@ COPY . .
 RUN pnpm build
 
 # Production stage
-FROM node:20-alpine AS production
+FROM node:20.11.1-alpine3.19 AS production
 
 # Install pnpm
 RUN npm install -g pnpm
 
 # Install ImageMagick for sandbox operations
-RUN apk add --no-cache imagemagick
+# SECURITY: Version pinned to prevent CVE-rich unpinned versions
+# Check for updates: https://pkgs.alpinelinux.org/packages?name=imagemagick
+RUN apk add --no-cache imagemagick=7.1.1.36-r0
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

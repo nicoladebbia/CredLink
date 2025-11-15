@@ -2,7 +2,7 @@
 # Multi-stage build for optimized production image with security hardening
 
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18.20.5-alpine3.20 AS builder
 
 # CRITICAL: Security updates
 RUN apk update && apk upgrade && \
@@ -25,7 +25,7 @@ COPY src/ ./src/
 RUN npm run build
 
 # Production stage with security hardening
-FROM node:18-alpine AS production
+FROM node:18.20.5-alpine3.20 AS production
 
 # CRITICAL: Install and configure security packages
 RUN apk update && apk upgrade && \

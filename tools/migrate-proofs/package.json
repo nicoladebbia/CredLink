@@ -1,0 +1,23 @@
+{
+  "name": "@credlink/migrate-proofs",
+  "version": "1.0.0",
+  "description": "CredLink Proof Migration Tool",
+  "bin": {
+    "credlink-migrate": "./migrate.ts"
+  },
+  "scripts": {
+    "start": "ts-node migrate.ts"
+  },
+  "dependencies": {
+    "@credlink/storage": "workspace:*",
+    "commander": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

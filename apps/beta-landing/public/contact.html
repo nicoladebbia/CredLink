@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us - CredLink</title>
+  
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-primary-dark: #1e40af;
+      --color-success: #10b981;
+      --color-error: #ef4444;
+      --color-warning: #f59e0b;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-border: #d1d5db;
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+    
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 1rem;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+    }
+    
+    .subtitle {
+      font-size: 1.125rem;
+      color: var(--color-text-light);
+      margin-bottom: 2rem;
+    }
+    
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+    
+    .contact-form {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .contact-info {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border: 1px solid #bfdbfe;
+      border-radius: 0.75rem;
+      padding: 2rem;
+    }
+    
+    h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 1.5rem;
+    }
+    
+    h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 1rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--color-text);
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--color-border);
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      transition: border-color 150ms;
+    }
+    
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    
+    .btn {
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 150ms;
+      width: 100%;
+    }
+    
+    .btn:hover {
+      background: var(--color-primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 0.5rem;
+    }
+    
+    .contact-item svg {
+      width: 24px;
+      height: 24px;
+      color: var(--color-primary);
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+    }
+    
+    .contact-content h4 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin-bottom: 0.25rem;
+    }
+    
+    .contact-content p {
+      color: var(--color-text-light);
+      font-size: 0.875rem;
+      margin-bottom: 0;
+    }
+    
+    .contact-content a {
+      color: var(--color-primary);
+      text-decoration: none;
+    }
+    
+    .contact-content a:hover {
+      text-decoration: underline;
+    }
+    
+    .alert {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    
+    .alert.show {
+      display: block;
+    }
+    
+    .alert-success {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      color: #166534;
+    }
+    
+    .alert-error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+    }
+    
+    .support-hours {
+      background: var(--color-bg-secondary);
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+    }
+    
+    .hours-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .hours-item {
+      text-align: center;
+      padding: 1rem;
+      background: white;
+      border-radius: 0.5rem;
+      border: 1px solid var(--color-border);
+    }
+    
+    .hours-item h4 {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .hours-item p {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: 0;
+    }
+    
+    .faq-section {
+      margin-bottom: 3rem;
+    }
+    
+    .faq-item {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    
+    .faq-question {
+      padding: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 150ms;
+    }
+    
+    .faq-question:hover {
+      background: var(--color-bg-secondary);
+    }
+    
+    .faq-question h4 {
+      margin: 0;
+      color: var(--color-text);
+    }
+    
+    .faq-icon {
+      width: 20px;
+      height: 20px;
+      transition: transform 150ms;
+    }
+    
+    .faq-item.active .faq-icon {
+      transform: rotate(180deg);
+    }
+    
+    .faq-answer {
+      padding: 0 1.5rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 300ms, padding 300ms;
+    }
+    
+    .faq-item.active .faq-answer {
+      padding: 0 1.5rem 1.5rem;
+      max-height: 500px;
+    }
+    
+    .office-locations {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    
+    .office-card {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .office-card h3 {
+      margin-bottom: 1rem;
+      color: var(--color-primary);
+    }
+    
+    .office-card p {
+      color: var(--color-text-light);
+      margin-bottom: 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .contact-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .hours-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">CredLink</div>
+      <h1>Contact Us</h1>
+      <p class="subtitle">
+        Get in touch with our team for support, sales, or partnership inquiries
+      </p>
+    </header>
+    
+    <!-- Alert Messages -->
+    <div id="alert-success" class="alert alert-success" role="alert">
+      <strong>Success!</strong> Your message has been sent. We'll respond within 24 hours.
+    </div>
+    
+    <div id="alert-error" class="alert alert-error" role="alert">
+      <strong>Error:</strong> Please fill in all required fields and try again.
+    </div>
+    
+    <!-- Contact Grid -->
+    <div class="contact-grid">
+      <!-- Contact Form -->
+      <div class="contact-form">
+        <h2>Send us a Message</h2>
+        <form id="contact-form">
+          <div class="form-group">
+            <label for="name">Full Name *</label>
+            <input type="text" id="name" name="name" required placeholder="John Doe">
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" name="email" required placeholder="john@example.com">
+          </div>
+          
+          <div class="form-group">
+            <label for="company">Company</label>
+            <input type="text" id="company" name="company" placeholder="Acme Inc">
+          </div>
+          
+          <div class="form-group">
+            <label for="subject">Subject *</label>
+            <select id="subject" name="subject" required>
+              <option value="">Select a topic</option>
+              <option value="support">Technical Support</option>
+              <option value="sales">Sales & Pricing</option>
+              <option value="partnership">Partnership Inquiry</option>
+              <option value="api">API Documentation</option>
+              <option value="security">Security Concern</option>
+              <option value="feedback">Product Feedback</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="message">Message *</label>
+            <textarea id="message" name="message" required placeholder="How can we help you?"></textarea>
+          </div>
+          
+          <button type="submit" class="btn" id="submit-btn">
+            Send Message
+          </button>
+        </form>
+      </div>
+      
+      <!-- Contact Information -->
+      <div class="contact-info">
+        <h2>Get in Touch</h2>
+        
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <div class="contact-content">
+            <h4>Email Support</h4>
+            <p>General inquiries: <a href="mailto:support@credlink.com">support@credlink.com</a></p>
+            <p>Technical support: <a href="mailto:tech@credlink.com">tech@credlink.com</a></p>
+            <p>Sales inquiries: <a href="mailto:sales@credlink.com">sales@credlink.com</a></p>
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+          <div class="contact-content">
+            <h4>Phone Support</h4>
+            <p>Main line: <a href="tel:+1-555-123-4567">+1 (555) 123-4567</a></p>
+            <p>Technical support: <a href="tel:+1-555-123-4568">+1 (555) 123-4568</a></p>
+            <p>Sales team: <a href="tel:+1-555-123-4569">+1 (555) 123-4569</a></p>
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <div class="contact-content">
+            <h4>Headquarters</h4>
+            <p>123 Tech Street</p>
+            <p>San Francisco, CA 94105</p>
+            <p>United States</p>
+          </div>
+        </div>
+        
+        <div class="contact-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+          </svg>
+          <div class="contact-content">
+            <h4>Online</h4>
+            <p>Website: <a href="https://credlink.com">credlink.com</a></p>
+            <p>Documentation: <a href="/docs/api.html">API Docs</a></p>
+            <p>Status page: <a href="https://status.credlink.com">status.credlink.com</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Support Hours -->
+    <div class="support-hours">
+      <h2>Support Hours</h2>
+      <div class="hours-grid">
+        <div class="hours-item">
+          <h4>General Support</h4>
+          <p>9 AM - 6 PM PST</p>
+        </div>
+        <div class="hours-item">
+          <h4>Technical Support</h4>
+          <p>24/7 Emergency</p>
+        </div>
+        <div class="hours-item">
+          <h4>Sales Team</h4>
+          <p>8 AM - 5 PM PST</p>
+        </div>
+        <div class="hours-item">
+          <h4>Enterprise Support</h4>
+          <p>24/7 Dedicated</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Office Locations -->
+    <div class="office-locations">
+      <div class="office-card">
+        <h3>🇺🇸 San Francisco</h3>
+        <p><strong>Headquarters</strong></p>
+        <p>123 Tech Street</p>
+        <p>San Francisco, CA 94105</p>
+        <p>United States</p>
+        <p style="margin-top: 1rem;">Phone: +1 (555) 123-4567</p>
+      </div>
+      
+      <div class="office-card">
+        <h3>🇬🇧 London</h3>
+        <p><strong>European Office</strong></p>
+        <p>456 Innovation Way</p>
+        <p>London, EC1A 1BB</p>
+        <p>United Kingdom</p>
+        <p style="margin-top: 1rem;">Phone: +44 20 7123 4567</p>
+      </div>
+      
+      <div class="office-card">
+        <h3>🇯🇵 Tokyo</h3>
+        <p><strong>Asia Pacific Office</strong></p>
+        <p>789 Tech Avenue</p>
+        <p>Shibuya, Tokyo 150-0002</p>
+        <p>Japan</p>
+        <p style="margin-top: 1rem;">Phone: +81 3 1234 5678</p>
+      </div>
+    </div>
+    
+    <!-- FAQ Section -->
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <h4>How quickly will I receive a response?</h4>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
+        <div class="faq-answer">
+          <p>We typically respond to all inquiries within 24 hours during business days. Technical support issues are prioritized and usually receive responses within 4-6 hours. Enterprise customers receive dedicated 24/7 support.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <h4>What information should I include in my support request?</h4>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
+        <div class="faq-answer">
+          <p>For technical support, please include: your API key (or account email), detailed description of the issue, error messages, steps to reproduce, and expected vs actual behavior. For general inquiries, include your company name and specific questions.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <h4>Do you offer phone support?</h4>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
+        <div class="faq-answer">
+          <p>Yes! We offer phone support for all customers. Enterprise customers receive 24/7 dedicated phone support. Standard customers can reach us during business hours (9 AM - 6 PM PST). Emergency technical support is available 24/7 for critical issues.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <h4>How do I report a security vulnerability?</h4>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
+        <div class="faq-answer">
+          <p>For security vulnerabilities, please email us at <a href="mailto:security@credlink.com">security@credlink.com</a> or call our emergency security line. We take all security reports seriously and will respond within 2 hours. Please do not publicly disclose vulnerabilities until we've had a chance to address them.</p>
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFAQ(this)">
+          <h4>Can I schedule a demo or consultation?</h4>
+          <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 9l6 6 6-6"/>
+          </svg>
+        </div>
+        <div class="faq-answer">
+          <p>Absolutely! Contact our sales team to schedule a personalized demo. We offer both online and in-person consultations depending on your location and needs. Enterprise customers can request on-site visits and technical workshops.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Form submission
+    document.getElementById('contact-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submit-btn');
+      const successAlert = document.getElementById('alert-success');
+      const errorAlert = document.getElementById('alert-error');
+      
+      // Hide alerts
+      successAlert.classList.remove('show');
+      errorAlert.classList.remove('show');
+      
+      // Validate form
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const subject = document.getElementById('subject').value;
+      const message = document.getElementById('message').value.trim();
+      
+      if (!name || !email || !subject || !message) {
+        errorAlert.classList.add('show');
+        return;
+      }
+      
+      // Validate email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errorAlert.innerHTML = '<strong>Error:</strong> Please enter a valid email address.';
+        errorAlert.classList.add('show');
+        return;
+      }
+      
+      // Show loading state
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      
+      // Simulate form submission (in production, this would be a real API call)
+      setTimeout(function() {
+        // Reset form
+        document.getElementById('contact-form').reset();
+        
+        // Show success message
+        successAlert.classList.add('show');
+        
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Send Message';
+        
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Hide success message after 5 seconds
+        setTimeout(function() {
+          successAlert.classList.remove('show');
+        }, 5000);
+      }, 1500);
+    });
+    
+    // FAQ toggle
+    function toggleFAQ(element) {
+      const faqItem = element.parentElement;
+      const isActive = faqItem.classList.contains('active');
+      
+      // Close all FAQ items
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      
+      // Open clicked item if it wasn't active
+      if (!isActive) {
+        faqItem.classList.add('active');
+      }
+    }
+    
+    // Form field validation
+    document.getElementById('email').addEventListener('blur', function() {
+      const email = this.value.trim();
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (email && !emailRegex.test(email)) {
+        this.style.borderColor = 'var(--color-error)';
+      } else {
+        this.style.borderColor = '';
+      }
+    });
+    
+    // Clear validation on focus
+    document.querySelectorAll('input, select, textarea').forEach(field => {
+      field.addEventListener('focus', function() {
+        this.style.borderColor = '';
+      });
+    });
+  </script>
+</body>
+</html>

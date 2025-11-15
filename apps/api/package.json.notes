@@ -1,0 +1,11 @@
+
+# IP Whitelist Middleware Dependencies
+# 
+# The IP whitelist middleware requires the ipaddr.js library for CIDR notation support.
+# 
+# Install with:
+# pnpm add ipaddr.js
+# pnpm add -D @types/ipaddr.js
+#
+# Or add to package.json dependencies:
+# "ipaddr.js": "^2.1.0"

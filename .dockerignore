@@ -1,10 +1,76 @@
 # SECURITY: Exclude sensitive files and build artifacts from Docker builds
 
 # Node modules
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+node_modules
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+.pnpm-store
+
+# Source control
+.git
+.gitignore
+.github
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test files
+coverage
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+__tests__
+test
+tests
+.jest
+
+# Documentation
+*.md
+!README.md
+docs
+examples
+
+# Build artifacts
+dist-backup
+*.log
+*.bak
+*.tmp
+*.temp
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+.circleci
+
+# Monitoring and dev tools
+.husky
+.eslintrc*
+.prettierrc*
+tsconfig.json
+jest.config.js
+nodemon.json
+
+# Archives
+docs/archive
+*.zip
+*.tar.gz
+
+# Fixtures and test data
+fixtures
+sandboxes
 
 # Build artifacts (SECURITY: Don't include in production images)
 dist/

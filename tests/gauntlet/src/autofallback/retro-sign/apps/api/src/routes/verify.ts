@@ -97,6 +97,24 @@ interface AdminRevocationRequest {
   };
 }
 
+// Missing interfaces for gauntlet test environment
+interface TrustSnippet {
+  trust_score: number;
+  confidence: number;
+  issuer: string;
+  valid_from: string;
+  valid_until?: string;
+  revocation_status: 'active' | 'revoked' | 'unknown';
+  metadata?: Record<string, any>;
+}
+
+interface VerificationContext {
+  asset_url: string;
+  manifest_url?: string;
+  mixed_content: boolean;
+  timestamp: string;
+}
+
 interface MediaMapResponse {
   sam: TemporalMap;
   manifest_url: string;

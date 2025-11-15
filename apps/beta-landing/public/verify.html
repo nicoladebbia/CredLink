@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Image - CredLink</title>
+  <meta name="description" content="Verify image authenticity with C2PA content credentials">
+  
+  <style>
+    :root {
+      --color-primary: #2563eb;
+      --color-success: #10b981;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+      --color-text: #1f2937;
+      --color-text-light: #6b7280;
+      --color-border: #d1d5db;
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f9fafb;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      line-height: 1.6;
+      color: var(--color-text);
+      background-color: var(--color-bg-secondary);
+      padding: 1rem;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: var(--color-primary);
+      font-size: 1.875rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    main {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    /* Drop zone */
+    .dropzone {
+      border: 2px dashed var(--color-border);
+      border-radius: 0.75rem;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 200ms ease;
+      background-color: var(--color-bg-secondary);
+    }
+    
+    .dropzone:hover {
+      border-color: var(--color-primary);
+      background-color: #eff6ff;
+    }
+    
+    /* C2PA Badge */
+    .c2pa-badge {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .c2pa-badge.verified {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border: 2px solid var(--color-success);
+    }
+    
+    .c2pa-badge.unverified {
+      background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+      border: 2px solid var(--color-error);
+    }
+    
+    .c2pa-badge.warning {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border: 2px solid var(--color-warning);
+    }
+    
+    .badge-icon {
+      width: 48px;
+      height: 48px;
+      flex-shrink: 0;
+    }
+    
+    .badge-icon.verified {
+      stroke: var(--color-success);
+      fill: none;
+      stroke-width: 2;
+    }
+    
+    .badge-icon.unverified {
+      stroke: var(--color-error);
+      fill: none;
+      stroke-width: 2;
+    }
+    
+    .badge-content {
+      flex: 1;
+    }
+    
+    .badge-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .badge-title.verified {
+      color: #047857;
+    }
+    
+    .badge-title.unverified {
+      color: #b91c1c;
+    }
+    
+    .confidence-score {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+    }
+    
+    /* Confidence Details */
+    .confidence-details {
+      background: var(--color-bg-secondary);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .confidence-details summary {
+      cursor: pointer;
+      font-weight: 500;
+      user-select: none;
+      list-style: none;
+    }
+    
+    .confidence-details summary::-webkit-details-marker {
+      display: none;
+    }
+    
+    .confidence-details summary::before {
+      content: '▶';
+      display: inline-block;
+      margin-right: 0.5rem;
+      transition: transform 200ms;
+    }
+    
+    .confidence-details[open] summary::before {
+      transform: rotate(90deg);
+    }
+    
+    .checklist {
+      list-style: none;
+      margin-top: 1rem;
+    }
+    
+    .checklist li {
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+      border-radius: 0.25rem;
+    }
+    
+    .checklist .pass {
+      background: #d1fae5;
+      color: #047857;
+    }
+    
+    .checklist .fail {
+      background: #fee;
+      color: #b91c1c;
+    }
+    
+    .checklist .warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    /* Creator Card */
+    .creator-card {
+      background: var(--color-bg-secondary);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .creator-card h3 {
+      color: var(--color-primary);
+      margin-bottom: 1rem;
+    }
+    
+    .creator-card dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 0.75rem;
+    }
+    
+    .creator-card dt {
+      font-weight: 500;
+      color: var(--color-text);
+    }
+    
+    .creator-card dd {
+      color: var(--color-text-light);
+      word-break: break-word;
+    }
+    
+    /* Provenance Timeline */
+    .provenance-timeline {
+      background: var(--color-bg-secondary);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .provenance-timeline h3 {
+      color: var(--color-primary);
+      margin-bottom: 1rem;
+    }
+    
+    .timeline {
+      list-style: none;
+      position: relative;
+      padding-left: 2rem;
+    }
+    
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0.5rem;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: var(--color-border);
+    }
+    
+    .timeline-item {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -1.5rem;
+      top: 0.25rem;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      border: 2px solid white;
+      box-shadow: 0 0 0 2px var(--color-primary);
+    }
+    
+    .timeline-item time {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    
+    .timeline-item strong {
+      display: block;
+      color: var(--color-text);
+      margin-bottom: 0.25rem;
+    }
+    
+    .timeline-item span {
+      font-size: 0.875rem;
+      color: var(--color-text-light);
+    }
+    
+    /* Image Preview */
+    .image-preview {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    .image-preview img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* Actions */
+    .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border-radius: 0.5rem;
+      border: none;
+      cursor: pointer;
+      transition: all 150ms ease;
+      text-decoration: none;
+    }
+    
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: white;
+    }
+    
+    .btn-outline {
+      background-color: white;
+      color: var(--color-primary);
+      border: 1px solid var(--color-primary);
+    }
+    
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header role="banner">
+      <h1>Verify Image Authenticity</h1>
+      <p class="tagline">Check C2PA content credentials and provenance</p>
+    </header>
+    
+    <main id="main-content" role="main">
+      <!-- Upload Section -->
+      <section id="upload-section">
+        <div id="dropzone" class="dropzone">
+          <input 
+            type="file" 
+            id="file-input" 
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+          >
+          <label for="file-input" style="cursor: pointer">
+            <svg style="width: 64px; height: 64px; margin: 0 auto 1rem; stroke: var(--color-primary); stroke-width: 2; fill: none;" viewBox="0 0 24 24">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <div style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem;">Drop image to verify</div>
+            <div style="font-size: 0.875rem; color: var(--color-text-light);">Supports JPEG, PNG, WebP • Max 50MB</div>
+          </label>
+        </div>
+      </section>
+      
+      <!-- Results Section -->
+      <section id="results-section" class="hidden">
+        <!-- C2PA Badge -->
+        <div id="c2pa-badge" class="c2pa-badge verified">
+          <svg class="badge-icon verified" viewBox="0 0 24 24">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="badge-content">
+            <div id="badge-title" class="badge-title verified">✓ Verified Authentic</div>
+            <div id="confidence-score" class="confidence-score">95% Confidence</div>
+          </div>
+        </div>
+        
+        <!-- Image Preview -->
+        <div class="image-preview">
+          <img id="preview-image" alt="Verified image">
+        </div>
+        
+        <!-- Confidence Breakdown -->
+        <details class="confidence-details">
+          <summary>How is confidence calculated?</summary>
+          <ul id="confidence-checklist" class="checklist">
+            <li class="pass">✓ C2PA Manifest found</li>
+            <li class="pass">✓ Signature valid</li>
+            <li class="pass">✓ Certificate verified</li>
+            <li class="pass">✓ Proof found</li>
+            <li class="warn">⚠ Certificate expires in 30 days</li>
+          </ul>
+        </details>
+        
+        <!-- Creator Info -->
+        <div class="creator-card">
+          <h3>Creator Information</h3>
+          <dl>
+            <dt>Name:</dt>
+            <dd id="creator-name">-</dd>
+            
+            <dt>Organization:</dt>
+            <dd id="creator-org">-</dd>
+            
+            <dt>Signed:</dt>
+            <dd id="sign-date">-</dd>
+            
+            <dt>Manifest ID:</dt>
+            <dd id="manifest-id" style="font-family: monospace; font-size: 0.875rem;">-</dd>
+          </dl>
+        </div>
+        
+        <!-- Provenance Timeline -->
+        <div class="provenance-timeline">
+          <h3>Provenance History</h3>
+          <ol id="provenance-list" class="timeline">
+            <li class="timeline-item">
+              <time>Nov 13, 2025 10:30 AM</time>
+              <strong>Image Signed</strong>
+              <span>by CredLink Platform</span>
+            </li>
+            <li class="timeline-item">
+              <time>Nov 13, 2025 9:45 AM</time>
+              <strong>Image Created</strong>
+              <span>Original file</span>
+            </li>
+          </ol>
+        </div>
+        
+        <!-- Actions -->
+        <div class="actions">
+          <a href="/sign.html" class="btn btn-primary">Sign Your Own Image</a>
+          <button id="reset-btn" class="btn btn-outline">Verify Another</button>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('file-input');
+    const uploadSection = document.getElementById('upload-section');
+    const resultsSection = document.getElementById('results-section');
+    const c2paBadge = document.getElementById('c2pa-badge');
+    const badgeTitle = document.getElementById('badge-title');
+    const confidenceScore = document.getElementById('confidence-score');
+    const previewImage = document.getElementById('preview-image');
+    const confidenceChecklist = document.getElementById('confidence-checklist');
+    const creatorName = document.getElementById('creator-name');
+    const creatorOrg = document.getElementById('creator-org');
+    const signDate = document.getElementById('sign-date');
+    const manifestId = document.getElementById('manifest-id');
+    const resetBtn = document.getElementById('reset-btn');
+    
+    // Drag and drop
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = 'var(--color-primary)';
+      dropzone.style.backgroundColor = '#eff6ff';
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+      dropzone.style.borderColor = '';
+      dropzone.style.backgroundColor = '';
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.style.borderColor = '';
+      dropzone.style.backgroundColor = '';
+      
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+    
+    async function handleFile(file) {
+      if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
+        alert('Invalid file type. Please upload a JPEG, PNG, or WebP image.');
+        return;
+      }
+      
+      try {
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+        
+        // Simulate verification (in real app, would call API)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Mock verification result
+        const result = {
+          verified: true,
+          confidence: 95,
+          manifestId: crypto.randomUUID(),
+          timestamp: new Date().toISOString(),
+          creator: {
+            name: 'Demo User',
+            organization: 'CredLink Platform'
+          },
+          checks: [
+            { name: 'C2PA Manifest found', status: 'pass' },
+            { name: 'Signature valid', status: 'pass' },
+            { name: 'Certificate verified', status: 'pass' },
+            { name: 'Proof found', status: 'pass' }
+          ]
+        };
+        
+        showResults(result);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to verify image. Please try again.');
+      }
+    }
+    
+    function showResults(result) {
+      uploadSection.classList.add('hidden');
+      resultsSection.classList.remove('hidden');
+      
+      // Update badge
+      if (result.verified) {
+        c2paBadge.className = 'c2pa-badge verified';
+        badgeTitle.className = 'badge-title verified';
+        badgeTitle.textContent = '✓ Verified Authentic';
+      } else {
+        c2paBadge.className = 'c2pa-badge unverified';
+        badgeTitle.className = 'badge-title unverified';
+        badgeTitle.textContent = '✗ Not Verified';
+      }
+      
+      confidenceScore.textContent = `${result.confidence}% Confidence`;
+      
+      // Update checklist
+      confidenceChecklist.innerHTML = result.checks.map(check => 
+        `<li class="${check.status}">${check.status === 'pass' ? '✓' : '✗'} ${check.name}</li>`
+      ).join('');
+      
+      // Update creator info
+      creatorName.textContent = result.creator.name;
+      creatorOrg.textContent = result.creator.organization;
+      signDate.textContent = new Date(result.timestamp).toLocaleString();
+      manifestId.textContent = result.manifestId;
+    }
+    
+    resetBtn.addEventListener('click', () => {
+      uploadSection.classList.remove('hidden');
+      resultsSection.classList.add('hidden');
+      fileInput.value = '';
+    });
+  </script>
+</body>
+</html>

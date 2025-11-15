@@ -245,7 +245,9 @@ resource "aws_db_parameter_group" "main" {
 
   parameter {
     name  = "log_statement"
-    value = "all"
+    value = "ddl"  # Only log DDL statements (CREATE, ALTER, DROP) to reduce log volume
+    # Options: none, ddl, mod (DDL + INSERT/UPDATE/DELETE), all
+    # "all" causes significant performance degradation and excessive log volume
   }
 
   parameter {
@@ -330,7 +332,7 @@ resource "aws_elasticache_replication_group" "main" {
 
   # Encryption
   at_rest_encryption_enabled = true
-  transit_encryption_enabled = false # Disable for simplicity, enable in production
+  transit_encryption_enabled = true # SECURITY: Enable transit encryption to prevent MITM attacks
 
   # Parameter Group
   parameter_group_name = aws_elasticache_parameter_group.main.name
@@ -461,10 +463,20 @@ resource "aws_s3_bucket_cors_configuration" "proofs" {
   bucket = aws_s3_bucket.proofs.id
 
   cors_rule {
-    allowed_headers = ["*"]
+    allowed_headers = [
+      "Content-Type",
+      "Content-Length",
+      "Authorization",
+      "X-Requested-With"
+    ]
     allowed_methods = ["GET", "HEAD"]
-    allowed_origins = ["*"] # Restrict this in production
-    max_age_seconds = 3000
+    allowed_origins = var.cors_allowed_origins # SECURITY: Restricted to specific domains only
+    expose_headers = [
+      "ETag",
+      "Content-Length",
+      "Content-Type"
+    ]
+    max_age_seconds = 3600
   }
 }
 
@@ -596,63 +608,7 @@ resource "aws_security_group" "alb" {
   }
 }
 
-# Security Group for ECS Tasks
-resource "aws_security_group" "ecs_tasks" {
-  name_prefix = "${var.project_name}-${var.environment}-ecs-"
-  description = "Security group for ECS tasks"
-  vpc_id      = module.vpc.vpc_id
-
-  # Allow traffic from ALB
-  ingress {
-    description     = "Allow traffic from ALB"
-    from_port       = var.app_port
-    to_port         = var.app_port
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  # Allow all outbound (for internet access via NAT)
-  egress {
-    description = "Allow all outbound"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(
-    var.tags,
-    {
-      Name = "${var.project_name}-${var.environment}-ecs-sg"
-    }
-  )
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# Update RDS security group to allow ECS tasks
-resource "aws_security_group_rule" "rds_from_ecs" {
-  type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.rds.id
-  source_security_group_id = aws_security_group.ecs_tasks.id
-  description              = "PostgreSQL from ECS tasks"
-}
-
-# Update Redis security group to allow ECS tasks
-resource "aws_security_group_rule" "redis_from_ecs" {
-  type                     = "ingress"
-  from_port                = 6379
-  to_port                  = 6379
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.redis.id
-  source_security_group_id = aws_security_group.ecs_tasks.id
-  description              = "Redis from ECS tasks"
-}
+# ECS resources are now in dedicated files: ecs-service.tf, ecs-outputs.tf, ecs-variables.tf
 
 #---------------------------------------------------
 # Application Load Balancer - Week 3
