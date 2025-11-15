@@ -38,8 +38,8 @@ describe('C2PA Real Integration Test', () => {
     expect(signingCert).toContain('-----END CERTIFICATE-----');
     
     expect(typeof signingKey).toBe('string');
-    expect(signingKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
-    expect(signingKey).toContain('-----END RSA PRIVATE KEY-----');
+    expect(signingKey).toContain('-----BEGIN PRIVATE KEY-----');
+    expect(signingKey).toContain('-----END PRIVATE KEY-----');
     
     // Verify certificate is valid by attempting to parse it
     const crypto = require('crypto');

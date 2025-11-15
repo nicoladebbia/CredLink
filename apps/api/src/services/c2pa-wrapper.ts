@@ -16,7 +16,7 @@ const certManager = new CertificateManager();
 
 export interface C2PASignResult {
   signedBuffer: Buffer;
-  manifestStore: any;
+  manifestStore: Record<string, unknown>;
   manifestUri: string;
 }
 
@@ -31,9 +31,13 @@ export interface C2PAManifestDefinition {
   instance_id?: string;
   assertions?: Array<{
     label: string;
-    data: any;
+    data: Record<string, unknown> | string | number | boolean;
   }>;
-  ingredients?: any[];
+  ingredients?: Array<{
+    uri?: string;
+    'xmp.ns'?: Record<string, string>;
+    'xmp.meta'?: Record<string, unknown>;
+  }>;
 }
 
 export class C2PAWrapper {
@@ -75,21 +79,21 @@ export class C2PAWrapper {
         },
         manifestUri
       };
-    } catch (error: any) {
-      throw new Error(`C2PA signing failed: ${error.message}`);
+    } catch (error) {
+      throw new Error(`C2PA signing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Read C2PA manifest (placeholder for Phase 2 JUMBF implementation)
    */
-  async read(imageBuffer: Buffer): Promise<any> {
+  async read(imageBuffer: Buffer): Promise<Record<string, unknown> | null> {
     try {
       // Phase 2: Will extract JUMBF container from image
       // For now, return null as images don't have embedded manifests yet
       return null;
-    } catch (error: any) {
-      throw new Error(`C2PA reading failed: ${error.message}`);
+    } catch (error) {
+      throw new Error(`C2PA reading failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
