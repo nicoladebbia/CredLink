@@ -134,6 +134,106 @@ const ENV_SCHEMA: EnvSchema[] = [
     type: 'string',
     description: 'Sentry DSN'
   },
+  
+  // AWS Configuration (SECURITY CRITICAL)
+  {
+    name: 'AWS_REGION',
+    required: false,
+    type: 'string',
+    default: 'us-east-1',
+    validator: (v) => /^[a-z0-9-]+$/.test(v),
+    description: 'AWS region for services'
+  },
+  {
+    name: 'KMS_KEY_ID',
+    required: false,
+    type: 'string',
+    validator: (v) => v.length > 0,
+    description: 'AWS KMS key ID for production signing'
+  },
+  {
+    name: 'ENCRYPTED_PRIVATE_KEY',
+    required: false,
+    type: 'string',
+    validator: (v) => v.length > 0,
+    description: 'Base64-encoded encrypted private key'
+  },
+  
+  // Certificate Configuration (SECURITY CRITICAL)
+  {
+    name: 'SIGNING_CERTIFICATE',
+    required: false,
+    type: 'string',
+    default: './certs/signing-cert.pem',
+    validator: (v) => v.length > 0,
+    description: 'Path to signing certificate file'
+  },
+  {
+    name: 'SIGNING_PRIVATE_KEY',
+    required: false,
+    type: 'string',
+    default: './certs/signing-key.pem',
+    validator: (v) => v.length > 0,
+    description: 'Path to signing private key file'
+  },
+  {
+    name: 'ISSUER_CERTIFICATE',
+    required: false,
+    type: 'string',
+    description: 'Path to issuer certificate file'
+  },
+  
+  // C2PA Configuration
+  {
+    name: 'USE_REAL_C2PA',
+    required: false,
+    type: 'boolean',
+    default: false,
+    description: 'Use real C2PA library vs mock implementation'
+  },
+  {
+    name: 'IMAGE_PROCESSING_TIMEOUT_MS',
+    required: false,
+    type: 'number',
+    default: 30000,
+    validator: (v) => !isNaN(parseInt(v, 10)) && parseInt(v, 10) > 0 && parseInt(v, 10) <= 300000,
+    description: 'Image processing timeout in milliseconds (max 5 minutes)'
+  },
+  {
+    name: 'SERVICE_VERSION',
+    required: false,
+    type: 'string',
+    default: '1.0.0',
+    validator: (v) => /^\d+\.\d+\.\d+$/.test(v),
+    description: 'Service version for manifests'
+  },
+  
+  // Proof Storage Configuration
+  {
+    name: 'PROOF_STORAGE_PATH',
+    required: false,
+    type: 'string',
+    default: './proofs',
+    validator: (v) => v.length > 0,
+    description: 'Local filesystem path for proof storage'
+  },
+  {
+    name: 'USE_LOCAL_PROOF_STORAGE',
+    required: false,
+    type: 'boolean',
+    default: true,
+    description: 'Use local filesystem for proof storage'
+  },
+  
+  // Rate Limiting (SECURITY CRITICAL)
+  {
+    name: 'SIGN_RATE_LIMIT_MAX',
+    required: false,
+    type: 'number',
+    default: 100,
+    validator: (v) => !isNaN(parseInt(v, 10)) && parseInt(v, 10) > 0 && parseInt(v, 10) <= 1000,
+    description: 'Max signing requests per minute per IP'
+  },
 ];
 
 class ValidationError extends Error {

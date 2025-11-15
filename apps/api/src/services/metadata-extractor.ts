@@ -13,6 +13,7 @@ import sharp from 'sharp';
 import { logger } from '../utils/logger';
 import { JUMBFBuilder } from './jumbf-builder';
 import { C2PAManifest } from './manifest-builder';
+import exifParser from 'exif-parser';
 
 export class ExtractionError extends Error {
   constructor(message: string, public code?: string) {
@@ -131,7 +132,6 @@ export class MetadataExtractor {
       }
 
       // Parse EXIF buffer using exif-parser
-      const exifParser = require('exif-parser');
       let proofUri: string | null = null;
 
       try {

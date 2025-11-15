@@ -6,6 +6,7 @@ import { PerceptualHash } from '../utils/perceptual-hash';
 import { ProofStorage } from './proof-storage';
 import * as crypto from 'crypto';
 import { LRUCache } from 'lru-cache';
+import sharp from 'sharp';
 
 export interface SigningOptions {
   creator?: string;
@@ -249,7 +250,6 @@ export class C2PAService {
     
     // Validate image dimensions to prevent decompression bombs
     try {
-      const sharp = require('sharp');
       const metadata = await sharp(buffer).metadata();
       const pixels = (metadata.width || 0) * (metadata.height || 0);
       

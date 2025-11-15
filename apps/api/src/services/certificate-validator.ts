@@ -1,4 +1,4 @@
-import { X509Certificate } from 'crypto';
+import { X509Certificate, createHash } from 'crypto';
 import { logger } from '../utils/logger';
 import * as https from 'https';
 import * as http from 'http';
@@ -555,17 +555,15 @@ export class CertificateValidator {
     // For now, we use a simplified approach with crypto.hash
     
     try {
-      const crypto = require('crypto');
-      
       // Extract certificate serial number
       const serialNumber = cert.serialNumber;
       
       // Hash issuer name and key
-      const issuerNameHash = crypto.createHash('sha1')
+      const issuerNameHash = createHash('sha1')
         .update(issuer.subject)
         .digest();
       
-      const issuerKeyHash = crypto.createHash('sha1')
+      const issuerKeyHash = createHash('sha1')
         .update(issuer.publicKey.export({ type: 'spki', format: 'der' }))
         .digest();
       
