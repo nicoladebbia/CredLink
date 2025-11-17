@@ -16,7 +16,7 @@ import { ApiKeyAuth } from './middleware/auth';
 import { ApiKeyService } from './services/api-key-service';
 import { AtomicCertificateManager } from './services/certificate-manager-atomic';
 import { errorHandler } from './middleware/error-handler';
-import { validateEnvironment } from './config/env';
+import { env, validateAndParseEnv, envHelpers } from './config/env-schema';
 import { validateSecrets } from './config/secrets';
 import { ipWhitelists } from './middleware/ip-whitelist';
 import { cleanupServices, registerService } from './utils/service-registry';
@@ -42,13 +42,15 @@ process.env.INDEX_EXECUTION_COUNT = String((parseInt(process.env.INDEX_EXECUTION
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Validate environment configuration on startup
+// Validate environment configuration with Zod schema
 try {
-  validateEnvironment();
-  // TODO: Add printEnvironmentSummary function to config/env
-  console.log('Environment validation passed');
+  const parsedEnv = validateAndParseEnv();
+  console.log('✅ Environment validation passed');
+  console.log(`   NODE_ENV: ${parsedEnv.NODE_ENV}`);
+  console.log(`   PORT: ${parsedEnv.PORT}`);
+  console.log(`   DATABASE_CONFIGURED: ${!!parsedEnv.DATABASE_URL}`);
 } catch (error: any) {
-  console.error('Environment validation failed:', error.message);
+  console.error('❌ Environment validation failed:', error.message);
   process.exit(1);
 }
 
@@ -180,28 +182,94 @@ sentryService.init();
 app.use(sentryService.getRequestHandler());
 app.use(sentryService.getTracingHandler());
 
-// ✅ Security headers with Helmet
+// ✅ Enhanced Security headers with Helmet
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Required for Swagger UI
       scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      childSrc: ["'none'"],
+      workerSrc: ["'none'"],
+      manifestSrc: ["'self'"],
+      upgradeInsecureRequests: envHelpers.isProduction() ? [] : null,
     },
   },
+  crossOriginEmbedderPolicy: true,
+  crossOriginOpenerPolicy: { policy: "same-origin" },
+  crossOriginResourcePolicy: { policy: "same-origin" },
+  dnsPrefetchControl: { allow: false },
+  frameguard: { action: "deny" },
   hsts: {
     maxAge: 31536000,
     includeSubDomains: true,
     preload: true,
   },
+  ieNoOpen: true,
+  noSniff: true,
+  originAgentCluster: true,
+  permittedCrossDomainPolicies: false,
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+  xssFilter: true,
 }));
 
-// CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+// Enhanced CORS configuration with strict origin validation
+const allowedOrigins = env.ALLOWED_ORIGINS?.split(',').map(origin => origin.trim()) || [
+  'https://credlink.com',
+  'https://www.credlink.com',
+  'https://app.credlink.com',
+];
+
+// Add development origins if not in production
+if (envHelpers.isDevelopment()) {
+  allowedOrigins.push(
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001'
+  );
+}
+
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Strict origin validation
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      logger.warn('CORS violation attempt', { 
+        origin, 
+        allowedOrigins, 
+        ip: origin,
+        userAgent: origin 
+      });
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
+  maxAge: 86400, // 24 hours
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'X-API-Key',
+    'Cache-Control'
+  ],
+  exposedHeaders: ['X-Total-Count', 'X-Rate-Limit-Remaining']
 }));
 
 // Body parsing
@@ -214,22 +282,61 @@ app.use(morgan('combined', { stream: process.stdout }));
 // ✅ Prometheus metrics tracking
 app.use(metricsCollector.trackHttpRequest);
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000'),
-  max: parseInt(process.env.RATE_LIMIT_MAX || '100'),
-  message: 'Too many requests from this IP, please try again later.',
+// Enhanced granular rate limiting with different limits per endpoint
+const createRateLimiter = (windowMs: number, max: number, message: string) => rateLimit({
+  windowMs,
+  max,
+  message,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Use IP + API key for more granular limiting when auth is present
+    const apiKey = req.headers['x-api-key'] as string;
+    return apiKey ? `${req.ip}:${apiKey}` : req.ip || 'unknown';
+  },
+  skip: (req) => {
+    // Skip rate limiting for health checks in production monitoring
+    return req.path === '/health' && req.ip === '127.0.0.1';
+  },
 });
-app.use(limiter);
 
-// Health check endpoints with light rate limiting
-const healthLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 1000, // 1000 requests per minute
-  message: 'Too many health check requests'
-});
+// Global rate limiter (most restrictive)
+const globalLimiter = createRateLimiter(
+  env.RATE_LIMIT_WINDOW_MS,
+  env.RATE_LIMIT_MAX,
+  'Too many requests from this IP, please try again later.'
+);
+
+// API endpoints rate limiter (moderate)
+const apiLimiter = createRateLimiter(
+  env.RATE_LIMIT_WINDOW_MS,
+  Math.floor(env.RATE_LIMIT_MAX * 0.8), // 80% of global limit
+  'API rate limit exceeded, please try again later.'
+);
+
+// Signing endpoints rate limiter (strict - resource intensive)
+const signingLimiter = createRateLimiter(
+  env.RATE_LIMIT_WINDOW_MS,
+  env.SIGN_RATE_LIMIT_MAX,
+  'Signing rate limit exceeded. C2PA signing is resource intensive - please try again later.'
+);
+
+// Upload endpoints rate limiter (very strict - storage intensive)
+const uploadLimiter = createRateLimiter(
+  5 * 60 * 1000, // 5 minutes
+  10, // 10 uploads per 5 minutes
+  'Upload rate limit exceeded. Large file uploads are restricted - please try again later.'
+);
+
+// Health check endpoints with very light rate limiting
+const healthLimiter = createRateLimiter(
+  60 * 1000, // 1 minute
+  1000, // 1000 requests per minute
+  'Too many health check requests'
+);
+
+// Apply global rate limiting to all requests
+app.use(globalLimiter);
 
 app.get('/health', healthLimiter, async (req: Request, res: Response) => {
   try {
@@ -420,16 +527,19 @@ const setupRbacRoutes = () => {
   // Always register routes, but conditionally apply auth/RBAC middleware
   if (apiKeyAuth && rbacMiddleware) {
     // Sign route - requires 'create' permission on 'proof' resource
+    app.use('/sign', signingLimiter); // Apply strict rate limiting for C2PA signing
     app.use('/sign', apiKeyAuth.authenticate.bind(apiKeyAuth));
     app.use('/sign', rbacMiddleware.requirePermission('create', 'proof'));
     app.use('/sign', signRouter);
     
     // Verify route - requires 'read' permission on 'proof' resource
+    app.use('/verify', apiLimiter); // Apply moderate rate limiting for verification
     app.use('/verify', apiKeyAuth.authenticate.bind(apiKeyAuth));
     app.use('/verify', rbacMiddleware.requirePermission('read', 'proof'));
     app.use('/verify', verifyRouter);
     
     // API keys management - requires 'admin' role
+    app.use('/api-keys', apiLimiter); // Apply moderate rate limiting for admin operations
     app.use('/api-keys', apiKeyAuth.authenticate.bind(apiKeyAuth));
     app.use('/api-keys', rbacMiddleware.requireRole('admin'));
     app.use('/api-keys', apiKeyRouter);
@@ -440,8 +550,11 @@ const setupRbacRoutes = () => {
     });
   } else {
     // 🔥 TEST MODE: Register routes without authentication for testing
+    app.use('/sign', signingLimiter); // Still apply rate limiting in test mode
     app.use('/sign', signRouter);
+    app.use('/verify', apiLimiter); // Still apply rate limiting in test mode
     app.use('/verify', verifyRouter);
+    app.use('/api-keys', apiLimiter); // Still apply rate limiting in test mode
     app.use('/api-keys', apiKeyRouter);
     
     logger.info('Routes registered without authentication (test mode)', {
