@@ -32,23 +32,20 @@ import certificateRouter from './routes/certificates';
 import { healthRouter, initializeHealthChecker } from './routes/health';
 import { auditRouter } from './routes/audit';
 import { Request, Response, NextFunction } from 'express';
-
-// 🔥 CRITICAL DEBUG: Track index.ts execution to find double initialization
-const executionId = Math.random().toString(36).substr(2, 9);
-console.log(`🔥 INDEX.TS EXECUTION #${process.env.INDEX_EXECUTION_COUNT || '1'} - ID: ${executionId}`);
-process.env.INDEX_EXECUTION_COUNT = String((parseInt(process.env.INDEX_EXECUTION_COUNT || '0') + 1));
+import { join } from 'path';
 
 // Load environment variables
 import dotenv from 'dotenv';
-dotenv.config();
+// Note: dotenv already loaded via 'dotenv/config' import at top of file
 
 // Validate environment configuration with Zod schema
 try {
   const parsedEnv = validateAndParseEnv();
-  console.log('✅ Environment validation passed');
-  console.log(`   NODE_ENV: ${parsedEnv.NODE_ENV}`);
-  console.log(`   PORT: ${parsedEnv.PORT}`);
-  console.log(`   DATABASE_CONFIGURED: ${!!parsedEnv.DATABASE_URL}`);
+  logger.info('✅ Environment validation passed', {
+    NODE_ENV: parsedEnv.NODE_ENV,
+    PORT: parsedEnv.PORT,
+    DATABASE_CONFIGURED: !!parsedEnv.DATABASE_URL
+  });
 } catch (error: any) {
   console.error('❌ Environment validation failed:', error.message);
   process.exit(1);
@@ -155,7 +152,7 @@ async function initializeDatabaseRBAC() {
       getOrgId: (req) => process.env.DEFAULT_ORG_ID || 'default-org'
     });
     
-    console.log('RBAC initialized');
+    logger.debug('RBAC initialized');
     
     // Verify RBAC health
     // TODO: Implement rbacHealthCheck function
@@ -187,8 +184,9 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // Required for Swagger UI
-      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"], // Required for Swagger UI and inline styles
+      scriptSrc: ["'self'"], // No unsafe-inline - we use proper event listeners now
+      scriptSrcAttr: ["'none'"], // Explicitly block inline event handlers
       imgSrc: ["'self'", "data:", "https:"],
       connectSrc: ["'self'"],
       fontSrc: ["'self'"],
@@ -281,6 +279,13 @@ app.use(morgan('combined', { stream: process.stdout }));
 
 // ✅ Prometheus metrics tracking
 app.use(metricsCollector.trackHttpRequest);
+
+// 🌐 Serve static web interface files
+app.use(express.static(join(__dirname, '../../web/public'), {
+  maxAge: '1h', // Cache static files for 1 hour
+  etag: true,
+  lastModified: true
+}));
 
 // Enhanced granular rate limiting with different limits per endpoint
 const createRateLimiter = (windowMs: number, max: number, message: string) => rateLimit({
@@ -404,8 +409,8 @@ app.get('/health', healthLimiter, async (req: Request, res: Response) => {
     
     // DEBUG: Log what's causing degradation
     if (failedChecks.length > 0) {
-      console.log('🔍 DEBUG: Health check failed for:', failedChecks);
-      console.log('🔍 DEBUG: All checks:', Object.entries(healthStatus.checks));
+      logger.debug('Health check failed for:', { failedChecks });
+      logger.debug('All health checks:', { allChecks: Object.entries(healthStatus.checks) });
       healthStatus.status = 'degraded';
     }
 
@@ -483,6 +488,10 @@ let apiKeyService: ApiKeyService | null = null;
 // 🔥 CRITICAL FIX: Hybrid certificate manager for atomic rotation
 let certificateManager: AtomicCertificateManager | null = null;
 
+// 🔥 CRITICAL FIX: Initialize C2PAService for basic signing demo
+  logger.debug('Initializing C2PAService without certificate manager');
+  initializeC2PAService(); // No certificate manager for basic demo
+
 if (process.env.ENABLE_API_KEY_AUTH === 'true') {
   // Initialize hybrid API key authentication with database support
   apiKeyAuth = new ApiKeyAuth(dbPool);
@@ -492,25 +501,6 @@ if (process.env.ENABLE_API_KEY_AUTH === 'true') {
   
   // Set API key service in app context for route access
   app.set('apiKeyService', apiKeyService);
-  
-  // 🔥 CRITICAL FIX: Initialize atomic certificate manager if enabled
-  if (process.env.USE_ATOMIC_CERTIFICATE_MANAGER === 'true') {
-    certificateManager = new AtomicCertificateManager();
-    
-    // Set certificate manager in app context for route access
-    app.set('certificateManager', certificateManager);
-    
-    // 🔥 CRITICAL FIX: Initialize services with singleton certificate manager to prevent race condition vulnerability
-    initializeC2PAService(certificateManager);
-    
-    // Register certificate manager for cleanup
-    registerService('certificateManager', certificateManager);
-    
-    logger.info('Atomic certificate manager initialized', {
-      feature: 'USE_ATOMIC_CERTIFICATE_MANAGER',
-      environment: process.env.NODE_ENV
-    });
-  }
   
   // Register API key auth service for cleanup
   registerService('apiKeyAuth', apiKeyAuth);
@@ -650,7 +640,7 @@ async function startServer() {
       logger.info('Starting job scheduler...');
       // TODO: Implement actual scheduler
       // scheduler.start();
-      console.log('Job scheduler started (stub)');
+      logger.debug('Job scheduler started (stub)');
       
       logger.info(`Job scheduler started with active jobs`);
       logger.info('Job scheduler started');

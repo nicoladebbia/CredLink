@@ -1,0 +1,22 @@
+{
+  "name": "@credlink/web",
+  "version": "1.0.0",
+  "description": "CredLink Web Interface - Image Signing Service",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "build": "echo 'No build needed - static files'"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "keywords": [
+    "c2pa",
+    "image-signing",
+    "credlink"
+  ],
+  "author": "CredLink",
+  "license": "MIT"
+}

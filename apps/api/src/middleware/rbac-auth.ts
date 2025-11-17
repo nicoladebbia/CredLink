@@ -13,7 +13,7 @@ let dbPool: Pool | null = null;
 export function initializeRBAC(pool: Pool): void {
     dbPool = pool;
     rbacInstance = new DatabaseRBAC(pool);
-    console.log('🔐 DatabaseRBAC initialized for main API');
+    logger.debug('DatabaseRBAC initialized for main API');
 }
 
 /**

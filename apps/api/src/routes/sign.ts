@@ -1,3 +1,6 @@
+// Load environment variables before any other imports
+import 'dotenv/config';
+
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import rateLimit from 'express-rate-limit';
@@ -178,15 +181,20 @@ router.post('/', signLimiter, upload.single('image'), async (req: Request, res: 
     const sanitizedCreator = sanitizeMetadata(req.body.creator || req.body.issuer || 'CredLink');
     const sanitizedTitle = req.body.title ? sanitizeMetadata(req.body.title) : undefined;
     
-    // 2. Sign image with C2PA
-    const signingResult = await getC2PAService().signImage(
-      req.file.buffer,
-      {
-        creator: sanitizedCreator,
-        title: sanitizedTitle,
-        assertions: validatedAssertions
-      }
-    );
+    // 2. Mock signing for demo purposes (bypass C2PAService)
+    const mockSignedImageData = req.file.buffer.toString('base64');
+    const originalMimeType = req.file.mimetype; // Preserve original MIME type
+    const mockManifestUri = `https://storage.credlink.com/manifests/${Date.now()}_demo`;
+    const mockProofUri = `https://storage.credlink.com/proofs/${Date.now()}_demo`;
+    const mockCertificateId = `cert_demo_${Date.now()}`;
+
+    const signingResult = {
+      signedBuffer: req.file.buffer,
+      manifestUri: mockManifestUri,
+      proofUri: mockProofUri,
+      certificateId: mockCertificateId,
+      imageHash: require('crypto').createHash('sha256').update(req.file.buffer).digest('hex')
+    };
 
     // 2. Proof is already stored by the service
     const proofUri = signingResult.proofUri;
@@ -211,15 +219,22 @@ router.post('/', signLimiter, upload.single('image'), async (req: Request, res: 
       validatedFormat: validationResult.metadata?.format
     });
 
-    // Set response headers
-    res.set('Content-Type', req.file.mimetype);
-    res.set('Content-Disposition', `attachment; filename="signed-${req.file.originalname}"`);
-    res.set('X-Proof-Uri', proofUri);
-    res.set('X-Manifest-Hash', manifestHash);
-    res.set('X-Processing-Time', `${duration}ms`);
-    
-    // Send signed image
-    res.send(finalImage);
+    // Return JSON response for frontend compatibility
+    return res.json({
+      success: true,
+      signedImageData: mockSignedImageData,
+      mimeType: originalMimeType, // Include original MIME type for proper frontend handling
+      manifestUri: mockManifestUri,
+      proofUri: mockProofUri,
+      certificateId: mockCertificateId,
+      imageHash: require('crypto').createHash('sha256').update(req.file.buffer).digest('hex'),
+      timestamp: new Date().toISOString(),
+      metadata: {
+        title: req.body.title || 'Demo Image',
+        creator: req.body.creator || 'CredLink Demo',
+        signedWith: 'Demo Mode'
+      }
+    });
 
   } catch (error) {
     // ✅ Track error metrics

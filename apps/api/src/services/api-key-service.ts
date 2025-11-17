@@ -483,7 +483,7 @@ export class ApiKeyService {
       const deactivatedCount = parseInt(result.rows[0].count, 10);
       
       if (deactivatedCount > 0) {
-        console.log(`🔐 Deactivated ${deactivatedCount} expired API keys`);
+        logger.debug('Deactivated expired API keys', { count: deactivatedCount });
       }
       
       return deactivatedCount;

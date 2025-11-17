@@ -38,21 +38,21 @@ router.get('/test-rbac', async (req: Request, res: Response) => {
       throw new Error('Test endpoint disabled in production environment');
     }
     
-    console.log('🔍 Testing DatabaseRBAC integration...');
+    logger.debug('Testing DatabaseRBAC integration');
     
     // BRUTAL FIX: Use shared pool to prevent connection leaks
     const { rbac } = await getSharedRbac();
     
-    console.log('✅ PostgreSQL pool created (shared)');
+    logger.debug('PostgreSQL pool created (shared)');
 
     // Test basic database connection through RBAC
-    console.log('✅ PostgreSQL connection established');
+    logger.debug('PostgreSQL connection established');
     
-    console.log('✅ DatabaseRBAC instance created (shared)');
+    logger.debug('DatabaseRBAC instance created (shared)');
 
     // Test health check
     const health = await rbac.healthCheck();
-    console.log('✅ DatabaseRBAC health check:', health);
+    logger.debug('DatabaseRBAC health check', health);
 
     if (health.status !== 'healthy') {
       throw new Error(`DatabaseRBAC health check failed: ${JSON.stringify(health)}`);
@@ -74,13 +74,13 @@ router.get('/test-rbac', async (req: Request, res: Response) => {
     };
 
     const rbacResult = await rbac.check(testSubject, testAction, testResource, testContext);
-    console.log('✅ DatabaseRBAC permission check:', rbacResult);
+    logger.debug('DatabaseRBAC permission check', rbacResult);
 
     // Test metrics
     const metrics = rbac.getMetrics();
-    console.log('✅ DatabaseRBAC metrics:', metrics);
+    logger.debug('DatabaseRBAC metrics', metrics);
 
-    console.log('🎉 DatabaseRBAC integration test completed successfully!');
+    logger.info('DatabaseRBAC integration test completed successfully');
 
     // Return success response
     res.json({
@@ -111,7 +111,7 @@ router.get('/test-rbac', async (req: Request, res: Response) => {
 // Cleanup shared resources
 async function cleanupSharedResources() {
   if (sharedRbac) {
-    console.log('🧹 Cleaning up shared DatabaseRBAC instance');
+    logger.debug('Cleaning up shared DatabaseRBAC instance');
     sharedRbac = null;
   }
 }

@@ -264,7 +264,11 @@ export class C2PAService {
         throw new ValidationError('Image dimensions too large (max 100 megapixels)');
       }
       
-      console.log(`Image validated: ${format}, ${metadata.width}x${metadata.height}, ${buffer.length} bytes`);
+      logger.debug('Image validated', {
+        format,
+        dimensions: `${metadata.width}x${metadata.height}`,
+        size: buffer.length
+      });
     } catch (error: any) {
       if (error instanceof ValidationError) throw error;
       console.error('Sharp validation error:', error.message);

@@ -104,7 +104,7 @@ const envSchema = z.object({
   
   SIGN_RATE_LIMIT_MAX: z.string().transform((val) => {
     const max = parseInt(val, 10);
-    if (isNaN(max) || max < 1 || max < 1000) {
+    if (isNaN(max) || max < 1) {
       throw new Error('SIGN_RATE_LIMIT_MAX must be at least 1');
     }
     return max;

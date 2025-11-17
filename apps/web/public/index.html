@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CredLink - Image Signing Service</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CredLink</h1>
+            <p>Sign your images with cryptographic certificates</p>
+        </header>
+
+        <main>
+            <!-- Upload Section -->
+            <section id="upload-section" class="active">
+                <h2>Upload Image to Sign</h2>
+                <div class="upload-area" id="upload-area">
+                    <div class="upload-content">
+                        <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7,10 12,15 17,10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <h3>Drag & Drop your image here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                        <button class="browse-btn" id="browse-btn">
+                            Choose File
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="file-info" id="file-info" style="display: none;">
+                    <p><strong>Selected:</strong> <span id="file-name"></span></p>
+                    <p><strong>Size:</strong> <span id="file-size"></span></p>
+                    <button class="sign-btn" id="sign-btn">
+                        Sign Image
+                    </button>
+                </div>
+            </section>
+
+            <!-- Processing Section -->
+            <section id="processing-section">
+                <h2>Signing Your Image...</h2>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="status-text">Initializing...</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results-section">
+                <h2>Image Signed Successfully!</h2>
+                <div class="results-grid">
+                    <div class="result-item">
+                        <h3>Original Image</h3>
+                        <img id="original-preview" alt="Original">
+                        <button class="download-btn" id="download-original-btn">
+                            Download Original
+                        </button>
+                    </div>
+                    <div class="result-item">
+                        <h3>Signed Image</h3>
+                        <img id="signed-preview" alt="Signed">
+                        <button class="download-btn primary" id="download-signed-btn">
+                            Download Signed Image
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="certificate-info">
+                    <h3>Certificate Information</h3>
+                    <div class="cert-details">
+                        <p><strong>Certificate ID:</strong> <span id="cert-id"></span></p>
+                        <p><strong>Signed At:</strong> <span id="signed-at"></span></p>
+                        <p><strong>Manifest URL:</strong> <a id="manifest-url" target="_blank"></a></p>
+                        <p><strong>Proof ID:</strong> <span id="proof-id"></span></p>
+                    </div>
+                </div>
+                
+                <div class="actions">
+                    <button class="sign-another-btn" id="sign-another-btn">
+                        Sign Another Image
+                    </button>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section id="error-section">
+                <h2>Signing Failed</h2>
+                <div class="error-content">
+                    <svg class="error-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p id="error-message">Something went wrong. Please try again.</p>
+                    <button class="retry-btn" id="retry-btn">
+                        Try Again
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 CredLink. Professional image signing service.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
