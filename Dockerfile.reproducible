@@ -126,19 +126,31 @@ ENV SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH} \
     npm_config_cache=/tmp/.npm
 
 # Copy built artifacts from builder stage (if they exist)
-RUN mkdir -p /app/dist /app/packages/acceptance/dist /app/packages/policy/dist /app/packages/utils/dist /app/packages/manifest-store/dist /app/apps/edge-worker/dist /app/apps/edge-relay/dist /app/apps/manifest-store-worker/dist
+RUN mkdir -p /app/dist /app/packages/c2pa-sdk/dist /app/packages/cache/dist /app/packages/circuit-breaker/dist /app/packages/compliance/dist /app/packages/config/dist /app/packages/health/dist /app/packages/manifest-store/dist /app/packages/policy-engine/dist /app/packages/rbac/dist /app/packages/redis-client/dist /app/packages/redis-lock/dist /app/packages/security-monitor/dist /app/packages/storage/dist /app/packages/tsa-service/dist /app/packages/types/dist /app/packages/verify/dist /app/apps/api/dist /app/apps/beta-landing/dist /app/apps/sign-service/dist
 # Copy all built artifacts at once (will skip missing directories)
 COPY --from=builder --chown=credlink:nodejs /app/ ./
 
 # Copy production dependencies with verification
 COPY --chown=credlink:nodejs package.json pnpm-lock.yaml ./
-COPY --chown=credlink:nodejs packages/acceptance/package.json ./packages/acceptance/
-COPY --chown=credlink:nodejs packages/policy/package.json ./packages/policy/
-COPY --chown=credlink:nodejs packages/utils/package.json ./packages/utils/
+COPY --chown=credlink:nodejs packages/c2pa-sdk/package.json ./packages/c2pa-sdk/
+COPY --chown=credlink:nodejs packages/cache/package.json ./packages/cache/
+COPY --chown=credlink:nodejs packages/circuit-breaker/package.json ./packages/circuit-breaker/
+COPY --chown=credlink:nodejs packages/compliance/package.json ./packages/compliance/
+COPY --chown=credlink:nodejs packages/config/package.json ./packages/config/
+COPY --chown=credlink:nodejs packages/health/package.json ./packages/health/
 COPY --chown=credlink:nodejs packages/manifest-store/package.json ./packages/manifest-store/
-COPY --chown=credlink:nodejs apps/edge-worker/package.json ./apps/edge-worker/
-COPY --chown=credlink:nodejs apps/edge-relay/package.json ./apps/edge-relay/
-COPY --chown=credlink:nodejs apps/manifest-store-worker/package.json ./apps/manifest-store-worker/
+COPY --chown=credlink:nodejs packages/policy-engine/package.json ./packages/policy-engine/
+COPY --chown=credlink:nodejs packages/rbac/package.json ./packages/rbac/
+COPY --chown=credlink:nodejs packages/redis-client/package.json ./packages/redis-client/
+COPY --chown=credlink:nodejs packages/redis-lock/package.json ./packages/redis-lock/
+COPY --chown=credlink:nodejs packages/security-monitor/package.json ./packages/security-monitor/
+COPY --chown=credlink:nodejs packages/storage/package.json ./packages/storage/
+COPY --chown=credlink:nodejs packages/tsa-service/package.json ./packages/tsa-service/
+COPY --chown=credlink:nodejs packages/types/package.json ./packages/types/
+COPY --chown=credlink:nodejs packages/verify/package.json ./packages/verify/
+COPY --chown=credlink:nodejs apps/api/package.json ./apps/api/
+COPY --chown=credlink:nodejs apps/beta-landing/package.json ./apps/beta-landing/
+COPY --chown=credlink:nodejs apps/sign-service/package.json ./apps/sign-service/
 
 # Install production dependencies with comprehensive security
 RUN set -euo pipefail && \
