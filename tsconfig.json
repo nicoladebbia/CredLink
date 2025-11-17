@@ -22,16 +22,20 @@
   "exclude": [
     "node_modules",
     "dist",
+    "build",
+    "coverage",
+    ".nyc_output",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/*.d.ts",
+    "tests/gauntlet/**/*",
     "**/dist",
     "**/node_modules",
     "**/.artifacts",
     ".artifacts",
     "archive",
     "sandboxes",
-    "scripts",
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "**/*.d.ts"
+    "scripts"
   ],
   "references": [
     {
@@ -39,66 +43,6 @@
     },
     {
       "path": "./tests/integration/acceptance-cms"
-    },
-    {
-      "path": "./core/utils"
-    },
-    {
-      "path": "./core/policy"
-    },
-    {
-      "path": "./core/manifest-store"
-    },
-    {
-      "path": "./core/oem-trust"
-    },
-    {
-      "path": "./core/rbac"
-    },
-    {
-      "path": "./core/oidc-saml"
-    },
-    {
-      "path": "./core/scim-core"
-    },
-    {
-      "path": "./core/idp"
-    },
-    {
-      "path": "./core/scim"
-    },
-    {
-      "path": "./core/api-gw"
-    },
-    {
-      "path": "./core/policy-engine"
-    },
-    {
-      "path": "./core/audit"
-    },
-    {
-      "path": "./core/flags"
-    },
-    {
-      "path": "./core/evidence"
-    },
-    {
-      "path": "./core/sw-relay"
-    },
-    {
-      "path": "./core/edge-worker"
-    },
-    {
-      "path": "./core/manifest-store/manifest-store-worker"
-    },
-    {
-      "path": "./core/reportgen"
-    },
-    {
-      "path": "./core/edge-relay"
-    },
-    {
-      "path": "./core/verify"
     }
   ]
 }

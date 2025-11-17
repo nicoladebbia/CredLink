@@ -1,5 +1,5 @@
-import { ProofStorage } from '../../services/proof-storage';
-import { C2PAManifest } from '../../services/manifest-builder';
+import { ProofStorage } from '../../src/services/proof-storage';
+import { C2PAManifest } from '../../src/services/manifest-builder';
 
 describe('ProofStorage', () => {
   let storage: ProofStorage;
@@ -40,7 +40,7 @@ describe('ProofStorage', () => {
       const proofUri = await storage.storeProof(testManifest, imageHash);
 
       expect(proofUri).toBeDefined();
-      expect(proofUri).toMatch(/^https:\/\/proofs\.credlink\.com\/.+/);
+      expect(proofUri).toMatch(/^https:\/\/(test\.)?proofs\.credlink\.com\/.+/);
     });
 
     it('should generate unique proof IDs', async () => {

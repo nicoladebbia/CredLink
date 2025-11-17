@@ -1,13 +1,17 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { readFile } from 'fs/promises';
+import { X509Certificate } from 'crypto';
 import multer from 'multer';
 import { C2PAService } from '../services/c2pa-service';
 import { ProofStorage } from '../services/proof-storage';
 import { extractManifest, extractProofUri } from '../services/metadata-extractor';
 import { CertificateValidator } from '../services/certificate-validator';
+import { validationService, ValidationService } from '../services/validation-service';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/error-handler';
 import { VerificationResult } from '../types';
-import { registerService } from '../index';
+import { registerService } from '../utils/service-registry';
+import { TimeoutConfig } from '../utils/timeout-config';
 
 const router: Router = Router();
 const proofStorage = new ProofStorage();
@@ -19,11 +23,13 @@ if (typeof registerService === 'function') {
 }
 
 // Configure multer for file uploads
+// 🔥 STEP 11: Replace duplicate validation with centralized ValidationService
 const upload = multer({
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE_MB || '50') * 1024 * 1024
   },
   fileFilter: (req, file, cb) => {
+    // Basic MIME type check - detailed validation happens in route handler
     if (!file.mimetype.startsWith('image/')) {
       cb(new Error('Only image files are allowed'));
       return;
@@ -62,6 +68,30 @@ router.post('/', upload.single('image'), async (req: Request, res: Response, nex
       size: req.file.size
     });
 
+    // 🔥 STEP 11: Centralized validation with comprehensive security checks
+    const validationOptions = ValidationService.getEnvironmentOptions();
+    const validationResult = await validationService.validateImage(
+      req.file.buffer,
+      req.file.mimetype,
+      validationOptions
+    );
+
+    if (!validationResult.isValid) {
+      logger.warn('Image validation failed during verification', {
+        errors: validationResult.errors,
+        filename: req.file.originalname
+      });
+      throw new AppError(400, `Invalid image: ${validationResult.errors.join(', ')}`);
+    }
+
+    // Log warnings from strict validation
+    if (validationResult.warnings.length > 0) {
+      logger.warn('Image validation warnings during verification', {
+        warnings: validationResult.warnings,
+        filename: req.file.originalname
+      });
+    }
+
     // 1. Extract embedded C2PA manifest
     const embeddedManifest = await extractManifest(req.file.buffer);
     
@@ -76,17 +106,46 @@ router.post('/', upload.single('image'), async (req: Request, res: Response, nex
     let certValidationDetails = null;
     if (embeddedManifest) {
       try {
-        // Extract certificate from embedded metadata or use default cert path
+        // 🔥 SECURITY FIX: Load certificates asynchronously with timeouts
         const certPath = process.env.SIGNING_CERTIFICATE || './certs/signing-cert.pem';
         const issuerPath = process.env.ISSUER_CERTIFICATE || null;
         
-        // Read certificates
-        const fs = require('fs');
-        const certPem = fs.existsSync(certPath) ? fs.readFileSync(certPath, 'utf8') : null;
-        const issuerPem = issuerPath && fs.existsSync(issuerPath) ? fs.readFileSync(issuerPath, 'utf8') : null;
+        // Load certificates asynchronously with timeout protection
+        const timeoutMs = TimeoutConfig.CERTIFICATE_LOAD_TIMEOUT;
         
+        const [certPem, issuerPem] = await Promise.all([
+          Promise.race([
+            readFile(certPath, 'utf8').catch(() => null),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Certificate load timeout')), timeoutMs)
+            )
+          ]),
+          issuerPath ? Promise.race([
+            readFile(issuerPath, 'utf8').catch(() => null),
+            new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Issuer certificate load timeout')), timeoutMs)
+            )
+          ]) : Promise.resolve(null)
+        ]);
+        
+        const certificates: X509Certificate[] = [];
         if (certPem) {
-          const validationResult = await certValidator.validateCertificateChain([certPem]);
+          try {
+            certificates.push(new X509Certificate(certPem));
+          } catch (error) {
+            logger.error('Failed to parse certificate', { error });
+          }
+        }
+        if (issuerPem) {
+          try {
+            certificates.push(new X509Certificate(issuerPem));
+          } catch (error) {
+            logger.error('Failed to parse issuer certificate', { error });
+          }
+        }
+        
+        if (certificates.length > 0) {
+          const validationResult = await certValidator.validateCertificateChain(certificates);
           certValid = validationResult.isValid;
           certValidationDetails = {
             errors: validationResult.errors,
@@ -155,7 +214,8 @@ router.post('/', upload.single('image'), async (req: Request, res: Response, nex
       valid,
       confidence,
       hasManifest: !!embeddedManifest,
-      hasProof: !!remoteProof
+      hasProof: !!remoteProof,
+      validatedFormat: validationResult.metadata?.format
     });
 
     const result: VerificationResult = {
@@ -169,7 +229,12 @@ router.post('/', upload.single('image'), async (req: Request, res: Response, nex
         proofUri: proofUri || null,
         proofFound: !!remoteProof,
         proofMatches: proofsMatch,
-        manifestTimestamp: embeddedManifest?.claim_generator?.timestamp || new Date().toISOString()
+        manifestTimestamp: embeddedManifest?.claim_generator?.timestamp || new Date().toISOString(),
+        imageFormat: validationResult.metadata?.format,
+        imageDimensions: validationResult.metadata ? {
+          width: validationResult.metadata.width,
+          height: validationResult.metadata.height
+        } : undefined
       }
     };
 

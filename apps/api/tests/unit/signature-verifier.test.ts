@@ -1,9 +1,10 @@
-import { SignatureVerifier } from '../../services/signature-verifier';
-import { ManifestBuilder } from '../../services/manifest-builder';
-import { C2PAService } from '../../services/c2pa-service';
+import { SignatureVerifier } from '../../src/services/signature-verifier';
+import { ManifestBuilder } from '../../src/services/manifest-builder';
+import { C2PAService } from '../../src/services/c2pa-service';
 import { X509Certificate } from 'crypto';
 import { readFileSync } from 'fs';
 import sharp from 'sharp';
+import { DateUtils } from '@credlink/config';
 
 describe('SignatureVerifier', () => {
   let verifier: SignatureVerifier;
@@ -28,11 +29,15 @@ describe('SignatureVerifier', () => {
     }).jpeg().toBuffer();
 
     // Load test certificate
+    console.log('Jest working directory:', process.cwd());
+    console.log('Test file directory:', __dirname);
     try {
       const certPem = process.env.SIGNING_CERTIFICATE || 
-                     readFileSync('./certs/signing-cert.pem', 'utf8');
+                     readFileSync(path.join(__dirname, '../../certs/signing-cert.pem'), 'utf8');
       testCert = new X509Certificate(certPem);
+      console.log('Certificate loaded successfully');
     } catch (error) {
+      console.log('Certificate loading error:', error);
       testCert = null as any;
     }
   });
@@ -342,7 +347,7 @@ describe('SignatureVerifier', () => {
         manifest,
         signingResult.signature,
         testCert
-      });
+      );
 
       expect(result.details.timestamp).toBeDefined();
     });
@@ -379,7 +384,8 @@ describe('SignatureVerifier', () => {
         imageBuffer: testImage,
         imageHash: 'test-hash',
         creator: 'Test',
-        timestamp: new Date('2000-01-01').toISOString(),
+        // 🔥 HARDCODED DATE ELIMINATION: Use dynamic old timestamp instead of hardcoded 2000-01-01
+        timestamp: DateUtils.addYears(-25).toISOString(), // 25 years ago (definitely too old)
         customAssertions: []
       });
 

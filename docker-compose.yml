@@ -57,8 +57,34 @@ services:
     environment:
       - PORT=4102
       - NODE_ENV=development
+    # SECURITY: Read-only volume mount to prevent container escape
     volumes:
-      - ./.artifacts:/app/.artifacts
+      - ./.artifacts:/app/.artifacts:ro
+    # SECURITY: Remove privileged capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # SECURITY: Run as non-root user
+    user: "1001:1001"
+    # SECURITY: Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    # SECURITY: No privileged mode
+    privileged: false
+    # SECURITY: Read-only filesystem
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/run:noexec,nosuid,size=50m
     command: ["node", "sandboxes/preserve-embed/server.js"]
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:4102/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
@@ -77,8 +103,34 @@ services:
     environment:
       - PORT=4103
       - NODE_ENV=development
+    # SECURITY: Read-only volume mount to prevent container escape
     volumes:
-      - ./.artifacts:/app/.artifacts
+      - ./.artifacts:/app/.artifacts:ro
+    # SECURITY: Remove privileged capabilities
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    # SECURITY: Run as non-root user
+    user: "1001:1001"
+    # SECURITY: Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    # SECURITY: No privileged mode
+    privileged: false
+    # SECURITY: Read-only filesystem
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=100m
+      - /var/run:noexec,nosuid,size=50m
     command: ["node", "sandboxes/remote-only/server.js"]
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:4103/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]

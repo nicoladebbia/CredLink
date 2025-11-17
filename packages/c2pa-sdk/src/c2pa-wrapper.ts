@@ -10,9 +10,42 @@
 
 import { readFileSync } from 'fs';
 import * as crypto from 'crypto';
-import { CertificateManager } from './certificate-manager';
 
-const certManager = new CertificateManager();
+// Simple certificate interface for c2pa-sdk
+interface Certificate {
+    pem: string;
+    fingerprint: string;
+}
+
+// Simple certificate loader that uses environment variables
+class SimpleCertificateLoader {
+    async getCertificate(): Promise<Certificate> {
+        if (!process.env.SIGNING_CERTIFICATE) {
+            throw new Error('SIGNING_CERTIFICATE environment variable is required');
+        }
+        
+        const pem = process.env.SIGNING_CERTIFICATE.startsWith('-----BEGIN CERTIFICATE-----') 
+            ? process.env.SIGNING_CERTIFICATE 
+            : readFileSync(process.env.SIGNING_CERTIFICATE, 'utf8');
+            
+        return {
+            pem,
+            fingerprint: crypto.createHash('sha256').update(pem).digest('hex')
+        };
+    }
+
+    async getSigningKey(): Promise<string> {
+        if (!process.env.SIGNING_PRIVATE_KEY) {
+            throw new Error('SIGNING_PRIVATE_KEY environment variable is required');
+        }
+        
+        return process.env.SIGNING_PRIVATE_KEY.startsWith('-----BEGIN') 
+            ? process.env.SIGNING_PRIVATE_KEY 
+            : readFileSync(process.env.SIGNING_PRIVATE_KEY, 'utf8');
+    }
+}
+
+const certManager = new SimpleCertificateLoader();
 
 export interface C2PASignResult {
   signedBuffer: Buffer;

@@ -1,6 +1,6 @@
 import { writeFile } from 'fs/promises';
 import { RealWorldSurvivalReport, RealWorldTestResult } from './survival-types';
-import { logger } from '../../utils/logger';
+import { logger } from '../../src/utils/logger';
 
 /**
  * Survival Report Generator

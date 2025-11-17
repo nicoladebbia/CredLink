@@ -4,9 +4,7 @@ import {
   VerifyAssetRequest,
   VerifyAssetResponse,
   VerifyPageRequest,
-  VerifyPageResponse,
   BatchVerifyRequest,
-  BatchVerifyResponse,
   InjectLinkRequest,
   InjectLinkResponse,
   SignFolderRequest,
@@ -16,7 +14,6 @@ import {
   RequestOptions,
   AsyncPageVerificationResult,
   AsyncBatchVerificationResult,
-  PaginationOptions,
   JobStatus,
 } from './types.js';
 import { HttpTransport, TelemetryManager } from './transport.js';
@@ -87,10 +84,10 @@ export class Client {
       
       const request: VerifyAssetRequest = {
         policy_id: options.policyId,
-        timeout: options.timeout,
-        cached_etag: options.cachedEtag,
-        cached_cert_thumbprints: options.cachedCertThumbprints,
-        enable_delta: options.enableDelta,
+        timeout: options.timeout || 30000,
+        cached_etag: options.cachedEtag || '',
+        cached_cert_thumbprints: options.cachedCertThumbprints || [],
+        enable_delta: options.enableDelta || false,
       };
 
       if (isUrl) {
@@ -148,17 +145,16 @@ export class Client {
     const span = this.telemetry.createSpan('verify.page', {
       url: this.sanitizeUrl(url),
       follow_links: options.followLinks ?? true,
-      max_depth: options.maxDepth ?? 2,
       policy_id: options.policyId || 'default',
     });
 
     try {
       const request: VerifyPageRequest = {
         page_url: url,
-        follow_links: options.followLinks ?? true,
-        max_depth: options.maxDepth ?? 2,
+        follow_links: options.followLinks || false,
+        max_depth: options.maxDepth || 1,
         policy_id: options.policyId || 'default',
-        timeout: options.timeout,
+        timeout: options.timeout || 30000,
       };
 
       return this.transport.requestStream<AsyncPageVerificationResult>(
@@ -211,15 +207,17 @@ export class Client {
 
     try {
       // Normalize assets to AssetReference format
-      const normalizedAssets = assets.map(asset => 
-        typeof asset === 'string' ? { url: asset } : asset
-      );
-
       const request: BatchVerifyRequest = {
-        assets: normalizedAssets,
+        assets: assets.map(asset => {
+          const assetRef = typeof asset === 'string' ? { url: asset, id: '' } : asset;
+          return {
+            url: assetRef.url,
+            id: assetRef.id || '',
+          };
+        }),
         policy_id: options.policyId || 'default',
-        parallel: options.parallel ?? true,
-        timeout_per_asset: options.timeoutPerAsset,
+        parallel: options.parallel || false,
+        timeout_per_asset: options.timeoutPerAsset || 30000,
       };
 
       return this.transport.requestStream<AsyncBatchVerificationResult>(
@@ -266,10 +264,10 @@ export class Client {
 
     try {
       const request: InjectLinkRequest = {
-        html,
+        html: html,
         manifest_url: options.manifestUrl,
         strategy: options.strategy || 'sha256_path',
-        selector: options.selector,
+        selector: options.selector || '',
       };
 
       const response = await this.transport.request<InjectLinkResponse>(
@@ -331,8 +329,8 @@ export class Client {
         folder_path: folderPath,
         profile_id: options.profileId,
         tsa: options.tsa || false,
-        recursive: options.recursive ?? true,
-        file_patterns: options.filePatterns,
+        recursive: options.recursive || false,
+        file_patterns: options.filePatterns || [],
         idempotency_key: options.idempotencyKey || randomUUID(),
       };
 
@@ -341,7 +339,7 @@ export class Client {
         '/sign/folder',
         request,
         {
-          idempotencyKey: request.idempotency_key,
+          idempotencyKey: request.idempotency_key || '',
         }
       );
 
@@ -455,7 +453,7 @@ export class Client {
       const request: ManifestRequest = {
         content: typeof content === 'string' ? content : Buffer.from(content).toString('base64'),
         content_type: options.contentType || 'application/c2pa',
-        metadata: options.metadata,
+        metadata: options.metadata || {},
       };
 
       const response = await this.transport.request<ManifestResponse>(

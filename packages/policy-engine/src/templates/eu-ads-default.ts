@@ -4,6 +4,7 @@
  */
 
 import { Policy } from '../types/policy.js';
+import { DateUtils } from '@credlink/config';
 
 export const EU_ADS_DEFAULT_POLICY: Policy = {
   policy_id: 'eu-ads-default',
@@ -34,8 +35,9 @@ export const EU_ADS_DEFAULT_POLICY: Policy = {
     provider: 'custom',
     license_id: 'EU-AD-2025-001',
     rights_window: {
-      from: '2025-10-01T00:00:00Z',
-      to: '2026-01-31T23:59:59Z'
+      // 🔥 HARDCODED DATE ELIMINATION: Use dynamic policy window dates
+      from: DateUtils.getPolicyWindowStartDate(),
+      to: DateUtils.addMonths(4).toISOString() // 4 months from now (typical campaign duration)
     },
     terms_url: 'https://brand.example/ad-terms'
   },
@@ -75,8 +77,8 @@ license:
   provider: custom
   license_id: EU-AD-2025-001
   rights_window:
-    from: 2025-10-01T00:00:00Z
-    to: 2026-01-31T23:59:59Z
+    from: new Date().toISOString()
+    to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
   terms_url: https://brand.example/ad-terms
 display:
   badge_copy: verbose

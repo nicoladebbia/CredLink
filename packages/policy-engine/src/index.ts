@@ -9,9 +9,7 @@ import {
   PolicyCondition, 
   PolicyEvaluationResult, 
   EnterprisePolicyEngine as PolicyEngine, 
-  EnterprisePolicyAPI as PolicyAPI,
-  enterprisePolicyEngine as policyEngine,
-  enterprisePolicyAPI as policyAPI 
+  EnterprisePolicyAPI as PolicyAPI
 } from './enterprise-policy.js';
 
 export { 
@@ -19,9 +17,7 @@ export {
   PolicyCondition, 
   PolicyEvaluationResult, 
   EnterprisePolicyEngine, 
-  EnterprisePolicyAPI,
-  enterprisePolicyEngine,
-  enterprisePolicyAPI 
+  EnterprisePolicyAPI
 } from './enterprise-policy.js';
 
 // Export new C2PA policy engine
@@ -160,7 +156,6 @@ export class UnifiedPolicyService {
 import { EnterprisePolicyEngine } from './enterprise-policy.js';
 import { C2PAPolicyEngine as C2PAEngine } from './policy-engine.js';
 
-export const unifiedPolicyService = new UnifiedPolicyService(
-  new EnterprisePolicyEngine(),
-  new C2PAEngine()
-);
+// 🔥 HARSH ARCHITECTURAL FIX: Removed singleton exports
+// Dependency injection requires explicit instantiation with proper dependencies
+// Callers must: new UnifiedPolicyService(new EnterprisePolicyEngine(databaseRbac), new C2PAEngine())

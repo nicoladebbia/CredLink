@@ -1,4 +1,5 @@
 import { X509Certificate, createHash } from 'crypto';
+import { LRUCacheFactory } from '@credlink/cache';
 import { logger } from '../utils/logger';
 import * as https from 'https';
 import * as http from 'http';
@@ -51,7 +52,7 @@ export interface OCSPResponse {
 }
 
 /**
- * Cached certificate validation
+ * Cached certificate validation result
  */
 interface CachedCertificate {
   result: CertificateValidationResult;
@@ -59,21 +60,17 @@ interface CachedCertificate {
 }
 
 /**
- * Certificate Validator
+ * Certificate Validator with CRL and OCSP Support
  * 
- * Validates X.509 certificates and certificate chains
- * Supports:
- * - Expiration checking
- * - Signature verification
- * - Key usage validation
- * - Basic constraints checking
+ * Features:
+ * - Certificate chain validation
+ * - CRL revocation checking (stub for MVP)
  * - OCSP revocation checking (stub for MVP)
  * - Trust anchor verification
  */
 export class CertificateValidator {
   private trustedRoots: Set<string> = new Set();
-  private certificateCache: Map<string, CachedCertificate> = new Map();
-  private readonly CACHE_TTL = 3600000; // 1 hour
+  private certificateCache = LRUCacheFactory.createCertificateCache();
 
   constructor() {
     this.loadTrustedRootCertificates();
@@ -146,13 +143,11 @@ export class CertificateValidator {
   ): Promise<CertificateValidationResult> {
     const cacheKey = cert.fingerprint;
 
-    // Check cache first
-    if (this.certificateCache.has(cacheKey)) {
-      const cached = this.certificateCache.get(cacheKey)!;
-      if (Date.now() - cached.timestamp < this.CACHE_TTL) {
-        logger.debug('Using cached certificate validation', { fingerprint: cacheKey });
-        return cached.result;
-      }
+    // Check cache first (LRU handles TTL automatically)
+    const cached = this.certificateCache.get(cacheKey);
+    if (cached) {
+      logger.debug('Using cached certificate validation', { fingerprint: cacheKey });
+      return cached.result;
     }
 
     const result: CertificateValidationResult = {
@@ -238,7 +233,7 @@ export class CertificateValidator {
       result.errors.push('Certificate has been revoked');
     }
 
-    // Cache the result
+    // Cache the result (LRU handles TTL automatically)
     this.certificateCache.set(cacheKey, {
       result,
       timestamp: Date.now()
@@ -709,16 +704,18 @@ export class CertificateValidator {
    */
   clearCache(): void {
     this.certificateCache.clear();
-    logger.info('Certificate cache cleared');
+    this.trustedRoots.clear();
+    logger.info('Certificate cache and trusted roots cleared');
   }
 
   /**
    * Get cache statistics
    */
-  getCacheStats(): { size: number; ttl: number } {
+  getCacheStats(): { size: number; maxSize: number; ttl?: number } {
     return {
       size: this.certificateCache.size,
-      ttl: this.CACHE_TTL
+      maxSize: 1000, // From LRUCacheFactory.createCertificateCache()
+      ttl: 3600000 // 1 hour TTL
     };
   }
 }

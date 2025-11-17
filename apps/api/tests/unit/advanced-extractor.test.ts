@@ -1,6 +1,6 @@
-import { AdvancedExtractor } from '../../services/advanced-extractor';
-import { ManifestBuilder } from '../../services/manifest-builder';
-import { MetadataEmbedder } from '../../services/metadata-embedder';
+import { AdvancedExtractor } from '../../src/services/advanced-extractor';
+import { ManifestBuilder } from '../../src/services/manifest-builder';
+import { MetadataEmbedder } from '../../src/services/metadata-embedder';
 import { readFileSync } from 'fs';
 import sharp from 'sharp';
 

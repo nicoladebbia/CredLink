@@ -1,0 +1,50 @@
+{
+  "totalRequests": 62,
+  "averageOverhead": 0.007003378421434564,
+  "maxOverhead": 0.014388489208633094,
+  "overheadStdDev": 0.0025708530361242157,
+  "overheadPercentile95": 0.012658227848101266,
+  "overheadPercentile99": 0.014388489208633094,
+  "boundedOverheadProof": {
+    "withinThreshold": false,
+    "statisticalTest": {
+      "testType": "t-test",
+      "nullHypothesis": "overhead ≥ 0.1%",
+      "alternativeHypothesis": "overhead < 0.1%",
+      "statistic": 18.38714554928934,
+      "pValue": 0.001,
+      "criticalValue": 2.04,
+      "rejectNull": false,
+      "confidenceInterval": [
+        0.006337321150777898,
+        0.007669435692091229
+      ],
+      "effectSize": 2.335169819930733
+    },
+    "confidenceInterval": [
+      0.006337321150777898,
+      0.007669435692091229
+    ]
+  },
+  "adaptiveSamplingResults": {
+    "initialSamplingRate": 1,
+    "finalSamplingRate": 1,
+    "samplingAdjustments": 0,
+    "loadBasedReductions": 0
+  },
+  "circuitBreakerResults": {
+    "trips": 0,
+    "failuresPrevented": 0,
+    "averageRecoveryTime": 0
+  },
+  "selfHealingResults": {
+    "degradationEvents": 0,
+    "recoveryEvents": 0,
+    "healthCheckPasses": 62
+  },
+  "chaosResilienceResults": {
+    "failuresInjected": 0,
+    "systemSurvived": true,
+    "gracefulDegradationAchieved": true
+  }
+}

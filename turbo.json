@@ -1,18 +1,55 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": ["**/.env.*local", "pnpm-lock.yaml"],
+  "globalEnv": ["NODE_ENV", "CI"],
   "pipeline": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**", "build/**"],
+      "inputs": ["src/**", "package.json", "tsconfig.json", "*.config.*", "!src/**/*.test.*", "!**/*.spec.*"]
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "inputs": ["src/**", "package.json"]
     },
     "test": {
       "dependsOn": ["build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["src/**", "tests/**", "package.json", "jest.config.*", "vitest.config.*"]
+    },
+    "test:unit": {
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["src/**", "tests/unit/**", "package.json", "jest.config.*"]
+    },
+    "test:integration": {
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**", "test-results/**"],
+      "inputs": ["src/**", "tests/integration/**", "package.json", "jest.config.*"]
+    },
+    "test:e2e": {
+      "dependsOn": ["build"],
+      "outputs": ["test-results/**"],
+      "inputs": ["src/**", "tests/e2e/**", "package.json"]
+    },
+    "lint": {
+      "outputs": [],
+      "inputs": ["src/**", "package.json", ".eslintrc.*", "eslint.config.*", "!**/*.test.*", "!**/*.spec.*"],
+      "passThroughEnv": ["NODE_ENV"]
+    },
+    "type-check": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**", "package.json", "tsconfig.json"]
+    },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    },
+    "bootstrap": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"],
+      "inputs": ["package.json", "pnpm-lock.yaml"]
     }
   }
 }

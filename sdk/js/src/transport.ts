@@ -2,10 +2,9 @@ import { v4 as randomUUID } from 'uuid';
 import {
   ClientConfig,
   RequestOptions,
-  CredLinkError,
   AuthError,
-  RateLimitError,
   ConflictError,
+  RateLimitError,
   ValidationError,
   ServerError,
   NetworkError,
@@ -123,7 +122,7 @@ class RetryHandler {
   public async executeWithRetry<T>(
     operation: () => Promise<T>,
     isRetryable: (error: any) => boolean,
-    context: string
+    _context: string
   ): Promise<T> {
     let lastError: any;
     const maxAttempts = this.config.maxAttempts || DEFAULT_CONFIG.retries.maxAttempts;
@@ -225,7 +224,7 @@ export class HttpTransport {
           const response = await fetch(url, {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined,
+            body: body ? JSON.stringify(body) : null,
             signal: AbortSignal.timeout(options.timeout || this.config.timeoutMs),
           });
 
@@ -269,7 +268,7 @@ export class HttpTransport {
           const response = await fetch(url, {
             method,
             headers,
-            body: body ? JSON.stringify(body) : undefined,
+            body: body ? JSON.stringify(body) : null,
             signal: AbortSignal.timeout(options.timeout || this.config.timeoutMs),
           });
 
@@ -337,7 +336,7 @@ export class HttpTransport {
     };
   }
 
-  private createRetryPredicate(method: string): (error: any) => boolean {
+  private createRetryPredicate(_method: string): (error: any) => boolean {
     return (error: any) => {
       // Don't retry validation errors, auth errors, or conflicts
       if (error instanceof ValidationError || 
@@ -406,7 +405,7 @@ export class HttpTransport {
       case 409:
         throw new ConflictError(message, {
           requestId,
-          idempotencyKey,
+          idempotencyKey: idempotencyKey || '',
           endpoint: path,
           hint: errorData.hint,
         });
@@ -422,7 +421,7 @@ export class HttpTransport {
         throw new RateLimitError(message, {
           requestId,
           endpoint: path,
-          retryAfter: retryAfterSeconds,
+          retryAfter: retryAfterSeconds || 0,
           hint: errorData.hint,
         });
 
@@ -464,12 +463,10 @@ export class HttpTransport {
 
 export class TelemetryManager {
   private enabled: boolean = false;
-  private otelConfig?: any;
 
   constructor(config?: ClientConfig['telemetry']) {
     if (config?.enabled) {
       this.enabled = true;
-      this.otelConfig = config.otel;
       // Initialize OpenTelemetry if available
       this.initializeOpenTelemetry();
     }
@@ -483,7 +480,7 @@ export class TelemetryManager {
     }
   }
 
-  public createSpan(name: string, attributes?: Record<string, any>): any {
+  public createSpan(_name: string, _attributes?: Record<string, any>): any {
     if (!this.enabled) {
       return null;
     }

@@ -7,9 +7,9 @@
  * 🎯 PRODUCTION: Replace with real image transformations and measurements
  */
 
-import { C2PAService } from '../../services/c2pa-service';
-import { extractManifest } from '../../services/metadata-extractor';
-import { logger } from '../../utils/logger';
+import { C2PAService } from '../../src/services/c2pa-service';
+import { extractManifest } from '../../src/services/metadata-extractor';
+import { logger } from '../../src/utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 

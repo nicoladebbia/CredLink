@@ -5,10 +5,27 @@ import { z } from 'zod';
 import { C2PAService } from '../services/c2pa-service';
 import { ProofStorage } from '../services/proof-storage';
 import { embedProofUri } from '../services/metadata-embedder';
+import { validationService, ValidationService, ValidationOptions } from '../services/validation-service';
 import { logger } from '../utils/logger';
 import { AppError } from '../middleware/error-handler';
 import { metricsCollector } from '../middleware/metrics';
-import { registerService } from '../index';
+import { registerService } from '../utils/service-registry';
+
+let c2paService: C2PAService | null = null;
+
+export const initializeC2PAService = (certificateManager?: any) => {
+  if (!c2paService) {
+    c2paService = new C2PAService({ certificateManager });
+  }
+  return c2paService;
+};
+
+export const getC2PAService = () => {
+  if (!c2paService) {
+    throw new Error('C2PAService not initialized');
+  }
+  return c2paService;
+};
 
 const proofStorage = new ProofStorage();
 
@@ -67,12 +84,13 @@ const signLimiter = rateLimit({
 });
 
 // Configure multer for file uploads
+// 🔥 STEP 11: Replace duplicate validation with centralized ValidationService
 const upload = multer({
   limits: {
     fileSize: parseInt(process.env.MAX_FILE_SIZE_MB || '50') * 1024 * 1024
   },
   fileFilter: (req, file, cb) => {
-    // Accept images only
+    // Basic MIME type check - detailed validation happens in route handler
     if (!file.mimetype.startsWith('image/')) {
       cb(new Error('Only image files are allowed'));
       return;
@@ -81,7 +99,7 @@ const upload = multer({
   }
 });
 
-const c2paService = new C2PAService();
+// 🔥 CRITICAL FIX: Initialize C2PAService lazily in route handlers to prevent import-time errors
 
 /**
  * POST /sign
@@ -112,14 +130,60 @@ router.post('/', signLimiter, upload.single('image'), async (req: Request, res: 
       creator: req.body.creator || req.body.issuer
     });
 
+    // 🔥 STEP 11: Centralized validation with comprehensive security checks
+    const validationOptions = ValidationService.getEnvironmentOptions();
+    const validationResult = await validationService.validateImage(
+      req.file.buffer,
+      req.file.mimetype,
+      validationOptions
+    );
+
+    if (!validationResult.isValid) {
+      logger.warn('Image validation failed', {
+        errors: validationResult.errors,
+        filename: req.file.originalname
+      });
+      throw new AppError(400, `Invalid image: ${validationResult.errors.join(', ')}`);
+    }
+
+    // Log warnings from strict validation
+    if (validationResult.warnings.length > 0) {
+      logger.warn('Image validation warnings', {
+        warnings: validationResult.warnings,
+        filename: req.file.originalname
+      });
+    }
+
     // 1. Validate and parse custom assertions (if provided)
     const validatedAssertions = parseCustomAssertions(req.body.customAssertions);
+
+    // 🔥 CRITICAL FIX: Sanitize metadata fields to prevent XSS
+    const sanitizeMetadata = (text: string): string => {
+      if (!text) return text;
+      return text
+        .replace(/<script\b[^<]*>.*?<\/script>/gi, '') // Remove script tags and content
+        .replace(/javascript:/gi, '')
+        .replace(/vbscript:/gi, '')
+        .replace(/on\w+\s*=/gi, '') // Remove event handlers like onclick=
+        .replace(/<iframe[^>]*>/gi, '')
+        .replace(/<object[^>]*>/gi, '')
+        .replace(/<embed[^>]*>/gi, '')
+        .replace(/<form[^>]*>/gi, '')
+        .replace(/<input[^>]*>/gi, '')
+        .replace(/<img[^>]*>/gi, '') // Remove img tags entirely
+        .trim();
+    };
+
+    // Sanitize metadata fields
+    const sanitizedCreator = sanitizeMetadata(req.body.creator || req.body.issuer || 'CredLink');
+    const sanitizedTitle = req.body.title ? sanitizeMetadata(req.body.title) : undefined;
     
     // 2. Sign image with C2PA
-    const signingResult = await c2paService.signImage(
+    const signingResult = await getC2PAService().signImage(
       req.file.buffer,
       {
-        creator: req.body.creator || req.body.issuer || 'CredLink',
+        creator: sanitizedCreator,
+        title: sanitizedTitle,
         assertions: validatedAssertions
       }
     );
@@ -135,7 +199,7 @@ router.post('/', signLimiter, upload.single('image'), async (req: Request, res: 
     const duration = Date.now() - startTime;
     
     // ✅ Track metrics
-    const format = req.file.mimetype.split('/')[1] || 'unknown';
+    const format = validationResult.metadata?.format || req.file.mimetype.split('/')[1] || 'unknown';
     metricsCollector.trackImageSigning(format, req.file.size, duration, true);
     
     logger.info('Sign completed successfully', {
@@ -143,7 +207,8 @@ router.post('/', signLimiter, upload.single('image'), async (req: Request, res: 
       proofUri,
       manifestHash,
       originalSize: req.file.size,
-      signedSize: finalImage.length
+      signedSize: finalImage.length,
+      validatedFormat: validationResult.metadata?.format
     });
 
     // Set response headers

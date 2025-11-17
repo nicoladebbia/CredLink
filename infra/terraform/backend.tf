@@ -65,46 +65,31 @@
 # 3. Uncomment the S3 backend below
 # 4. Run: terraform init -migrate-state
 #
-# Current backend (DEVELOPMENT ONLY):
-terraform {
-  backend "local" {
-    path = "./terraform.tfstate"
-  }
-}
-
-# Production S3 Backend (RECOMMENDED)
-# 
-# Uncomment this block and comment out the local backend above
-# after running ./setup-remote-state.sh
+# PRODUCTION S3 BACKEND - MANDATORY FOR SECURITY
 #
-# Features:
-# ✅ Encrypted state storage
-# ✅ State versioning with 90-day retention
-# ✅ State locking via DynamoDB (prevents concurrent modifications)
-# ✅ Team collaboration
-# ✅ State history and rollback capability
-# ✅ Automatic backup
+# ⚠️  CRITICAL SECURITY: Local backend exposes infrastructure state
+# - State contains secrets, credentials, resource IDs
+# - No encryption enables complete system compromise
+# - No state locking allows corruption during concurrent operations
 #
-/*
 terraform {
   backend "s3" {
     bucket         = "credlink-terraform-state-002893232481"
     key            = "production/terraform.tfstate"
     region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "credlink-terraform-locks"
-    
+    encrypt        = true                       # MANDATORY: State encryption at rest
+    dynamodb_table = "credlink-terraform-locks" # MANDATORY: State locking
+
     # Workspace support for multi-environment
     workspace_key_prefix = "workspaces"
-    
-    # Additional security
-    kms_key_id = null  # Set to KMS key ARN for envelope encryption
-    
-    # Optional: Role assumption for cross-account access
+
+    # Enhanced security: KMS envelope encryption
+    kms_key_id = null # TODO: Set to KMS key ARN for envelope encryption
+
+    # Security: Role assumption for cross-account access
     # role_arn = "arn:aws:iam::ACCOUNT_ID:role/TerraformRole"
   }
 }
-*/
 
 # State Locking with DynamoDB
 # The DynamoDB table must have a primary key named "LockID" (case-sensitive)

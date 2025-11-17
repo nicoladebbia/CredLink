@@ -14,7 +14,7 @@ terraform {
 # API Keys Secret
 resource "aws_secretsmanager_secret" "api_keys" {
   name_prefix             = "${var.project_name}-${var.environment}-api-keys-"
-  description            = "API keys for CredLink service authentication"
+  description             = "API keys for CredLink service authentication"
   recovery_window_in_days = var.recovery_window_days
 
   tags = merge(var.tags, {

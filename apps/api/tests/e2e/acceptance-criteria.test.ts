@@ -5,17 +5,20 @@
  * - Real C2PA signature (not SHA256 hash)
  * - Signature validates with public certificate
  * - Manifest is embedded in image EXIF/XMP/JUMBF
- * - Signs test image < 2 seconds
+ * - Signs test image < configurable threshold seconds
  * - Embedding survives 85% of transformations
  * - Multiple embedding strategies working
  */
 
-import { C2PAService } from '../../services/c2pa-service';
-import { MetadataEmbedder } from '../../services/metadata-embedder';
-import { MetadataExtractor } from '../../services/metadata-extractor';
-import { ManifestBuilder } from '../../services/manifest-builder';
-import { readFileSync } from 'fs';
-import sharp from 'sharp';
+import { C2PAService } from '../../src/services/c2pa-service';
+import { MetadataEmbedder } from '../../src/services/metadata-embedder';
+import { MetadataExtractor } from '../../src/services/metadata-extractor';
+import { ManifestBuilder } from '../../src/services/manifest-builder';
+import request from 'supertest';
+import app from '../../src/index';
+import fs from 'fs';
+import path from 'path';
+import { TEST_CONSTANTS } from '../config/test-constants';
 
 describe('Acceptance Criteria Validation - Day 9-10', () => {
   let c2paService: C2PAService;
@@ -163,7 +166,7 @@ describe('Acceptance Criteria Validation - Day 9-10', () => {
       
       const duration = Date.now() - startTime;
 
-      expect(duration).toBeLessThan(2000);
+      expect(duration).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
     });
 
     it('should sign PNG in less than 2 seconds', async () => {
@@ -175,7 +178,7 @@ describe('Acceptance Criteria Validation - Day 9-10', () => {
       });
       const duration = Date.now() - startTime;
 
-      expect(duration).toBeLessThan(2000);
+      expect(duration).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
     });
 
     it('should sign WebP in less than 2 seconds', async () => {
@@ -187,7 +190,7 @@ describe('Acceptance Criteria Validation - Day 9-10', () => {
       });
       const duration = Date.now() - startTime;
 
-      expect(duration).toBeLessThan(2000);
+      expect(duration).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
     });
 
     it('should maintain performance under load', async () => {

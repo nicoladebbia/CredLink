@@ -1,0 +1,2058 @@
+{
+  "totalFiles": 112,
+  "externalContracts": [
+    {
+      "module": "@aws-sdk/client-acm-pca",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-acm-pca",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-kms",
+      "importType": "named",
+      "exportedSymbols": [
+        "KMSClient",
+        "DecryptCommand"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/client-kms",
+      "importType": "named",
+      "exportedSymbols": [
+        "KMSClient",
+        "DecryptCommand"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/client-s3",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-s3",
+      "importType": "named",
+      "exportedSymbols": [
+        "S3Client",
+        "PutObjectCommand",
+        "GetObjectCommand",
+        "DeleteObjectCommand",
+        "HeadObjectCommand",
+        "ListObjectsV2Command",
+        "CopyObjectCommand",
+        "DeleteObjectsCommand"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/storage/s3-storage-provider.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/client-s3",
+      "importType": "named",
+      "exportedSymbols": [
+        "S3Client",
+        "PutObjectCommand",
+        "GetObjectCommand",
+        "DeleteObjectCommand",
+        "HeadObjectCommand",
+        "ListObjectsV2Command",
+        "CopyObjectCommand",
+        "DeleteObjectsCommand"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/providers/s3-provider.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/client-s3",
+      "importType": "named",
+      "exportedSymbols": [
+        "S3Client",
+        "PutObjectCommand",
+        "GetObjectCommand",
+        "DeleteObjectCommand",
+        "HeadObjectCommand"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/storage/s3-proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/client-secrets-manager",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/auth.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-secrets-manager",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-secrets-manager",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-secrets-manager",
+      "importType": "named",
+      "exportedSymbols": [
+        "SecretsManagerClient",
+        "GetSecretValueCommand",
+        "UpdateSecretCommand"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/secrets-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/client-sns",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/client-sns",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "@aws-sdk/s3-request-presigner",
+      "importType": "named",
+      "exportedSymbols": [
+        "getSignedUrl"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/storage/s3-storage-provider.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@aws-sdk/s3-request-presigner",
+      "importType": "named",
+      "exportedSymbols": [
+        "getSignedUrl"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/providers/s3-provider.ts",
+      "lineNumber": 0,
+      "contractType": "aws-sdk",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/redis-client",
+      "importType": "named",
+      "exportedSymbols": [
+        "getRedisClient"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/redis-lock",
+      "importType": "named",
+      "exportedSymbols": [
+        "RedisLock"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/security-monitor",
+      "importType": "named",
+      "exportedSymbols": [
+        "securityMonitor",
+        "SecurityEventType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/security-monitor",
+      "importType": "named",
+      "exportedSymbols": [
+        "securityMonitor",
+        "SecurityEventType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/security-monitor",
+      "importType": "named",
+      "exportedSymbols": [
+        "securityMonitor",
+        "SecurityEventType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/security-monitor",
+      "importType": "named",
+      "exportedSymbols": [
+        "securityMonitor",
+        "SecurityEventType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/security-monitor",
+      "importType": "named",
+      "exportedSymbols": [
+        "securityMonitor",
+        "SecurityEventType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/validation.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/security-monitor",
+      "importType": "named",
+      "exportedSymbols": [
+        "securityMonitor",
+        "SecurityEventType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/storage",
+      "importType": "named",
+      "exportedSymbols": [
+        "S3StorageProvider"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/monitoring/health-checker.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/storage",
+      "importType": "named",
+      "exportedSymbols": [
+        "UnifiedProofStorage"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/proof-storage-legacy.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/storage",
+      "importType": "named",
+      "exportedSymbols": [
+        "ProofStorage"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/storage/providers",
+      "importType": "named",
+      "exportedSymbols": [
+        "UnifiedStorageFactory",
+        "StorageProvider"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/storage/storage-factory-legacy.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/storage/providers",
+      "importType": "named",
+      "exportedSymbols": [
+        "StorageConfig"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/storage/storage-factory-legacy.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@credlink/storage/providers",
+      "importType": "named",
+      "exportedSymbols": [
+        "UnifiedStorageProvider",
+        "StorageOptions",
+        "StorageResult",
+        "StorageConfig",
+        "StorageStats",
+        "HealthCheckResult",
+        "StorageError",
+        "StorageNotFoundError",
+        "StorageAccessDeniedError"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/storage/storage-provider-legacy.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@fastify/cors",
+      "importType": "default",
+      "exportedSymbols": [
+        "cors"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/compliance/src/api.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@sentry/node",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/sentry.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "@sentry/profiling-node",
+      "importType": "named",
+      "exportedSymbols": [
+        "ProfilingIntegration"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/sentry.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "cbor",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/advanced-extractor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "child_process",
+      "importType": "named",
+      "exportedSymbols": [
+        "spawn"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/sandboxes.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "child_process",
+      "importType": "named",
+      "exportedSymbols": [
+        "execFile"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/transforms/magick.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "commander",
+      "importType": "named",
+      "exportedSymbols": [
+        "program"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/main.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "cors",
+      "importType": "default",
+      "exportedSymbols": [
+        "cors"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "cors",
+      "importType": "default",
+      "exportedSymbols": [
+        "cors"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/sign.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/sign.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/verify.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/verify.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/c2pa-wrapper.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "X509Certificate",
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-validator.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "randomUUID"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/cloud-proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/deduplication-service.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createCipheriv",
+        "createDecipheriv",
+        "randomBytes",
+        "scryptSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/encryption.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/jumbf-builder.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/manifest-builder.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "randomUUID"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createVerify",
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/signature-verifier.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "X509Certificate"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/signature-verifier.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/virus-scan.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/perceptual-hash.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "randomUUID"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/structured-logger.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash",
+        "sign"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-wrapper.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/jumbf-builder.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/manifest-builder.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/utils/perceptual-hash.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createCipheriv",
+        "createDecipheriv",
+        "randomBytes",
+        "scryptSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/encryption.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "randomUUID"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/proof-storage-unified.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "randomUUID"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/probes/linkResolutionProbe.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "crypto",
+      "importType": "named",
+      "exportedSymbols": [
+        "createHash"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/csv.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "dotenv",
+      "importType": "default",
+      "exportedSymbols": [
+        "dotenv"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "exif-parser",
+      "importType": "default",
+      "exportedSymbols": [
+        "exifParser"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/metadata-extractor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/errors/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Application"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/api-versioning.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/auth.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/error-handler.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/ip-whitelist.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/metrics.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router",
+        "RouterType"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/docs.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router",
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router",
+        "Request",
+        "Response"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/docs.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router",
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router",
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Router",
+        "Request",
+        "Response",
+        "NextFunction"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Express"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/sentry.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/structured-logger.test.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Request"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/structured-logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express",
+      "importType": "named",
+      "exportedSymbols": [
+        "Express"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express-rate-limit",
+      "importType": "default",
+      "exportedSymbols": [
+        "rateLimit"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express-rate-limit",
+      "importType": "named",
+      "exportedSymbols": [
+        "rateLimit"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express-rate-limit",
+      "importType": "named",
+      "exportedSymbols": [
+        "rateLimit"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express-rate-limit",
+      "importType": "named",
+      "exportedSymbols": [
+        "rateLimit"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express-rate-limit",
+      "importType": "named",
+      "exportedSymbols": [
+        "rateLimit"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "express-rate-limit",
+      "importType": "default",
+      "exportedSymbols": [
+        "rateLimit"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fast-xml-parser",
+      "importType": "named",
+      "exportedSymbols": [
+        "XMLParser"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/advanced-extractor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fastify",
+      "importType": "named",
+      "exportedSymbols": [
+        "FastifyInstance",
+        "FastifyRequest",
+        "FastifyReply"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/compliance/src/api.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/c2pa-native-service.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/c2pa-wrapper.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync",
+        "fs"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "writeFileSync",
+        "readFileSync",
+        "mkdirSync",
+        "existsSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-wrapper.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "fs",
+        "readFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/certificate-manager.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "writeFileSync",
+        "readFileSync",
+        "mkdirSync",
+        "existsSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/proof-storage-unified.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "writeFileSync",
+        "readFileSync",
+        "mkdirSync",
+        "existsSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/loadMatrix.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/main.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "writeFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/csv.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "writeFileSync",
+        "mkdirSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/json.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "writeFileSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/junit.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "mkdirSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/junit.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "readFileSync",
+        "writeFileSync",
+        "mkdirSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/runScenario.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "fs",
+      "importType": "named",
+      "exportedSymbols": [
+        "existsSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/sandboxes.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "helmet",
+      "importType": "default",
+      "exportedSymbols": [
+        "helmet"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "helmet",
+      "importType": "default",
+      "exportedSymbols": [
+        "helmet"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "http",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-validator.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "https",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/certificate-validator.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "ioredis",
+      "importType": "default",
+      "exportedSymbols": [
+        "Redis"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "ipaddr.js",
+      "importType": "default",
+      "exportedSymbols": [
+        "ipaddr"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/ip-whitelist.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "js-yaml",
+      "importType": "named",
+      "exportedSymbols": [
+        "yamlLoad"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/loadMatrix.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "lru-cache",
+      "importType": "named",
+      "exportedSymbols": [
+        "LRUCache"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "lru-cache",
+      "importType": "named",
+      "exportedSymbols": [
+        "LRUCache"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/cache-manager.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "lru-cache",
+      "importType": "named",
+      "exportedSymbols": [
+        "LRUCache"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/cloud-proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "lru-cache",
+      "importType": "named",
+      "exportedSymbols": [
+        "LRUCache"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "morgan",
+      "importType": "default",
+      "exportedSymbols": [
+        "morgan"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/index.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "multer",
+      "importType": "default",
+      "exportedSymbols": [
+        "multer"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "multer",
+      "importType": "default",
+      "exportedSymbols": [
+        "multer"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "multer",
+      "importType": "default",
+      "exportedSymbols": [
+        "multer"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "multer",
+      "importType": "default",
+      "exportedSymbols": [
+        "multer"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/verify.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "node:assert",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/compliance/src/tests/security.test.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "node:test",
+      "importType": "named",
+      "exportedSymbols": [
+        "test",
+        "describe"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/compliance/src/tests/security.test.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "default",
+      "exportedSymbols": [
+        "path"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/docs.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "join"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "default",
+      "exportedSymbols": [
+        "path"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "join"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/proof-storage-unified.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "join"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/proof-storage.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "resolve"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/loadMatrix.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "join"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/main.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "join",
+        "dirname",
+        "resolve"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/json.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "resolve",
+        "dirname"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/reporters/junit.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "join",
+        "dirname"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/runScenario.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "path",
+      "importType": "named",
+      "exportedSymbols": [
+        "dirname",
+        "join",
+        "resolve"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/sandboxes.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "prom-client",
+      "importType": "named",
+      "exportedSymbols": [
+        "Registry",
+        "Counter",
+        "Histogram",
+        "Gauge",
+        "collectDefaultMetrics"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/middleware/metrics.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/advanced-extractor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/c2pa-service.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/manifest-builder.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/metadata-embedder.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/metadata-extractor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/perceptual-hash.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/manifest-builder.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/metadata-embedder.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/metadata-extractor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/utils/perceptual-hash.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/utils/sharp-optimizer.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "sharp",
+      "importType": "dynamic",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/runScenario.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "dynamic"
+    },
+    {
+      "module": "sharp",
+      "importType": "default",
+      "exportedSymbols": [
+        "sharp"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/transforms/magick.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "swagger-ui-express",
+      "importType": "default",
+      "exportedSymbols": [
+        "swaggerUi"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/docs.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "url",
+      "importType": "named",
+      "exportedSymbols": [
+        "fileURLToPath"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/sandboxes.ts",
+      "lineNumber": 0,
+      "contractType": "nodejs-built-in",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "util",
+      "importType": "named",
+      "exportedSymbols": [
+        "promisify"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/tests/acceptance/src/transforms/magick.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "uuid",
+      "importType": "named",
+      "exportedSymbols": [
+        "uuidv4"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/services/manifest-builder.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "uuid",
+      "importType": "named",
+      "exportedSymbols": [
+        "uuidv4"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/manifest-builder.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "v8",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/memory-monitor.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston",
+      "importType": "default",
+      "exportedSymbols": [
+        "winston"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/secure-logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston",
+      "importType": "default",
+      "exportedSymbols": [
+        "winston"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/structured-logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston",
+      "importType": "default",
+      "exportedSymbols": [
+        "winston"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/c2pa-sdk/src/utils/logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston",
+      "importType": "default",
+      "exportedSymbols": [
+        "winston"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston-daily-rotate-file",
+      "importType": "namespace",
+      "exportedSymbols": [
+        "*"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston-daily-rotate-file",
+      "importType": "default",
+      "exportedSymbols": [
+        "DailyRotateFile"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/secure-logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "winston-daily-rotate-file",
+      "importType": "default",
+      "exportedSymbols": [
+        "DailyRotateFile"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/utils/structured-logger.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "yamljs",
+      "importType": "default",
+      "exportedSymbols": [
+        "YAML"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/docs.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "zlib",
+      "importType": "named",
+      "exportedSymbols": [
+        "gzipSync",
+        "gunzipSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/storage/s3-storage-provider.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "zlib",
+      "importType": "named",
+      "exportedSymbols": [
+        "gzipSync",
+        "gunzipSync"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/packages/storage/src/providers/s3-provider.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "zod",
+      "importType": "named",
+      "exportedSymbols": [
+        "z"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "zod",
+      "importType": "named",
+      "exportedSymbols": [
+        "z"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/api/src/routes/v1/sign.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    },
+    {
+      "module": "zod",
+      "importType": "named",
+      "exportedSymbols": [
+        "z"
+      ],
+      "sourceFile": "/Users/nicoladebbia/Code_Ideas/CredLink/apps/beta-landing/src/server.ts",
+      "lineNumber": 0,
+      "contractType": "third-party",
+      "usagePattern": "direct"
+    }
+  ],
+  "cryptographicHash": "b32f5a5ceff392d199a5a727b745829f82f45185dc9a1e4819c516d6c4ce809c",
+  "discoveryCompleteness": {
+    "staticAnalysisCoverage": 65.17857142857143,
+    "runtimeVerificationNeeded": true,
+    "confidenceScore": 0.8847457627118644
+  }
+}

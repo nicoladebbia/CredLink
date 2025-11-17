@@ -1,4 +1,4 @@
-import { PerceptualHash } from '../utils/perceptual-hash';
+import { PerceptualHash } from '../src/utils/perceptual-hash';
 import { readFileSync } from 'fs';
 
 describe('PerceptualHash', () => {

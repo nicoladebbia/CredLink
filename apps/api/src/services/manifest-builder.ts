@@ -1,8 +1,10 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
 import sharp from 'sharp';
+import { versionConfig } from '../utils/version-config';
 
 // exif-parser doesn't have proper ES module exports
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const exifParser = require('exif-parser');
 
 export interface ManifestOptions {
@@ -49,8 +51,8 @@ export class ManifestBuilder {
     const manifest: C2PAManifest = {
       claim_generator: {
         $id: `urn:uuid:${uuidv4()}`,
-        name: 'CredLink/1.0',
-        version: '1.0.0',
+        name: versionConfig.userAgent,
+        version: versionConfig.manifestVersion,
         timestamp: options.timestamp
       },
       claim_data: [
@@ -104,7 +106,7 @@ export class ManifestBuilder {
     manifest.assertions.push({
       label: 'credlink.technical',
       data: {
-        serviceVersion: process.env.SERVICE_VERSION || '1.0.0',
+        serviceVersion: process.env.SERVICE_VERSION || versionConfig.appVersion,
         nodeVersion: process.version,
         platform: process.platform,
         signingAlgorithm: 'RSA-SHA256',

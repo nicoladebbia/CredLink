@@ -190,6 +190,7 @@ resource "aws_db_instance" "main" {
   max_allocated_storage = var.db_allocated_storage * 5
   storage_type          = "gp3"
   storage_encrypted     = true
+  kms_key_id            = aws_kms_key.credlink_master.arn
 
   # Database Configuration
   db_name  = "credlink"
@@ -203,10 +204,13 @@ resource "aws_db_instance" "main" {
   multi_az               = var.db_multi_az
 
   # Backup Configuration
-  backup_retention_period   = var.db_backup_retention_days
+  backup_retention_period   = var.db_backup_retention_days > 0 ? var.db_backup_retention_days : 7
   backup_window             = "03:00-04:00"
   maintenance_window        = "mon:04:00-mon:05:00"
   skip_final_snapshot       = var.environment != "production"
+  delete_automated_backups  = false
+  backup_target_window      = "03:00-04:00"
+  copy_tags_to_snapshot     = true
   final_snapshot_identifier = var.environment == "production" ? "${var.project_name}-${var.environment}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}" : null
 
   # Monitoring
@@ -245,7 +249,7 @@ resource "aws_db_parameter_group" "main" {
 
   parameter {
     name  = "log_statement"
-    value = "ddl"  # Only log DDL statements (CREATE, ALTER, DROP) to reduce log volume
+    value = "ddl" # Only log DDL statements (CREATE, ALTER, DROP) to reduce log volume
     # Options: none, ddl, mod (DDL + INSERT/UPDATE/DELETE), all
     # "all" causes significant performance degradation and excessive log volume
   }
@@ -415,8 +419,10 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "proofs" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = aws_kms_key.credlink_master.arn
+      sse_algorithm     = "aws:kms"
     }
+    bucket_key_enabled = true
   }
 }
 
@@ -437,6 +443,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "proofs" {
   rule {
     id     = "transition-to-glacier"
     status = "Enabled"
+
+    filter {} # Apply to all objects
 
     transition {
       days          = var.s3_lifecycle_glacier_days

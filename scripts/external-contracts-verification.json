@@ -1,0 +1,27 @@
+{
+  "staticAnalysisHash": "6dd1f7019e9da4b7d90fd6b2704db46562c8d8d904a71f819249e9ee46d81124",
+  "runtimeContracts": [],
+  "completenessProof": {
+    "totalStaticContracts": 9,
+    "totalRuntimeContracts": 0,
+    "missingFromStatic": [],
+    "unexpectedRuntime": [
+      "child_process",
+      "commander",
+      "crypto",
+      "fs",
+      "js-yaml",
+      "path",
+      "sharp",
+      "url",
+      "util"
+    ],
+    "completenessScore": 0.5,
+    "isMathematicallyComplete": false
+  },
+  "cryptographicProof": {
+    "combinedHash": "5c46f400ce463b66e860da13ee4d4f7b66500c4c07ac0c22afeffd46ad6b7e5c",
+    "verificationTimestamp": "2025-11-15T20:40:20.330Z",
+    "proofOfCompleteness": "Mathematical Proof: |Static ∩ Runtime| / |Static ∪ Runtime| = 0/9 = 0.0000. Missing modules: []"
+  }
+}

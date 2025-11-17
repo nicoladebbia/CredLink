@@ -1,4 +1,5 @@
 import { SecretsManagerClient, GetSecretValueCommand, UpdateSecretCommand } from '@aws-sdk/client-secrets-manager';
+import { randomBytes } from 'crypto';
 import { logger } from '../utils/logger';
 
 interface SecretValue {
@@ -9,7 +10,7 @@ interface SecretValue {
 class SecretsManagerService {
   private client: SecretsManagerClient;
   private cache = new Map<string, { value: SecretValue; expires: number }>();
-  private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly CACHE_TTL = parseInt(process.env.SECRETS_CACHE_TTL_MS || String(5 * 60 * 1000));
 
   constructor() {
     this.client = new SecretsManagerClient({ 
@@ -95,8 +96,7 @@ class SecretsManagerService {
   }
 
   async generateAndRotateApiKey(secretId: string): Promise<string> {
-    const crypto = require('crypto');
-    const newApiKey = crypto.randomBytes(32).toString('hex');
+    const newApiKey = randomBytes(32).toString('hex');
     
     await this.rotateSecret(secretId, { apiKey: newApiKey });
     
@@ -105,7 +105,7 @@ class SecretsManagerService {
 
   // Schedule automatic rotation (90 days)
   scheduleRotation(secretId: string, intervalDays: number = 90): void {
-    const interval = intervalDays * 24 * 60 * 60 * 1000;
+    const interval = intervalDays * parseInt(process.env.HOURS_PER_DAY || '24') * 60 * 60 * 1000;
     
     setInterval(async () => {
       try {

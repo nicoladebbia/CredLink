@@ -3,7 +3,7 @@
  * Handles organization policies for enterprise controls
  */
 
-import { check, Subject, Action, Resource, Context } from '@credlink/rbac';
+import { DatabaseRBAC, Subject, Action, Resource, Context } from '@credlink/rbac';
 
 export interface Policy {
   id: string;
@@ -43,9 +43,17 @@ export interface PolicyEvaluationResult {
  */
 export class EnterprisePolicyEngine {
   private policies: Map<string, Policy> = new Map();
+  private rbac: DatabaseRBAC;
   
-  constructor() {
+  constructor(rbac: DatabaseRBAC) {
+    this.rbac = rbac;
     this.seedDefaultPolicies();
+  }
+
+  // 🔥 HARSH FIX: Public method to expose RBAC functionality properly
+  // Avoids encapsulation violation through bracket notation
+  async checkPermission(subject: Subject, action: Action, resource: Resource, context: Context): Promise<any> {
+    return await this.rbac.check(subject, action, resource, context);
   }
 
   /**
@@ -69,7 +77,7 @@ export class EnterprisePolicyEngine {
     }
 
     // First check RBAC
-    const rbacResult = check(subject, action, resource, context);
+    const rbacResult = await this.rbac.check(subject, action, resource, context);
     if (!rbacResult.allow) {
       return {
         allow: false,
@@ -200,12 +208,12 @@ export class EnterprisePolicyEngine {
     
     // SECURITY: Sanitize reason to prevent injection
     const sanitizedReason = reason ? 
-      reason.replace(/[<>\"'&\n\r\t]/g, '').substring(0, 200) : 
+      reason.replace(/[<>"'&\n\r\t]/g, '').substring(0, 200) : 
       'Policy updated';
     
     // SECURITY: Sanitize updated_by to prevent injection  
     const sanitizedUpdatedBy = updated_by ? 
-      updated_by.replace(/[<>\"'&\n\r\t]/g, '').substring(0, 100) : 
+      updated_by.replace(/[<>"'&\n\r\t]/g, '').substring(0, 100) : 
       'system';
 
     const policy: Policy = {
@@ -332,7 +340,7 @@ export class EnterprisePolicyAPI {
    */
   async getPolicies(org_id: string, subject: Subject): Promise<Policy[]> {
     // Check if user can read policies
-    const canRead = check(
+    const canRead = await this.policyEngine.checkPermission(
       subject,
       { verb: 'read', resource: 'policies' },
       { type: 'policies', org_id },
@@ -359,7 +367,7 @@ export class EnterprisePolicyAPI {
     reason?: string
   ): Promise<Policy> {
     // Check if user can update policies
-    const canUpdate = check(
+    const canUpdate = await this.policyEngine.checkPermission(
       subject,
       { verb: 'update', resource: 'policies' },
       { type: 'policies', org_id },
@@ -382,6 +390,6 @@ export class EnterprisePolicyAPI {
   }
 }
 
-// Singleton instance
-export const enterprisePolicyEngine = new EnterprisePolicyEngine();
-export const enterprisePolicyAPI = new EnterprisePolicyAPI(enterprisePolicyEngine);
+// 🔥 HARSH ARCHITECTURAL FIX: Removed singleton exports
+// Dependency injection requires explicit instantiation, not global singletons
+// Callers must: new EnterprisePolicyEngine(databaseRbac)

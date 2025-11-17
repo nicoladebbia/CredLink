@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { logger } from '../utils/logger';
+import { LRUCacheFactory } from '@credlink/cache';
 
 /**
  * Deduplication Index Entry
@@ -32,7 +33,7 @@ export interface DeduplicationStats {
  * Prevents duplicate storage of identical images
  */
 export class DeduplicationService {
-  private index: Map<string, DeduplicationEntry>;
+  private index = LRUCacheFactory.createDeduplicationCache();
   private stats: {
     lookups: number;
     hits: number;
@@ -41,7 +42,6 @@ export class DeduplicationService {
   };
 
   constructor() {
-    this.index = new Map();
     this.stats = {
       lookups: 0,
       hits: 0,
@@ -248,7 +248,12 @@ export class DeduplicationService {
   importIndex(data: string): void {
     try {
       const entries = JSON.parse(data) as Array<[string, DeduplicationEntry]>;
-      this.index = new Map(entries);
+      
+      // Clear existing cache and repopulate with imported data
+      this.index.clear();
+      for (const [hash, entry] of entries) {
+        this.index.set(hash, entry);
+      }
       
       logger.info('Deduplication index imported', {
         entries: this.index.size

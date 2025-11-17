@@ -8,11 +8,13 @@
  * Phase 3: C2PA library integration (when ES module issues resolved)
  */
 
-import { readFileSync } from 'fs';
 import * as crypto from 'crypto';
-import { CertificateManager } from './certificate-manager';
+import { readFile } from 'fs/promises';
+import { AsyncCertificateManager } from './certificate-manager-async';
+import { AtomicCertificateManager } from './certificate-manager-atomic';
 
-const certManager = new CertificateManager();
+// 🔥 CRITICAL FIX: Use singleton certificate manager to prevent race condition vulnerability
+let certManager: AsyncCertificateManager | AtomicCertificateManager | null = null;
 
 export interface C2PASignResult {
   signedBuffer: Buffer;
@@ -44,10 +46,19 @@ export class C2PAWrapper {
   private certPath: string;
   private keyPath: string;
   private signingAlgorithm: string = 'RSA-SHA256';
+  private certificateManager: AsyncCertificateManager | AtomicCertificateManager;
 
-  constructor() {
+  constructor(certificateManager?: AsyncCertificateManager | AtomicCertificateManager) {
     this.certPath = process.env.SIGNING_CERTIFICATE || './certs/signing-cert.pem';
     this.keyPath = process.env.SIGNING_PRIVATE_KEY || './certs/signing-key.pem';
+    
+    // 🔥 CRITICAL FIX: Use injected certificate manager to prevent race condition vulnerability
+    this.certificateManager = certificateManager || new AsyncCertificateManager();
+    
+    // Store global reference for backward compatibility
+    if (certificateManager) {
+      certManager = certificateManager;
+    }
   }
 
   /**
@@ -57,7 +68,7 @@ export class C2PAWrapper {
   async sign(imageBuffer: Buffer, manifest: C2PAManifestDefinition): Promise<C2PASignResult> {
     try {
       const manifestUri = `urn:uuid:${crypto.randomUUID()}`;
-      const signingKey = await certManager.getSigningKey();
+      const signingKey = await this.certificateManager.getSigningKey();
 
       // Create real cryptographic signature of manifest using RSA-SHA256
       const manifestString = JSON.stringify({
@@ -112,25 +123,21 @@ export class C2PAWrapper {
     }
   }
 
-  private loadCertificate(): string {
+  private async loadCertificate(): Promise<string> {
     try {
-      if (this.certPath.startsWith('./')) {
-        return readFileSync(this.certPath, 'utf8');
-      }
-      return this.certPath; // Assume it's already PEM content
+      // Always use AsyncCertificateManager for non-blocking I/O
+      return await certManager!.getSigningCertificateAsync();
     } catch (error) {
-      throw new Error(`Failed to load certificate from ${this.certPath}: ${error}`);
+      throw new Error(`Failed to load certificate: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  private loadPrivateKey(): string {
+  private async loadPrivateKey(): Promise<string> {
     try {
-      if (this.keyPath.startsWith('./')) {
-        return readFileSync(this.keyPath, 'utf8');
-      }
-      return this.keyPath; // Assume it's already PEM content
+      // Always use AsyncCertificateManager for non-blocking I/O
+      return await certManager!.getSigningKeyAsync();
     } catch (error) {
-      throw new Error(`Failed to load private key from ${this.keyPath}: ${error}`);
+      throw new Error(`Failed to load private key: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

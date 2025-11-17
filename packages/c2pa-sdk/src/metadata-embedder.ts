@@ -55,10 +55,18 @@ export class MetadataEmbedder {
     signature?: string
   ): Promise<Buffer> {
     try {
-      // Validate and sanitize proof URI
+      // Validate buffer size to prevent OOM attacks
+      const MAX_BUFFER_SIZE = 100 * 1024 * 1024; // 100MB limit
+      if (imageBuffer.length > MAX_BUFFER_SIZE) {
+        throw new EmbeddingError(`Image buffer too large: ${imageBuffer.length} bytes (max: ${MAX_BUFFER_SIZE} bytes)`, 'BUFFER_TOO_LARGE');
+      }
+
+      // Validate and sanitize proof URI with specific error messages
       const sanitizedProofUri = this.sanitizeProofUri(proofUri);
       if (!sanitizedProofUri) {
-        throw new EmbeddingError('Invalid proof URI', 'INVALID_PROOF_URI');
+        // Determine specific error based on validation failure
+        const error = this.getProofUriError(proofUri);
+        throw new EmbeddingError(error, 'INVALID_PROOF_URI');
       }
 
       // Sanitize manifest creator name to prevent injection
@@ -481,6 +489,52 @@ export class MetadataEmbedder {
   }
 
   /**
+   * Get specific error message for proof URI validation failure
+   */
+  private getProofUriError(uri: string): string {
+    try {
+      // Trim whitespace
+      uri = uri.trim();
+
+      // Must not be too long
+      if (uri.length > 2000) {
+        return 'URI too long';
+      }
+
+      // Must be a valid URL
+      const url = new URL(uri);
+
+      // Must use HTTPS
+      if (url.protocol !== 'https:') {
+        return 'HTTPS required';
+      }
+
+      // Must not contain credentials
+      if (url.username || url.password) {
+        return 'URI credentials not allowed';
+      }
+
+      // Must have proper domain (no localhost or IPs in production)
+      if (url.hostname === 'localhost') {
+        return 'Localhost not allowed';
+      }
+      
+      if (url.hostname === '127.0.0.1' ||
+          url.hostname.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+        // Reject internal IPs in production, allow in testing/development
+        if (process.env.NODE_ENV === 'production') {
+          return 'Internal IP not allowed';
+        }
+        return 'Internal IP not allowed'; // Also reject in test mode for security testing
+      }
+
+      return 'Invalid proof URI';
+    } catch {
+      return 'Invalid URL format';
+    }
+  }
+
+  /**
    * Sanitize proof URI (must be valid HTTPS URL)
    */
   private sanitizeProofUri(uri: string): string | null {
@@ -501,13 +555,34 @@ export class MetadataEmbedder {
         return null;
       }
 
+      // Must not contain credentials
+      if (url.username || url.password) {
+        return null;
+      }
+
+      // Additional validation for malformed URLs that URL constructor accepts
+      // Reject empty hostname (e.g., 'https://')
+      if (!url.hostname) {
+        return null;
+      }
+
+      // Reject hostnames with consecutive dots (e.g., 'https://proofs..credlink.com')
+      if (url.hostname.includes('..')) {
+        return null;
+      }
+
       // Must have proper domain (no localhost or IPs in production)
-      if (url.hostname === 'localhost' ||
-          url.hostname === '127.0.0.1' ||
+      if (url.hostname === 'localhost') {
+        return null; // Always reject localhost
+      }
+      
+      if (url.hostname === '127.0.0.1' ||
           url.hostname.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
-        // Allow for testing/development
-        if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'development') {
-          return null;
+        // Reject internal IPs in production, allow in development only
+        if (process.env.NODE_ENV === 'development') {
+          // Allow in development
+        } else {
+          return null; // Reject in production and test
         }
       }
 
@@ -523,6 +598,12 @@ export class MetadataEmbedder {
   private sanitizeString(input: string, maxLength: number): string {
     // Remove null bytes and control characters
     let sanitized = input.replace(/[\x00-\x1F\x7F]/g, '');
+
+    // Remove HTML tags to prevent XSS
+    sanitized = sanitized.replace(/<[^>]*>/g, '');
+
+    // Decode and remove HTML entities
+    sanitized = sanitized.replace(/&[a-zA-Z0-9#]+;/g, '');
 
     // Trim whitespace
     sanitized = sanitized.trim();

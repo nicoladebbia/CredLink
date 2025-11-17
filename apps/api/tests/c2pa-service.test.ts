@@ -1,4 +1,8 @@
-import { C2PAService, ValidationError } from '../services/c2pa-service';
+import { C2PAService, ValidationError } from '../src/services/c2pa-service';
+import { MetadataEmbedder } from '../src/services/metadata-embedder';
+import { MetadataExtractor } from '../src/services/metadata-extractor';
+import { ManifestBuilder } from '../src/services/manifest-builder';
+import { TEST_CONSTANTS } from './config/test-constants';
 import { readFileSync } from 'fs';
 
 describe('C2PAService', () => {
@@ -85,7 +89,7 @@ describe('C2PAService', () => {
       await service.signImage(testImageBuffer);
       const duration = Date.now() - startTime;
       
-      expect(duration).toBeLessThan(2000);
+      expect(duration).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
     });
 
     it('should handle concurrent signing requests', async () => {

@@ -350,14 +350,18 @@ async function createServer() {
     });
   };
 
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  // 🔥 CRITICAL FIX: Only register signal handlers when running standalone
+  // Prevents duplicate handlers when imported as library by main API
+  if (require.main === module) {
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-  // SECURITY: Handle uncaught exceptions
-  process.on('uncaughtException', (error) => {
-    fastify.log.error({ error: error.message }, 'Uncaught exception');
-    process.exit(1);
-  });
+    // SECURITY: Handle uncaught exceptions
+    process.on('uncaughtException', (error) => {
+      fastify.log.error({ error: error.message }, 'Uncaught exception');
+      process.exit(1);
+    });
+  }
 
   process.on('unhandledRejection', (reason, promise) => {
     fastify.log.error({ reason, promise }, 'Unhandled rejection');

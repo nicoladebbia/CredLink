@@ -1,4 +1,4 @@
-import { CertificateValidator } from '../../services/certificate-validator';
+import { CertificateValidator } from '../../src/services/certificate-validator';
 import { X509Certificate } from 'crypto';
 import { readFileSync } from 'fs';
 

@@ -446,25 +446,25 @@ export const TEST_FIXTURES = {
         domain: 'test.example',
         conformance: ['c2pa', 'cai']
       },
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-10-31T00:00:00Z'
+      created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString()
     },
     key: {
       node_id: 'key:test:abc123',
       type: 'key' as const,
       attrs: {
         alg: 'ES256',
-        created_at: '2025-07-01T00:00:00Z',
-        expires_at: '2026-07-01T00:00:00Z',
+        created_at: new Date(Date.now() - 150 * 24 * 60 * 60 * 1000).toISOString(),
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         attested: true,
-        last_seen: '2025-10-31T00:00:00Z',
+        last_seen: new Date().toISOString(),
         chain_valid: true,
         trust_root_known: true,
         had_incidents: false,
         rotated_on_time: true
       },
-      created_at: '2025-07-01T00:00:00Z',
-      updated_at: '2025-10-31T00:00:00Z'
+      created_at: new Date(Date.now() - 150 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString()
     },
     device: {
       node_id: 'dev:yubihsm2:SN123',
@@ -472,11 +472,11 @@ export const TEST_FIXTURES = {
       attrs: {
         kind: 'yubihsm2',
         attested: true,
-        last_attested: '2025-09-30T00:00:00Z',
+        last_attested: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
         evidence_pack_url: 'https://example.com/evidence/123'
       },
-      created_at: '2025-07-01T00:00:00Z',
-      updated_at: '2025-10-31T00:00:00Z'
+      created_at: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString()
     }
   },
   
@@ -485,21 +485,21 @@ export const TEST_FIXTURES = {
       node_id: 'org:revoked',
       type: 'org' as const,
       attrs: { display_name: 'Revoked Org' },
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-10-31T00:00:00Z'
+      created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString()
     },
     key: {
       node_id: 'key:test:revoked456',
       type: 'key' as const,
       attrs: {
         alg: 'ES256',
-        created_at: '2025-01-01T00:00:00Z',
+        created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
         chain_valid: true,
         revoked: true,
-        revocation_ts: '2025-10-15T12:00:00Z'
+        revocation_ts: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       },
-      created_at: '2025-01-01T00:00:00Z',
-      updated_at: '2025-10-31T00:00:00Z'
+      created_at: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000).toISOString(),
+      updated_at: new Date().toISOString()
     }
   }
 };

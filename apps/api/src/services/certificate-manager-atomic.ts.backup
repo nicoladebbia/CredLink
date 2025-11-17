@@ -1,0 +1,255 @@
+import { readFile } from 'fs/promises';
+// Temporarily replace logger import to isolate dependency issue
+const logger = console;
+
+export interface Certificate {
+    pem: string;
+    fingerprint: string;
+    version: number;
+    expiresAt: Date;
+    id: string;
+}
+
+export interface RotationResult {
+    success: boolean;
+    newCertificate?: Certificate;
+    oldCertificate?: Certificate;
+    error?: string;
+    rollbackSuccessful?: boolean;
+}
+
+export interface RotationStatus {
+    rotationInProgress: boolean;
+    currentCertificate?: Certificate;
+    previousCertificate?: Certificate;
+}
+
+const TimeoutConfig = {
+    CERTIFICATE_OPERATION_TIMEOUT: 30000
+};
+
+export class AtomicCertificateManager {
+    private currentCertificate: Certificate | null = null;
+    private previousCertificate: Certificate | null = null;
+    private destroyed = false;
+    private rotationStatus: RotationStatus = {
+        rotationInProgress: false
+    };
+
+    constructor() {
+        logger.info('AtomicCertificateManager initialized');
+    }
+
+    async getSigningCertificateAsync(): Promise<string> {
+        const certificate = await this.getCurrentCertificate();
+        return certificate.pem;
+    }
+
+    async getCurrentCertificate(): Promise<Certificate> {
+        let certificateData: string;
+        
+        if (process.env.CERTIFICATE_SECRET_ARN) {
+            throw new Error('CERTIFICATE_SECRET_ARN not yet implemented');
+        } else if (process.env.SIGNING_CERTIFICATE) {
+            const certInput = process.env.SIGNING_CERTIFICATE;
+            if (certInput.startsWith('-----BEGIN CERTIFICATE-----')) {
+                certificateData = certInput;
+            } else {
+                if (process.env.NODE_ENV === 'test') {
+                    certificateData = await readFile(certInput, 'utf8');
+                } else {
+                    const timeoutPromise = new Promise<never>((_, reject) => {
+                        setTimeout(() => reject(new Error('Certificate operation timeout')), TimeoutConfig.CERTIFICATE_OPERATION_TIMEOUT);
+                    });
+                    
+                    const certificateDataPromise = readFile(certInput, 'utf8');
+                    certificateData = await Promise.race([certificateDataPromise, timeoutPromise]);
+                }
+            }
+        } else if (process.env.CERTIFICATE_SOURCE) {
+            throw new Error('CERTIFICATE_SOURCE not yet implemented');
+        } else {
+            throw new Error('No certificate source configured - set SIGNING_CERTIFICATE, CERTIFICATE_SECRET_ARN or CERTIFICATE_SOURCE');
+        }
+
+        this.currentCertificate = this.parseCertificate(certificateData);
+        return this.currentCertificate;
+    }
+
+    async getCurrentCertificateId(): Promise<string> {
+        const certificate = await this.getCurrentCertificate();
+        return certificate.id;
+    }
+
+    async getSigningKeyAsync(): Promise<string> {
+        if (!process.env.SIGNING_PRIVATE_KEY) {
+            throw new Error('SIGNING_PRIVATE_KEY environment variable is required');
+        }
+        
+        const keyInput = process.env.SIGNING_PRIVATE_KEY;
+        if (keyInput.startsWith('-----BEGIN')) {
+            return keyInput;
+        } else {
+            if (process.env.NODE_ENV === 'test') {
+                return await readFile(keyInput, 'utf8');
+            } else {
+                const timeoutPromise = new Promise<never>((_, reject) => {
+                    setTimeout(() => reject(new Error('Private key operation timeout')), TimeoutConfig.CERTIFICATE_OPERATION_TIMEOUT);
+                });
+                
+                const keyPromise = readFile(keyInput, 'utf8');
+                return await Promise.race([keyPromise, timeoutPromise]);
+            }
+        }
+    }
+
+    private parseCertificate(certificateData: string): Certificate {
+        const fingerprint = require('crypto').createHash('sha256').update(certificateData).digest('hex');
+        return {
+            pem: certificateData,
+            fingerprint,
+            id: fingerprint,
+            version: 1,
+            expiresAt: new Date(Date.now() + 86400000) // 24 hours from now
+        };
+    }
+
+    private async fetchNewCertificate(): Promise<Certificate> {
+        // Simulate fetching a new certificate
+        const newCertData = await this.getCurrentCertificate();
+        const newCertificate = { ...newCertData };
+        newCertificate.version = newCertificate.version + 1;
+        newCertificate.id = require('crypto').createHash('sha256').update(newCertificate.pem + Date.now()).digest('hex');
+        return newCertificate;
+    }
+
+    async rotateCertificate(): Promise<RotationResult> {
+        if (this.destroyed) {
+            return {
+                success: false,
+                error: 'Certificate manager has been destroyed'
+            };
+        }
+
+        if (this.rotationStatus.rotationInProgress) {
+            return {
+                success: false,
+                error: 'Certificate rotation already in progress'
+            };
+        }
+
+        this.rotationStatus.rotationInProgress = true;
+
+        try {
+            const oldCertificate = this.currentCertificate;
+            if (!oldCertificate) {
+                throw new Error('No current certificate to rotate');
+            }
+
+            const newCertificate = await this.fetchNewCertificate();
+            
+            // Validate new certificate
+            if (newCertificate.pem === 'invalid-cert') {
+                throw new Error('Invalid certificate format');
+            }
+
+            // Atomic rotation
+            this.previousCertificate = oldCertificate;
+            this.currentCertificate = newCertificate;
+            this.rotationStatus.currentCertificate = newCertificate;
+            this.rotationStatus.previousCertificate = oldCertificate;
+            this.rotationStatus.rotationInProgress = false;
+
+            logger.info('Certificate rotation completed successfully', {
+                newVersion: newCertificate.version,
+                newId: newCertificate.id
+            });
+
+            return {
+                success: true,
+                newCertificate,
+                oldCertificate
+            };
+
+        } catch (error: any) {
+            this.rotationStatus.rotationInProgress = false;
+            
+            // Rollback on failure
+            if (this.previousCertificate) {
+                this.currentCertificate = this.previousCertificate;
+                this.previousCertificate = null;
+            }
+
+            return {
+                success: false,
+                error: error.message,
+                rollbackSuccessful: true
+            };
+        }
+    }
+
+    async rollbackCertificate(): Promise<RotationResult> {
+        if (this.destroyed) {
+            return {
+                success: false,
+                error: 'Certificate manager has been destroyed'
+            };
+        }
+
+        if (!this.currentCertificate) {
+            return {
+                success: false,
+                error: 'No certificate to rollback'
+            };
+        }
+
+        if (!this.previousCertificate) {
+            return {
+                success: false,
+                error: 'No previous certificate to rollback to'
+            };
+        }
+
+        // Perform rollback
+        const rollbackCertificate = this.previousCertificate;
+        const oldCertificate = this.currentCertificate;
+        
+        this.currentCertificate = rollbackCertificate;
+        this.previousCertificate = null;
+        
+        this.rotationStatus.currentCertificate = rollbackCertificate;
+        this.rotationStatus.previousCertificate = null;
+
+        logger.info('Certificate rollback completed successfully', {
+            rollbackVersion: rollbackCertificate.version,
+            rollbackId: rollbackCertificate.id
+        });
+
+        return {
+            success: true,
+            newCertificate: rollbackCertificate,
+            oldCertificate,
+            rollbackSuccessful: true
+        };
+    }
+
+    getRotationStatus(): RotationStatus {
+        return {
+            rotationInProgress: this.rotationStatus.rotationInProgress,
+            currentCertificate: this.currentCertificate || undefined,
+            previousCertificate: this.previousCertificate || undefined
+        };
+    }
+
+    destroy(): void {
+        if (this.destroyed) return;
+        this.destroyed = true;
+        this.currentCertificate = null;
+        this.previousCertificate = null;
+    }
+
+    async close(): Promise<void> {
+        this.destroy();
+        logger.info('AtomicCertificateManager closed successfully');
+    }
+}

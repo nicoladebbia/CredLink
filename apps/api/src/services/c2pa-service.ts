@@ -1,9 +1,10 @@
-import { CertificateManager } from './certificate-manager';
+import { AsyncCertificateManager } from './certificate-manager-async';
+import { AtomicCertificateManager } from './certificate-manager-atomic';
 import { ManifestBuilder, C2PAManifest } from './manifest-builder';
 import { C2PAWrapper } from './c2pa-wrapper';
 import { MetadataEmbedder } from './metadata-embedder';
 import { PerceptualHash } from '../utils/perceptual-hash';
-import { ProofStorage } from './proof-storage';
+import { AsyncProofStorage } from './proof-storage-async';
 import * as crypto from 'crypto';
 import { LRUCache } from 'lru-cache';
 import sharp from 'sharp';
@@ -55,27 +56,29 @@ export class SigningError extends Error {
 }
 
 export class C2PAService {
-  private certManager: CertificateManager;
+  private certManager: AtomicCertificateManager;
   private manifestBuilder: ManifestBuilder;
   private c2paWrapper: C2PAWrapper;
   private metadataEmbedder: MetadataEmbedder;
-  private proofStorage: ProofStorage;
+  private proofStorage: AsyncProofStorage;
   private useRealC2PA: boolean;
   private manifestCache: LRUCache<string, C2PAManifest>;
   private signingLock: Map<string, Promise<any>> = new Map();
 
-  constructor(options: { useRealC2PA?: boolean } = {}) {
+  constructor(options: { useRealC2PA?: boolean; certificateManager?: AtomicCertificateManager } = {}) {
     this.useRealC2PA = options.useRealC2PA ?? (process.env.USE_REAL_C2PA === 'true');
-    this.certManager = new CertificateManager();
+    // 🔥 CRITICAL FIX: Use injected certificate manager to prevent race condition vulnerability
+    this.certManager = options.certificateManager || new AtomicCertificateManager();
     this.manifestBuilder = new ManifestBuilder();
-    this.c2paWrapper = new C2PAWrapper();
+    // 🔥 CRITICAL FIX: Pass certificate manager to C2PAWrapper to prevent rogue instances
+    this.c2paWrapper = new C2PAWrapper(this.certManager);
     this.metadataEmbedder = new MetadataEmbedder();
-    this.proofStorage = new ProofStorage();
+    this.proofStorage = new AsyncProofStorage();
     
     // Initialize LRU cache with max 1000 entries to prevent memory leak
     this.manifestCache = new LRUCache<string, C2PAManifest>({
-      max: 1000,
-      ttl: 1000 * 60 * 60 * 24, // 24 hours
+      max: parseInt(process.env.C2PA_CACHE_MAX_SIZE || '1000'),
+      ttl: parseInt(process.env.C2PA_CACHE_TTL_MS || String(1000 * 60 * 60 * 24)),
       updateAgeOnGet: true
     });
   }
@@ -145,7 +148,7 @@ export class C2PAService {
         proofUri: proofUri,
         imageHash: imageHash,
         timestamp: manifest.claim_generator.timestamp,
-        certificateId: this.certManager.getCurrentCertificateId(),
+        certificateId: await this.certManager.getCurrentCertificateId(),
         signedBuffer: signingResult.signedBuffer!,
         manifest: manifest
       };
@@ -237,8 +240,12 @@ export class C2PAService {
     if (buffer.length === 0) {
       throw new ValidationError('Image cannot be empty');
     }
-    if (buffer.length > 50 * 1024 * 1024) { // 50MB limit
-      throw new ValidationError('Image size exceeds 50MB limit');
+    if (buffer.length > 0) {
+      // 🔥 CRITICAL FIX: Use configurable file size limit instead of hardcoded 50MB
+      const maxFileSize = parseInt(process.env.MAX_FILE_SIZE_MB || '50') * 1024 * 1024;
+      if (buffer.length > maxFileSize) {
+        throw new ValidationError(`Image size exceeds ${maxFileSize / 1024 / 1024}MB limit`);
+      }
     }
     
     // Validate image format first
@@ -312,7 +319,7 @@ export class C2PAService {
         return await this.c2paWrapper.verify(imageBuffer, signature);
       }
       // Fallback verification
-      return signature.length > 50;
+      return signature.length > parseInt(process.env.MIN_SIGNATURE_LENGTH || '50');
     } catch (error) {
       return false;
     }

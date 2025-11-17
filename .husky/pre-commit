@@ -3,14 +3,14 @@
 
 # Run linting
 echo "Running linter..."
-npm run lint --workspaces --if-present || exit 1
+pnpm run lint || exit 1
 
 # Run type checking
 echo "Running type check..."
-npm run build --workspaces --if-present || exit 1
+pnpm run build || exit 1
 
 # Run tests (fast ones only)
 echo "Running tests..."
-npm test -- --bail --findRelatedTests --passWithNoTests || exit 1
+pnpm test -- --bail --findRelatedTests --passWithNoTests || exit 1
 
 echo "✅ Pre-commit checks passed"

@@ -40,6 +40,12 @@ export interface VerificationResult {
     proofFound: boolean;
     proofMatches: boolean;
     manifestTimestamp?: string;
+    // 🔥 STEP 11: Add validation metadata fields
+    imageFormat?: string;
+    imageDimensions?: {
+      width: number;
+      height: number;
+    };
   };
 }
 

@@ -43,8 +43,8 @@ describe('Rate Limiting Tests', () => {
     });
 
     it('should have separate limits per user', async () => {
-      const key1 = 'demo-admin-key';
-      const key2 = 'demo-user-key';
+      const key1 = process.env.TEST_DEMO_ADMIN_KEY || 'test-admin-key-placeholder';
+      const key2 = process.env.TEST_DEMO_USER_KEY || 'test-user-key-placeholder';
 
       // Make requests with different keys
       const response1 = await request(baseUrl)

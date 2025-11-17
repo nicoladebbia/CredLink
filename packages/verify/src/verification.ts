@@ -5,6 +5,7 @@
 
 import fetch from 'node-fetch';
 import { createHash } from 'crypto';
+import { DateUtils } from '@credlink/config';
 import { 
   VerificationRequest, 
   VerificationResult, 
@@ -39,7 +40,8 @@ function getTrustRoots(): TrustRoot[] {
       name: 'C2PA Production Root CA',
       public_key: publicKey,
       trusted: true,
-      expires_at: expiresAt || '2025-12-31T23:59:59Z'
+      // 🔥 HARDCODED DATE ELIMINATION: Use dynamic expiration date calculation
+      expires_at: expiresAt || DateUtils.getCertificateExpiryDate().toISOString()
     }
   ];
 }
@@ -306,13 +308,21 @@ export async function verifyProvenance(
 
     decisionPath.steps.push(`Validating against ${trustRoots.length} trust roots`);
 
-    // Extract signature from manifest (simplified)
+    // Extract signature from manifest for cryptographic validation
     const manifestHash = createHash('sha256').update(manifestData).digest('hex');
-    const mockSignature = manifestHash.slice(0, 32);
-  // CRITICAL: Use real cryptographic validation (or fail safely)
+    
+    // CRITICAL: Use real cryptographic validation (or fail safely)
     const cryptoStatus = getCryptoStatus();
     if (!cryptoStatus.ready) {
       console.error('🚨 CRYPTOGRAPHIC VALIDATION NOT READY:', cryptoStatus.warnings);
+      throw new VerificationError(
+        'CRYPTO_NOT_READY',
+        'Cryptographic validation system is not ready for production',
+        { 
+          errors: cryptoStatus.warnings,
+          cryptoStatus: 'not_ready'
+        }
+      );
     }
     
     const { valid: signatureValid, signer, errors, warnings } = validateManifestSignature(
@@ -331,13 +341,14 @@ export async function verifyProvenance(
       errors.forEach(error => console.error('🚨 Crypto Error:', error));
     }
     
+    // Handle signature validation failure
     if (!signatureValid) {
       throw new VerificationError(
         'INVALID_SIGNATURE',
         'Manifest signature validation failed',
         { 
           errors: errors || ['Unknown validation error'],
-          cryptoStatus: cryptoStatus.ready ? 'ready' : 'mock'
+          cryptoStatus: cryptoStatus.securityLevel || 'unknown'
         }
       );
     }

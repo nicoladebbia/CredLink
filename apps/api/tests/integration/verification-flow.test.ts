@@ -1,9 +1,9 @@
-import { C2PAService } from '../../services/c2pa-service';
-import { AdvancedExtractor } from '../../services/advanced-extractor';
-import { SignatureVerifier } from '../../services/signature-verifier';
-import { CertificateValidator } from '../../services/certificate-validator';
-import { ConfidenceCalculator } from '../../services/confidence-calculator';
-import { ProofStorage } from '../../services/proof-storage';
+import { C2PAService } from '../../src/services/c2pa-service';
+import { AdvancedExtractor } from '../../src/services/advanced-extractor';
+import { SignatureVerifier } from '../../src/services/signature-verifier';
+import { CertificateValidator } from '../../src/services/certificate-validator';
+import { ConfidenceCalculator } from '../../src/services/confidence-calculator';
+import { ProofStorage } from '../../src/services/proof-storage';
 import sharp from 'sharp';
 import { X509Certificate } from 'crypto';
 import { readFileSync } from 'fs';

@@ -2,9 +2,9 @@ import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import sharp from 'sharp';
-import { C2PAService } from '../../services/c2pa-service';
-import { extractProof } from '../../services/metadata-extractor';
-import { logger } from '../../utils/logger';
+import { C2PAService } from '../../src/services/c2pa-service';
+import { extractProof } from '../../src/services/metadata-extractor';
+import { logger } from '../../src/utils/logger';
 
 /**
  * CDN Survival Testing

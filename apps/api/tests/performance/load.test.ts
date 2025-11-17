@@ -5,13 +5,14 @@
  */
 
 import request from 'supertest';
-import * as fs from 'fs';
-import * as path from 'path';
 import app from '../../src/index';
+import fs from 'fs';
+import path from 'path';
+import { TEST_CONSTANTS } from '../config/test-constants';
 
 describe('Load Testing', () => {
   const testImage = fs.readFileSync(
-    path.join(__dirname, '../../../fixtures/images/source/small-test.jpg')
+    path.join(__dirname, '../../test-fixtures/images/test-image.jpg')
   );
 
   describe('Concurrent Sign Requests', () => {
@@ -83,7 +84,7 @@ describe('Load Testing', () => {
       console.log(`Response times - p50: ${p50}ms, p95: ${p95}ms, p99: ${p99}ms`);
 
       expect(p50).toBeLessThan(500); // 500ms median
-      expect(p95).toBeLessThan(2000); // 2s p95
+      expect(p95).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS); // configurable threshold p95
       expect(p99).toBeLessThan(5000); // 5s p99
     }, 120000);
   });

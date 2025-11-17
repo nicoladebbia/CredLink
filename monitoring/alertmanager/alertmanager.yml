@@ -1,0 +1,205 @@
+# AlertManager Configuration for CredLink Health Monitoring
+# Production-ready alerting with comprehensive routing and notification
+
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: '${ALERT_EMAIL_FROM:-alerts@yourcompany.com}'
+  smtp_auth_username: '${ALERT_EMAIL_USER:-alerts@yourcompany.com}'
+  smtp_auth_password: 'your-app-password'
+
+# Route configuration for alert routing
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    # Critical alerts go to PagerDuty and Slack
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+      routes:
+        # Service down alerts get immediate escalation
+        - match:
+            alertname: 'CredlinkServiceDown'
+          receiver: 'service-down-alerts'
+          group_wait: 0s
+          repeat_interval: 2m
+
+    # Warning alerts go to Slack and email
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 2h
+
+    # Info alerts go to Slack only
+    - match:
+        severity: info
+      receiver: 'info-alerts'
+      group_wait: 5m
+      repeat_interval: 24h
+
+# Inhibition rules to prevent alert spam
+inhibit_rules:
+  # Inhibit component alerts if overall service is down
+  - source_match:
+      alertname: 'CredlinkServiceDown'
+    target_match_re:
+      alertname: '(DatabaseHealthCheckFailed|RedisHealthCheckFailed|ManifestStoreDegraded|C2PAServiceDegraded|CertificateManagerDegraded)'
+    equal: ['service']
+
+  # Inhibit degraded alerts if service is down
+  - source_match:
+      alertname: 'CredlinkServiceDown'
+    target_match:
+      alertname: 'CredlinkServiceDegraded'
+    equal: ['service']
+
+# Receivers for different alert types
+receivers:
+  # Default receiver
+  - name: 'default'
+    email_configs:
+      - to: '${DEVOPS_EMAIL:-devops@yourcompany.com}'
+        subject: '[CredLink] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+
+  # Critical alerts - PagerDuty + Slack + Email
+  - name: 'critical-alerts'
+    pagerduty_configs:
+      - service_key: 'your-pagerduty-service-key'
+        description: '{{ .GroupLabels.alertname }}: {{ .Annotations.summary }}'
+        details:
+          firing: '{{ .Alerts.Firing | len }}'
+          summary: '{{ .Annotations.summary }}'
+          description: '{{ .Annotations.description }}'
+          runbook: '{{ .Annotations.runbook_url }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#credlink-alerts-critical'
+        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Component:* {{ .Labels.component }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+    
+    email_configs:
+      - to: '${ONCALL_EMAIL:-oncall@yourcompany.com},${DEVOPS_EMAIL:-devops@yourcompany.com}'
+        subject: '🚨 CRITICAL [CredLink] {{ .GroupLabels.alertname }}'
+        body: |
+          CRITICAL ALERT - IMMEDIATE ATTENTION REQUIRED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.service }}
+          Component: {{ .Labels.component }}
+          Runbook: {{ .Annotations.runbook_url }}
+          
+          This alert requires immediate investigation and resolution.
+          {{ end }}
+
+  # Service down alerts - Maximum priority
+  - name: 'service-down-alerts'
+    pagerduty_configs:
+      - service_key: 'your-pagerduty-urgent-service-key'
+        severity: 'critical'
+        description: 'SERVICE DOWN: {{ .Annotations.summary }}'
+        details:
+          urgency: 'high'
+          summary: '{{ .Annotations.summary }}'
+          description: '{{ .Annotations.description }}'
+    
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#credlink-alerts-critical'
+        title: '💀 SERVICE DOWN: {{ .GroupLabels.alertname }}'
+        text: |
+          SERVICE IS DOWN - ALL HANDS ON DECK
+          
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          
+          @here @oncall This requires immediate attention!
+          {{ end }}
+        color: 'danger'
+        send_resolved: true
+
+  # Warning alerts - Slack + Email
+  - name: 'warning-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#credlink-alerts-warning'
+        title: '⚠️ WARNING: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          *Component:* {{ .Labels.component }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: 'warning'
+        send_resolved: true
+    
+    email_configs:
+      - to: '${DEVOPS_EMAIL:-devops@yourcompany.com}'
+        subject: '⚠️ WARNING [CredLink] {{ .GroupLabels.alertname }}'
+        body: |
+          Warning Alert - Investigation Required
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Service: {{ .Labels.service }}
+          Component: {{ .Labels.component }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+
+  # Info alerts - Slack only
+  - name: 'info-alerts'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#credlink-alerts-info'
+        title: 'ℹ️ INFO: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Service:* {{ .Labels.service }}
+          {{ end }}
+        color: 'good'
+        send_resolved: true
+
+# Time intervals for special alert routing
+time_intervals:
+  - name: 'business-hours'
+    time_intervals:
+      - times:
+          - start_time: '09:00'
+            end_time: '17:00'
+        weekdays: ['monday:friday']
+        location: 'US/Eastern'
+
+# Templates for custom alert formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

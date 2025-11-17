@@ -23,7 +23,7 @@ describe('Sharp EXIF Behavior', () => {
           IFD0: {
             ImageDescription: 'CredLink:https://test.com/proof',
             Software: 'CredLink/1.0',
-            Copyright: 'C2PA Signed - 2025-11-11',
+            Copyright: 'C2PA Signed',
             Artist: 'Test Creator'
           }
         }

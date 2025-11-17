@@ -218,11 +218,14 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "dr_backup" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      kms_master_key_id = aws_kms_key.credlink_backups.arn
+      sse_algorithm     = "aws:kms"
     }
+    bucket_key_enabled = true
   }
 }
 
+# Backup Lifecycle
 resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
   provider = aws.backup_region
   bucket   = aws_s3_bucket.dr_backup.id
@@ -230,6 +233,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
   rule {
     id     = "backup_lifecycle"
     status = "Enabled"
+
+    filter {} # Apply to all objects
 
     transition {
       days          = 30
@@ -242,7 +247,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "dr_backup" {
     }
 
     expiration {
-      days = 2555 # 7 years
+      days = var.dr_backup_retention_days
     }
   }
 }

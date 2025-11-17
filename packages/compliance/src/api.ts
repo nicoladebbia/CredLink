@@ -5,6 +5,7 @@
 
 import Fastify, { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import cors from '@fastify/cors';
+import { DateUtils } from '@credlink/config';
 import { CompliancePackGenerator, PackGenerationRequest as GenPackGenerationRequest, PackGenerationResponse } from './generator.js';
 import { ComplianceReportingHarmonizer, ComplianceDataSource } from './reporting.js';
 import { RetentionPolicyManager, RetentionPolicy } from './retention.js';
@@ -367,8 +368,9 @@ export class ComplianceAPIServer {
           tenant_id: request.params.tenant_id,
           regions: regions as Array<"EU" | "UK" | "US" | "BR">,
           status: 'active',
-          last_pack_generated: '2025-10-01T00:00:00Z',
-          next_pack_scheduled: '2025-11-01T00:00:00Z',
+          // 🔥 HARDCODED DATE ELIMINATION: Use dynamic compliance dates
+          last_pack_generated: DateUtils.addDays(-30).toISOString(), // 30 days ago
+          next_pack_scheduled: DateUtils.addDays(7).toISOString(), // 7 days from now
           retention_policy: retentionPolicy,
           template_versions: {
             "eu_ai": "1.1.0",

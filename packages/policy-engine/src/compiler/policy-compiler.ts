@@ -344,7 +344,7 @@ export class PolicyCompiler {
         const generator = firstAction.parameters.generator;
         if (typeof generator === 'string' && generator.length <= 100) {
           // SECURITY: Remove any potentially dangerous characters
-          const sanitized = generator.replace(/[<>\"'&]/g, '');
+          const sanitized = generator.replace(/[<>"'&]/g, '');
           parts.push(`via ${sanitized}`);
         }
       }
@@ -356,7 +356,7 @@ export class PolicyCompiler {
       const operations = editActions
         .map(a => a.parameters?.operation)
         .filter(op => typeof op === 'string' && op.length <= 50)
-        .map(op => op.replace(/[<>\"'&]/g, '')) // SECURITY: Sanitize
+        .map(op => op.replace(/[<>"'&]/g, '')) // SECURITY: Sanitize
         .filter(op => /^[a-zA-Z0-9_-]+$/.test(op)); // SECURITY: Validate format
       
       if (operations.length > 0) {
@@ -371,7 +371,7 @@ export class PolicyCompiler {
       const license = compiled.license.data;
       if (license.license_id) {
         // SECURITY: Sanitize license ID to prevent injection
-        const sanitizedLicenseId = license.license_id.toString().replace(/[<>\"'&]/g, '').substring(0, 50);
+        const sanitizedLicenseId = license.license_id.toString().replace(/[<>"'&]/g, '').substring(0, 50);
         parts.push(`Licensed: ${license.provider} ${sanitizedLicenseId}`);
       }
       

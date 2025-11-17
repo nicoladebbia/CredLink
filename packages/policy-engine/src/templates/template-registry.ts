@@ -55,7 +55,7 @@ export class TemplateRegistry {
         policy: NEWSROOM_DEFAULT_POLICY,
         yaml: NEWSROOM_DEFAULT_YAML,
         metadata: NEWSROOM_DEFAULT_METADATA,
-        created_at: '2025-10-01T00:00:00Z',
+        created_at: new Date().toISOString(),
         version: '1.0.0'
       },
       {
@@ -66,7 +66,7 @@ export class TemplateRegistry {
         policy: EU_ADS_DEFAULT_POLICY,
         yaml: EU_ADS_DEFAULT_YAML,
         metadata: EU_ADS_DEFAULT_METADATA,
-        created_at: '2025-10-01T00:00:00Z',
+        created_at: new Date().toISOString(),
         version: '1.0.0'
       },
       {
@@ -77,7 +77,7 @@ export class TemplateRegistry {
         policy: MARKETPLACE_LISTING_DEFAULT_POLICY,
         yaml: MARKETPLACE_LISTING_DEFAULT_YAML,
         metadata: MARKETPLACE_LISTING_DEFAULT_METADATA,
-        created_at: '2025-10-01T00:00:00Z',
+        created_at: new Date().toISOString(),
         version: '1.0.0'
       }
     ];
@@ -299,7 +299,7 @@ export class TemplateRegistry {
         } else {
           // SECURITY: Sanitize string values to prevent injection
           const sanitized = typeof item === 'string' ? 
-            item.replace(/[<>\"'&\n\r\t]/g, '').substring(0, 200) : item;
+            item.replace(/[<>"'&\n\r\t]/g, '').substring(0, 200) : item;
           yaml += `${spaces}- ${sanitized}\n`;
         }
       }
@@ -322,7 +322,7 @@ export class TemplateRegistry {
           yaml += `${spaces}${key}:\n${this.objectToYaml(value, indent + 1)}`;
         } else if (typeof value === 'string') {
           // SECURITY: Sanitize string values to prevent injection
-          const sanitized = value.replace(/[<>\"'&\n\r\t]/g, '').substring(0, 500);
+          const sanitized = value.replace(/[<>"'&\n\r\t]/g, '').substring(0, 500);
           yaml += `${spaces}${key}: ${sanitized}\n`;
         } else {
           yaml += `${spaces}${key}: ${value}\n`;

@@ -34,9 +34,9 @@ export class MemoryOptimizer {
 
   constructor(thresholds?: Partial<MemoryThresholds>) {
     this.memoryThresholds = {
-      maxHeapSize: thresholds?.maxHeapSize ?? 512 * 1024 * 1024, // 512MB
-      maxIncreasePerMinute: thresholds?.maxIncreasePerMinute ?? 50 * 1024 * 1024, // 50MB/min
-      gcThreshold: thresholds?.gcThreshold ?? 400 * 1024 * 1024 // 400MB
+      maxHeapSize: thresholds?.maxHeapSize ?? parseInt(process.env.MAX_HEAP_SIZE_BYTES || String(512 * 1024 * 1024)), // 512MB
+      maxIncreasePerMinute: thresholds?.maxIncreasePerMinute ?? parseInt(process.env.MAX_HEAP_INCREASE_PER_MINUTE_BYTES || String(50 * 1024 * 1024)), // 50MB/min
+      gcThreshold: thresholds?.gcThreshold ?? parseInt(process.env.GC_THRESHOLD_BYTES || String(400 * 1024 * 1024)) // 400MB
     };
 
     logger.info('Memory Optimizer initialized', { thresholds: this.memoryThresholds });
@@ -49,7 +49,7 @@ export class MemoryOptimizer {
     // Monitor memory usage every 30 seconds
     this.memoryMonitorInterval = setInterval(() => {
       this.checkMemoryUsage();
-    }, 30000);
+    }, parseInt(process.env.MEMORY_MONITOR_INTERVAL_MS || '30000'));
 
     // Force garbage collection every 5 minutes if available
     if (global.gc) {

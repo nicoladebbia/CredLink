@@ -357,6 +357,7 @@ export class AdvancedExtractor {
       }
       
       // Use exif-parser as fallback for JPEG
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const exifParser = require('exif-parser');
       const parser = exifParser.create(imageBuffer);
       const result = parser.parse();

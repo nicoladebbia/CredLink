@@ -21,7 +21,14 @@ const SHARP_CONCURRENCY = parseInt(process.env.SHARP_CONCURRENCY || '4', 10);
 
 // Initialize Sharp configuration
 export function initializeSharp(): void {
-  // Configure cache size
+  // Disable cache entirely in test environment to prevent heap OOM
+  if (process.env.NODE_ENV === 'test') {
+    sharp.cache(false);
+    logger.info('Sharp cache disabled for test environment');
+    return;
+  }
+
+  // Configure cache size for production
   sharp.cache({
     memory: SHARP_CACHE_MB, // MB of memory to use for caching
     files: 20, // Max number of files to cache
@@ -91,12 +98,28 @@ export async function processImage(
   
   try {
     const processed = operations(instance);
-    return await processed.toBuffer();
+    const result = await processed.toBuffer();
+    
+    // Explicitly dispose Sharp instances to prevent memory leaks
+    if (instance && typeof instance.destroy === 'function') {
+      instance.destroy();
+    }
+    if (processed && typeof processed.destroy === 'function') {
+      processed.destroy();
+    }
+    
+    return result;
   } catch (error: any) {
     logger.error('Sharp processing failed', {
       error: error.message,
       inputSize: input.length
     });
+    
+    // Ensure disposal even on error
+    if (instance && typeof instance.destroy === 'function') {
+      instance.destroy();
+    }
+    
     throw error;
   }
 }

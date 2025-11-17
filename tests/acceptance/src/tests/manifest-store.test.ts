@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import * as assert from 'node:assert';
-import { ManifestStore } from '../../../../core/manifest-store/src/manifest-store.js';
-import type { ManifestStoreConfig, AuditRecord, ManifestMetadata } from '../../../../core/manifest-store/src/types.js';
+import { ManifestStore } from '@credlink/manifest-store';
+import type { ManifestStoreConfig, AuditRecord, ManifestMetadata } from '@credlink/manifest-store';
 
 describe('Manifest Store Acceptance Tests', () => {
   let store: ManifestStore;

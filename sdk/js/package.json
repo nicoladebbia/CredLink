@@ -45,25 +45,31 @@
     "build": "npm run clean && npm run build:types && npm run build:js",
     "build:types": "tsc --declaration --emitDeclarationOnly --outDir dist",
     "build:js": "rollup -c",
+    "build:analyze": "npm run build && npm run bundle-analysis",
+    "bundle-analysis": "open dist/bundle-analysis.html || echo 'Bundle analysis saved to dist/bundle-analysis.html'",
+    "size-limit": "size-limit",
+    "size-monitor": "node scripts/bundle-monitor.js",
+    "size-check": "npm run size-limit && npm run size-monitor",
     "clean": "rimraf dist",
     "dev": "rollup -c -w",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix",
-    "format": "prettier --write src/**/*.ts",
-    "prepublishOnly": "npm run build && npm test",
-    "docs": "typedoc src/index.ts",
-    "example:verify": "npm run build && node ../../examples/verify-on-build/verify-on-build.js",
-    "example:batch-verify": "npm run build && node ../../examples/batch-verify/batch-verify.js",
-    "example:inject-link": "npm run build && node ../../examples/inject-link/inject-link.js",
-    "example:retro-sign": "npm run build && node ../../examples/retro-sign/retro-sign.js"
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "lint": "eslint src --ext .ts,.js",
+    "lint:fix": "eslint src --ext .ts,.js --fix",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run size-check",
+    "size-limit:why": "size-limit --why",
+    "analyze": "npm run build && npm run size-limit"
   },
   "dependencies": {
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@size-limit/preset-small-lib": "^11.1.4",
     "@types/jest": "^29.5.8",
     "@types/node": "^20.9.0",
     "@types/uuid": "^9.0.7",
@@ -76,11 +82,10 @@
     "prettier": "^3.1.0",
     "rimraf": "^5.0.5",
     "rollup": "^4.6.1",
-    "@rollup/plugin-typescript": "^11.1.5",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "rollup-plugin-terser": "^7.0.2",
+    "rollup-plugin-visualizer": "^5.9.2",
+    "size-limit": "^11.1.4",
     "ts-jest": "^29.1.1",
+    "tslib": "^2.8.1",
     "typedoc": "^0.25.4",
     "typescript": "^5.2.2"
   },
@@ -92,5 +97,25 @@
     "branches": [
       "main"
     ]
-  }
+  },
+  "size-limit": [
+    {
+      "path": "dist/index.js",
+      "limit": "10 KB",
+      "gzip": true,
+      "name": "UMD Bundle (Browser)"
+    },
+    {
+      "path": "dist/index.esm.js",
+      "limit": "9 KB",
+      "gzip": true,
+      "name": "ESM Bundle (Modern)"
+    },
+    {
+      "path": "dist/index.cjs.js",
+      "limit": "15 KB",
+      "gzip": true,
+      "name": "CJS Bundle (Node.js)"
+    }
+  ]
 }

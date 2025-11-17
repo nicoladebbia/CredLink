@@ -5,10 +5,10 @@
  * format-specific embedding, size optimization, and performance
  */
 
-import { MetadataEmbedder, EmbeddingError } from '../services/metadata-embedder';
-import { MetadataExtractor } from '../services/metadata-extractor';
-import { JUMBFBuilder } from '../services/jumbf-builder';
-import { ManifestBuilder } from '../services/manifest-builder';
+import { MetadataEmbedder } from '../src/services/metadata-embedder';
+import { MetadataExtractor } from '../src/services/metadata-extractor';
+import { ManifestBuilder } from '../src/services/manifest-builder';
+import { TEST_CONSTANTS } from './config/test-constants';
 import { readFileSync } from 'fs';
 import sharp from 'sharp';
 
@@ -299,7 +299,7 @@ describe('Embedding Tests - Day 6-8', () => {
       const duration = Date.now() - startTime;
 
       expect(results).toHaveLength(5);
-      expect(duration).toBeLessThan(2000);
+      expect(duration).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
     });
   });
 

@@ -22,6 +22,15 @@ export interface ClientConfig {
   userAgent?: string;
 }
 
+export interface CredLinkClient {
+  /** Client configuration */
+  config: ClientConfig;
+  /** Transport layer */
+  transport: any;
+  /** Telemetry manager */
+  telemetry: any;
+}
+
 export interface TelemetryConfig {
   /** Enable OpenTelemetry telemetry */
   enabled?: boolean;
@@ -167,8 +176,8 @@ export class ValidationError extends CredLinkError {
 
   constructor(message: string, options: ValidationErrorOptions = {}) {
     super(message, options);
-    this.requestId = options.requestId;
-    this.endpoint = options.endpoint;
+    this.requestId = options.requestId || '';
+    this.endpoint = options.endpoint || '';
     this.hint = options.hint || 'Check required fields and data formats';
     this.docsUrl = 'https://docs.credlink.com/api/errors#validation_error';
   }
@@ -193,8 +202,8 @@ export class ServerError extends CredLinkError {
 
   constructor(message: string, options: ServerErrorOptions = {}) {
     super(message, options);
-    this.requestId = options.requestId;
-    this.endpoint = options.endpoint;
+    this.requestId = options.requestId || '';
+    this.endpoint = options.endpoint || '';
     this.hint = options.hint || 'Server encountered an unexpected error';
     this.docsUrl = 'https://docs.credlink.com/api/errors#server_error';
   }
@@ -219,8 +228,8 @@ export class NetworkError extends CredLinkError {
 
   constructor(message: string, options: NetworkErrorOptions = {}) {
     super(message, options);
-    this.requestId = options.requestId;
-    this.endpoint = options.endpoint;
+    this.requestId = options.requestId || '';
+    this.endpoint = options.endpoint || '';
     this.hint = options.hint || 'Network connectivity issue encountered';
     this.docsUrl = 'https://docs.credlink.com/api/errors#network_error';
   }

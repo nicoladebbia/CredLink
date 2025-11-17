@@ -13,7 +13,9 @@ import sharp from 'sharp';
 import { logger } from '../utils/logger';
 import { JUMBFBuilder } from './jumbf-builder';
 import { C2PAManifest } from './manifest-builder';
-import exifParser from 'exif-parser';
+// BRUTAL FIX: exif-parser doesn't have proper TypeScript declarations
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const exifParser = require('exif-parser');
 
 export class ExtractionError extends Error {
   constructor(message: string, public code?: string) {

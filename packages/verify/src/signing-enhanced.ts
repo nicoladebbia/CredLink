@@ -291,9 +291,8 @@ async function createC2PAManifest(
     signature = generateSignature(manifestString, keys.privateKey);
     console.log('[Crypto] Generated RSA-SHA256 signature');
   } else {
-    // Fallback to mock signature for development
-    signature = Buffer.from(manifestHash.slice(0, 32)).toString('base64');
-    console.log('[Crypto] Using mock signature (development mode)');
+    // Security: Never use mock signatures in production
+    throw new Error('Cryptographic signing is required for production operations. Configure USE_REAL_CRYPTO=true and provide valid signing keys.');
   }
 
   // Add signature to manifest

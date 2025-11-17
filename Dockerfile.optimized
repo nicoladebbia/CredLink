@@ -1,79 +1,96 @@
-# Multi-stage build for minimal production image
-# Stage 1: Build dependencies and compile TypeScript
-FROM node:20.11.1-alpine3.19 AS builder
+# CredLink Multi-Stage Optimized Docker Build
+# Optimized for layer caching, minimal image size, and fast builds
+FROM node:20.11.1-alpine3.19 AS base
 
-# Install pnpm
-RUN npm install -g pnpm@latest
+# Install pnpm and build tools
+RUN npm install -g pnpm@9.0.0 && \
+    apk add --no-cache \
+        imagemagick=7.1.1.36-r0 \
+        dumb-init \
+        && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-# Copy package files
+# Copy dependency files (optimized layer caching)
 COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY apps/sign-service/package.json ./apps/sign-service/
+COPY packages/*/package.json ./packages/*/
+COPY apps/*/package.json ./apps/*/
+COPY sandboxes/*/package.json ./sandboxes/*/
 
-# Install ALL dependencies (including devDependencies for build)
+# Install all dependencies with frozen lockfile
 RUN pnpm install --frozen-lockfile
 
+# Build stage with parallel compilation
+FROM base AS builder
+
 # Copy source code
-COPY apps/sign-service ./apps/sign-service
+COPY . .
 
-# Build TypeScript
-WORKDIR /app/apps/sign-service
-RUN pnpm run build
+# Build all packages in parallel using turbo
+RUN pnpm run build --force
 
-# Stage 2: Production dependencies only
-FROM node:20.11.1-alpine3.19 AS prod-deps
+# Production dependencies stage
+FROM base AS prod-deps
 
-RUN npm install -g pnpm@latest
+# Install only production dependencies
+RUN pnpm install --frozen-lockfile --prod
 
-WORKDIR /app
-
-# Copy package files
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY apps/sign-service/package.json ./apps/sign-service/
-
-# Install ONLY production dependencies
-RUN pnpm install --prod --frozen-lockfile
-
-# Stage 3: Final production image
+# Final production stage
 FROM node:20.11.1-alpine3.19 AS production
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install runtime dependencies
+RUN apk add --no-cache \
+        imagemagick=7.1.1.36-r0 \
+        dumb-init \
+        && rm -rf /var/cache/apk/*
 
-# Create non-root user
+# Install pnpm
+RUN npm install -g pnpm@9.0.0
+
+# Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+    adduser -S credlink -u 1001 -G nodejs
 
 WORKDIR /app
 
-# Copy production dependencies from prod-deps stage
-COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=prod-deps --chown=nodejs:nodejs /app/apps/sign-service/node_modules ./apps/sign-service/node_modules
+# Copy production dependencies
+COPY --from=prod-deps --chown=credlink:nodejs /app/node_modules ./node_modules
+COPY --from=prod-deps --chown=credlink:nodejs /app/packages/*/node_modules ./packages/*/
+COPY --from=prod-deps --chown=credlink:nodejs /app/apps/*/node_modules ./apps/*/
+COPY --from=prod-deps --chown=credlink:nodejs /app/sandboxes/*/node_modules ./sandboxes/*/
 
-# Copy built application from builder stage
-COPY --from=builder --chown=nodejs:nodejs /app/apps/sign-service/dist ./apps/sign-service/dist
-COPY --from=builder --chown=nodejs:nodejs /app/apps/sign-service/package.json ./apps/sign-service/
+# Copy built artifacts from builder stage
+COPY --from=builder --chown=credlink:nodejs /app/packages/*/dist ./packages/*/
+COPY --from=builder --chown=credlink:nodejs /app/apps/*/dist ./apps/*/
+COPY --from=builder --chown=credlink:nodejs /app/sandboxes/*/dist ./sandboxes/*/
 
-# Copy necessary runtime files
-COPY --chown=nodejs:nodejs apps/sign-service/.env.example ./apps/sign-service/.env.example
-COPY --chown=nodejs:nodejs apps/sign-service/certs ./apps/sign-service/certs
+# Copy runtime configuration files
+COPY --chown=credlink:nodejs package.json pnpm-workspace.yaml ./
+COPY --chown=credlink:nodejs packages/*/package.json ./packages/*/
+COPY --chown=credlink:nodejs apps/*/package.json ./apps/*/
+COPY --chown=credlink:nodejs sandboxes/*/package.json ./sandboxes/*/
+COPY --chown=credlink:nodejs scripts ./scripts
+COPY --chown=credlink:nodejs .env.example ./.env.example
+
+# Create necessary directories
+RUN mkdir -p .artifacts/logs .artifacts/acceptance fixtures && \
+    chown -R credlink:nodejs .artifacts fixtures
 
 # Switch to non-root user
-USER nodejs
+USER credlink
 
-# Set working directory to app
-WORKDIR /app/apps/sign-service
+# Expose application ports
+EXPOSE 3000 3001 4101 4102 4103
 
-# Expose port
-EXPOSE 3001
-
-# Health check
+# Health checks for different services
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+    CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" || \
+    node -e "require('http').get('http://localhost:3001/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" || \
+    node -e "require('http').get('http://localhost:4101/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))" || \
+    exit 1
 
-# Use dumb-init to handle signals properly
+# Use dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start application
-CMD ["node", "dist/index.js"]
+# Default command starts all services
+CMD ["pnpm", "bootstrap"]

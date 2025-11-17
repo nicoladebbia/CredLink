@@ -1,0 +1,202 @@
+# AlertManager Rules for CredLink Health Monitoring
+# Production-ready alerting rules for comprehensive health monitoring
+
+groups:
+  - name: credlink-health-alerts
+    rules:
+      # Critical: Service completely unhealthy
+      - alert: CredlinkServiceDown
+        expr: credlink_service_health_status{service="credlink-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: overall
+        annotations:
+          summary: "CredLink API service is down"
+          description: "CredLink API service has been unhealthy for more than 1 minute. Immediate investigation required."
+          runbook_url: "https://docs.credlink.com/runbooks/service-down"
+
+      # Warning: Service degraded
+      - alert: CredlinkServiceDegraded
+        expr: credlink_service_health_status{service="credlink-api"} == 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: overall
+        annotations:
+          summary: "CredLink API service is degraded"
+          description: "CredLink API service has been degraded for more than 5 minutes. Some components may be failing."
+          runbook_url: "https://docs.credlink.com/runbooks/service-degraded"
+
+      # Critical: Database health failure
+      - alert: DatabaseHealthCheckFailed
+        expr: credlink_health_check_status{service="credlink-api", component="postgresql"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: database
+        annotations:
+          summary: "Database health check failed"
+          description: "PostgreSQL database health check has been failing for more than 2 minutes. Database may be down or unreachable."
+          runbook_url: "https://docs.credlink.com/runbooks/database-failure"
+
+      # Critical: Redis health failure
+      - alert: RedisHealthCheckFailed
+        expr: credlink_health_check_status{service="credlink-api", component="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: redis
+        annotations:
+          summary: "Redis health check failed"
+          description: "Redis health check has been failing for more than 2 minutes. Cache service may be down."
+          runbook_url: "https://docs.credlink.com/runbooks/redis-failure"
+
+      # Warning: Manifest store degraded
+      - alert: ManifestStoreDegraded
+        expr: credlink_health_check_status{service="credlink-api", component="manifest_store"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: manifest_store
+        annotations:
+          summary: "Manifest store is degraded"
+          description: "Manifest store has been degraded for more than 5 minutes. Storage service may be experiencing issues."
+          runbook_url: "https://docs.credlink.com/runbooks/manifest-store-degraded"
+
+      # Warning: C2PA SDK issues
+      - alert: C2PAServiceDegraded
+        expr: credlink_health_check_status{service="credlink-api", component="c2pa_sdk"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: c2pa_sdk
+        annotations:
+          summary: "C2PA SDK service is degraded"
+          description: "C2PA SDK has been degraded for more than 5 minutes. Content signing/verification may be affected."
+          runbook_url: "https://docs.credlink.com/runbooks/c2pa-sdk-degraded"
+
+      # Warning: Certificate manager issues
+      - alert: CertificateManagerDegraded
+        expr: credlink_health_check_status{service="credlink-api", component="certificate_manager"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: certificate_manager
+        annotations:
+          summary: "Certificate manager is degraded"
+          description: "Certificate manager has been degraded for more than 10 minutes. Certificate expiration may be approaching."
+          runbook_url: "https://docs.credlink.com/runbooks/certificate-manager-degraded"
+
+      # Critical: Certificate expiration imminent
+      - alert: CertificateExpiringSoon
+        expr: credlink_health_check_status{service="credlink-api", component="certificate_manager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: certificate_manager
+        annotations:
+          summary: "Certificate expiring soon"
+          description: "Certificate is expiring within 24 hours. Immediate renewal required."
+          runbook_url: "https://docs.credlink.com/runbooks/certificate-expiration"
+
+      # Warning: Slow health check response times
+      - alert: HealthCheckSlowResponse
+        expr: credlink_health_check_response_time_ms{service="credlink-api"} > 5000
+        for: 5m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: "{{ $labels.component }}"
+        annotations:
+          summary: "Health check response time is slow"
+          description: "Health check for {{ $labels.component }} is taking {{ $value }}ms (threshold: 5000ms). Performance degradation detected."
+          runbook_url: "https://docs.credlink.com/runbooks/slow-health-checks"
+
+      # Critical: Very slow health check response times
+      - alert: HealthCheckVerySlowResponse
+        expr: credlink_health_check_response_time_ms{service="credlink-api"} > 10000
+        for: 2m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: "{{ $labels.component }}"
+        annotations:
+          summary: "Health check response time is very slow"
+          description: "Health check for {{ $labels.component }} is taking {{ $value }}ms (threshold: 10000ms). Critical performance issue."
+          runbook_url: "https://docs.credlink.com/runbooks/very-slow-health-checks"
+
+      # Warning: High failure rate
+      - alert: HealthCheckHighFailureRate
+        expr: rate(credlink_health_check_failures_total{service="credlink-api"}[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: "{{ $labels.component }}"
+        annotations:
+          summary: "High health check failure rate"
+          description: "Health check failure rate for {{ $labels.component }} is {{ $value | humanizePercentage }} over the last 5 minutes."
+          runbook_url: "https://docs.credlink.com/runbooks/high-failure-rate"
+
+      # Info: Service restart detected
+      - alert: ServiceRestarted
+        expr: credlink_service_uptime_seconds{service="credlink-api"} < 300
+        for: 0m
+        labels:
+          severity: info
+          service: credlink-api
+          component: overall
+        annotations:
+          summary: "CredLink API service restarted"
+          description: "CredLink API service restarted within the last 5 minutes. Current uptime: {{ $value | humanizeDuration }}."
+          runbook_url: "https://docs.credlink.com/runbooks/service-restart"
+
+  - name: credlink-infrastructure-alerts
+    rules:
+      # Critical: High memory usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: infrastructure
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}. Risk of OOM."
+          runbook_url: "https://docs.credlink.com/runbooks/high-memory"
+
+      # Warning: High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: credlink-api
+          component: infrastructure
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+          runbook_url: "https://docs.credlink.com/runbooks/high-cpu"
+
+      # Critical: Disk space running low
+      - alert: DiskSpaceRunningLow
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: credlink-api
+          component: infrastructure
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk space is {{ $value }}% available on {{ $labels.instance }}:{{ $labels.mountpoint }}."
+          runbook_url: "https://docs.credlink.com/runbooks/low-disk-space"

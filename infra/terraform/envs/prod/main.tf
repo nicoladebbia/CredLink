@@ -71,7 +71,7 @@ module "iam" {
   project = var.project
 
   # Cloudflare configuration
-  cloudflare_account_id         = var.cloudflare_account_id
+  cloudflare_account_id = var.cloudflare_account_id
   cloudflare_permission_groups = {
     r2_read_write = "c8fed203ed3043cba015a93ad1616f1f"
     worker_edit   = "82e64a83756745bbbb1c9c2701bf816b"
@@ -93,15 +93,15 @@ module "iam" {
   # Token scopes
   token_scopes = [
     {
-      name = "storage"
+      name        = "storage"
       permissions = ["r2:read", "r2:write"]
     },
     {
-      name = "workers"
+      name        = "workers"
       permissions = ["worker:read", "worker:write"]
     },
     {
-      name = "queues"
+      name        = "queues"
       permissions = ["queue:read", "queue:write"]
     }
   ]

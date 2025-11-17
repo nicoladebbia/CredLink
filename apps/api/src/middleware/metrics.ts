@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { Registry, Counter, Histogram, Gauge } from 'prom-client';
+import { Registry, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom-client';
 import { logger } from '../utils/logger';
 
 /**
@@ -97,7 +97,6 @@ export class MetricsCollector {
 
     // Collect default metrics (CPU, memory, etc.)
     if (process.env.ENABLE_DEFAULT_METRICS === 'true') {
-      const collectDefaultMetrics = require('prom-client').collectDefaultMetrics;
       collectDefaultMetrics({ register: this.registry });
     }
 

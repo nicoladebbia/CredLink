@@ -1,0 +1,173 @@
+{
+  "buildMetrics": {
+    "buildTime": 4221,
+    "buildSuccess": false,
+    "buildType": "file-count",
+    "error": "Command failed: npx tsc --noEmit --skipLibCheck"
+  },
+  "sizeMetrics": {
+    "totalSize": 9119481,
+    "totalSizeMB": 8.7,
+    "totalFiles": 575,
+    "averageFileSize": 15860,
+    "largestFiles": [
+      {
+        "file": "./.baseline/dependency-graph.json",
+        "size": 962095,
+        "sizeKB": 940
+      },
+      {
+        "file": "./.baseline/dependency-graph-final.json",
+        "size": 962095,
+        "sizeKB": 940
+      },
+      {
+        "file": "./apps/api/coverage/coverage-final.json",
+        "size": 742209,
+        "sizeKB": 725
+      },
+      {
+        "file": "./simple-runtime-behavior.json",
+        "size": 734328,
+        "sizeKB": 717
+      },
+      {
+        "file": "./apps/api/package-lock.json",
+        "size": 460807,
+        "sizeKB": 450
+      },
+      {
+        "file": "./simple-observability.json",
+        "size": 453961,
+        "sizeKB": 443
+      },
+      {
+        "file": "./sdk/js/package-lock.json",
+        "size": 234610,
+        "sizeKB": 229
+      },
+      {
+        "file": "./simple-external-contracts.json",
+        "size": 230208,
+        "sizeKB": 225
+      },
+      {
+        "file": "./packages/c2pa-sdk/package-lock.json",
+        "size": 224465,
+        "sizeKB": 219
+      },
+      {
+        "file": "./simple-dependency-graph.json",
+        "size": 217089,
+        "sizeKB": 212
+      }
+    ]
+  },
+  "dependencyMetrics": {
+    "packageDependencies": 0,
+    "totalImports": 988,
+    "averageImportsPerFile": 3,
+    "totalDependencies": 988
+  },
+  "complexityMetrics": {
+    "totalFiles": 394,
+    "totalComplexity": 16202,
+    "averageComplexity": 41.12,
+    "mostComplexFiles": [
+      {
+        "file": "./apps/api/coverage/lcov-report/prettify.js",
+        "lines": 3,
+        "functions": 23,
+        "loops": 32,
+        "conditions": 92,
+        "complexityScore": 363
+      },
+      {
+        "file": "./packages/verify/src/phase42-rehydration.ts",
+        "lines": 1221,
+        "functions": 14,
+        "loops": 10,
+        "conditions": 100,
+        "complexityScore": 334
+      },
+      {
+        "file": "./tests/acceptance/tests/dr-acceptance-tests.ts",
+        "lines": 932,
+        "functions": 14,
+        "loops": 5,
+        "conditions": 80,
+        "complexityScore": 264
+      },
+      {
+        "file": "./packages/verify/src/phase41-cdn-invalidation.ts",
+        "lines": 623,
+        "functions": 14,
+        "loops": 6,
+        "conditions": 78,
+        "complexityScore": 260
+      },
+      {
+        "file": "./ui/badge/c2-badge/src/c2-badge.js",
+        "lines": 590,
+        "functions": 17,
+        "loops": 6,
+        "conditions": 64,
+        "complexityScore": 221
+      },
+      {
+        "file": "./ui/badge/c2-badge/src/c2-badge.ts",
+        "lines": 716,
+        "functions": 17,
+        "loops": 6,
+        "conditions": 64,
+        "complexityScore": 221
+      },
+      {
+        "file": "./packages/manifest-store/src/manifest-store.ts",
+        "lines": 845,
+        "functions": 6,
+        "loops": 2,
+        "conditions": 63,
+        "complexityScore": 199
+      },
+      {
+        "file": "./packages/manifest-store/src/background-job-service.ts",
+        "lines": 785,
+        "functions": 6,
+        "loops": 5,
+        "conditions": 57,
+        "complexityScore": 187
+      },
+      {
+        "file": "./packages/manifest-store/src/manifest-store.js",
+        "lines": 686,
+        "functions": 5,
+        "loops": 1,
+        "conditions": 60,
+        "complexityScore": 187
+      },
+      {
+        "file": "./packages/verify/src/phase41-cache-middleware.ts",
+        "lines": 504,
+        "functions": 13,
+        "loops": 0,
+        "conditions": 57,
+        "complexityScore": 184
+      }
+    ]
+  },
+  "metadata": {
+    "generatedAt": "2025-11-16T01:04:40.737Z",
+    "nodeVersion": "v22.12.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "memory": {
+      "rss": 58146816,
+      "heapTotal": 7389184,
+      "heapUsed": 5139528,
+      "external": 1701897,
+      "arrayBuffers": 24851
+    },
+    "fingerprint": "ad0fd061c6f5a473"
+  }
+}

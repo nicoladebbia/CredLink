@@ -1,4 +1,4 @@
-import { C2PAWrapper } from '../services/c2pa-wrapper';
+import { C2PAWrapper } from '../src/services/c2pa-wrapper';
 import { readFileSync } from 'fs';
 
 describe('C2PAWrapper - Real C2PA Integration', () => {

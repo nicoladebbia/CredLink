@@ -1,4 +1,4 @@
-import { C2PAService } from '../services/c2pa-service';
+import { C2PAService } from '../src/services/c2pa-service';
 import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';

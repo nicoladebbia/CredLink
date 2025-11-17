@@ -47,8 +47,8 @@ paths:
                 $ref: '#/components/schemas/HealthResponse'
               example:
                 status: healthy
-                timestamp: "2025-11-05T12:00:00.000Z"
-                version: "1.0.0"
+                timestamp: "{{CURRENT_TIMESTAMP}}"
+                version: "{{APP_VERSION}}"
                 uptime: 86400
 
   /compliance/pack:
@@ -90,7 +90,7 @@ paths:
                   uk_osa: "1.0.2"
                   us_ftc: "1.0.1"
                   br_lgpd: "1.0.0"
-                generated_at: "2025-11-05T12:00:00.000Z"
+                generated_at: "{{CURRENT_TIMESTAMP}}"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -134,7 +134,7 @@ paths:
                 purge_scheduled: "2027-11-05T12:00:00.000Z"
                 worm_storage_enabled: true
                 dsr_hooks_enabled: true
-                last_updated: "2025-11-05T12:00:00.000Z"
+                last_updated: "{{CURRENT_TIMESTAMP}}"
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -187,7 +187,7 @@ paths:
                   purge_scheduled: "2027-11-05T12:00:00.000Z"
                   worm_storage_enabled: true
                   dsr_hooks_enabled: true
-                  last_updated: "2025-11-05T12:00:00.000Z"
+                  last_updated: "{{CURRENT_TIMESTAMP}}"
                 template_versions:
                   eu_ai: "1.1.0"
                   dsa26: "1.2.0"
@@ -198,7 +198,7 @@ paths:
                 alerts:
                   - type: "info"
                     message: "Monthly compliance pack scheduled for November 1"
-                    timestamp: "2025-11-05T12:00:00.000Z"
+                    timestamp: "{{CURRENT_TIMESTAMP}}"
         '404':
           $ref: '#/components/responses/NotFound'
         '401':
@@ -296,7 +296,7 @@ components:
         timestamp:
           type: string
           format: date-time
-          example: "2025-11-05T12:00:00.000Z"
+          example: "{{CURRENT_TIMESTAMP}}"
         version:
           type: string
           example: "1.0.0"
@@ -389,7 +389,7 @@ components:
           type: string
           format: date-time
           description: Timestamp when pack was generated
-          example: "2025-11-05T12:00:00.000Z"
+          example: "{{CURRENT_TIMESTAMP}}"
         error:
           type: string
           description: Error message if status is "error"
@@ -469,7 +469,7 @@ components:
           type: string
           format: date-time
           description: When policy was last updated
-          example: "2025-11-05T12:00:00.000Z"
+          example: "{{CURRENT_TIMESTAMP}}"
 
     ComplianceStatus:
       type: object
@@ -546,7 +546,7 @@ components:
         timestamp:
           type: string
           format: date-time
-          example: "2025-11-05T12:00:00.000Z"
+          example: "{{CURRENT_TIMESTAMP}}"
 
     TemplatesResponse:
       type: object

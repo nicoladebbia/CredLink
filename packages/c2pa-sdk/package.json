@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-kms": "^3.450.0",
+    "@credlink/api": "workspace:*",
     "@contentauth/c2pa-node": "^0.3.0",
     "cbor": "^10.0.11",
     "sharp": "^0.33.0",

@@ -1,0 +1,130 @@
+=== TESTING tests/debug-exif.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+=== TESTING tests/unit/proof-storage.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 8 passed, 9 total
+=== TESTING tests/unit/signature-verifier.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 5 passed, 17 total
+=== TESTING tests/unit/error-handling.test.ts ===
+=== TESTING tests/unit/metadata-embedder.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       11 failed, 2 passed, 13 total
+=== TESTING tests/unit/advanced-extractor.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/unit/storage.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/unit/certificate-manager.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       17 failed, 1 passed, 18 total
+=== TESTING tests/unit/certificate-validator.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/security/injection.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       17 failed, 10 passed, 27 total
+=== TESTING tests/security/input-validation.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       14 passed, 14 total
+=== TESTING tests/security/injection-prevention.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       13 failed, 13 total
+=== TESTING tests/security/authentication.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 12 total
+=== TESTING tests/embedding.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 21 passed, 27 total
+=== TESTING tests/c2pa-service.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 3 passed, 9 total
+=== TESTING tests/integration/multi-format.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 1 passed, 9 total
+=== TESTING tests/integration/rate-limiting.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       10 failed, 4 passed, 14 total
+=== TESTING tests/integration/health-endpoints.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/integration/rate-limiting-live.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       9 failed, 2 passed, 11 total
+=== TESTING tests/integration/storage.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       11 failed, 3 passed, 14 total
+=== TESTING tests/integration/verification-flow.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/survival.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 19 passed, 20 total
+=== TESTING tests/c2pa-real-signing.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       8 failed, 1 passed, 9 total
+=== TESTING tests/c2pa-wrapper.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       5 passed, 5 total
+=== TESTING tests/c2pa-integration.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+=== TESTING tests/perceptual-hash.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 10 passed, 11 total
+=== TESTING tests/cdn/cdn-survival.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       14 failed, 14 total
+=== TESTING tests/recovery.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 19 passed, 21 total
+=== TESTING tests/debug-sharp-exif.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+=== TESTING tests/c2pa-real-integration.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 5 passed, 6 total
+=== TESTING tests/performance/concurrency.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 3 passed, 4 total
+=== TESTING tests/performance/large-files.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 6 passed, 12 total
+=== TESTING tests/performance/api-performance.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       11 failed, 11 total
+=== TESTING tests/performance/storage-performance.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/performance/load.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       2 failed, 3 passed, 5 total
+=== TESTING tests/performance/performance.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/performance/verification-performance.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/performance/load-testing.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       18 failed, 18 total
+=== TESTING tests/e2e/sign-verify-integration.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       32 failed, 32 total
+=== TESTING tests/e2e/health-endpoints.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       16 failed, 16 total
+=== TESTING tests/e2e/load-testing.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/e2e/acceptance-criteria.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       20 failed, 20 total
+=== TESTING tests/e2e/sign-verify-roundtrip.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       7 failed, 1 passed, 8 total
+=== TESTING tests/survival/survival-rates.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total

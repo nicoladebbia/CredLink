@@ -13,7 +13,7 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 // Sensitive patterns to redact from logs
 const REDACT_PATTERNS = [
   // API keys and tokens
-  { pattern: /(api[_-]?key|apikey|token|bearer)[\s:=]+([a-zA-Z0-9_\-]{20,})/gi, replacement: '$1=***REDACTED***' },
+  { pattern: /(api[_-]?key|apikey|token|bearer)[\s:=]+([a-zA-Z0-9_-]{20,})/gi, replacement: '$1=***REDACTED***' },
   // Passwords
   { pattern: /(password|passwd|pwd)[\s:=]+([^\s,}]+)/gi, replacement: '$1=***REDACTED***' },
   // Private keys

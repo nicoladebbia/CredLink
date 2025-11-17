@@ -1,0 +1,41 @@
+{
+  "name": "@credlink/security-monitor",
+  "version": "1.0.0",
+  "description": "Comprehensive security monitoring and threat detection system",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": ["security", "monitoring", "threat-detection", "audit", "credlink"],
+  "author": "CredLink",
+  "license": "MIT",
+  "dependencies": {
+    "node-fetch": "^2.7.0",
+    "@sentry/node": "^7.0.0",
+    "@credlink/cache": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/node-fetch": "^2.6.4",
+    "@types/jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

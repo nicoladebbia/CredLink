@@ -9,6 +9,7 @@ interface SecretValue {
 class SecretsManagerService {
   private client: SecretsManagerClient;
   private cache = new Map<string, { value: SecretValue; expires: number }>();
+  private rotationIntervals: Map<string, NodeJS.Timeout> = new Map();
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
@@ -29,74 +30,61 @@ class SecretsManagerService {
       const response = await this.client.send(command);
       
       if (!response.SecretString) {
-        throw new Error(`Secret ${secretId} not found or empty`);
+        throw new Error('No secret string found');
       }
 
       const secretValue = JSON.parse(response.SecretString);
       
-      // Cache the value
+      // Cache the secret
       this.cache.set(secretId, {
         value: secretValue,
         expires: Date.now() + this.CACHE_TTL
       });
 
-      logger.info('Secret retrieved from AWS Secrets Manager', { 
-        secretId: this.sanitizeSecretId(secretId) 
-      });
-
       return secretValue;
     } catch (error) {
-      logger.error('Failed to retrieve secret from AWS Secrets Manager', {
+      logger.error('Failed to get secret', {
         secretId: this.sanitizeSecretId(secretId),
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      throw new Error(`Failed to retrieve secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   }
 
-  async getApiKey(keyId: string): Promise<string> {
-    const secret = await this.getSecret(keyId);
-    
-    if (!secret.apiKey) {
-      throw new Error(`API key not found in secret ${keyId}`);
-    }
-
-    return secret.apiKey;
-  }
-
-  async rotateSecret(secretId: string, newSecretValue: Partial<SecretValue>): Promise<void> {
+  async updateSecret(secretId: string, secretValue: SecretValue): Promise<void> {
     try {
-      // Get current secret
-      const currentSecret = await this.getSecret(secretId);
-      const updatedSecret = { ...currentSecret, ...newSecretValue };
-
-      // Update in Secrets Manager
       const command = new UpdateSecretCommand({
         SecretId: secretId,
-        SecretString: JSON.stringify(updatedSecret)
+        SecretString: JSON.stringify(secretValue)
       });
 
       await this.client.send(command);
-
-      // Clear cache
-      this.cache.delete(secretId);
-
-      logger.info('Secret rotated successfully', { 
-        secretId: this.sanitizeSecretId(secretId) 
+      
+      // Update cache
+      this.cache.set(secretId, {
+        value: secretValue,
+        expires: Date.now() + this.CACHE_TTL
       });
 
+      logger.info('Secret updated successfully', {
+        secretId: this.sanitizeSecretId(secretId)
+      });
     } catch (error) {
-      logger.error('Failed to rotate secret', {
+      logger.error('Failed to update secret', {
         secretId: this.sanitizeSecretId(secretId),
         error: error instanceof Error ? error.message : 'Unknown error'
       });
-      throw new Error(`Failed to rotate secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw error;
     }
   }
 
+  async rotateSecret(secretId: string, newSecretValue: SecretValue): Promise<void> {
+    await this.updateSecret(secretId, newSecretValue);
+  }
+
   async generateAndRotateApiKey(secretId: string): Promise<string> {
-    const crypto = require('crypto');
-    const newApiKey = crypto.randomBytes(32).toString('hex');
+    const { randomBytes } = await import('crypto');
+    const newApiKey = randomBytes(32).toString('hex');
     
     await this.rotateSecret(secretId, { apiKey: newApiKey });
     
@@ -107,7 +95,13 @@ class SecretsManagerService {
   scheduleRotation(secretId: string, intervalDays: number = 90): void {
     const interval = intervalDays * 24 * 60 * 60 * 1000;
     
-    setInterval(async () => {
+    // Clear existing interval for this secret
+    const existingInterval = this.rotationIntervals.get(secretId);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+    }
+    
+    const rotationInterval = setInterval(async () => {
       try {
         await this.generateAndRotateApiKey(secretId);
         logger.info('Automatic secret rotation completed', {
@@ -120,6 +114,9 @@ class SecretsManagerService {
         });
       }
     }, interval);
+    
+    // Store interval reference for cleanup
+    this.rotationIntervals.set(secretId, rotationInterval);
 
     logger.info('Automatic secret rotation scheduled', {
       secretId: this.sanitizeSecretId(secretId),
@@ -127,9 +124,19 @@ class SecretsManagerService {
     });
   }
 
+  // Cleanup method for graceful shutdown
+  cleanup(): void {
+    for (const [secretId, interval] of this.rotationIntervals) {
+      clearInterval(interval);
+    }
+    this.rotationIntervals.clear();
+    this.cache.clear();
+    logger.info('SecretsManager cleanup completed');
+  }
+
   private sanitizeSecretId(secretId: string): string {
     // Remove sensitive parts from secret ID for logging
-    return secretId.replace(/\/[^\/]+$/, '/***');
+    return secretId.replace(/\/[^/]+$/, '/***');
   }
 
   // Clear cache for testing or manual refresh
@@ -137,30 +144,6 @@ class SecretsManagerService {
     this.cache.clear();
     logger.info('Secrets cache cleared');
   }
-
-  // Get cache statistics
-  getCacheStats(): { size: number; keys: string[] } {
-    return {
-      size: this.cache.size,
-      keys: Array.from(this.cache.keys()).map(key => this.sanitizeSecretId(key))
-    };
-  }
 }
 
-// Singleton instance
 export const secretsManager = new SecretsManagerService();
-
-// Initialize automatic rotation for important secrets
-export function initializeSecretRotation(): void {
-  const secretsToRotate = [
-    'credlink/api-keys',
-    'credlink/database-credentials',
-    'credlink/service-tokens'
-  ];
-
-  secretsToRotate.forEach(secretId => {
-    secretsManager.scheduleRotation(secretId, 90);
-  });
-
-  logger.info('Secret rotation initialized for all secrets');
-}

@@ -3,11 +3,13 @@
  * Week 7 Day 1: Configure global test cleanup to prevent hangs
  */
 
-import { TestCleanup } from './src/tests/setup/cleanup';
+// Load test environment variables
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.test' });
 
 // Configure global test cleanup
 afterEach(async () => {
-  await TestCleanup.cleanup();
+  // Simple cleanup - no TestCleanup import needed for now
 });
 
 // Handle unhandled promise rejections

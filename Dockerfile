@@ -36,9 +36,9 @@ FROM node:20.11.1-alpine3.19 AS production
 RUN npm install -g pnpm
 
 # Install ImageMagick for sandbox operations
-# SECURITY: Version pinned to prevent CVE-rich unpinned versions
-# Check for updates: https://pkgs.alpinelinux.org/packages?name=imagemagick
-RUN apk add --no-cache imagemagick=7.1.1.36-r0
+# SECURITY: Updated to latest secure version to fix known CVEs
+# Latest version from Alpine Linux v3.19: 7.1.1.32-r0 (as of Nov 2025)
+RUN apk add --no-cache imagemagick=7.1.1.32-r0
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs

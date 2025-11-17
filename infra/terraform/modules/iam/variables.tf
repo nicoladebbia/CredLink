@@ -88,7 +88,7 @@ variable "vpc_endpoint_id" {
   description = "VPC endpoint ID for S3 access restriction (e.g., vpce-0abcd1234efgh5678). Must be a valid VPC endpoint ID if provided."
   type        = string
   default     = null
-  
+
   validation {
     condition = (
       var.vpc_endpoint_id == null ||
@@ -113,7 +113,7 @@ EOT
     queue_read    = string
     queue_write   = string
   })
-  
+
   validation {
     condition = alltrue([
       for k, v in var.cloudflare_permission_groups :

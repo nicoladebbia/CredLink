@@ -365,7 +365,7 @@ components:
           proofUri: https://proofs.credlink.com/550e8400-e29b-41d4-a716-446655440000
           proofFound: true
           proofMatches: true
-          manifestTimestamp: "2025-11-12T14:00:00.000Z"
+          manifestTimestamp: "2024-01-01T00:00:00.000Z"
 
     VerifyFailed:
       summary: Invalid signature
@@ -380,4 +380,4 @@ components:
           proofUri: null
           proofFound: false
           proofMatches: false
-          manifestTimestamp: "2025-11-12T14:00:00.000Z"
+          manifestTimestamp: "2024-01-01T00:00:00.000Z"

@@ -1,0 +1,44 @@
+=== TESTING tests/debug-exif.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+=== TESTING tests/unit/proof-storage.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 8 passed, 9 total
+=== TESTING tests/unit/signature-verifier.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 5 passed, 17 total
+=== TESTING tests/unit/error-handling.test.ts ===
+=== TESTING tests/unit/metadata-embedder.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       11 failed, 2 passed, 13 total
+=== TESTING tests/unit/advanced-extractor.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/unit/storage.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/unit/certificate-manager.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       17 failed, 1 passed, 18 total
+=== TESTING tests/unit/certificate-validator.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       0 total
+=== TESTING tests/security/injection.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       17 failed, 10 passed, 27 total
+=== TESTING tests/security/input-validation.test.ts ===
+Test Suites: 1 passed, 1 total
+Tests:       14 passed, 14 total
+=== TESTING tests/security/injection-prevention.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       13 failed, 13 total
+=== TESTING tests/security/authentication.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 12 total
+=== TESTING tests/embedding.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 21 passed, 27 total
+=== TESTING tests/c2pa-service.test.ts ===
+Test Suites: 1 failed, 1 total
+Tests:       6 failed, 3 passed, 9 total
+=== TESTING tests/integration/multi-format.test.ts ===

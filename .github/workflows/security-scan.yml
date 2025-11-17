@@ -1,43 +1,294 @@
-# S-11: Dependency Security & Automated Scanning
-name: Security Scan
+#==================================================
+# Exponential Secret Scanning & Security Automation - Step 18
+#==================================================
+name: 🔒 Exponential Secret Scanning & Security Validation
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop, staging, production ]
   pull_request:
-    branches: [main]
+    branches: [ main, develop, staging, production ]
   schedule:
-    # Run daily at 2 AM UTC
+    # Run comprehensive security scan daily at 2 AM UTC
     - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+        - full
+        - secrets-only
+        - terraform-only
+        - dependencies-only
+
+env:
+  # Security scanning configurations
+  SCAN_DEPTH: 'full'
+  FAIL_ON_SECRETS: 'true'
+  FAIL_ON_VULNERABILITIES: 'true'
+  REPORT_TO_SECURITY_HUB: 'true'
 
 jobs:
-  dependency-audit:
-    name: Dependency Audit
+  #==================================================
+  # Secret Detection - Multiple Tools
+  #==================================================
+  secret-detection:
+    name: 🔐 Secret Detection
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
-      - uses: actions/checkout@v4
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for comprehensive scanning
+        
+    - name: 🔍 TruffleHog Secret Scanning
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --regex --entropy=False --verify=False --json
+        output: trufflehog-results.json
+        
+    - name: 🕵️ Gitleaks Secret Scanning
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      with:
+        config_path: .gitleaks.toml
+        report_format: json
+        report_path: gitleaks-results.json
+        
+    - name: 🔎 Detect-Secrets Scanning
+      run: |
+        echo "🔍 Running detect-secrets scanning..."
+        pip install detect-secrets
+        detect-secrets scan --all-files --baseline .secrets.baseline || true
+        detect-secrets audit --report detect-secrets-report.json
+        
+    - name: 🚨 Custom Secret Pattern Scanning
+      run: |
+        echo "🚨 Running custom secret pattern detection..."
+        python3 scripts/security/custom-secret-scan.py \
+          --directory . \
+          --output custom-secrets.json \
+          --patterns-file scripts/security/secret-patterns.json
+          
+    - name: 📊 Aggregate Secret Scan Results
+      run: |
+        echo "📊 Aggregating secret scan results..."
+        python3 scripts/security/aggregate-results.py \
+          --trufflehog trufflehog-results.json \
+          --gitleaks gitleaks-results.json \
+          --detect-secrets detect-secrets-report.json \
+          --custom custom-secrets.json \
+          --output aggregated-secrets.json
+          
+    - name: 🚨 Fail on Secrets Found
+      if: env.FAIL_ON_SECRETS == 'true'
+      run: |
+        echo "🚨 Checking for detected secrets..."
+        if [ -s aggregated-secrets.json ] && [ "$(jq '.secrets | length' aggregated-secrets.json)" -gt 0 ]; then
+          echo "❌ SECRETS DETECTED! Failing build..."
+          jq '.' aggregated-secrets.json
+          exit 1
+        else
+          echo "✅ No secrets detected"
+        fi
+        
+    - name: 📤 Upload Secret Scan Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: secret-scan-results
+        path: |
+          trufflehog-results.json
+          gitleaks-results.json
+          detect-secrets-report.json
+          custom-secrets.json
+          aggregated-secrets.json
+        retention-days: 30
+
+  #==================================================
+  # Enhanced Dependency Security
+  #==================================================
+  dependency-security:
+    name: 📦 Enhanced Dependency Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        package-manager: [npm, pip, cargo, go]
+        
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+    - name: 🔍 NPM Audit (JavaScript/TypeScript)
+      if: matrix.package-manager == 'npm'
+      run: |
+        echo "🔍 Running comprehensive NPM security audit..."
+        npm audit --audit-level=moderate --json > npm-audit.json || true
+        npm audit --audit-level=moderate
+        
+    - name: 🐍 Pip Audit (Python)
+      if: matrix.package-manager == 'pip'
+      run: |
+        echo "🐍 Running comprehensive pip security audit..."
+        pip install pip-audit
+        pip-audit --requirement packages/*/requirements.txt --format=json --output pip-audit.json || true
+        pip-audit --requirement packages/*/requirements.txt
+        
+    - name: 🦀 Cargo Audit (Rust)
+      if: matrix.package-manager == 'cargo'
+      run: |
+        echo "🦀 Running comprehensive cargo security audit..."
+        cargo install cargo-audit
+        # FAIL ON SECURITY VULNERABILITIES - NO SILENT BYPASS
+        if ! cargo audit --json > cargo-audit.json; then
+          echo "❌ CRITICAL: Cargo audit detected security vulnerabilities"
+          echo "🚨 SECURITY VIOLATION: Cannot proceed with vulnerable Rust dependencies"
+          exit 1
+        fi
+        cargo audit
+        
+    - name: 🔧 Gosec (Go)
+      if: matrix.package-manager == 'go'
+      run: |
+        echo "🔧 Running comprehensive Go security audit..."
+        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        # FAIL ON SECURITY VULNERABILITIES - NO SILENT BYPASS
+        if ! gosec ./... -fmt=json -out=gosec-results.json; then
+          echo "❌ CRITICAL: Gosec detected security vulnerabilities in Go code"
+          echo "🚨 SECURITY VIOLATION: Cannot proceed with vulnerable Go code"
+          exit 1
+        fi
+        gosec ./...
+        
+    - name: 📤 Upload Dependency Security Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-security-${{ matrix.package-manager }}
+        path: |
+          npm-audit.json
+          pip-audit.json
+          cargo-audit.json
+          gosec-results.json
+        retention-days: 30
+
+  #==================================================
+  # Security Reporting & Integration
+  #==================================================
+  security-reporting:
+    name: 📊 Security Reporting
+    runs-on: ubuntu-latest
+    needs: [secret-detection, dependency-security]
+    if: always()
+    timeout-minutes: 20
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
       
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      
-      - name: Run pnpm audit
-        run: |
-          pnpm audit --audit-level=moderate
-          if [ $? -ne 0 ]; then
-            echo "::error::Dependency vulnerabilities found!"
-            exit 1
-          fi
-      
-      - name: Check for outdated dependencies
-        run: pnpm outdated || true
+    - name: 📥 Download All Security Results
+      uses: actions/download-artifact@v4
+      with:
+        path: security-results/
+        
+    - name: 📊 Generate Comprehensive Security Report
+      run: |
+        echo "📊 Generating comprehensive security report..."
+        python3 scripts/security/generate-security-report.py \
+          --input-dir security-results/ \
+          --output security-comprehensive-report.json \
+          --markdown security-comprehensive-report.md
+          
+    - name: 📤 Upload Comprehensive Security Report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: comprehensive-security-report
+        path: |
+          security-comprehensive-report.json
+          security-comprehensive-report.md
+        retention-days: 90
+        
+    - name: 📋 Comment PR with Security Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('security-comprehensive-report.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 🔒 Security Scan Results\n\n${report}`
+          });
+
+  #==================================================
+  # Security Gate (Fail Fast on Critical Issues)
+  #==================================================
+  security-gate:
+    name: 🚪 Security Gate
+    runs-on: ubuntu-latest
+    needs: [security-reporting]
+    if: always()
+    timeout-minutes: 10
+    
+    steps:
+    - name: 📥 Download Security Report
+      uses: actions/download-artifact@v4
+      with:
+        name: comprehensive-security-report
+        path: ./report/
+        
+    - name: 🚪 Evaluate Security Gate
+      run: |
+        echo "🚪 Evaluating security gate..."
+        python3 scripts/security/evaluate-security-gate.py \
+          --report ./report/security-comprehensive-report.json \
+          --fail-on-critical ${{ env.FAIL_ON_VULNERABILITIES }}
+          
+    - name: ✅ Security Gate Passed
+      if: success()
+      run: |
+        echo "✅ Security gate passed - no critical vulnerabilities detected"
+        
+    - name: ❌ Security Gate Failed
+      if: failure()
+      run: |
+        echo "❌ Security gate failed - critical vulnerabilities detected"
+        exit 1
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+    
+    - name: Run pnpm audit
+      run: |
+        pnpm audit --audit-level=moderate
+        if [ $? -ne 0 ]; then
+          echo "::error::Dependency vulnerabilities found!"
+          exit 1
+        fi
+    
+    - name: Check for outdated dependencies
+      run: pnpm outdated || true
 
   code-scanning:
     name: CodeQL Analysis

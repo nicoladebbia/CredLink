@@ -15,6 +15,11 @@ on:
 env:
   NODE_VERSION: '18.x'
   PNPM_VERSION: '8.x'
+  # Turbo Remote Caching Configuration
+  # Note: TURBO_TEAM and TURBO_TOKEN secrets must be configured in GitHub Settings
+  # These warnings will resolve automatically after secrets are added
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
 
 jobs:
   # Job 1: Lint and Format Check

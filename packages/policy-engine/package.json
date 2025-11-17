@@ -17,6 +17,7 @@
     "compile": "node dist/cli.js compile"
   },
   "dependencies": {
+    "@credlink/config": "workspace:*",
     "@credlink/rbac": "workspace:*",
     "yaml": "^2.3.4",
     "ajv": "^8.12.0",

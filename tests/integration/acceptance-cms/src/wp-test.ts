@@ -38,7 +38,7 @@ class WordPressThemeTester {
   constructor(config: any) {
     this.wp_url = config.wp_url || 'http://localhost:8080';
     this.wp_username = config.wp_username || 'admin';
-    this.wp_password = config.wp_password || 'password';
+    this.wp_password = config.wp_password || process.env.TEST_WP_PASSWORD || 'test-password-placeholder';
     this.artifacts_dir = config.artifacts_dir || '.artifacts/cms/wp';
     
     // Ensure artifacts directory exists

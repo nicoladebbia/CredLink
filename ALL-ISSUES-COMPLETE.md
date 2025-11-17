@@ -242,7 +242,7 @@ const service = new C2PANativeService();
 const result = await service.signImage(imageBuffer, {
   creator: 'John Doe',
   title: 'My Image',
-  claimGenerator: 'CredLink/1.0.0',
+  claimGenerator: '{{USER_AGENT}}',
   assertions: [/* custom assertions */]
 });
 
@@ -267,7 +267,7 @@ const verifyResult = await service.verifyImage(signedBuffer);
 **Manifest Structure**:
 ```json
 {
-  "claim_generator": "CredLink/1.0.0",
+  "claim_generator": "{{USER_AGENT}}",
   "title": "Signed Image",
   "format": "image/jpeg",
   "instance_id": "xmp.iid:uuid",
@@ -278,7 +278,7 @@ const verifyResult = await service.verifyImage(signedBuffer);
         "actions": [{
           "action": "c2pa.created",
           "when": "2025-01-12T...",
-          "softwareAgent": "CredLink/1.0.0"
+          "softwareAgent": "{{USER_AGENT}}"
         }]
       }
     },

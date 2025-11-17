@@ -2,7 +2,9 @@ import { randomUUID } from 'crypto';
 import { C2PAManifest } from '../services/manifest-builder';
 import { logger } from '../utils/logger';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
+import { readFile, unlink } from 'fs/promises';
 import { join } from 'path';
+import { LRUCacheFactory } from '@credlink/cache';
 
 export interface ProofRecord {
   proofId: string;
@@ -23,16 +25,13 @@ export interface ProofRecord {
  * Production: Cloudflare KV, DynamoDB, PostgreSQL, or R2
  */
 export class ProofStorage {
-  private storage: Map<string, ProofRecord>;
-  private hashIndex: Map<string, string>;
+  private storage = LRUCacheFactory.createProofCache();
+  private hashIndex = LRUCacheFactory.createDeduplicationCache();
   private storagePath: string;
   private useLocalFilesystem: boolean;
   private cleanupInterval: NodeJS.Timeout | null = null;
 
   constructor() {
-    this.storage = new Map();
-    this.hashIndex = new Map();
-    
     // PRODUCTION DEFAULT: Use filesystem storage to prevent data loss
     // Development: Can use in-memory for faster iteration
     // Override with USE_LOCAL_PROOF_STORAGE=false to force in-memory mode
@@ -170,7 +169,16 @@ export class ProofStorage {
     }
     
     try {
-      const proofJson = readFileSync(proofPath, 'utf8');
+      // 🔥 CRITICAL SECURITY FIX: Convert blocking sync I/O to async with timeout
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Proof retrieval timeout')), parseInt(process.env.PROOF_RETRIEVAL_TIMEOUT_MS || '5000'));
+      });
+      
+      const proofJson = await Promise.race([
+        readFile(proofPath, 'utf8'),
+        timeoutPromise
+      ]);
+      
       return JSON.parse(proofJson) as ProofRecord;
     } catch (error) {
       return null;
@@ -220,8 +228,7 @@ export class ProofStorage {
   private async deleteProofLocal(proofId: string): Promise<boolean> {
     const proofPath = join(this.storagePath, `${proofId}.json`);
     try {
-      const fs = require('fs').promises;
-      await fs.unlink(proofPath);
+      await unlink(proofPath);
       return true;
     } catch (error) {
       return false;

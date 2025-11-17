@@ -276,7 +276,7 @@ export class PolicyValidator {
           code: 'policy.license.invalid_from_date',
           message: 'rights_window.from must be a valid ISO 8601 timestamp',
           path: 'license.rights_window.from',
-          fix_hint: 'Use format: "2025-10-01T00:00:00Z"'
+          fix_hint: 'Use format: "YYYY-MM-DDTHH:mm:ssZ" with current date'
         });
       }
       
@@ -285,7 +285,7 @@ export class PolicyValidator {
           code: 'policy.license.invalid_to_date',
           message: 'rights_window.to must be a valid ISO 8601 timestamp',
           path: 'license.rights_window.to',
-          fix_hint: 'Use format: "2026-10-01T00:00:00Z"'
+          fix_hint: 'Use format: "YYYY-MM-DDTHH:mm:ssZ" with future date'
         });
       }
       

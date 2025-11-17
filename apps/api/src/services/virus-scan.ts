@@ -4,6 +4,7 @@
  * Integration with ClamAV or VirusTotal API for malware detection
  */
 
+import { createConnection } from 'net';
 import { logger } from '../utils/logger';
 import * as crypto from 'crypto';
 
@@ -43,8 +44,9 @@ export class VirusTotalScanner {
       const fileHash = crypto.createHash('sha256').update(buffer).digest('hex');
 
       // Check VirusTotal API
+      const virusTotalApiUrl = process.env.VIRUSTOTAL_API_URL || 'https://www.virustotal.com/api/v3/files';
       const response = await fetch(
-        `https://www.virustotal.com/api/v3/files/${fileHash}`,
+        `${virusTotalApiUrl}/${fileHash}`,
         {
           headers: {
             'x-apikey': this.apiKey
@@ -138,10 +140,8 @@ export class ClamAVScanner {
     const startTime = Date.now();
 
     try {
-      const net = require('net');
-      
       return await new Promise<ScanResult>((resolve, reject) => {
-        const client = net.createConnection(this.port, this.host, () => {
+        const client = createConnection(this.port, this.host, () => {
           // Send INSTREAM command
           client.write('zINSTREAM\0');
           

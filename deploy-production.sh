@@ -59,7 +59,7 @@ print_info "Verifying AWS credentials..."
 aws sts get-caller-identity --output json > /dev/null
 if [ $? -eq 0 ]; then
     print_status "AWS credentials verified"
-    echo "   Account: $(aws sts get-caller-identity --query Account --output text)"
+    echo "   Account: [REDACTED]"
 else
     print_error "AWS credentials verification failed"
     exit 1
@@ -67,8 +67,9 @@ fi
 
 # Verify Cloudflare credentials
 print_info "Verifying Cloudflare credentials..."
-curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-    "https://api.cloudflare.com/client/v4/user/tokens/verify" > /dev/null
+# SECURITY: Mask token in logs to prevent credential exposure
+CURL_OUTPUT=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+    "https://api.cloudflare.com/client/v4/user/tokens/verify" 2>/dev/null)
 if [ $? -eq 0 ]; then
     print_status "Cloudflare credentials verified"
 else
@@ -76,10 +77,14 @@ else
     exit 1
 fi
 
-# Step 2: Terraform Deployment
+# Step 2: Terraform Deployment with Rollback
 print_info "Step 2: Deploying infrastructure with Terraform..."
 
 cd infra/terraform
+
+# Create rollback directory
+mkdir -p ../rollback
+cp -r .terraform ../rollback/terraform-backup-$(date +%Y%m%d-%H%M%S) 2>/dev/null || true
 
 # Initialize Terraform
 print_info "Initializing Terraform..."
@@ -96,23 +101,37 @@ print_info "Planning Terraform deployment..."
 terraform plan -out=tfplan
 print_status "Terraform plan created"
 
-# Apply the configuration
+# Backup current state before applying
+if [ -f "terraform.tfstate" ]; then
+  cp terraform.tfstate ../rollback/terraform-state-backup-$(date +%Y%m%d-%H%M%S).tfstate
+  print_status "Current Terraform state backed up"
+fi
+
+# Apply the configuration with rollback capability
 print_warning "Applying Terraform configuration..."
 print_warning "This will create resources in your AWS and Cloudflare accounts"
 read -p "Do you want to continue? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    terraform apply tfplan
+  # Apply with error handling
+  if terraform apply tfplan; then
     print_status "Terraform deployment completed"
+    
+    # Save successful state for rollback
+    terraform output -json > ../terraform-outputs.json
+    cp terraform.tfstate ../rollback/terraform-state-success-$(date +%Y%m%d-%H%M%S).tfstate
+    print_status "Infrastructure outputs saved"
+  else
+    print_error "Terraform deployment failed!"
+    print_info "Rollback options available:"
+    print_info "1. Restore from: ../rollback/terraform-state-backup-*.tfstate"
+    print_info "2. Manual rollback: terraform destroy"
+    exit 1
+  fi
 else
-    print_warning "Terraform deployment cancelled"
-    exit 0
+  print_warning "Terraform deployment cancelled"
+  exit 0
 fi
-
-# Get outputs for later use
-print_info "Capturing Terraform outputs..."
-terraform output -json > ../terraform-outputs.json
-print_status "Infrastructure outputs saved"
 
 cd ../..
 
@@ -122,8 +141,8 @@ print_info "Step 3: Deploying application..."
 # Build the application
 print_info "Building application..."
 cd apps/api
-npm ci --production
-npm run build
+pnpm install --production
+pnpm run build
 print_status "Application built"
 
 cd ../..
@@ -142,7 +161,7 @@ sleep 30
 
 # Check health endpoint
 print_info "Checking API health..."
-if curl -f -s http://localhost:3000/health > /dev/null; then
+if curl -f -s https://localhost:3000/health > /dev/null; then
     print_status "API health check passed"
 else
     print_error "API health check failed"
@@ -150,7 +169,7 @@ fi
 
 # Check metrics endpoint
 print_info "Checking metrics endpoint..."
-if curl -f -s http://localhost:9090/metrics > /dev/null; then
+if curl -f -s https://localhost:9090/metrics > /dev/null; then
     print_status "Metrics endpoint accessible"
 else
     print_warning "Metrics endpoint not accessible (may still be starting)"

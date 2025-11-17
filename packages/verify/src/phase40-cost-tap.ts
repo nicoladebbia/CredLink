@@ -340,8 +340,12 @@ export class Phase40CostTap {
     tenantId: string,
     startDate: string,
     endDate: string,
-    arm?: 'A_EMBED' | 'B_REMOTE'
+    arm?: 'A_EMBED' | 'B_REMOTE',
+    secret?: string
   ): DashboardData[] {
+    if (!secret || secret === process.env.DEFAULT_SECRET_PLACEHOLDER || secret.includes('default')) {
+      return [];
+    }
     const results: DashboardData[] = [];
 
     for (const [key, data] of Array.from(this.metricsBuffer.entries())) {

@@ -1,0 +1,267 @@
+import { AtomicCertificateManager } from '../../src/services/certificate-manager-atomic';
+import { KMSClient, DecryptCommand } from '@aws-sdk/client-kms';
+import path from 'path';
+
+// Mock AWS SDK
+jest.mock('@aws-sdk/client-kms', () => ({
+  KMSClient: jest.fn(() => ({
+    send: jest.fn()
+  })),
+  DecryptCommand: jest.fn()
+}));
+
+describe('AtomicCertificateManager', () => {
+  let certManager: AtomicCertificateManager;
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    process.env = { ...originalEnv };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    if (certManager) {
+      certManager.destroy();
+    }
+  });
+
+  describe('Certificate Loading', () => {
+    it('should load certificate from file path', async () => {
+      process.env.SIGNING_CERTIFICATE = path.join(__dirname, '../../certs/signing-cert.pem');
+      
+      certManager = new AtomicCertificateManager();
+      const cert = await certManager.getCurrentCertificate();
+      
+      expect(cert).toBeDefined();
+      expect(cert.pem).toContain('BEGIN CERTIFICATE');
+      expect(cert.fingerprint).toMatch(/^[a-f0-9:]+$/);
+      expect(cert.expiresAt).toBeInstanceOf(Date);
+    });
+
+    it('should load certificate from environment variable', async () => {
+      const mockCertPem = `-----BEGIN CERTIFICATE-----
+MIIDAjCCAeoCCQDrxqfKbadnxzANBgkqhkiG9w0BAQsFADBDMQswCQYDVQQGEwJV
+UzERMA8GA1UECgwIQ3JlZExpbmsxITAfBgNVBAMMGENyZWRMaW5rIFNpZ25pbmcg
+U2VydmljZTAeFw0yNTExMTYyMzM1MDBaFw0yNjExMTYyMzM1MDBaMEMxCzAJBgNV
+BAYTAlVTMREwDwYDVQQKDAhDcmVkTGluazEhMB8GA1UEAwwYQ3JlZExpbmsgU2ln
+bmluZyBTZXJ2aWNlMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAlVHl
+P0t11l92Xp8J/xuOPfBvBn2DK+acpcSA2QkseF9G8EfXAH2Nf/ZM/9s6JLW2fi8L
+PNN9Ta2T2RPcY+3EepxxrP9M+SgutTWqlXhyoKfz9EuemegdUbZBlmvq2IzZtPuC
+GUC0gsYzVTCPXnaNL5RcpxsF8tfHbrBuCoKEj2p6PGGG33o8YMglWPdmJ+YkwfHh
+oVZD9mONdS1aai4yyiQYWj9Q3QEW9DijsHsVH1wWXEI034tBtRVT+hCUNSdkpGVl
++Vt3pPsWBol56FZ3q7RGB+D+feykTpoH1EzBlGX3VADv2i+XKnQ7z0ighXaNvCxl
+EAmsy9yNTsRkT9W0UQIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQCRXciQ44BU4sir
+oMJt4JXei+ZvBLv3zByaccdOEbiQ2vxhNodal3R3VBBN7ZzQw0ALVApctT9DeNTN
+0vCC+QLobnOFXPqhC0OLRqHTnmaxUSVegdqAO11pNDX9e1RhsF45OfZX6nrH5lnn
+0Yj/22QX3PVTrJ/DLZ5LReYny430sp2YhFiAhy8rNbzM9Tutr9FEzgUAMnRmeSis
+SaB1ADRUetoHv8R6xJWrdtPfI4NKmQm1cOMtpDuiIQTD/QxVd9GK9BKOovOGuJiq
+9zbyO7VNa99DP4J3NiNNEzc5kU2SETKRMCjYDTmky+zBJoaT6LMRJHODrzPfJ0hH
+n4M+59sN
+-----END CERTIFICATE-----`;
+      
+      process.env.SIGNING_CERTIFICATE = mockCertPem;
+      
+      certManager = new AtomicCertificateManager();
+      const cert = await certManager.getCurrentCertificate();
+      
+      expect(cert.pem).toBe(mockCertPem);
+    });
+
+    it('should handle missing certificate gracefully', async () => {
+      delete process.env.SIGNING_CERTIFICATE;
+      
+      certManager = new AtomicCertificateManager();
+      // Should not throw during construction, but getCurrentCertificate should handle gracefully
+      await expect(certManager.getCurrentCertificate()).rejects.toThrow();
+    });
+  });
+
+  describe('Private Key Loading', () => {
+    it('should load private key from file', async () => {
+      process.env.SIGNING_PRIVATE_KEY = path.join(__dirname, '../../certs/signing-key.pem');
+      
+      certManager = new AtomicCertificateManager();
+      const privateKey = await certManager.getSigningKey();
+      
+      expect(privateKey).toContain('BEGIN PRIVATE KEY');
+    });
+
+    it('should load private key from environment variable', async () => {
+      const mockKeyPem = `-----BEGIN PRIVATE KEY-----
+MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC5U7LY8Kqf6Q5k
+-----END PRIVATE KEY-----`;
+      
+      process.env.SIGNING_PRIVATE_KEY = mockKeyPem;
+      
+      certManager = new AtomicCertificateManager();
+      const privateKey = await certManager.getSigningKey();
+      
+      expect(privateKey).toBe(mockKeyPem);
+    });
+  });
+
+  describe('API Compatibility', () => {
+    it('should provide getCurrentCertificateId method', async () => {
+      process.env.SIGNING_CERTIFICATE = path.join(__dirname, '../../certs/signing-cert.pem');
+      
+      certManager = new AtomicCertificateManager();
+      const certId = await certManager.getCurrentCertificateId();
+      
+      expect(certId).toBeDefined();
+      expect(typeof certId).toBe('string');
+    });
+
+    it('should provide getSigningKeyAsync method', async () => {
+      process.env.SIGNING_CERTIFICATE = path.join(__dirname, '../../certs/signing-cert.pem');
+      
+      certManager = new AtomicCertificateManager();
+      const signingKey = await certManager.getSigningKeyAsync();
+      
+      expect(signingKey).toContain('BEGIN CERTIFICATE');
+    });
+  });
+});
+      }));
+      
+      certManager = new AtomicCertificateManager();
+      
+      await expect(certManager.getSigningKey()).rejects.toThrow();
+    });
+  });
+
+  describe('Certificate Rotation', () => {
+    it('should detect expired certificate', async () => {
+      const expiredCert = {
+        pem: '-----BEGIN CERTIFICATE-----\ntest\n-----END CERTIFICATE-----',
+        fingerprint: 'aa:bb:cc:dd',
+        // 🔥 CRITICAL BUG FIX: Use dynamic expired date instead of hardcoded 2020-01-01
+        expiresAt: DateUtils.addYears(-5), // 5 years ago (definitely expired)
+        id: 'expired-cert'
+      };
+      
+      certManager = new AtomicCertificateManager();
+      // @ts-ignore - accessing private method for testing
+      const isExpired = certManager.isCertificateExpired(expiredCert);
+      
+      expect(isExpired).toBe(true);
+    });
+
+    it('should schedule rotation in production', async () => {
+      process.env.NODE_ENV = 'production';
+      
+      jest.useFakeTimers();
+      certManager = new AtomicCertificateManager();
+      
+      // Verify rotation timer is set
+      expect(jest.getTimerCount()).toBeGreaterThan(0);
+      
+      jest.useRealTimers();
+    });
+
+    it('should not schedule rotation in development', async () => {
+      process.env.NODE_ENV = 'development';
+      
+      jest.useFakeTimers();
+      certManager = new AtomicCertificateManager();
+      
+      // No rotation timer in dev
+      expect(jest.getTimerCount()).toBe(0);
+      
+      jest.useRealTimers();
+    });
+
+    it('should generate valid certificate fingerprint', async () => {
+      const certPem = `-----BEGIN CERTIFICATE-----
+MIICdTCCAd4CCQDd...
+-----END CERTIFICATE-----`;
+      
+      certManager = new AtomicCertificateManager();
+      // @ts-ignore
+      const fingerprint = certManager.generateCertificateFingerprint(certPem);
+      
+      expect(fingerprint).toMatch(/^[a-f0-9:]+$/);
+      expect(fingerprint.split(':').length).toBeGreaterThan(10);
+    });
+  });
+
+  describe('Certificate Validation', () => {
+    it('should extract expiration date from certificate', async () => {
+      const validCertPem = fs.readFileSync(
+        path.join(__dirname, '../../../fixtures/certs/valid-cert.pem'),
+        'utf8'
+      );
+      
+      certManager = new AtomicCertificateManager();
+      // @ts-ignore
+      const expiresAt = certManager.extractExpirationDate(validCertPem);
+      
+      expect(expiresAt).toBeInstanceOf(Date);
+      expect(expiresAt.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it('should handle certificates without expiration', async () => {
+      const malformedCert = '-----BEGIN CERTIFICATE-----\ninvalid\n-----END CERTIFICATE-----';
+      
+      certManager = new AtomicCertificateManager();
+      
+      expect(() => {
+        // @ts-ignore
+        certManager.extractExpirationDate(malformedCert);
+      }).toThrow();
+    });
+  });
+
+  describe('Cleanup', () => {
+    it('should cleanup resources on destroy', async () => {
+      certManager = new AtomicCertificateManager();
+      
+      await expect(certManager.cleanup()).resolves.not.toThrow();
+    });
+
+    it('should clear rotation timer on cleanup', async () => {
+      process.env.NODE_ENV = 'production';
+      
+      certManager = new AtomicCertificateManager();
+      await certManager.cleanup();
+      
+      // Timer should be cleared
+      // @ts-ignore
+      expect(certManager.rotationTimer).toBeNull();
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle concurrent certificate requests', async () => {
+      certManager = new AtomicCertificateManager();
+      
+      const requests = Array(10).fill(null).map(() => 
+        certManager.getCurrentCertificate()
+      );
+      
+      const certs = await Promise.all(requests);
+      
+      expect(certs).toHaveLength(10);
+      expect(certs.every(c => c.id === certs[0].id)).toBe(true);
+    });
+
+    it('should handle missing AWS credentials gracefully', async () => {
+      process.env.NODE_ENV = 'production';
+      process.env.AWS_REGION = undefined;
+      
+      certManager = new AtomicCertificateManager();
+      
+      // Should fall back to file-based loading
+      await expect(certManager.getSigningKey()).resolves.toBeDefined();
+    });
+
+    it('should generate unique certificate IDs', async () => {
+      certManager = new AtomicCertificateManager();
+      
+      const cert1 = await certManager.getCurrentCertificate();
+      const cert2 = await certManager.getCurrentCertificate();
+      
+      expect(cert1.id).toBe(cert2.id); // Same cert = same ID
+    });
+  });
+});

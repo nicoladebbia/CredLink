@@ -3,6 +3,31 @@
  */
 
 /**
+ * Performance report - comprehensive performance analysis
+ */
+export interface PerformanceReport {
+  totalRequests: number;
+  requestsPerSecond: number;
+  errorRate: number;
+  latency: {
+    p50: number;
+    p95: number;
+    p99: number;
+    average: number;
+  };
+  memory: {
+    used: number;
+    peak: number;
+    delta: number;
+  };
+  passedThresholds: {
+    passed: boolean;
+    failed: string[];
+  };
+  timestamp: string;
+}
+
+/**
  * Operation metrics
  */
 export interface OperationMetrics {

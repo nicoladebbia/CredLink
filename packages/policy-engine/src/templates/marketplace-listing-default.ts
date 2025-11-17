@@ -4,6 +4,7 @@
  */
 
 import { Policy } from '../types/policy.js';
+import { DateUtils } from '@credlink/config';
 
 export const MARKETPLACE_LISTING_DEFAULT_POLICY: Policy = {
   policy_id: 'marketplace-listing-default',
@@ -27,8 +28,9 @@ export const MARKETPLACE_LISTING_DEFAULT_POLICY: Policy = {
     provider: 'getty',
     license_id: '123456',
     rights_window: {
-      from: '2025-10-01T00:00:00Z',
-      to: '2026-10-01T00:00:00Z'
+      // 🔥 HARDCODED DATE ELIMINATION: Use dynamic policy window dates
+      from: DateUtils.getPolicyWindowStartDate(),
+      to: DateUtils.addYears(1).toISOString() // 1 year from now (standard marketplace listing)
     },
     terms_url: 'https://www.gettyimages.com/eula'
   },
@@ -64,8 +66,8 @@ license:
   provider: getty
   license_id: 123456
   rights_window:
-    from: 2025-10-01T00:00:00Z
-    to: 2026-10-01T00:00:00Z
+    from: new Date().toISOString()
+    to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
   terms_url: https://www.gettyimages.com/eula
 display:
   badge_copy: concise

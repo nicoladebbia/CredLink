@@ -8,9 +8,9 @@
  * - Filters and effects
  */
 
-import { MetadataEmbedder } from '../services/metadata-embedder';
-import { MetadataExtractor } from '../services/metadata-extractor';
-import { ManifestBuilder } from '../services/manifest-builder';
+import { MetadataEmbedder } from '../src/services/metadata-embedder';
+import { MetadataExtractor } from '../src/services/metadata-extractor';
+import { ManifestBuilder } from '../src/services/manifest-builder';
 import { readFileSync } from 'fs';
 import sharp from 'sharp';
 

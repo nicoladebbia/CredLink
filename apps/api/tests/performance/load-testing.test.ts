@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeAll } from '@jest/globals';
-import { PerformanceProfiler } from '../../performance/performance-profiler';
-import sharp from 'sharp';
+import request from 'supertest';
+import app from '../../src/index';
+import fs from 'fs';
+import path from 'path';
+import { TEST_CONSTANTS } from '../config/test-constants';
 
 /**
  * Load Testing Suite
@@ -44,7 +47,7 @@ describe('Load Testing', () => {
       expect(report.totalRequests).toBeGreaterThan(0);
       expect(report.requestsPerSecond).toBeGreaterThan(5);
       expect(report.errorRate).toBeLessThan(0.05); // < 5% error rate
-      expect(report.latency.p95).toBeLessThan(2000);
+      expect(report.latency.p95).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
     });
 
     it('should handle 50 concurrent signing requests', async () => {
@@ -63,7 +66,7 @@ describe('Load Testing', () => {
       expect(report.totalRequests).toBeGreaterThan(100);
       expect(report.requestsPerSecond).toBeGreaterThan(10);
       expect(report.errorRate).toBeLessThan(0.01); // < 1% error rate
-      expect(report.latency.p95).toBeLessThan(2000);
+      expect(report.latency.p95).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS);
       expect(report.passedThresholds.passed).toBe(true);
     });
 

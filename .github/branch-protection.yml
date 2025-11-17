@@ -1,0 +1,113 @@
+# GitHub Branch Protection Configuration
+# 
+# SECURITY: Apply these settings via GitHub repository settings
+# or use GitHub CLI to automate configuration
+
+# Main Branch Protection Rules
+main:
+  # Required status checks
+  required_status_checks:
+    strict: true
+    contexts:
+      - "Security Audit & Quality Checks"
+      - "Build & Test"
+      - "Docker Security Scan"
+      - "Security Policy Check"
+  
+  # Enforce admin restrictions
+  enforce_admins: true
+  
+  # Required pull request reviews
+  required_pull_request_reviews:
+    required_approving_review_count: 2
+    dismiss_stale_reviews: true
+    require_code_owner_reviews: true
+    require_last_push_approval: true
+    dismissal_restrictions:
+      users: []
+      teams: ["security-team", "devops-team"]
+  
+  # Restrict pushes
+  restrictions:
+    users: []
+    teams: ["devops-team", "security-team"]
+  
+  # Allow force pushes
+  allow_force_pushes: false
+  
+  # Allow deletions
+  allow_deletions: false
+
+# Develop Branch Protection Rules
+develop:
+  required_status_checks:
+    strict: false
+    contexts:
+      - "Security Audit & Quality Checks"
+      - "Build & Test"
+  
+  enforce_admins: false
+  
+  required_pull_request_reviews:
+    required_approving_review_count: 1
+    dismiss_stale_reviews: true
+    require_code_owner_reviews: false
+  
+  restrictions:
+    users: []
+    teams: ["development-team"]
+  
+  allow_force_pushes: true
+  allow_deletions: false
+
+# Teams Configuration
+teams:
+  security-team:
+    description: "Security team with access to sensitive configurations"
+    permission: "write"
+    members: []
+  
+  devops-team:
+    description: "DevOps team with deployment and infrastructure access"
+    permission: "admin"
+    members: []
+  
+  development-team:
+    description: "Development team with code access"
+    permission: "write"
+    members: []
+  
+  code-reviewers:
+    description: "Senior developers required for code review"
+    permission: "read"
+    members: []
+
+# Environment Protection Rules
+environments:
+  production:
+    # Required reviewers for deployment
+    required_reviewers: 2
+    # Wait timer for deployment
+    wait_timer: 5
+    # Prevent bypassing required reviewers
+    reviewers:
+      users: []
+      teams: ["security-team", "devops-team"]
+  
+  staging:
+    required_reviewers: 1
+    wait_timer: 2
+    reviewers:
+      teams: ["devops-team"]
+
+# CODEOWNERS Configuration
+# Create .github/CODEOWNERS file with:
+# * @development-team
+# *.yml @devops-team
+# *.yaml @devops-team
+# .github/ @security-team
+# infra/ @devops-team
+# apps/api/src/services/ @security-team
+# apps/api/src/middleware/ @security-team
+# docker* @devops-team
+# Dockerfile* @devops-team

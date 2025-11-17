@@ -1,0 +1,2 @@
+ ERROR  Unknown options: 'coverage', 'json'
+For help, run: pnpm help test

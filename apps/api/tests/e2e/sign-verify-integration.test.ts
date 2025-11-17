@@ -5,13 +5,17 @@
  * Tests manifest embedding, extraction, and performance
  */
 
-import { C2PAService } from '../../services/c2pa-service';
-import { ProofStorage } from '../../services/proof-storage';
-import { MetadataEmbedder } from '../../services/metadata-embedder';
-import { MetadataExtractor } from '../../services/metadata-extractor';
-import { ManifestBuilder } from '../../services/manifest-builder';
-import { PerceptualHash } from '../../utils/perceptual-hash';
-import { readFileSync } from 'fs';
+import { C2PAService } from '../../src/services/c2pa-service';
+import { ProofStorage } from '../../src/services/proof-storage';
+import { MetadataEmbedder } from '../../src/services/metadata-embedder';
+import { MetadataExtractor } from '../../src/services/metadata-extractor';
+import { ManifestBuilder } from '../../src/services/manifest-builder';
+import { PerceptualHash } from '../../src/utils/perceptual-hash';
+import request from 'supertest';
+import app from '../../src/index';
+import fs from 'fs';
+import path from 'path';
+import { TEST_CONSTANTS } from '../config/test-constants';
 import sharp from 'sharp';
 
 describe('End-to-End Integration Tests - Day 9-10', () => {
@@ -52,13 +56,13 @@ describe('End-to-End Integration Tests - Day 9-10', () => {
         creator: 'E2E Test User',
         useRealC2PA: true
       });
-      const signDuration = Date.now() - signStartTime;
+      const duration = Date.now() - signStartTime;
 
       expect(signResult).toBeDefined();
       expect(signResult.signedBuffer).toBeInstanceOf(Buffer);
       expect(signResult.proofUri).toMatch(/https:\/\/proofs\.credlink\.com\//);
       expect(signResult.signature).toBeDefined();
-      expect(signDuration).toBeLessThan(2000); // < 2s requirement
+      expect(duration).toBeLessThan(TEST_CONSTANTS.PERFORMANCE_THRESHOLD_MS); // < configurable threshold requirement
 
       // 3. VERIFY: Extract and validate signature
       const verifyResult = await c2paService.verifySignature(

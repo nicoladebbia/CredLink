@@ -1,5 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
+import { readFileSync } from 'fs';
+import jwt from 'jsonwebtoken';
 import { logger } from '../utils/logger';
+import { ApiKeyService, ApiKeyInfo } from '../services/api-key-service';
+import { LRUCacheFactory } from '@credlink/cache';
 
 /**
  * API Key Authentication Middleware
@@ -8,19 +12,33 @@ import { logger } from '../utils/logger';
  * Supports multiple API keys for different clients
  */
 
+export interface ApiKeyClient {
+  apiKey: string;
+  clientId: string;
+  clientName: string;
+}
+
 interface AuthenticatedRequest extends Request {
   apiKey?: string;
   clientId?: string;
+  clientName?: string;
 }
 
 export class ApiKeyAuth {
-  private apiKeys: Map<string, { clientId: string; name: string; rateLimit?: number }>;
+  private apiKeys = LRUCacheFactory.createApiKeyCache();
   private enabled: boolean;
   private initialized: Promise<void>;
+  private apiKeyService?: ApiKeyService;
+  private useDatabaseKeys: boolean;
 
-  constructor() {
-    this.apiKeys = new Map();
+  constructor(databasePool?: any) {
     this.enabled = process.env.ENABLE_API_KEY_AUTH === 'true';
+    this.useDatabaseKeys = process.env.USE_DATABASE_API_KEYS === 'true';
+    
+    // Initialize API key service if database keys are enabled and pool is provided
+    if (this.useDatabaseKeys && databasePool) {
+      this.apiKeyService = new ApiKeyService(databasePool);
+    }
     
     // Initialize asynchronously
     this.initialized = this.enabled ? this.loadApiKeys() : Promise.resolve();
@@ -81,47 +99,62 @@ export class ApiKeyAuth {
   }
 
   /**
-   * Load API keys from secure source
-   * 
-   * SECURITY WARNING: Loading API keys from environment variables is NOT secure
-   * for production. Environment variables are visible in:
-   * - Process listings (ps aux, /proc)
-   * - Container inspections
-   * - CI/CD logs
-   * - Application crash dumps
-   * 
-   * RECOMMENDED PRODUCTION APPROACHES:
-   * 1. AWS Secrets Manager: Fetch keys at runtime via AWS SDK
    * 2. HashiCorp Vault: Use Vault agent or SDK
    * 3. Kubernetes Secrets: Mount as files, not env vars
    * 
    * Environment variable format (DEV ONLY): API_KEYS=key1:client1:ClientName,key2:client2:ClientName2
    */
   private async loadApiKeys(): Promise<void> {
+    try {
+      // Initialize database key service if enabled
+      if (this.useDatabaseKeys && this.apiKeyService) {
+        await this.apiKeyService.initialize();
+        logger.info('Database-backed API keys initialized');
+      }
+      
+      // Load static keys as fallback (always load for backward compatibility)
+      await this.loadStaticApiKeys();
+      
+      logger.info('Hybrid API key authentication initialized', {
+        databaseEnabled: this.useDatabaseKeys,
+        staticKeysCount: this.apiKeys.size
+      });
+    } catch (error) {
+      logger.error('Failed to load API keys', { 
+        error: error instanceof Error ? error.message : String(error)
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Load static API keys from environment variables, files, or AWS Secrets Manager
+   * FALLBACK: Used when database keys are disabled or for migration compatibility
+   */
+  private async loadStaticApiKeys(): Promise<void> {
     // Priority 1: Load from AWS Secrets Manager (production)
     if (process.env.API_KEYS_SECRET_ARN) {
-      logger.info('Loading API keys from AWS Secrets Manager');
+      logger.info('Loading static API keys from AWS Secrets Manager');
       try {
         await this.loadFromSecretsManager(process.env.API_KEYS_SECRET_ARN);
-        logger.info(`Loaded ${this.apiKeys.size} API keys from AWS Secrets Manager`);
+        logger.info(`Loaded ${this.apiKeys.size} static API keys from AWS Secrets Manager`);
         return;
       } catch (error) {
-        logger.error('Failed to load API keys from AWS Secrets Manager', { error });
-        logger.warn('Falling back to alternate methods');
+        logger.error('Failed to load static API keys from AWS Secrets Manager', { error });
+        logger.warn('Falling back to alternate static methods');
       }
     }
     
     // Priority 2: Load from file (mounted secret)
     if (process.env.API_KEYS_FILE) {
-      logger.info('Loading API keys from file');
+      logger.info('Loading static API keys from file');
       try {
-        const fs = require('fs');
-        const fileContent = fs.readFileSync(process.env.API_KEYS_FILE, 'utf8');
+        const fileContent = readFileSync(process.env.API_KEYS_FILE, 'utf8');
         this.parseApiKeys(fileContent);
-        logger.info(`Loaded ${this.apiKeys.size} API keys from file`);
+        logger.info(`Loaded ${this.apiKeys.size} static API keys from file`);
         return;
       } catch (error) {
-        logger.error('Failed to load API keys from file', { error });
+        logger.error('Failed to load static API keys from file', { error });
       }
     }
     
@@ -129,16 +162,16 @@ export class ApiKeyAuth {
     const apiKeysEnv = process.env.API_KEYS;
     
     if (!apiKeysEnv) {
-      logger.warn('API key authentication enabled but no API_KEYS configured');
+      logger.warn('Static API key authentication enabled but no API_KEYS configured');
       return;
     }
 
     if (process.env.NODE_ENV === 'production') {
-      logger.warn('SECURITY WARNING: Loading API keys from environment variables in production is not recommended. Use AWS Secrets Manager or Vault instead.');
+      logger.warn('SECURITY WARNING: Loading static API keys from environment variables in production is not recommended. Use database-backed keys instead.');
     }
 
     this.parseApiKeys(apiKeysEnv);
-    logger.info(`Loaded ${this.apiKeys.size} API keys from environment variables`);
+    logger.info(`Loaded ${this.apiKeys.size} static API keys from environment variables`);
   }
 
   /**
@@ -184,8 +217,73 @@ export class ApiKeyAuth {
       return;
     }
 
-    // Validate API key
-    const client = this.apiKeys.get(apiKey);
+    // Validate API key with hybrid approach
+    let client: ApiKeyClient | null = null;
+    let authSource: string = '';
+
+    // Priority 1: Check database-backed keys if enabled
+    if (this.useDatabaseKeys && this.apiKeyService) {
+      try {
+        const dbKeyInfo = await this.apiKeyService.validateApiKey(apiKey);
+        if (dbKeyInfo) {
+          client = {
+            apiKey: apiKey,
+            clientId: dbKeyInfo.clientId,
+            clientName: dbKeyInfo.clientName
+          };
+          authSource = 'database';
+          
+          logger.info('API key authenticated via database', {
+            clientId: client.clientId,
+            clientName: client.clientName,
+            keyId: dbKeyInfo.keyId,
+            version: dbKeyInfo.version,
+            path: req.path
+          });
+        }
+      } catch (error) {
+        logger.error('Database key validation failed', { 
+          error: error instanceof Error ? error.message : String(error)
+        });
+        
+        // 🔥 CRITICAL SECURITY FIX: Only allow static fallback if explicitly enabled
+        if (process.env.ALLOW_STATIC_FALLBACK_ON_DB_FAILURE !== 'true') {
+          logger.error('Database authentication failed and static fallback disabled - rejecting request', {
+            error: error instanceof Error ? error.message : String(error),
+            ip: req.ip,
+            path: req.path
+          });
+          res.status(503).json({
+            error: 'Service Unavailable',
+            message: 'Authentication service temporarily unavailable'
+          });
+          return;
+        }
+        
+        // Only continue to static fallback if explicitly allowed
+        logger.warn('Database authentication failed - using static fallback (SECURITY RISK)', {
+          error: error instanceof Error ? error.message : String(error),
+          ip: req.ip,
+          path: req.path
+        });
+      }
+    }
+
+    // Priority 2: Fall back to static keys for backward compatibility
+    if (!client) {
+      const staticClient = this.apiKeys.get(apiKey);
+      if (staticClient) {
+        client = staticClient;
+        authSource = 'static';
+        
+        logger.info('API key authenticated via static fallback', {
+          clientId: client!.clientId,
+          clientName: client!.clientName,
+          path: req.path,
+          warning: this.useDatabaseKeys ? 'Using static fallback - consider migrating to database keys' : undefined
+        });
+      }
+    }
 
     if (!client) {
       logger.warn('Invalid API key', { ip: req.ip, path: req.path });
@@ -202,12 +300,23 @@ export class ApiKeyAuth {
 
     logger.info('API key authenticated', {
       clientId: client.clientId,
-      clientName: client.name,
+      clientName: client.clientName,
       path: req.path
     });
 
     next();
   };
+
+  /**
+   * Close the API key authentication service
+   */
+  async close(): Promise<void> {
+    if (this.apiKeyService) {
+      await this.apiKeyService.close();
+    }
+    this.enabled = false;
+    logger.info('ApiKeyAuth closed');
+  }
 
   /**
    * Extract API key from request headers

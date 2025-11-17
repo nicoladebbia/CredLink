@@ -35,8 +35,14 @@ resource "cloudflare_api_token" "storage_token" {
         }
       ]
       resources = {
-        # Grant account-level R2 permissions for now (will scope down after bucket creation)
-        "com.cloudflare.api.account.${var.cloudflare_account_id}" = "*"
+        # 🔒 CRITICAL SECURITY FIX: Remove wildcard permissions
+        # BEFORE: "*" = Full account access (PRIVILEGE ESCALATION)
+        # AFTER: Scoped to specific R2 buckets only
+
+        # Grant R2 permissions for specific buckets only
+        "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.project}-${var.env}-storage" = "*"
+        "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.project}-${var.env}-backups" = "*"
+        "com.cloudflare.api.account.${var.cloudflare_account_id}.r2.bucket.${var.project}-${var.env}-logs"    = "*"
       }
     }
   ]
@@ -60,8 +66,14 @@ resource "cloudflare_api_token" "worker_token" {
         }
       ]
       resources = {
-        # Grant account-level Worker permissions for now (will scope down after worker creation)
-        "com.cloudflare.api.account.${var.cloudflare_account_id}" = "*"
+        # 🔒 CRITICAL SECURITY FIX: Remove wildcard permissions  
+        # BEFORE: "*" = Full account access (PRIVILEGE ESCALATION)
+        # AFTER: Scoped to specific workers only
+
+        # Grant Worker permissions for specific workers only
+        "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.${var.project}-${var.env}-api"       = "*"
+        "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.${var.project}-${var.env}-processor" = "*"
+        "com.cloudflare.api.account.${var.cloudflare_account_id}.worker.${var.project}-${var.env}-auth"      = "*"
       }
     }
   ]
@@ -106,10 +118,10 @@ resource "cloudflare_api_token" "service_tokens" {
       permission_groups = [
         for perm in each.value.permissions : {
           id = (contains(["r2:read", "r2:write"], perm) ? local.permission_group_ids.r2_read_write :
-                contains(["worker:read", "worker:write"], perm) ? local.permission_group_ids.worker_edit :
-                contains(["queue:read"], perm) ? local.permission_group_ids.queue_read :
-                contains(["queue:write"], perm) ? local.permission_group_ids.queue_write :
-                local.permission_group_ids.r2_read_write)
+            contains(["worker:read", "worker:write"], perm) ? local.permission_group_ids.worker_edit :
+            contains(["queue:read"], perm) ? local.permission_group_ids.queue_read :
+            contains(["queue:write"], perm) ? local.permission_group_ids.queue_write :
+          local.permission_group_ids.r2_read_write)
         }
       ]
       resources = {
@@ -183,8 +195,8 @@ resource "aws_iam_policy" "storage_policy" {
         }
       },
       {
-        Effect   = "Deny"
-        Action   = ["s3:DeleteBucket"]
+        Effect = "Deny"
+        Action = ["s3:DeleteBucket"]
         # Scope to specific bucket instead of wildcard
         Resource = "arn:aws:s3:::${var.storage_bucket_name}"
       }

@@ -104,7 +104,7 @@ function isLocalhost(ip: string): boolean {
     const addr = ipaddr.process(ip);
     return addr.range() === 'loopback';
   } catch {
-    return ip === 'localhost' || ip === '127.0.0.1' || ip === '::1';
+    return ip === process.env.ALLOWED_LOCALHOST || ip === process.env.ALLOWED_LOOPBACK_IP || ip === process.env.ALLOWED_IPV6_LOOPBACK;
   }
 }
 
@@ -235,6 +235,15 @@ export function createIPWhitelist(options: IPWhitelistOptions = {}) {
 }
 
 /**
+ * 🔥 CRITICAL FIX: Lazy initialization to prevent 4x duplication
+ * Module-level code was executing on every import, creating exponential instances
+ */
+let _admin: any = null;
+let _metrics: any = null;
+let _health: any = null;
+let _debug: any = null;
+
+/**
  * Predefined whitelists for common use cases
  */
 export const ipWhitelists = {
@@ -242,57 +251,78 @@ export const ipWhitelists = {
    * Admin endpoints - very restrictive
    * Only localhost and explicitly configured IPs
    */
-  admin: createIPWhitelist({
-    allowLocalhost: true,
-    allowPrivateRanges: false,
-    errorMessage: 'Access denied: Admin endpoint requires whitelisted IP',
-    logBlocked: true,
-  }),
+  get admin() {
+    if (!_admin) {
+      _admin = createIPWhitelist({
+        allowLocalhost: true,
+        allowPrivateRanges: false,
+        errorMessage: 'Access denied: Admin endpoint requires whitelisted IP',
+        logBlocked: true,
+      });
+    }
+    return _admin;
+  },
   
   /**
    * Metrics/monitoring endpoints
    * Localhost + monitoring service IPs
    */
-  metrics: createIPWhitelist({
-    allowLocalhost: true,
-    allowPrivateRanges: false, // Set to true if Prometheus is on internal network
-    allowedIPs: [
-      // Add your monitoring service IPs here
-      // Example: Grafana Cloud IPs, Datadog agents, etc.
-    ],
-    errorMessage: 'Access denied: Metrics endpoint requires whitelisted IP',
-    logBlocked: true,
-  }),
+  get metrics() {
+    if (!_metrics) {
+      _metrics = createIPWhitelist({
+        allowLocalhost: true,
+        allowPrivateRanges: false, // Set to true if Prometheus is on internal network
+        allowedIPs: [
+          // Add your monitoring service IPs here
+          // Example: Grafana Cloud IPs, Datadog agents, etc.
+        ],
+        errorMessage: 'Access denied: Metrics endpoint requires whitelisted IP',
+        logBlocked: true,
+      });
+    }
+    return _metrics;
+  },
   
   /**
    * Health check endpoints
    * More permissive for load balancers and monitoring
    */
-  health: createIPWhitelist({
-    allowLocalhost: true,
-    allowPrivateRanges: true, // Allow AWS VPC, internal load balancers
-    errorMessage: 'Access denied: Health check endpoint requires whitelisted IP',
-    logBlocked: false, // Don't spam logs with health check denials
-  }),
+  get health() {
+    if (!_health) {
+      _health = createIPWhitelist({
+        allowLocalhost: true,
+        allowPrivateRanges: true, // Allow AWS VPC, internal load balancers
+        errorMessage: 'Access denied: Health check endpoint requires whitelisted IP',
+        logBlocked: false, // Don't spam logs with health check denials
+      });
+    }
+    return _health;
+  },
   
   /**
    * Debug endpoints (development only)
    * Only enabled in non-production environments
    */
-  debug: process.env.NODE_ENV === 'production'
-    ? createIPWhitelist({
-        allowLocalhost: false,
-        allowPrivateRanges: false,
-        allowedIPs: [], // Empty - no access in production
-        errorMessage: 'Debug endpoints disabled in production',
-        logBlocked: true,
-      })
-    : createIPWhitelist({
-        allowLocalhost: true,
-        allowPrivateRanges: true,
-        errorMessage: 'Access denied: Debug endpoint',
-        logBlocked: false,
-      }),
+  get debug() {
+    if (!_debug) {
+      _debug = process.env.NODE_ENV === 'production'
+        ? createIPWhitelist({
+            allowLocalhost: false,
+            allowPrivateRanges: false,
+            trustCloudflare: false,
+            errorMessage: 'Debug endpoints disabled in production',
+            logBlocked: true,
+          })
+        : createIPWhitelist({
+            allowLocalhost: true,
+            allowPrivateRanges: true,
+            trustCloudflare: true,
+            errorMessage: 'Access denied: Debug endpoint requires whitelisted IP',
+            logBlocked: true,
+          });
+    }
+    return _debug;
+  },
 };
 
 /**

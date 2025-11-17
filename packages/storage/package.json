@@ -12,7 +12,8 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.450.0",
     "@aws-sdk/s3-request-presigner": "^3.928.0",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "@credlink/circuit-breaker": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.17.4",

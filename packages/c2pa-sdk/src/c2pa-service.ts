@@ -1,10 +1,43 @@
-import { CertificateManager } from './certificate-manager';
 import { ManifestBuilder, C2PAManifest } from './manifest-builder';
 import { C2PAWrapper } from './c2pa-wrapper';
 import { MetadataEmbedder } from './metadata-embedder';
 import { PerceptualHash } from './utils/perceptual-hash';
 import * as crypto from 'crypto';
 import { LRUCache } from 'lru-cache';
+
+// Simple certificate interface for c2pa-sdk
+interface Certificate {
+    pem: string;
+    fingerprint: string;
+}
+
+// Simple certificate loader that uses environment variables
+class SimpleCertificateLoader {
+    async getCertificate(): Promise<Certificate> {
+        if (!process.env.SIGNING_CERTIFICATE) {
+            throw new Error('SIGNING_CERTIFICATE environment variable is required');
+        }
+        
+        const pem = process.env.SIGNING_CERTIFICATE.startsWith('-----BEGIN CERTIFICATE-----') 
+            ? process.env.SIGNING_CERTIFICATE 
+            : require('fs').readFileSync(process.env.SIGNING_CERTIFICATE, 'utf8');
+            
+        return {
+            pem,
+            fingerprint: crypto.createHash('sha256').update(pem).digest('hex')
+        };
+    }
+
+    async getSigningKey(): Promise<string> {
+        if (!process.env.SIGNING_PRIVATE_KEY) {
+            throw new Error('SIGNING_PRIVATE_KEY environment variable is required');
+        }
+        
+        return process.env.SIGNING_PRIVATE_KEY.startsWith('-----BEGIN') 
+            ? process.env.SIGNING_PRIVATE_KEY 
+            : require('fs').readFileSync(process.env.SIGNING_PRIVATE_KEY, 'utf8');
+    }
+}
 
 // ProofStorage is in @credlink/storage package now
 // We'll handle it as an optional dependency
@@ -62,7 +95,7 @@ export class SigningError extends Error {
 }
 
 export class C2PAService {
-  private certManager: CertificateManager;
+  private certManager: SimpleCertificateLoader;
   private manifestBuilder: ManifestBuilder;
   private c2paWrapper: C2PAWrapper;
   private metadataEmbedder: MetadataEmbedder;
@@ -73,7 +106,7 @@ export class C2PAService {
 
   constructor(options: { useRealC2PA?: boolean; proofStorage?: any } = {}) {
     this.useRealC2PA = options.useRealC2PA ?? (process.env.USE_REAL_C2PA === 'true');
-    this.certManager = new CertificateManager();
+    this.certManager = new SimpleCertificateLoader();
     this.manifestBuilder = new ManifestBuilder();
     this.c2paWrapper = new C2PAWrapper();
     this.metadataEmbedder = new MetadataEmbedder();
@@ -152,7 +185,7 @@ export class C2PAService {
         proofUri: proofUri,
         imageHash: imageHash,
         timestamp: manifest.claim_generator.timestamp,
-        certificateId: this.certManager.getCurrentCertificateId(),
+        certificateId: (await this.certManager.getCertificate()).fingerprint,
         signedBuffer: signingResult.signedBuffer!,
         manifest: manifest
       };

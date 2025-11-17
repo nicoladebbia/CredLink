@@ -59,15 +59,8 @@ export type {
   // API request/response types
   VerifyAssetRequest,
   VerifyAssetResponse,
-  VerificationResult,
   VerifyPageRequest,
-  VerifyPageResponse,
-  AssetVerificationResult,
   BatchVerifyRequest,
-  BatchVerifyResponse,
-  AssetReference,
-  BatchVerificationResult,
-  BatchSummary,
   InjectLinkRequest,
   InjectLinkResponse,
   SignFolderRequest,
@@ -85,28 +78,8 @@ export type {
 } from './types.js';
 
 // Export error classes for direct use
-import {
-  CredLinkError,
-  AuthError,
-  RateLimitError,
-  ConflictError,
-  ValidationError,
-  ServerError,
-  NetworkError,
-} from './types.js';
 import { Client } from './client.js';
 import type { ClientConfig } from './types.js';
-
-// Re-export error classes
-export {
-  CredLinkError,
-  AuthError,
-  RateLimitError,
-  ConflictError,
-  ValidationError,
-  ServerError,
-  NetworkError,
-} from './types.js';
 
 // Version information
 export const VERSION = '1.3.0';

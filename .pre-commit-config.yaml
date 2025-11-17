@@ -1,0 +1,174 @@
+#==================================================
+# Pre-commit Hooks Configuration - Step 18 Secret Scanning
+#==================================================
+repos:
+  #==================================================
+  # Secret Detection with Multiple Tools
+  #==================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: 'package-lock\.json|pnpm-lock\.yaml|\.git/|\.artifacts/|node_modules/'
+        
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.63.1
+    hooks:
+      - id: trufflehog
+        args: [--regex, --entropy=False, --verify=False]
+        exclude: 'package-lock\.json|pnpm-lock\.yaml|\.git/|\.artifacts/|node_modules/'
+        
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0
+    hooks:
+      - id: gitleaks
+        args: [--config=.gitleaks.toml]
+        exclude: 'package-lock\.json|pnpm-lock\.yaml|\.git/|\.artifacts/|node_modules/'
+
+  #==================================================
+  # Security and Code Quality Checks
+  #==================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-xml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: mixed-line-ending
+      - id: requirements-txt-fixer
+
+  #==================================================
+  # Terraform Security Validation
+  #==================================================
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.88.4
+    hooks:
+      - id: terraform_fmt
+      - id: terraform_validate
+      - id: terraform_tflint
+        args: [--deep, --config=__GIT_WORKING_DIR__/.tflint.hcl]
+      - id: terraform_tfsec
+        args: [--config-file=__GIT_WORKING_DIR__/.tfsec.json]
+      - id: terraform_checkov
+        args: [--config-file=__GIT_WORKING_DIR__/.checkov.yaml]
+      - id: terraform_docs
+        args: [--args=--config-file=__GIT_WORKING_DIR__/.terraform-docs.yml]
+
+  #==================================================
+  # TypeScript/JavaScript Security
+  #==================================================
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.54.0
+    hooks:
+      - id: eslint
+        types: [file]
+        types_or: [javascript, jsx, ts, tsx]
+        args: [--fix, --config=.eslintrc.json]
+        additional_dependencies:
+          - eslint@8.54.0
+          - "@typescript-eslint/eslint-plugin@6.12.0"
+          - "@typescript-eslint/parser@6.12.0"
+          - eslint-plugin-security@1.7.1
+
+  #==================================================
+  # Docker Security Scanning
+  #==================================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--config=.hadolint.yaml]
+
+  #==================================================
+  # Python Security (if applicable)
+  #==================================================
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        args: [--config=.flake8]
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-import-order
+          - flake8-bugbear
+
+  #==================================================
+  # Custom Security Scripts
+  #==================================================
+  - repo: local
+    hooks:
+      - id: check-for-secrets-in-code
+        name: Check for hardcoded secrets in code
+        entry: python3 scripts/security/check-secrets.py
+        language: system
+        files: '\.(js|ts|jsx|tsx|py|go|java|php|rb|cs)$'
+        pass_filenames: true
+        
+      - id: validate-kms-usage
+        name: Validate KMS encryption usage
+        entry: python3 scripts/security/validate-kms.py
+        language: system
+        files: '\.tf$'
+        pass_filenames: true
+        
+      - id: check-iam-permissions
+        name: Check for overly permissive IAM policies
+        entry: python3 scripts/security/check-iam.py
+        language: system
+        files: '\.tf$'
+        pass_filenames: true
+        
+      - id: scan-for-api-keys
+        name: Scan for exposed API keys
+        entry: python3 scripts/security/scan-api-keys.py
+        language: system
+        files: '\.(js|ts|jsx|tsx|json|yaml|yml|env)$'
+        pass_filenames: true
+
+  #==================================================
+  # Dependency Security Scanning
+  #==================================================
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+        files: 'requirements\.txt$'
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-nodejs
+    rev: v1.0.1
+    hooks:
+      - id: nodejs-npm-audit
+        files: 'package\.json$'
+
+#==================================================
+# Global Configuration
+#==================================================
+default_language_version:
+  python: python3
+  node: '18'
+  go: '1.21'
+
+#==================================================
+# CI/CD Configuration Override
+#==================================================
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false

@@ -174,12 +174,16 @@ ENTRYPOINT ["dumb-init", "--"]
 # Default command with security considerations
 CMD ["pnpm", "bootstrap"]
 
+# Build arguments for version injection
+ARG APP_VERSION=0.1.0
+ARG BUILD_NUMBER=local
+
 # Comprehensive security and provenance labels
 LABEL org.opencontainers.image.title="C2 Concierge" \
       org.opencontainers.image.description="Provenance verification platform with remote-first survival doctrine" \
       org.opencontainers.image.vendor="C2 Concierge Team" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.version="${APP_VERSION}+${BUILD_NUMBER}" \
       security.scan.enabled="true" \
       security.scan.timestamp="" \
       security.scan.level="comprehensive" \

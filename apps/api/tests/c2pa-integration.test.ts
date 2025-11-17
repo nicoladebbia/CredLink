@@ -38,8 +38,8 @@ describe('C2PA Integration Test', () => {
     expect(signingCert).toContain('-----END CERTIFICATE-----');
     
     expect(typeof signingKey).toBe('string');
-    expect(signingKey).toContain('-----BEGIN PRIVATE KEY-----');
-    expect(signingKey).toContain('-----END PRIVATE KEY-----');
+    expect(signingKey).toContain('-----BEGIN RSA PRIVATE KEY-----');
+    expect(signingKey).toContain('-----END RSA PRIVATE KEY-----');
   });
 
   it('should create a basic C2PA manifest', async () => {

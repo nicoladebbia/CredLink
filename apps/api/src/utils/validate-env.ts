@@ -1,4 +1,6 @@
+import { z } from 'zod';
 import { logger } from './logger';
+import { versionConfig } from './version-config';
 
 /**
  * Environment Variable Validator
@@ -203,7 +205,7 @@ const ENV_SCHEMA: EnvSchema[] = [
     name: 'SERVICE_VERSION',
     required: false,
     type: 'string',
-    default: '1.0.0',
+    default: versionConfig.appVersion,
     validator: (v) => /^\d+\.\d+\.\d+$/.test(v),
     description: 'Service version for manifests'
   },

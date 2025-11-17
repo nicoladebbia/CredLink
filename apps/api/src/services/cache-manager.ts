@@ -66,8 +66,8 @@ export class CacheManager<T> {
     enableL3?: boolean;
   } = {}) {
     const {
-      maxSize = 1000,
-      ttl = 3600000, // 1 hour
+      maxSize = parseInt(process.env.CACHE_MAX_SIZE || '1000'),
+      ttl = parseInt(process.env.CACHE_TTL_MS || '3600000'), // 1 hour
       enableL2 = false,
       enableL3 = false
     } = options;

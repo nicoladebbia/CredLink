@@ -221,19 +221,20 @@ jobs:
           
           # Check if syft is available
           if ! command -v syft &> /dev/null; then
-            echo "⚠️ Syft not available, skipping SBOM generation"
-            echo "✅ Build completed without SBOM"
-            exit 0
+            echo "❌ CRITICAL: Syft not available for SBOM generation"
+            echo "🚨 SECURITY VIOLATION: SBOM generation is mandatory for supply chain security"
+            exit 1
           fi
           
-          # Generate SPDX SBOM with enhanced options
+          # Generate SPDX SBOM with enhanced options - FAIL ON ERROR
           if syft ${{ env.IMAGE }} \
             -o spdx-json=sbom.spdx.json \
             -o spdx-tag-value=sbom.spdx; then
             echo "✅ SBOM generated successfully"
           else
-            echo "⚠️ SBOM generation failed, continuing without SBOM"
-            exit 0
+            echo "❌ CRITICAL: SBOM generation failed"
+            echo "🚨 SECURITY VIOLATION: Cannot deploy without valid SBOM"
+            exit 1
           fi
           
           # Validate SPDX format comprehensively
@@ -287,6 +288,25 @@ jobs:
             exit 1
           fi
           
+          # CRITICAL: Container vulnerability scanning
+          echo "🔍 Running container vulnerability scanning..."
+          if ! command -v trivy &> /dev/null; then
+            echo "❌ CRITICAL: Trivy not available for container vulnerability scanning"
+            echo "🚨 SECURITY VIOLATION: Container vulnerability scanning is mandatory"
+            exit 1
+          fi
+          
+          # Run comprehensive container vulnerability scan - FAIL ON VULNERABILITIES
+          if ! trivy image --format json --output trivy-results.json --exit-code 1 ${{ env.IMAGE }}; then
+            echo "❌ CRITICAL: Container vulnerabilities detected"
+            echo "🚨 SECURITY VIOLATION: Cannot deploy vulnerable container image"
+            echo "📊 Vulnerability details:"
+            cat trivy-results.json | jq -r '.Results[]?.Vulnerabilities[]? | "  \(.Severity): \(.VulnerabilityID) in \(.PkgName) \(.InstalledVersion)"' || true
+            exit 1
+          fi
+          
+          echo "✅ Container vulnerability scan passed - no critical vulnerabilities found"
+          
           echo "✅ Comprehensive SBOMs generated and validated"
       
       - name: SBOM attestations with enhanced validation
@@ -296,28 +316,31 @@ jobs:
           
           # Check if cosign is available
           if ! command -v cosign &> /dev/null; then
-            echo "⚠️ Cosign not available, skipping SBOM attestations"
-            echo "✅ Build completed without SBOM attestations"
-            exit 0
+            echo "❌ CRITICAL: Cosign not available for artifact signing"
+            echo "🚨 SECURITY VIOLATION: Artifact signing is mandatory for supply chain security"
+            exit 1
           fi
           
           # Check if SBOM files exist
           if [ ! -f "sbom.spdx.json" ]; then
-            echo "⚠️ SBOM files not found, skipping attestations"
-            exit 0
+            echo "❌ CRITICAL: SBOM files not found for attestation"
+            echo "🚨 SECURITY VIOLATION: Cannot attest artifacts without SBOM"
+            exit 1
           fi
           
-          # SPDX attestation
+          # SPDX attestation - FAIL ON ERROR
           if cosign attest --yes \
             --predicate-type spdx \
             --predicate sbom.spdx.json \
             ${{ env.IMAGE }}; then
             echo "✅ SPDX attestation completed"
           else
-            echo "⚠️ SPDX attestation failed, continuing anyway"
+            echo "❌ CRITICAL: SPDX attestation failed"
+            echo "🚨 SECURITY VIOLATION: Cannot deploy unsigned artifacts"
+            exit 1
           fi
           
-          # CycloneDX attestation (if file exists)
+          # CycloneDX attestation - MANDATORY IF FILE EXISTS
           if [ -f "sbom.cdx.json" ]; then
             if cosign attest --yes \
               --predicate-type cyclonedx \
@@ -325,10 +348,12 @@ jobs:
               ${{ env.IMAGE }}; then
               echo "✅ CycloneDX attestation completed"
             else
-              echo "⚠️ CycloneDX attestation failed, continuing anyway"
+              echo "❌ CRITICAL: CycloneDX attestation failed"
+              echo "🚨 SECURITY VIOLATION: CycloneDX SBOM exists but attestation failed"
+              exit 1
             fi
           else
-            echo "⚠️ CycloneDX SBOM not found, skipping CycloneDX attestation"
+            echo "⚠️ CycloneDX SBOM not found - this is acceptable as CycloneDX is optional"
           fi
           
           echo "✅ SBOM attestations process completed"
