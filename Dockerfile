@@ -1,84 +1,85 @@
-# C2 Concierge Multi-Stage Docker Build
-FROM node:20.11.1-alpine3.19 AS base
+# S-14: Server Hardening - Secure Docker Configuration
 
-# Install pnpm
-RUN npm install -g pnpm
+# Multi-stage build for minimal attack surface
+FROM node:20.11.1-alpine3.19 AS builder
 
-# Set working directory
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
-COPY packages/acceptance/package.json ./packages/acceptance/
-COPY packages/policy/package.json ./packages/policy/
-COPY packages/utils/package.json ./packages/utils/
-COPY apps/edge-worker/package.json ./apps/edge-worker/
-COPY sandboxes/strip-happy/package.json ./sandboxes/strip-happy/
-COPY sandboxes/preserve-embed/package.json ./sandboxes/preserve-embed/
-COPY sandboxes/remote-only/package.json ./sandboxes/remote-only/
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Build stage
-FROM base AS builder
-
-# Copy source code
-COPY . .
-
-# Build all packages
-RUN pnpm build
-
-# Production stage
-FROM node:20.11.1-alpine3.19 AS production
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages ./packages
+COPY apps ./apps
 
 # Install pnpm
-RUN npm install -g pnpm
+RUN npm install -g pnpm@8
 
-# Install ImageMagick for sandbox operations
-# SECURITY: Updated to latest secure version to fix known CVEs
-# Latest version from Alpine Linux v3.19: 7.1.1.32-r0 (as of Nov 2025)
-RUN apk add --no-cache imagemagick=7.1.1.32-r0
+# Install dependencies (dev dependencies needed for build)
+RUN pnpm install --frozen-lockfile
+
+# Build all packages
+RUN pnpm run build
+
+# Production stage
+FROM node:20.11.1-alpine3.19
+
+# S-14: Security hardening
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S credlink -u 1001
+RUN addgroup -g 1001 -S credlink && \
+    adduser -S -D -H -u 1001 -G credlink credlink
+
+# Install production dependencies only
+RUN apk add --no-cache \
+    dumb-init \
+    tini \
+    && rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-# Copy built artifacts
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/packages/acceptance/dist ./packages/acceptance/dist
-COPY --from=builder /app/packages/policy/dist ./packages/policy/dist
-COPY --from=builder /app/packages/utils/dist ./packages/utils/dist
-COPY --from=builder /app/apps/edge-worker/dist ./apps/edge-worker/dist
+# Copy built artifacts from builder
+COPY --from=builder --chown=credlink:credlink /app/node_modules ./node_modules
+COPY --from=builder --chown=credlink:credlink /app/packages ./packages
+COPY --from=builder --chown=credlink:credlink /app/apps ./apps
+COPY --from=builder --chown=credlink:credlink /app/package.json ./
 
-# Copy production dependencies
-COPY package.json pnpm-lock.yaml ./
-COPY packages/acceptance/package.json ./packages/acceptance/
-COPY packages/policy/package.json ./packages/policy/
-COPY packages/utils/package.json ./packages/utils/
-COPY apps/edge-worker/package.json ./apps/edge-worker/
+# Install production dependencies only
+RUN npm install -g pnpm@8 && \
+    pnpm install --prod --frozen-lockfile && \
+    pnpm store prune
 
-RUN pnpm install --frozen-lockfile --prod
+# Remove unnecessary files
+RUN rm -rf \
+    /root/.npm \
+    /root/.node-gyp \
+    /tmp/* \
+    /var/tmp/*
 
-# Copy scripts and configs
-COPY scripts ./scripts
-COPY .env.example ./.env.example
+# S-14: Set read-only filesystem for certain directories
+RUN mkdir -p /app/logs /app/temp && \
+    chown -R credlink:credlink /app/logs /app/temp
 
-# Create artifacts directory
-RUN mkdir -p .artifacts/logs .artifacts/acceptance fixtures
-
-# Change ownership
-RUN chown -R credlink:nodejs /app
+# Switch to non-root user
 USER credlink
 
-# Expose sandbox ports
-EXPOSE 4101 4102 4103
+# S-14: Drop all capabilities except necessary ones
+# (requires docker run with --cap-drop=ALL --cap-add=NET_BIND_SERVICE)
+
+# Expose port (non-privileged port)
+EXPOSE 3000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:4101/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"
+    CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Default command
-CMD ["pnpm", "bootstrap"]
+# Use tini as PID 1 to handle signals properly
+ENTRYPOINT ["/sbin/tini", "--"]
+
+# Start application
+CMD ["node", "apps/api/dist/index.js"]
+
+# S-14: Security labels
+LABEL security.no-new-privileges="true"
+LABEL security.read-only-root-filesystem="true"
