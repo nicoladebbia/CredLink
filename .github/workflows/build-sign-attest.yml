@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     env:
-      IMAGE: ghcr.io/nickiller04/credlink:${{ github.sha }}
+      IMAGE: ghcr.io/nicoladebbia/credlink:${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
