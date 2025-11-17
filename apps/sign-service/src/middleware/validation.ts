@@ -11,7 +11,7 @@ export const validateRequest = (schema: z.ZodSchema) => {
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const errorMessages = error.errors.map(err => ({
+        const errorDetails = error.errors.map(err => ({
           field: err.path.join('.'),
           message: err.message,
           code: err.code
