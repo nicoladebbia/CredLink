@@ -226,7 +226,9 @@ jobs:
           fi
       
       - name: Attest SLSA provenance with validation
+        if: false # Disabled - attestations only available for public repositories
         uses: actions/attest-build-provenance@v1
+        continue-on-error: true
         with: 
           subject-path: build.json
       
