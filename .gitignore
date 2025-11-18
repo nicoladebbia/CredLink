@@ -86,7 +86,17 @@ signed-*.png
 signed-*.jpg
 test-*.png
 test-*.jpg
+proxy-test.*
+real-signed-image.*
+signed-result.*
 *.bak
+
+# Temporary scripts and launch files
+launch-*.sh
+deploy-*.sh
+test-fix.sh
+test-memory-stress.cjs
+test-lint-violation.ts
 
 # Build artifacts
 dist-backup/
