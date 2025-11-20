@@ -2,7 +2,6 @@
   "name": "@credlink/rbac",
   "version": "1.0.0",
   "description": "CredLink Role-Based Access Control - Enterprise RBAC system",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

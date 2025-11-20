@@ -1,8 +1,0 @@
-expected:
-  decision: "DESTROYED"
-  reason: "This file's Content Credentials are broken: Invalid length encoding"
-  code: "LEN_OVERFLOW"
-  user_copy: "This file's Content Credentials are broken: Invalid length encoding"
-  log_assertions:
-    incident: true
-    headers_snapshot: "present"

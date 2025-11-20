@@ -1,8 +1,10 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
+import { logger } from '../utils/logger';
+import { requirePermission } from '../middleware/rbac-auth';
 
-const router = Router();
+const router: Router = Router();
 
-router.get('/', (req, res) => {
+router.get('/', (req: Request, res: Response) => {
   res.json({ audits: [], timestamp: new Date().toISOString() });
 });
 

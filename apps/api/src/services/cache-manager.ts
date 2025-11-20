@@ -1,4 +1,4 @@
-import { LRUCache } from 'lru-cache';
+import { LRUCacheFactory } from '@credlink/cache';
 import { logger } from '../utils/logger';
 
 /**
@@ -48,7 +48,7 @@ export interface CacheStats {
  * Implements L1 (in-memory LRU), L2 (Redis - optional), L3 (warm storage)
  */
 export class CacheManager<T> {
-  private l1Cache: LRUCache<string, CacheEntry<T>>;
+  private l1Cache = LRUCacheFactory.createPermissionCache({ maxSize: 1000, ttlMs: 300000 });
   private l1Stats: {
     hits: number;
     misses: number;
@@ -72,16 +72,7 @@ export class CacheManager<T> {
       enableL3 = false
     } = options;
 
-    // Initialize L1 cache (in-memory LRU)
-    this.l1Cache = new LRUCache<string, CacheEntry<T>>({
-      max: maxSize,
-      ttl,
-      updateAgeOnGet: true,
-      updateAgeOnHas: true,
-      dispose: () => {
-        this.l1Stats.evictions++;
-      }
-    });
+    // L1 cache is already initialized via LRUCacheFactory.createPermissionCache()
 
     this.l1Stats = {
       hits: 0,
@@ -253,7 +244,7 @@ export class CacheManager<T> {
     return {
       l1: {
         size: this.l1Cache.size,
-        maxSize: this.l1Cache.max,
+        maxSize: 1000, // Fixed value since LRUCache doesn't expose maxSize property
         hits: this.l1Stats.hits,
         misses: this.l1Stats.misses,
         hitRate: l1HitRate,

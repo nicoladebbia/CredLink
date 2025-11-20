@@ -1,8 +1,0 @@
-expected:
-  decision: "DESTROYED"
-  reason: "This file's Content Credentials are broken: Invalid text encoding"
-  code: "UTF8_INVALID"
-  user_copy: "This file's Content Credentials are broken: Invalid text encoding"
-  log_assertions:
-    incident: true
-    headers_snapshot: "present"

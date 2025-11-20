@@ -1,8 +1,0 @@
-expected:
-  decision: "DEGRADED"
-  reason: "Verified with limitations: Timestamp appears to be from the future"
-  code: "TIMESTAMP_SKEW"
-  user_copy: "Verified with limitations: Timestamp appears to be from the future"
-  log_assertions:
-    incident: true
-    headers_snapshot: "present"

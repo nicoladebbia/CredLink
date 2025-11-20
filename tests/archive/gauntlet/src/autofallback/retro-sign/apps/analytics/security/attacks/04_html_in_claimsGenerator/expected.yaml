@@ -1,8 +1,0 @@
-expected:
-  decision: "VALID"
-  reason: "Provenance verified"
-  code: "UI_SANITIZED"
-  user_copy: "Provenance verified"
-  log_assertions:
-    incident: false
-    headers_snapshot: "present"

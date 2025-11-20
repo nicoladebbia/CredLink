@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -97,7 +97,7 @@ export const dbPool = new Pool({
 });
 
 // 🔥 CRITICAL FIX: Declare app and services at module level for exports
-const app = express();
+const app: Express = express();
 const activeServices: Array<{ name: string; close: () => Promise<void> | void }> = [];
 
 // Test database connection and initialize RBAC
@@ -294,12 +294,12 @@ const createRateLimiter = (windowMs: number, max: number, message: string) => ra
   message,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
+  keyGenerator: (req: any) => {
     // Use IP + API key for more granular limiting when auth is present
     const apiKey = req.headers['x-api-key'] as string;
     return apiKey ? `${req.ip}:${apiKey}` : req.ip || 'unknown';
   },
-  skip: (req) => {
+  skip: (req: any) => {
     // Skip rate limiting for health checks in production monitoring
     return req.path === '/health' && req.ip === '127.0.0.1';
   },
@@ -342,89 +342,6 @@ const healthLimiter = createRateLimiter(
 
 // Apply global rate limiting to all requests
 app.use(globalLimiter);
-
-app.get('/health', healthLimiter, async (req: Request, res: Response) => {
-  try {
-    const healthStatus = {
-      status: 'ok',
-      uptime: process.uptime(),
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-      checks: {
-        service: 'ok',
-        memory: {
-          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 100) / 100,
-          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024 * 100) / 100,
-          external: Math.round(process.memoryUsage().external / 1024 / 1024 * 100) / 100
-        },
-        // BRUTAL FIX: Add database connectivity check
-        database: 'unknown',
-        // BRUTAL FIX: Add critical service checks
-        scheduler: 'ok', // TODO: Implement actual scheduler status check
-        storage: 'ok' // Basic check - proof storage is initialized
-      }
-    };
-
-    // BRUTAL FIX: Validate PostgreSQL connectivity if configured
-    if (process.env.DB_HOST && process.env.DB_USER) {
-      try {
-        const testPool = new Pool({
-          host: process.env.DB_HOST,
-          port: parseInt(process.env.DB_PORT || '5432'),
-          database: process.env.DB_NAME || 'postgres',
-          user: process.env.DB_USER,
-          password: process.env.DB_PASSWORD || '',
-          ssl: process.env.DB_SSL === 'true',
-          max: 1,
-          connectionTimeoutMillis: 3000,
-        });
-        
-        const client = await testPool.connect();
-        await client.query('SELECT 1');
-        client.release();
-        await testPool.end();
-        
-        healthStatus.checks.database = 'ok';
-      } catch (dbError) {
-        healthStatus.checks.database = 'error';
-        healthStatus.status = 'degraded';
-        (healthStatus as any).database_error = (dbError as Error).message;
-      }
-    } else {
-      healthStatus.checks.database = 'not_configured';
-    }
-
-    // BRUTAL FIX: Check overall health
-    // In development, only critical errors (not Redis or optional services) cause degradation
-    const isDevelopment = process.env.NODE_ENV === 'development';
-    const failedChecks = Object.entries(healthStatus.checks)
-      .filter(([key, value]) => {
-        // Skip memory object check and optional services in development
-        if (isDevelopment && (key === 'redis' || key === 'scheduler' || key === 'storage' || key === 'memory')) {
-          return false;
-        }
-        // Only check string values for 'ok' status
-        return typeof value === 'string' && value !== 'ok' && key !== 'database';
-      });
-    
-    // DEBUG: Log what's causing degradation
-    if (failedChecks.length > 0) {
-      logger.debug('Health check failed for:', { failedChecks });
-      logger.debug('All health checks:', { allChecks: Object.entries(healthStatus.checks) });
-      healthStatus.status = 'degraded';
-    }
-
-    const statusCode = healthStatus.status === 'ok' ? 200 : 503;
-    res.status(statusCode).json(healthStatus);
-    
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      timestamp: new Date().toISOString(),
-      error: (error as Error).message
-    });
-  }
-});
 
 app.get('/ready', healthLimiter, (req: Request, res: Response) => {
   res.json({
@@ -514,6 +431,7 @@ if (process.env.ENABLE_API_KEY_AUTH === 'true') {
 
 // Placeholder for routes that will be added after RBAC initialization
 const setupRbacRoutes = () => {
+  console.log('🔥 DEBUG: setupRbacRoutes() called - registering all routes');
   // Always register routes, but conditionally apply auth/RBAC middleware
   if (apiKeyAuth && rbacMiddleware) {
     // Sign route - requires 'create' permission on 'proof' resource
@@ -547,6 +465,9 @@ const setupRbacRoutes = () => {
     app.use('/api-keys', apiLimiter); // Still apply rate limiting in test mode
     app.use('/api-keys', apiKeyRouter);
     
+    // 🔥 CRITICAL FIX: Mount health router at root level for testing
+    // app.use('/', healthRouter); // REMOVED - will mount after initialization
+    
     logger.info('Routes registered without authentication (test mode)', {
       apiKeyAuth: !!apiKeyAuth,
       rbacMiddleware: !!rbacMiddleware
@@ -554,9 +475,8 @@ const setupRbacRoutes = () => {
   }
 };
 
-// 🔥 CRITICAL FIX: Register routes synchronously at module load time
-// This ensures routes are available for tests that import the app
-setupRbacRoutes();
+// 🔥 CRITICAL FIX: Routes will be set up after database initialization
+// setupRbacRoutes(); // REMOVED - duplicate call causing initialization issues
 
 // 🔥 CRITICAL FIX: Add certificate management routes if atomic manager is enabled
 if (process.env.USE_ATOMIC_CERTIFICATE_MANAGER === 'true') {
@@ -585,7 +505,13 @@ if (process.env.USE_ATOMIC_CERTIFICATE_MANAGER === 'true') {
   }
 }
 
-// 404 handler
+// 🔥 HARSH FIX: Mount health router BEFORE 404 handler
+// In Express, routes must be mounted before catch-all 404 handler
+console.log('🔥 MOUNTING HEALTH ROUTER BEFORE 404 HANDLER');
+app.use('/health', healthRouter);
+console.log('🔥 HEALTH ROUTER MOUNTED SUCCESSFULLY');
+
+// 404 handler (must be after all routes)
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: 'Not Found',
@@ -600,7 +526,7 @@ app.use(sentryService.getErrorHandler());
 app.use(errorHandler);
 
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 let server: any; // 🔥 CRITICAL FIX: Declare server at module level
 
 // 🔥 CRITICAL FIX: Initialize DatabaseRBAC before starting server
@@ -625,9 +551,13 @@ async function startServer() {
       logger.warn('⚠️  API key authentication disabled - RBAC protection bypassed');
     }
     
-    // Initialize health checker with shared database pool
+    // 🔥 CRITICAL FIX: Initialize health checker with shared connections
     logger.info('Initializing health checker with shared connections...');
     initializeHealthChecker(dbPool);
+    
+    // 🔥 CRITICAL FIX: Call setupRbacRoutes once to register all routes
+    console.log('🔥 HARSH FIX: Registering all routes now');
+    setupRbacRoutes();
     
     server = app.listen(PORT, () => {
       logger.info(`Sign service running on port ${PORT}`);

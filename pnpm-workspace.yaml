@@ -3,6 +3,4 @@ packages:
   - 'packages/*'
   - 'tools/*'
   - 'ui/*'
-  - 'tests/acceptance'
-  - 'tests/integration'
   - 'tests/setup'

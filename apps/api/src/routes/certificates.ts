@@ -8,7 +8,7 @@ import { AtomicCertificateManager, CertificateRotationResult } from '../services
 import { logger } from '../utils/logger';
 import { requirePermission } from '../middleware/rbac-auth';
 
-const router = Router();
+const router: Router = Router();
 
 interface AuthenticatedRequest extends Request {
   clientId?: string;

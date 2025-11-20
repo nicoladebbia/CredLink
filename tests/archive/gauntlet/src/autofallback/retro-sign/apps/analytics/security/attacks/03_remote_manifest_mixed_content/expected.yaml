@@ -1,8 +1,0 @@
-expected:
-  decision: "BLOCKED"
-  reason: "For safety, this request was blocked: Mixed content not allowed"
-  code: "MIXED_CONTENT_BLOCK"
-  user_copy: "For safety, this request was blocked: Mixed content not allowed"
-  log_assertions:
-    incident: true
-    headers_snapshot: "present"

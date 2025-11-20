@@ -2,17 +2,20 @@
 import 'dotenv/config';
 
 import { Router, Request, Response, NextFunction } from 'express';
-import multer from 'multer';
 import rateLimit from 'express-rate-limit';
-import { z } from 'zod';
-import { C2PAService } from '../services/c2pa-service';
+import { logger } from '../utils/logger';
+import { requirePermission } from '../middleware/rbac-auth';
 import { ProofStorage } from '../services/proof-storage';
 import { embedProofUri } from '../services/metadata-embedder';
 import { validationService, ValidationService, ValidationOptions } from '../services/validation-service';
-import { logger } from '../utils/logger';
 import { AppError } from '../middleware/error-handler';
 import { metricsCollector } from '../middleware/metrics';
 import { registerService } from '../utils/service-registry';
+import { C2PAService } from '../services/c2pa-service';
+import multer from 'multer';
+import { z } from 'zod';
+
+const router: Router = Router();
 
 let c2paService: C2PAService | null = null;
 
@@ -36,8 +39,6 @@ const proofStorage = new ProofStorage();
 if (typeof registerService === 'function') {
   registerService('ProofStorage (sign route)', proofStorage);
 }
-
-const router: Router = Router();
 
 // Validation schema for custom assertions
 // Ensures safe, validated assertions to prevent injection attacks

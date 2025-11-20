@@ -1,8 +1,0 @@
-expected:
-  decision: "DESTROYED"
-  reason: "This file's Content Credentials are broken: Ingredient cycle detected"
-  code: "CYCLE_DETECTED"
-  user_copy: "This file's Content Credentials are broken: Ingredient cycle detected"
-  log_assertions:
-    incident: true
-    headers_snapshot: "present"

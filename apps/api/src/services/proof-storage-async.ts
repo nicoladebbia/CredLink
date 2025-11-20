@@ -9,7 +9,7 @@ import { logger } from '../utils/logger';
 import { DataEncryption } from './encryption';
 import { writeFile, readFile, mkdir, access } from 'fs/promises';
 import { join } from 'path';
-import { LRUCache } from 'lru-cache';
+import { LRUCacheFactory } from '@credlink/cache';
 
 export interface ProofRecord {
     proofId: string;
@@ -22,7 +22,7 @@ export interface ProofRecord {
 }
 
 export class AsyncProofStorage {
-    private cache: LRUCache<string, ProofRecord>;
+    private cache = LRUCacheFactory.createProofCache();
     private hashIndex: Map<string, string> = new Map();
     private storagePath: string;
     private useLocalFilesystem: boolean;
@@ -38,15 +38,11 @@ export class AsyncProofStorage {
         this.useLocalFilesystem = process.env.USE_LOCAL_PROOF_STORAGE === 'true';
         this.encryption = new DataEncryption({
             kmsKeyId: process.env.KMS_KEY_ID,
+            localKey: process.env.ENCRYPTION_KEY,
             algorithm: 'aes-256-gcm'
         });
 
-        // Initialize LRU cache with size limits to prevent memory exhaustion
-        this.cache = new LRUCache<string, ProofRecord>({
-            max: this.maxCacheSize,
-            ttl: 1000 * 60 * 60 * 24, // 24 hours
-            updateAgeOnGet: true
-        });
+        // Cache is already initialized via LRUCacheFactory.createProofCache()
 
         // Start async initialization
         this.initializeAsync();

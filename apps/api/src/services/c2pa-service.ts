@@ -5,8 +5,9 @@ import { C2PAWrapper } from './c2pa-wrapper';
 import { MetadataEmbedder } from './metadata-embedder';
 import { PerceptualHash } from '../utils/perceptual-hash';
 import { AsyncProofStorage } from './proof-storage-async';
+import { logger } from '../utils/logger';
 import * as crypto from 'crypto';
-import { LRUCache } from 'lru-cache';
+import { LRUCacheFactory } from '@credlink/cache';
 import sharp from 'sharp';
 
 export interface SigningOptions {
@@ -62,7 +63,7 @@ export class C2PAService {
   private metadataEmbedder: MetadataEmbedder;
   private proofStorage: AsyncProofStorage;
   private useRealC2PA: boolean;
-  private manifestCache: LRUCache<string, C2PAManifest>;
+  private manifestCache = LRUCacheFactory.createCertificateCache();
   private signingLock: Map<string, Promise<any>> = new Map();
 
   constructor(options: { useRealC2PA?: boolean; certificateManager?: AtomicCertificateManager } = {}) {
@@ -75,12 +76,7 @@ export class C2PAService {
     this.metadataEmbedder = new MetadataEmbedder();
     this.proofStorage = new AsyncProofStorage();
     
-    // Initialize LRU cache with max 1000 entries to prevent memory leak
-    this.manifestCache = new LRUCache<string, C2PAManifest>({
-      max: parseInt(process.env.C2PA_CACHE_MAX_SIZE || '1000'),
-      ttl: parseInt(process.env.C2PA_CACHE_TTL_MS || String(1000 * 60 * 60 * 24)),
-      updateAgeOnGet: true
-    });
+    // Manifest cache is already initialized via LRUCacheFactory.createCertificateCache()
   }
 
   async signImage(imageBuffer: Buffer, options: SigningOptions = {}): Promise<SigningResult> {

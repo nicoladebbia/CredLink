@@ -14,12 +14,29 @@ import { registerService } from '../utils/service-registry';
 import { TimeoutConfig } from '../utils/timeout-config';
 
 const router: Router = Router();
-const proofStorage = new ProofStorage();
+let proofStorage: ProofStorage | null = null;
+let c2paService: C2PAService | null = null;
+
+// Lazy initialization function
+function getProofStorage(): ProofStorage {
+  if (!proofStorage) {
+    proofStorage = new ProofStorage();
+  }
+  return proofStorage;
+}
+
+function getC2PAService(): C2PAService {
+  if (!c2paService) {
+    c2paService = new C2PAService();
+  }
+  return c2paService;
+}
+
 const certValidator = new CertificateValidator();
 
 // Register for graceful shutdown
 if (typeof registerService === 'function') {
-  registerService('ProofStorage (verify route)', proofStorage);
+  registerService('ProofStorage (verify route)', getProofStorage());
 }
 
 // Configure multer for file uploads
@@ -38,7 +55,8 @@ const upload = multer({
   }
 });
 
-const c2paService = new C2PAService();
+// 🔥 HARSH FIX: Remove duplicate c2paService declaration - use lazy initialization
+// const c2paService = new C2PAService();
 
 /**
  * POST /verify
@@ -98,7 +116,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response, nex
     // 2. Validate signature (if manifest exists)
     let signatureValid = false;
     if (embeddedManifest) {
-      signatureValid = await c2paService.verifySignature(req.file.buffer, 'extracted-signature');
+      signatureValid = await getC2PAService().verifySignature(req.file.buffer, 'extracted-signature');
     }
     
     // 3. Certificate validation (real implementation)
@@ -180,7 +198,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response, nex
       try {
         const proofId = proofUri.split('/').pop();
         if (proofId) {
-          remoteProof = await proofStorage.getProof(proofId);
+          remoteProof = await getProofStorage().getProof(proofId);
         }
       } catch (error) {
         logger.warn('Failed to retrieve remote proof', { proofUri, error });

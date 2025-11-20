@@ -1,8 +1,9 @@
 import * as express from 'express';
 import { Router, Request, Response } from 'express';
 import { DatabaseRBAC, Subject, Action, Resource, Context } from '@credlink/rbac';
+import { logger } from '../utils/logger';
 
-const router = Router();
+const router: Router = Router();
 
 // BRUTAL FIX: Use shared database pool from index.ts to prevent connection exhaustion
 let sharedRbac: DatabaseRBAC | null = null;
