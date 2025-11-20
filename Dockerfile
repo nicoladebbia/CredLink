@@ -87,7 +87,7 @@ WORKDIR /app
 COPY . .
 
 # Install all dependencies
-RUN npm install -g pnpm@9.0.0 && \
+RUN npm install -g pnpm@8.15.6 && \
     pnpm install --frozen-lockfile
 
 # Set permissions
