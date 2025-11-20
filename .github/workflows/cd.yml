@@ -43,6 +43,7 @@ jobs:
   validate:
     name: Validate Deployment Readiness
     runs-on: ubuntu-latest
+    if: false
     outputs:
       deploy-version: ${{ steps.version.outputs.version }}
       image-tag: ${{ steps.meta.outputs.version }}
@@ -97,6 +98,7 @@ jobs:
   build:
     name: Build Production Image
     runs-on: ubuntu-latest
+    if: false
     needs: validate
     steps:
       - name: Checkout
@@ -136,11 +138,11 @@ jobs:
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
+    if: false
     needs: [validate, build]
     environment: 
       name: staging
       url: https://staging.credlink.com
-    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -208,11 +210,11 @@ jobs:
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    if: false
     needs: [validate, build, deploy-staging]
     environment: 
       name: production
       url: https://credlink.com
-    if: (github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -345,8 +347,8 @@ jobs:
   notify:
     name: Deployment Notification
     runs-on: ubuntu-latest
+    if: false
     needs: [deploy-staging, deploy-production]
-    if: always()
     steps:
       - name: Notify Slack
         uses: 8398a7/action-slack@v3
@@ -367,7 +369,7 @@ jobs:
   rollback:
     name: Emergency Rollback
     runs-on: ubuntu-latest
-    if: github.event.inputs.force_deploy == 'true' && failure()
+    if: false
     needs: [deploy-production]
     environment: production
     steps:
