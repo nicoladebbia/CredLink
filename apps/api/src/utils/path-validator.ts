@@ -74,7 +74,7 @@ export class PathValidator {
       }
 
       // 🔥 SECURITY: Normalize path
-      let normalizedPath = normalize(inputPath).replace(/\\/g, '/');
+      const normalizedPath = normalize(inputPath).replace(/\\/g, '/');
 
       // 🔥 SECURITY: Prevent absolute paths unless explicitly allowed
       if (normalizedPath.startsWith('/') && !options?.allowTraversal) {

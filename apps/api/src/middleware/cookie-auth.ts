@@ -121,7 +121,7 @@ export class CookieAuthMiddleware {
     return (req: Request, res: Response, next: NextFunction): void => {
       try {
         // Try to authenticate but don't reject if it fails
-        let token = req.cookies?.auth_token || 
+        const token = req.cookies?.auth_token || 
                    (req.headers.authorization?.startsWith('Bearer ') ? 
                     req.headers.authorization.substring(7) : null);
 

@@ -403,7 +403,7 @@ let apiKeyAuth: ApiKeyAuth | null = null;
 let apiKeyService: ApiKeyService | null = null;
 
 // 🔥 CRITICAL FIX: Hybrid certificate manager for atomic rotation
-let certificateManager: AtomicCertificateManager | null = null;
+const certificateManager: AtomicCertificateManager | null = null;
 
 // 🔥 CRITICAL FIX: Initialize C2PAService for basic signing demo
   logger.debug('Initializing C2PAService without certificate manager');

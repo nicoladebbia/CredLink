@@ -526,7 +526,7 @@ export function createSCIMRouter(pool: Pool): Router {
         });
       }
 
-      let user = current.rows[0];
+      const user = current.rows[0];
 
       // Apply operations
       for (const op of Operations || []) {
