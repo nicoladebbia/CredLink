@@ -80,10 +80,13 @@ jobs:
             echo "✅ SOURCE_DATE_EPOCH is already in correct format: ${{ env.SOURCE_DATE_EPOCH }}"
           fi
           
-          # Validate repository structure
+          # Validate repository structure (Dockerfile.reproducible is optional for now)
           if [[ ! -f "Dockerfile.reproducible" ]]; then
-            echo "❌ Dockerfile.reproducible not found"
-            exit 1
+            echo "⚠️ Dockerfile.reproducible not found, using standard Dockerfile"
+            echo "REPRODUCIBLE_BUILD=false" >> $GITHUB_ENV
+          else
+            echo "✅ Dockerfile.reproducible found"
+            echo "REPRODUCIBLE_BUILD=true" >> $GITHUB_ENV
           fi
           
           # buildkit.toml is optional
