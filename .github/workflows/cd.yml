@@ -208,9 +208,7 @@ jobs:
     environment: 
       name: production
       url: https://credlink.com
-    if: |
-      (github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    if: (github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     steps:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
