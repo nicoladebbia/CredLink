@@ -22,6 +22,10 @@ on:
         default: false
         type: boolean
 
+# Temporarily disabled due to AWS infrastructure setup requirements
+# Re-enable when AWS secrets and infrastructure are properly configured
+if: false
+
 env:
   NODE_VERSION: '20.11.1'
   PNPM_VERSION: '9.0.0'
