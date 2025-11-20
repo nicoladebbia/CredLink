@@ -102,6 +102,15 @@ jobs:
           set -euo pipefail
           
           # Build with comprehensive security constraints
+          # Select Dockerfile based on REPRODUCIBLE_BUILD environment variable
+          if [[ "${{ env.REPRODUCIBLE_BUILD }}" == "true" ]]; then
+            DOCKERFILE_ARG="-f Dockerfile.reproducible"
+            echo "🔧 Using reproducible Dockerfile"
+          else
+            DOCKERFILE_ARG="-f Dockerfile"
+            echo "🔧 Using standard Dockerfile"
+          fi
+          
           docker buildx build \
             --builder buildx \
             --provenance=true \
@@ -112,7 +121,7 @@ jobs:
             --tag ${{ env.IMAGE }} \
             --no-cache \
             --pull \
-            -f Dockerfile.reproducible \
+            $DOCKERFILE_ARG \
             .
       
       - name: Post-build image validation
