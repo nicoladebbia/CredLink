@@ -46,14 +46,13 @@ jobs:
       with:
         fetch-depth: 0  # Full history for comprehensive scanning
         
-    - name: 🔍 TruffleHog Secret Scanning
+    - name: TruffleHog Scan
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
         base: main
         head: HEAD
         extra_args: --regex --entropy=False --verify=False --json
-        output: trufflehog-results.json
         
     - name: 🕵️ Gitleaks Secret Scanning
       uses: gitleaks/gitleaks-action@v2
