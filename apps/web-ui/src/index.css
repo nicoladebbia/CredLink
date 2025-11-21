@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-1: 0 100% 50%;
+    --color-2: 30 100% 50%;
+    --color-3: 60 100% 50%;
+    --color-4: 120 100% 50%;
+    --color-5: 240 100% 50%;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  @keyframes rainbow {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animate-rainbow {
+    animation: rainbow 3s ease-in-out infinite;
+    background-size: 200% 200%;
+  }
+
+  /* CPU Architecture Animations - Lights follow actual SVG paths */
+  .cpu-architecture.cpu-line-1 {
+    animation: cpu-light-move-1 4s ease-in-out infinite;
+  }
+  .cpu-architecture.cpu-line-2 {
+    animation: cpu-light-move-2 4s ease-in-out infinite 0.5s;
+  }
+  .cpu-architecture.cpu-line-3 {
+    animation: cpu-light-move-3 4s ease-in-out infinite 1s;
+  }
+  .cpu-architecture.cpu-line-4 {
+    animation: cpu-light-move-4 4s ease-in-out infinite 1.5s;
+  }
+  .cpu-architecture.cpu-line-5 {
+    animation: cpu-light-move-5 4s ease-in-out infinite 2s;
+  }
+  .cpu-architecture.cpu-line-6 {
+    animation: cpu-light-move-6 4s ease-in-out infinite 2.5s;
+  }
+  .cpu-architecture.cpu-line-7 {
+    animation: cpu-light-move-7 4s ease-in-out infinite 3s;
+  }
+  .cpu-architecture.cpu-line-8 {
+    animation: cpu-light-move-8 4s ease-in-out infinite 3.5s;
+  }
+
+  /* Path 1: M 10 20 h 79.5 q 5 0 5 5 v 30 - Bottom left to CPU bottom */
+  @keyframes cpu-light-move-1 {
+    0% { transform: translate(10px, 20px); opacity: 0; }
+    5% { opacity: 1; }
+    25% { transform: translate(50px, 20px); }
+    50% { transform: translate(89.5px, 20px); }
+    60% { transform: translate(94.5px, 25px); }
+    85% { transform: translate(94.5px, 50px); }
+    95% { opacity: 1; }
+    100% { transform: translate(94.5px, 55px); opacity: 0; }
+  }
+
+  /* Path 2: M 180 10 h -69.7 q -5 0 -5 5 v 30 - Top right to CPU top */
+  @keyframes cpu-light-move-2 {
+    0% { transform: translate(180px, 10px); opacity: 0; }
+    5% { opacity: 1; }
+    25% { transform: translate(140px, 10px); }
+    50% { transform: translate(110.3px, 10px); }
+    60% { transform: translate(105.3px, 15px); }
+    85% { transform: translate(105.3px, 40px); }
+    95% { opacity: 1; }
+    100% { transform: translate(105.3px, 45px); opacity: 0; }
+  }
+
+  /* Path 3: M 130 20 v 21.8 q 0 5 -5 5 h -10 - Top right corner to CPU */
+  @keyframes cpu-light-move-3 {
+    0% { transform: translate(130px, 20px); opacity: 0; }
+    5% { opacity: 1; }
+    40% { transform: translate(130px, 41.8px); }
+    60% { transform: translate(125px, 46.8px); }
+    85% { transform: translate(115px, 46.8px); }
+    95% { opacity: 1; }
+    100% { transform: translate(110px, 46.8px); opacity: 0; }
+  }
+
+  /* Path 4: M 170 80 v -21.8 q 0 -5 -5 -5 h -50 - Right bottom to CPU right */
+  @keyframes cpu-light-move-4 {
+    0% { transform: translate(170px, 80px); opacity: 0; }
+    5% { opacity: 1; }
+    30% { transform: translate(170px, 58.2px); }
+    50% { transform: translate(165px, 53.2px); }
+    85% { transform: translate(115px, 53.2px); }
+    95% { opacity: 1; }
+    100% { transform: translate(110px, 53.2px); opacity: 0; }
+  }
+
+  /* Path 5: M 135 65 h 15 q 5 0 5 5 v 10 q 0 5 -5 5 h -39.8 q -5 0 -5 -5 v -20 */
+  @keyframes cpu-light-move-5 {
+    0% { transform: translate(135px, 65px); opacity: 0; }
+    5% { opacity: 1; }
+    20% { transform: translate(150px, 65px); }
+    30% { transform: translate(155px, 70px); }
+    40% { transform: translate(155px, 80px); }
+    50% { transform: translate(150px, 85px); }
+    70% { transform: translate(110.2px, 85px); }
+    80% { transform: translate(105.2px, 80px); }
+    95% { transform: translate(105.2px, 60px); opacity: 1; }
+    100% { transform: translate(105.2px, 55px); opacity: 0; }
+  }
+
+  /* Path 6: M 94.8 95 v -36 - Bottom center straight up */
+  @keyframes cpu-light-move-6 {
+    0% { transform: translate(94.8px, 95px); opacity: 0; }
+    5% { opacity: 1; }
+    85% { transform: translate(94.8px, 59px); }
+    95% { opacity: 1; }
+    100% { transform: translate(94.8px, 54px); opacity: 0; }
+  }
+
+  /* Path 7: M 88 88 v -15 q 0 -5 -5 -5 h -10 q -5 0 -5 -5 v -5 q 0 -5 5 -5 h 14 */
+  @keyframes cpu-light-move-7 {
+    0% { transform: translate(88px, 88px); opacity: 0; }
+    5% { opacity: 1; }
+    20% { transform: translate(88px, 73px); }
+    30% { transform: translate(83px, 68px); }
+    45% { transform: translate(73px, 68px); }
+    55% { transform: translate(68px, 63px); }
+    65% { transform: translate(68px, 58px); }
+    75% { transform: translate(73px, 53px); }
+    95% { transform: translate(87px, 53px); opacity: 1; }
+    100% { transform: translate(90px, 53px); opacity: 0; }
+  }
+
+  /* Path 8: M 30 30 h 25 q 5 0 5 5 v 6.5 q 0 5 5 5 h 20 */
+  @keyframes cpu-light-move-8 {
+    0% { transform: translate(30px, 30px); opacity: 0; }
+    5% { opacity: 1; }
+    30% { transform: translate(55px, 30px); }
+    40% { transform: translate(60px, 35px); }
+    55% { transform: translate(60px, 41.5px); }
+    65% { transform: translate(65px, 46.5px); }
+    95% { transform: translate(85px, 46.5px); opacity: 1; }
+    100% { transform: translate(88px, 46.5px); opacity: 0; }
+  }
+
+  /* Circular Gradient Animation with Pause */
+  @keyframes circularGradient {
+    0% { 
+      transform: translate(0, 0) rotate(0deg) scale(1);
+      opacity: 0.3;
+    }
+    18% { 
+      transform: translate(-50px, 30px) rotate(90deg) scale(1.2);
+      opacity: 0.5;
+    }
+    36% { 
+      transform: translate(-100px, 0) rotate(180deg) scale(1);
+      opacity: 0.3;
+    }
+    54% { 
+      transform: translate(-50px, -30px) rotate(270deg) scale(0.8);
+      opacity: 0.4;
+    }
+    72% { 
+      transform: translate(0, 0) rotate(360deg) scale(1);
+      opacity: 0.3;
+    }
+    100% { 
+      transform: translate(0, 0) rotate(360deg) scale(1);
+      opacity: 0.3;
+    }
+  }
+}
+
+@layer components {
+  .container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
