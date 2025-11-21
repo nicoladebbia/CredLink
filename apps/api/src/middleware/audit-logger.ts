@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '../utils/logger';
+import { createHash } from 'crypto';
 
 /**
  * 🔥 REALISTIC SECURITY: Comprehensive audit logging middleware
@@ -120,7 +121,7 @@ function categorizeSecurityEvent(req: Request, res: Response): {
 function sanitizeIP(ip?: string): string {
   if (!ip) return 'unknown';
   // Hash IP for privacy while maintaining uniqueness
-  return require('crypto').createHash('sha256').update(ip).digest('hex').substring(0, 8);
+  return createHash('sha256').update(ip).digest('hex').substring(0, 8);
 }
 
 function sanitizeUserAgent(userAgent?: string): string {
@@ -140,7 +141,7 @@ function sanitizeRequestBody(body: any): any {
   
   const sanitized: any = {};
   for (const key in body) {
-    if (body.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) {
       const value = body[key];
       // 🔥 CRITICAL: Never log sensitive fields
       if (typeof value === 'string' && 
@@ -164,7 +165,7 @@ function sanitizeQuery(query: any): any {
   
   const sanitized: any = {};
   for (const key in query) {
-    if (query.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(query, key)) {
       const value = query[key];
       if (typeof value === 'string' && value.length > 50) {
         sanitized[key] = value.substring(0, 50) + '...';
@@ -181,7 +182,7 @@ function sanitizeHeaders(headers: any): any {
   
   const sanitized: any = {};
   for (const key in headers) {
-    if (headers.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(headers, key)) {
       // 🔥 CRITICAL: Never log sensitive headers
       if (key.toLowerCase().includes('authorization') ||
           key.toLowerCase().includes('cookie') ||
@@ -201,7 +202,7 @@ function getUserId(req: Request): string {
 
 function getSessionId(req: Request): string {
   // Return session identifier without exposing actual session ID
-  return req.session?.id ? require('crypto').createHash('sha256').update(req.session.id).digest('hex').substring(0, 8) : 'none';
+  return req.session?.id ? createHash('sha256').update(req.session.id).digest('hex').substring(0, 8) : 'none';
 }
 
 function getResponseTime(req: Request): number {

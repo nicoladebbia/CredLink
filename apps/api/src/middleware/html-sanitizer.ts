@@ -38,7 +38,7 @@ export function sanitizeHtmlInput(req: Request, res: Response, next: NextFunctio
  */
 function sanitizeObject(obj: any): void {
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       const value = obj[key];
       
       if (typeof value === 'string') {
@@ -50,7 +50,7 @@ function sanitizeObject(obj: any): void {
             'code', 'pre'
           ],
           ALLOWED_ATTR: ['class'],
-          ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+          ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))/i,
           ADD_ATTR: ['target'],
           FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea'],
           FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur']

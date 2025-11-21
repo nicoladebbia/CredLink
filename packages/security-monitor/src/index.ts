@@ -5,8 +5,8 @@
  * Tracks suspicious activities, failed authentication, and anomalies
  */
 
-import { AlertProvider, SecurityAlert, PagerDutyAlertProvider, ConsoleFallbackProvider } from './alert-providers';
-import { initializeAlertProviders, validateAlertConfig } from './config';
+import { AlertProvider, SecurityAlert, ConsoleFallbackProvider } from './alert-providers';
+import { initializeAlertProviders } from './config';
 
 export interface SecurityEvent {
   id: string;
@@ -65,7 +65,6 @@ export interface SecurityMonitorOptions {
   };
 }
 
-import { LRUCacheFactory } from '@credlink/cache';
 
 export class SecurityMonitor {
   private enabled: boolean;
