@@ -137,8 +137,7 @@ jobs:
       - name: Build
         run: |
           echo "🏗️ Building project..."
-          # Install turbo globally if not available
-          pnpm add -g turbo || true
+          # Use local turbo from node_modules
           pnpm build
       
       - name: Run tests
