@@ -137,7 +137,9 @@ jobs:
       - name: Build
         run: |
           echo "🏗️ Building project..."
-          pnpm exec turbo run build || pnpm build
+          # Install turbo globally if not available
+          pnpm add -g turbo || true
+          pnpm build
       
       - name: Run tests
         run: |
