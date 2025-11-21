@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20.11.1'
-  PNPM_VERSION: '9.0.0'
+  PNPM_VERSION: '8.15.6'
   # Turbo Remote Caching Configuration
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

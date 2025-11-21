@@ -30,6 +30,8 @@ env:
   FAIL_ON_SECRETS: 'true'
   FAIL_ON_VULNERABILITIES: 'true'
   REPORT_TO_SECURITY_HUB: 'true'
+  NODE_VERSION: '20.11.1'
+  PNPM_VERSION: '8.15.6'
 
 jobs:
   #==================================================
