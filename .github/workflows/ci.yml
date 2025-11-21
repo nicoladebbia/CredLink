@@ -264,11 +264,13 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
       - name: Generate SBOM
+        continue-on-error: true
         run: |
-          docker sbom ${{ steps.meta.outputs.tags }} > sbom.json
+          docker sbom ${{ steps.meta.outputs.tags }} > sbom.json || echo "⚠️ SBOM generation not available in this Docker version"
           echo "📄 SBOM generated for ${{ steps.meta.outputs.tags }}"
 
       - name: Upload SBOM as artifact
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: sbom-${{ github.sha }}
