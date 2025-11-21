@@ -135,7 +135,9 @@ jobs:
           pnpm type-check || echo "📝 Type check issues documented - pipeline continues"
       
       - name: Build
-        run: pnpm build
+        run: |
+          echo "🏗️ Building project..."
+          pnpm exec turbo run build || pnpm build
       
       - name: Run tests
         run: |
